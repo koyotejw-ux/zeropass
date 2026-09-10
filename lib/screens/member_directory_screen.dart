@@ -160,9 +160,12 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         ),
         title: Row(
           children: [
-            Text(
-              member.name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            Flexible(
+              child: Text(
+                member.name,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(width: 6),
             Container(
@@ -174,6 +177,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               child: Text(
                 member.groupName,
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
