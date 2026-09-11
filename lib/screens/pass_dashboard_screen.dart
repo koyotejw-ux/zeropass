@@ -332,20 +332,19 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
-                        Flexible(
-                          child: Text(
-                            member.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          member.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
@@ -359,7 +358,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textSecondary,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

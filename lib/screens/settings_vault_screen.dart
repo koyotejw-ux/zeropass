@@ -29,6 +29,46 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 90),
             children: [
+              // 0. Easy Getting Started Guide Card (출결선생처럼 한눈에 알기 쉬운 사용 설명서)
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.lightbulb_outline, color: Colors.white, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          '초간단 3단계 이용 가이드',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildGuideStep('1', '출결 체크', '첫 번째 탭에서 [체크인] 누르면 출석 기록 & 잔여 회차가 1회 자동 차감됩니다.'),
+                    const SizedBox(height: 8),
+                    _buildGuideStep('2', '등·하원 안심 문자', '체크 완료 후 [출석/하원 알림]을 누르면 비용 0원으로 부모님께 즉시 문자가 갑니다.'),
+                    const SizedBox(height: 8),
+                    _buildGuideStep('3', '청구서 & 입금 장부', '두 번째 탭에서 수강료 청구서를 만들고, 은행 푸시 알림으로 수납을 자동 정리하세요.'),
+                  ],
+                ),
+              ),
+
               // 1. Studio Profile Card
               _buildSectionTitle('스튜디오 & 강사 프로필'),
               Container(
@@ -55,6 +95,85 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         onPressed: () => _openEditProfileDialog(context, profile),
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label: const Text('프로필 및 수납 계좌 변경'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 2. 문자 양식 커스텀 관리 카드 (새로 추가)
+              _buildSectionTitle('문자 알림 및 청구 양식 관리 (사용자 정의 서식)'),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFEFF6FF),
+                        child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
+                      ),
+                      title: const Text('청구서 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('수강료 청구 시 발송되는 기본 문자 내용을 변경합니다.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _openTemplateEditorDialog(
+                        context,
+                        title: '청구서 문자 서식 편집',
+                        initialText: profile.invoiceTemplate,
+                        placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{납부기한}',
+                        onSave: (newTemplate) {
+                          final updated = profile.copyWith(invoiceTemplate: newTemplate);
+                          ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                        },
+                      ),
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFECFDF5),
+                        child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
+                      ),
+                      title: const Text('출석/등원 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('체크인 시 학부모/회원에게 전송되는 안심 문자를 변경합니다.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _openTemplateEditorDialog(
+                        context,
+                        title: '출석/등원 문자 서식 편집',
+                        initialText: profile.attendanceTemplate,
+                        placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
+                        onSave: (newTemplate) {
+                          final updated = profile.copyWith(attendanceTemplate: newTemplate);
+                          ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                        },
+                      ),
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFFFFBEB),
+                        child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
+                      ),
+                      title: const Text('하원/수업종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('귀가/퇴실 시 발송되는 안내 문자를 변경합니다.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _openTemplateEditorDialog(
+                        context,
+                        title: '하원/수업종료 문자 서식 편집',
+                        initialText: profile.departureTemplate,
+                        placeholders: '#{상호명}, #{회원명}',
+                        onSave: (newTemplate) {
+                          final updated = profile.copyWith(departureTemplate: newTemplate);
+                          ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                        },
                       ),
                     ),
                   ],
@@ -313,6 +432,123 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       Navigator.pop(ctx);
                     },
                     child: const Text('저장하기'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGuideStep(String num, String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 10,
+          backgroundColor: Colors.white.withAlpha((255 * 0.25).round()),
+          child: Text(
+            num,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                ),
+                TextSpan(
+                  text: desc,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFFDBEAFE), height: 1.3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openTemplateEditorDialog(
+    BuildContext context, {
+    required String title,
+    required String initialText,
+    required String placeholders,
+    required Function(String) onSave,
+  }) {
+    final textController = TextEditingController(text: initialText);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '사용 가능한 치환 태그:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  placeholders,
+                  style: const TextStyle(fontSize: 11, color: AppTheme.primaryBlue, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: textController,
+                  maxLines: 7,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                  ),
+                  style: const TextStyle(fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      onSave(textController.text.trim());
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('문자 서식이 안전하게 저장되었습니다.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+                    child: const Text('서식 저장하기'),
                   ),
                 ),
               ],

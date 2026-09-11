@@ -358,7 +358,6 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 child: Text(
                   '$memberNames (${invoice.recipientPhone})',
                   style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -454,26 +453,104 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     StudioProfile studio,
     List<Member> members,
     Invoice invoice,
-  ) async {
-    final message = SmsTemplateService.generateInvoiceMessage(
+  ) {
+    final defaultMessage = SmsTemplateService.generateInvoiceMessage(
       studio: studio,
       members: members,
       invoice: invoice,
     );
 
-    final success = await SmsTemplateService.launchNativeSms(
-      recipientPhone: invoice.recipientPhone,
-      body: message,
-    );
+    final textController = TextEditingController(text: defaultMessage);
 
-    if (!success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('문자 앱을 실행할 수 없습니다. 번호를 확인해주세요.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '청구 문자 내용 확인 & 편집',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '수신: ${invoice.recipientPhone} (전송 전 내용을 자유롭게 수정할 수 있습니다)',
+                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                ),
+                style: const TextStyle(fontSize: 14, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('취소'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final success = await SmsTemplateService.launchNativeSms(
+                          recipientPhone: invoice.recipientPhone,
+                          body: textController.text.trim(),
+                        );
+                        if (!success && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('문자 앱을 실행할 수 없습니다. 번호를 확인해주세요.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
+                      label: const Text('문자 앱으로 전송'),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _sendReceiptSms(

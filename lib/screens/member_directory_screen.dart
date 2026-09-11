@@ -158,16 +158,15 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
         ),
-        title: Row(
+        title: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 4,
           children: [
-            Flexible(
-              child: Text(
-                member.name,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                overflow: TextOverflow.ellipsis,
-              ),
+            Text(
+              member.name,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
@@ -177,7 +176,6 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               child: Text(
                 member.groupName,
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

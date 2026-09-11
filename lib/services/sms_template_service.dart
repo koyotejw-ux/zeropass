@@ -4,60 +4,52 @@ import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 
-enum SmsTemplateType {
-  attendanceNotice, // 출석/등원 알림
-  departureNotice,  // 하원/퇴실 알림
-  invoiceNotice,    // 수납/청구 안내
-  receiptNotice,    // 수납 완료 영수 안내
-  expiryNotice,     // 회차 만료 임박 안내
-}
-
 class SmsTemplateService {
   static final NumberFormat _currencyFormat = NumberFormat('#,###');
 
-  /// 1. 청구서 수납 안내 문자
+  /// 1. 청구서 수납 안내 문자 (사용자 정의 템플릿 치환)
   static String generateInvoiceMessage({
     required StudioProfile studio,
     required List<Member> members,
     required Invoice invoice,
+    String? customBody,
   }) {
+    if (customBody != null && customBody.trim().isNotEmpty) {
+      return customBody.trim();
+    }
+
     final memberNames = members.map((m) => m.name.split(' ').first).join(', ');
     final accountInfo = '${studio.bankName} ${studio.accountNumber} (${studio.accountHolder})';
     final formattedAmount = _currencyFormat.format(invoice.amount);
     final dueDateStr = DateFormat('yyyy.MM.dd').format(invoice.dueDate);
 
-    return '''
-[${studio.studioName}] 수강료 청구 안내
-안녕하세요, ${studio.studioName}입니다.
-$memberNames 회원님의 ${invoice.title}이 발행되었습니다.
-
-• 수납 금액: $formattedAmount원
-• 입금 계좌: $accountInfo
-• 납부 기한: $dueDateStr까지
-
-기한 내 입금 부탁드리며, 확인 즉시 패스가 안전하게 자동 갱신됩니다. 감사합니다.
-'''.trim();
+    return studio.invoiceTemplate
+        .replaceAll('#{상호명}', studio.studioName)
+        .replaceAll('#{회원명}', memberNames)
+        .replaceAll('#{청구제목}', invoice.title)
+        .replaceAll('#{안내내용}', invoice.title)
+        .replaceAll('#{금액}', formattedAmount)
+        .replaceAll('#{계좌정보}', accountInfo)
+        .replaceAll('#{납부기한}', dueDateStr)
+        .trim();
   }
 
-  /// 2. 출석 / 등원 확인 알림 (출결선생 스타일 학부모/회원 안심 문자)
+  /// 2. 출석 / 등원 확인 알림
   static String generateAttendanceMessage({
     required StudioProfile studio,
     required Member member,
     required DateTime time,
-    String? customNote,
   }) {
     final timeStr = DateFormat('HH:mm').format(time);
     final isSession = member.billingType == BillingType.sessionBased;
-    final sessionText = isSession ? '\n• 잔여 회차: ${member.remainingSessions}회' : '';
-    final noteText = (customNote != null && customNote.isNotEmpty) ? '\n• 전달 사항: $customNote' : '';
+    final sessionText = isSession ? '• 잔여 회차: ${member.remainingSessions}회' : '• 이용권: 정기 패스';
 
-    return '''
-[${studio.studioName}] 출석 확인
-안녕하세요.
-${member.name.split(' ').first} 회원님이 오늘 $timeStr에 정상 출석(등원)하였습니다.$sessionText$noteText
-
-오늘도 즐겁고 유익한 수업이 되도록 정성을 다하겠습니다.
-'''.trim();
+    return studio.attendanceTemplate
+        .replaceAll('#{상호명}', studio.studioName)
+        .replaceAll('#{회원명}', member.name.split(' ').first)
+        .replaceAll('#{출석시간}', timeStr)
+        .replaceAll('#{잔여회차}', sessionText)
+        .trim();
   }
 
   /// 3. 하원 / 수업 종료 알림
@@ -66,15 +58,10 @@ ${member.name.split(' ').first} 회원님이 오늘 $timeStr에 정상 출석(�
     required Member member,
     required DateTime time,
   }) {
-    final timeStr = DateFormat('HH:mm').format(time);
-
-    return '''
-[${studio.studioName}] 하원 안내
-안녕하세요.
-${member.name.split(' ').first} 회원님이 오늘 $timeStr에 수업을 마치고 안전하게 귀가(하원)하였습니다.
-
-가정에서 따뜻한 격려 부탁드립니다. 감사합니다.
-'''.trim();
+    return studio.departureTemplate
+        .replaceAll('#{상호명}', studio.studioName)
+        .replaceAll('#{회원명}', member.name.split(' ').first)
+        .trim();
   }
 
   /// 4. 수납 완료 / 영수 확인 알림
@@ -125,7 +112,6 @@ ${member.name.split(' ').first} 회원님의 잔여 패스가 [${member.remainin
   }
 
   /// Launches the native SMS app with recipient and prefilled body.
-  /// Zero server cost, direct telecom native messaging.
   static Future<bool> launchNativeSms({
     required String recipientPhone,
     required String body,

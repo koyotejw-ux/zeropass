@@ -90,7 +90,10 @@ class DatabaseService {
         bankName TEXT NOT NULL,
         accountNumber TEXT NOT NULL,
         accountHolder TEXT NOT NULL,
-        autoBankDetectEnabled INTEGER NOT NULL DEFAULT 1
+        autoBankDetectEnabled INTEGER NOT NULL DEFAULT 1,
+        invoiceTemplate TEXT,
+        attendanceTemplate TEXT,
+        departureTemplate TEXT
       )
     ''');
 
