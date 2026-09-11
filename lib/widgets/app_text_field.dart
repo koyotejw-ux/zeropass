@@ -55,7 +55,9 @@ class AppTextField extends StatelessWidget {
           focusNode: focusNode,
           autofocus: autofocus,
           obscureText: obscureText,
-          keyboardType: keyboardType,
+          keyboardType: maxLines > 1 && keyboardType == TextInputType.text
+              ? TextInputType.multiline
+              : keyboardType,
           inputFormatters: inputFormatters,
           scrollPadding: const EdgeInsets.only(bottom: 140),
           textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,

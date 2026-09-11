@@ -905,6 +905,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     controller: textController,
                     label: '문자 본문 (치환 태그 클릭 시 본문에 추가됩니다)',
                     maxLines: 7,
+                    keyboardType: TextInputType.multiline,
                     onChanged: (_) => setModalState(() {}),
                   ),
                   const SizedBox(height: 16),
