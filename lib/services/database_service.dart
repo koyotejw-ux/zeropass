@@ -329,4 +329,20 @@ class DatabaseService {
     final db = await database;
     await db.update('studio_profile', profile.toMap(), where: 'id = 1');
   }
+
+  /// Reset all data and clear out mock data for clean real usage
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('pass_records');
+    await db.delete('invoices');
+    await db.delete('members');
+  }
+
+  /// Re-seed sample practice data
+  Future<void> restoreSampleData() async {
+    final db = await database;
+    await clearAllData();
+    await _seedMockData(db);
+  }
 }
+

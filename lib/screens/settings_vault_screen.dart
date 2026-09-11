@@ -4,6 +4,8 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/data_vault_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/interactive_guide_dialog.dart';
+import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
@@ -14,6 +16,18 @@ class SettingsVaultScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
+  void _openInteractiveGuide(BuildContext context) {
+    StepByStepPracticeGuideDialog.show(
+      context,
+      onOpenAddMember: () {
+        HomeNavigationScreen.of(context)?.switchToTab(2); // 회원 관리 탭
+      },
+      onOpenSettings: () {
+        HomeNavigationScreen.of(context)?.switchToTab(3); // 설정 탭
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final studioAsync = ref.watch(studioProfileProvider);
@@ -22,6 +36,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('설정 · 보안 금고'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: '실전 가이드 튜토리얼',
+            onPressed: () => _openInteractiveGuide(context),
+          ),
+        ],
       ),
       body: studioAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -67,22 +88,38 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     const SizedBox(height: 8),
                     _buildGuideStep('3', '청구서 & 입금 장부', '두 번째 탭에서 수강료 청구서를 만들고, 은행 푸시 알림으로 수납을 자동 정리하세요.'),
                     const SizedBox(height: 14),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (ctx) => OnboardingScreen(onFinish: () => Navigator.pop(ctx)),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _openInteractiveGuide(context),
+                          icon: const Icon(Icons.play_lesson, color: AppTheme.primaryDark, size: 16),
+                          label: const Text('스텝바이스텝 가이드', style: TextStyle(color: AppTheme.primaryDark, fontWeight: FontWeight.w800)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.help_outline, color: Colors.white, size: 16),
-                      label: const Text('마스코트 패시와 함께하는 온보딩 다시보기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white, width: 1.2),
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (ctx) => OnboardingScreen(onFinish: () => Navigator.pop(ctx)),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.help_outline, color: Colors.white, size: 16),
+                          label: const Text('온보딩 다시보기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white, width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -306,6 +343,79 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('수납 장부 CSV가 생성되었습니다: ${file.path.split('/').last}'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFFEF2F2),
+                        child: Icon(Icons.cleaning_services_outlined, color: AppTheme.danger),
+                      ),
+                      title: const Text('체험용 가상 데이터 비우기 (실제 운영 시작)', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.danger)),
+                      subtitle: const Text('샘플 5명 데이터를 모두 지우고 실제 회원만 등록합니다.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (c) => AlertDialog(
+                            title: const Text('연습 데이터를 모두 비우시겠습니까?'),
+                            content: const Text(
+                              '현재 등록된 가상 회원, 출석 기록, 청구서 내역이 모두 삭제되어 실제 운영 모드로 초기화됩니다.\n(스튜디오 프로필 설정은 유지됩니다.)',
+                              style: TextStyle(height: 1.5, fontSize: 13),
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('취소')),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(c, true),
+                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+                                child: const Text('깨끗이 비우기', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true && context.mounted) {
+                          final db = ref.read(databaseServiceProvider);
+                          await db.clearAllData();
+                          await ref.read(membersProvider.notifier).reload();
+                          await ref.read(passRecordsProvider.notifier).reload();
+                          await ref.read(invoicesProvider.notifier).reload();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('체험용 데이터가 비워졌습니다. 이제 실제 회원을 등록해 보세요!'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFF3E8FF),
+                        child: Icon(Icons.restart_alt, color: Colors.purple),
+                      ),
+                      title: const Text('체험용 샘플 데이터 다시 불러오기', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('학원/PT/공방 연습용 5명 예시 데이터를 다시 채웁니다.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () async {
+                        final db = ref.read(databaseServiceProvider);
+                        await db.restoreSampleData();
+                        await ref.read(membersProvider.notifier).reload();
+                        await ref.read(passRecordsProvider.notifier).reload();
+                        await ref.read(invoicesProvider.notifier).reload();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('연습용 샘플 데이터가 성공적으로 복원되었습니다.'),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );

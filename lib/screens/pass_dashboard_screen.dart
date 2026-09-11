@@ -8,6 +8,8 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/interactive_guide_dialog.dart';
+import 'home_navigation_screen.dart';
 
 class PassDashboardScreen extends ConsumerStatefulWidget {
   const PassDashboardScreen({super.key});
@@ -19,6 +21,18 @@ class PassDashboardScreen extends ConsumerStatefulWidget {
 class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   String _selectedGroup = '전체 그룹';
   String _statusFilter = '전체'; // '전체', '수업 전', '체크 완료'
+
+  void _openInteractiveGuide(BuildContext context) {
+    StepByStepPracticeGuideDialog.show(
+      context,
+      onOpenAddMember: () {
+        HomeNavigationScreen.of(context)?.switchToTab(2); // 회원 관리 탭
+      },
+      onOpenSettings: () {
+        HomeNavigationScreen.of(context)?.switchToTab(3); // 설정 탭
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +67,25 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 출결선생 스타일 학부모 출결 문자 발송 설정 바로가기 안내
+          // 패시 마스코트 얼굴 아이콘으로 실전 가이드 모달 호출
+          IconButton(
+            icon: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icons/splash_icon.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            tooltip: '패시의 스텝바이스텝 가이드',
+            onPressed: () => _openInteractiveGuide(context),
+          ),
           IconButton(
             icon: const Icon(Icons.mark_chat_read_outlined),
             tooltip: '출결 알림 안내',

@@ -14,7 +14,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPageData> _pages = [
     const OnboardingPageData(
-      title: '반가워요! 제로패스 마스코트 패시예요',
+      title: '반가워요! 제로패스 마스코트 패시예요 😉',
       subtitle: '학원, 공방, PT, 레슨 등 모든 1인 및 소상공인 대표님을 위한\n서버비 0원 로컬 안심 출결·장부 비서예요.',
       tag: '안녕하세요 👋',
     ),
@@ -27,6 +27,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: '부모님 안심 문자 & 수강료 청구서 발송',
       subtitle: '등·하원 문자 알림과 수강료 청구 문자를\n비용 0원으로 기본 문자 앱에서 바로 전송할 수 있어요.',
       tag: '0원 문자 💬',
+    ),
+    const OnboardingPageData(
+      title: '하나씩 따라하는 초간단 실전 가이드!',
+      subtitle: '체험용 연습 데이터는 언제든 1초 만에 비우고,\n대표님의 실제 회원과 수업 정보로 바로 채울 수 있어요.',
+      tag: '실제 데이터 시작 🚀',
     ),
     const OnboardingPageData(
       title: '모든 데이터는 대표님의 폰에만 암호화 보관',
@@ -74,10 +79,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             height: 220,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFEFF6FF),
+              color: const Color(0xFF1E293B),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryBlue.withAlpha((255 * 0.15).round()),
+                  color: AppTheme.primaryBlue.withAlpha((255 * 0.25).round()),
                   blurRadius: 30,
                   spreadRadius: 5,
                 ),
@@ -85,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             child: ClipOval(
               child: Image.asset(
-                'assets/icons/mascot_passy.png',
+                'assets/icons/splash_icon.png',
                 fit: BoxFit.cover,
               ),
             ),
@@ -191,17 +196,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 height: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFF1E293B),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withAlpha((255 * 0.15).round()),
+                      color: AppTheme.primaryBlue.withAlpha((255 * 0.25).round()),
                       blurRadius: 20,
                     ),
                   ],
                 ),
                 child: ClipOval(
                   child: Image.asset(
-                    'assets/icons/mascot_passy.png',
+                    'assets/icons/splash_icon.png',
                     fit: BoxFit.cover,
                   ),
                 ),

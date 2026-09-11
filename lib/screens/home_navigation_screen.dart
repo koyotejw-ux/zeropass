@@ -8,12 +8,22 @@ import 'settings_vault_screen.dart';
 class HomeNavigationScreen extends StatefulWidget {
   const HomeNavigationScreen({super.key});
 
+  static HomeNavigationScreenState? of(BuildContext context) {
+    return context.findAncestorStateOfType<HomeNavigationScreenState>();
+  }
+
   @override
-  State<HomeNavigationScreen> createState() => _HomeNavigationScreenState();
+  State<HomeNavigationScreen> createState() => HomeNavigationScreenState();
 }
 
-class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
+class HomeNavigationScreenState extends State<HomeNavigationScreen> {
   int _currentIndex = 0;
+
+  void switchToTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   final List<Widget> _screens = const [
     PassDashboardScreen(),

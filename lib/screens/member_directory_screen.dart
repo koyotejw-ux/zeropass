@@ -28,6 +28,29 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('회원 명부 관리'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: '회원 등록 & 이용 팁',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (c) => AlertDialog(
+                  title: const Text('💡 회원 관리 & 실제 데이터 안내'),
+                  content: const Text(
+                    '1. 우측 하단의 [+ 신규 회원 등록] 버튼으로 실제 운영하시는 학생/회원 정보를 바로 추가할 수 있습니다.\n'
+                    '2. 회차권(예: 10회권)과 월 정기권(매월 자동) 중 매장 운영 방식에 맞춰 선택할 수 있습니다.\n'
+                    '3. 연습용 샘플 데이터는 [설정·보안] 탭에서 언제든지 깨끗하게 비우거나 다시 채울 수 있습니다.',
+                    style: TextStyle(height: 1.5, fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(c), child: const Text('확인')),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: membersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
