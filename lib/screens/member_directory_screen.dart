@@ -6,8 +6,12 @@ import '../models/member.dart';
 import '../models/invoice.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/coach_mark_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_bottom_sheet.dart';
+import '../widgets/app_text_field.dart';
+import '../widgets/coach_mark_dialog.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
   const MemberDirectoryScreen({super.key});
@@ -19,6 +23,21 @@ class MemberDirectoryScreen extends ConsumerStatefulWidget {
 class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CoachMarkDialog.showIfFirstTime(
+        context: context,
+        coachKey: CoachMarkService.keyMemberTab,
+        title: '수강생(회원) 명부 관리 📋',
+        message: '등록된 회원들의 남은 회차와 수업 그룹, 출결 이력을 한눈에 볼 수 있는 공간이에요.\n\n새로운 학생이나 회원이 등록하면 언제든 우측 하단 [+ 회원 등록]으로 10초 만에 추가하세요!',
+        tip: '회원 카드를 터치하면 출결 타임라인 확인, 회차 충전(+10회), 청구서 즉시 발송이 가능해요.',
+        buttonText: '회원 명부 둘러보기 🚀',
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,19 +300,17 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   }
 
   void _openMemberDetailSheet(BuildContext context, Member member) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightRatio: 0.88,
       builder: (ctx) => _MemberDetailModal(memberId: member.id),
     );
   }
 
   void _openAddMemberDialog(BuildContext context) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightRatio: 0.90,
       builder: (ctx) => const _AddMemberModal(),
     );
   }
@@ -538,30 +555,28 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               const SizedBox(height: 12),
 
               // Name
-              TextFormField(
+              AppTextField(
                 controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: '회원 이름 (예: 김하늘)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                label: '회원 이름',
+                hint: '예: 김하늘',
+                prefixIcon: Icons.badge_outlined,
                 validator: (v) => (v == null || v.trim().isEmpty) ? '이름을 입력하세요' : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
               // Phone
-              TextFormField(
+              AppTextField(
                 controller: _phoneController,
+                label: '연락처 (안심 알림·청구 문자용)',
+                hint: '예: 010-1234-5678',
+                prefixIcon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: '연락처 (01012345678)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
                 validator: (v) => (v == null || v.trim().length < 10) ? '유효한 번호를 입력하세요' : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
 
               // Multi-Industry Quick Selection Chips
-              const Text('업종별 간편 선택', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+              const Text('업종별 간편 템플릿', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
               const SizedBox(height: 6),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -576,17 +591,16 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Group
-              TextFormField(
+              AppTextField(
                 controller: _groupController,
-                decoration: InputDecoration(
-                  labelText: '그룹/반 명 (예: 중등수학, 기구필라테스, 도예반)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                label: '수업 / 클래스 그룹',
+                hint: '예: 중등수학, 기구필라테스, 도예반',
+                prefixIcon: Icons.group_outlined,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Billing Type Segmented
               const Text('패스 수강 유형', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
@@ -607,45 +621,42 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                   setState(() => _billingType = val.first);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Default Fee & Sessions
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: AppTextField(
                       controller: _feeController,
+                      label: '수강료 (원)',
+                      hint: '300000',
+                      prefixIcon: Icons.payments_outlined,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: '수강료 (원)',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
                     ),
                   ),
                   if (_billingType == BillingType.sessionBased) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: TextFormField(
+                      child: AppTextField(
                         controller: _sessionsController,
+                        label: '총 등록 회차',
+                        hint: '10',
+                        prefixIcon: Icons.confirmation_number_outlined,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: '총 등록 회차',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
                       ),
                     ),
                   ],
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
 
               // Memo
-              TextFormField(
+              AppTextField(
                 controller: _memoController,
-                decoration: InputDecoration(
-                  labelText: '운영자 메모 (비공개 로컬 보관)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                label: '운영자 메모 (비공개 로컬 보관)',
+                hint: '회원 특이사항, 목표 등',
+                prefixIcon: Icons.note_alt_outlined,
               ),
               const SizedBox(height: 20),
 

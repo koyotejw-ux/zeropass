@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_bottom_sheet.dart';
+import '../widgets/app_text_field.dart';
+import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
-import 'onboarding_screen.dart';
+import 'studio_setup_wizard_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
   const SettingsVaultScreen({super.key});
@@ -16,6 +20,21 @@ class SettingsVaultScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CoachMarkDialog.showIfFirstTime(
+        context: context,
+        coachKey: CoachMarkService.keySettingsTab,
+        title: '로컬 100% 보안 금고 🛡️',
+        message: '제로패스는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
+        tip: '스튜디오 상호명, 수납 계좌번호, 자동 문자 양식 편집도 모두 여기서 관리하실 수 있습니다.',
+        buttonText: '안심하고 사용할게요! 🔒',
+      );
+    });
+  }
+
   void _openInteractiveGuide(BuildContext context) {
     StepByStepPracticeGuideDialog.show(
       context,
@@ -107,12 +126,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (ctx) => OnboardingScreen(onFinish: () => Navigator.pop(ctx)),
+                                builder: (ctx) => StudioSetupWizardScreen(onFinish: () => Navigator.pop(ctx)),
                               ),
                             );
                           },
-                          icon: const Icon(Icons.help_outline, color: Colors.white, size: 16),
-                          label: const Text('온보딩 다시보기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 16),
+                          label: const Text('매장 셋업 위저드', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Colors.white, width: 1.2),
                             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
@@ -180,12 +199,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       subtitle: const Text('수강료 청구 시 발송되는 기본 문자 내용을 변경합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
-                        context,
+                        context: context,
                         title: '청구서 문자 서식 편집',
                         initialText: profile.invoiceTemplate,
                         placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{납부기한}',
-                        onSave: (newTemplate) {
-                          final updated = profile.copyWith(invoiceTemplate: newTemplate);
+                        profile: profile,
+                        onSave: (newTemplate, updatedProfile) {
+                          final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
                           ref.read(studioProfileProvider.notifier).updateProfile(updated);
                         },
                       ),
@@ -201,12 +221,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       subtitle: const Text('체크인 시 학부모/회원에게 전송되는 안심 문자를 변경합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
-                        context,
+                        context: context,
                         title: '출석/등원 문자 서식 편집',
                         initialText: profile.attendanceTemplate,
                         placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
-                        onSave: (newTemplate) {
-                          final updated = profile.copyWith(attendanceTemplate: newTemplate);
+                        profile: profile,
+                        onSave: (newTemplate, updatedProfile) {
+                          final updated = updatedProfile.copyWith(attendanceTemplate: newTemplate);
                           ref.read(studioProfileProvider.notifier).updateProfile(updated);
                         },
                       ),
@@ -222,12 +243,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       subtitle: const Text('귀가/퇴실 시 발송되는 안내 문자를 변경합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
-                        context,
+                        context: context,
                         title: '하원/수업종료 문자 서식 편집',
                         initialText: profile.departureTemplate,
                         placeholders: '#{상호명}, #{회원명}',
-                        onSave: (newTemplate) {
-                          final updated = profile.copyWith(departureTemplate: newTemplate);
+                        profile: profile,
+                        onSave: (newTemplate, updatedProfile) {
+                          final updated = updatedProfile.copyWith(departureTemplate: newTemplate);
                           ref.read(studioProfileProvider.notifier).updateProfile(updated);
                         },
                       ),
@@ -501,95 +523,84 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     final accountCtrl = TextEditingController(text: current.accountNumber);
     final holderCtrl = TextEditingController(text: current.accountHolder);
 
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 6),
-                const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: studioCtrl,
-                  decoration: InputDecoration(
-                    labelText: '상호명 / 스튜디오명',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: instructorCtrl,
-                  decoration: InputDecoration(
-                    labelText: '원장 / 대표 강사명',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: bankCtrl,
-                  decoration: InputDecoration(
-                    labelText: '수납 은행명 (예: 토스뱅크, 국민은행)',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: accountCtrl,
-                  decoration: InputDecoration(
-                    labelText: '수납 계좌번호',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: holderCtrl,
-                  decoration: InputDecoration(
-                    labelText: '예금주 성명',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final updated = current.copyWith(
-                        studioName: studioCtrl.text.trim(),
-                        instructorName: instructorCtrl.text.trim(),
-                        bankName: bankCtrl.text.trim(),
-                        accountNumber: accountCtrl.text.trim(),
-                        accountHolder: holderCtrl.text.trim(),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+              const SizedBox(height: 18),
+              AppTextField(
+                controller: studioCtrl,
+                label: '상호명 / 스튜디오명',
+                hint: '예: 제로패스 스튜디오',
+                prefixIcon: Icons.storefront_outlined,
+              ),
+              const SizedBox(height: 14),
+              AppTextField(
+                controller: instructorCtrl,
+                label: '원장 / 대표 강사명',
+                hint: '예: 홍길동 원장',
+                prefixIcon: Icons.badge_outlined,
+              ),
+              const SizedBox(height: 14),
+              AppTextField(
+                controller: bankCtrl,
+                label: '수납 은행명',
+                hint: '예: 토스뱅크, 국민은행',
+                prefixIcon: Icons.account_balance_outlined,
+              ),
+              const SizedBox(height: 14),
+              AppTextField(
+                controller: accountCtrl,
+                label: '수납 계좌번호',
+                hint: '예: 3333-01-2345678',
+                prefixIcon: Icons.credit_card_outlined,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 14),
+              AppTextField(
+                controller: holderCtrl,
+                label: '예금주 성명',
+                hint: '예: 홍길동',
+                prefixIcon: Icons.person_outline,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final updated = current.copyWith(
+                      studioName: studioCtrl.text.trim(),
+                      instructorName: instructorCtrl.text.trim(),
+                      bankName: bankCtrl.text.trim(),
+                      accountNumber: accountCtrl.text.trim(),
+                      accountHolder: holderCtrl.text.trim(),
+                    );
+                    await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('스튜디오 프로필이 저장되었습니다.')),
                       );
-                      ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                      Navigator.pop(ctx);
-                    },
-                    child: const Text('저장하기'),
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
+                  child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -629,85 +640,230 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
-  void _openTemplateEditorDialog(
-    BuildContext context, {
+  void _openTemplateEditorDialog({
+    required BuildContext context,
     required String title,
     required String initialText,
     required String placeholders,
-    required Function(String) onSave,
+    required StudioProfile profile,
+    required Function(String, StudioProfile) onSave,
   }) {
     final textController = TextEditingController(text: initialText);
+    final studioNameController = TextEditingController(text: profile.studioName);
+    final instructorController = TextEditingController(text: profile.instructorName);
+    final bankController = TextEditingController(text: profile.bankName);
+    final accountController = TextEditingController(text: profile.accountNumber);
+    final holderController = TextEditingController(text: profile.accountHolder);
 
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightRatio: 0.92,
       builder: (ctx) {
-        return Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '사용 가능한 치환 태그:',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  placeholders,
-                  style: const TextStyle(fontSize: 11, color: AppTheme.primaryBlue, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: textController,
-                  maxLines: 7,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // Live preview generation
+            String previewText = textController.text
+                .replaceAll('#{상호명}', studioNameController.text.trim().isEmpty ? '상호명' : studioNameController.text.trim())
+                .replaceAll('#{회원명}', '김민준')
+                .replaceAll('#{강사명}', instructorController.text.trim().isEmpty ? '원장님' : instructorController.text.trim())
+                .replaceAll('#{계좌정보}', '${bankController.text.trim()} ${accountController.text.trim()} (${holderController.text.trim()})')
+                .replaceAll('#{금액}', '250,000')
+                .replaceAll('#{청구제목}', '9월 수강료')
+                .replaceAll('#{납부기한}', '2026.09.20')
+                .replaceAll('#{출석시간}', '14:30')
+                .replaceAll('#{잔여회차}', '• 잔여 회차: 9회');
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
                   ),
-                  style: const TextStyle(fontSize: 13, height: 1.4),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      onSave(textController.text.trim());
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('문자 서식이 안전하게 저장되었습니다.'),
-                          behavior: SnackBarBehavior.floating,
+                  const SizedBox(height: 4),
+                  const Text(
+                    '필수 변수(상호명, 계좌 등)를 수정하면 문자에 즉시 반영됩니다.',
+                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 1. Dedicated Input Fields for Essential Variables
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.tune_rounded, size: 16, color: AppTheme.primaryBlue),
+                            SizedBox(width: 6),
+                            Text(
+                              '문자에 삽입되는 필수 기본 정보',
+                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-                    child: const Text('서식 저장하기'),
+                        const SizedBox(height: 14),
+                        AppTextField(
+                          controller: studioNameController,
+                          label: '스튜디오 상호명 (#{상호명})',
+                          hint: '예: 제로패스 음악학원',
+                          prefixIcon: Icons.storefront_outlined,
+                          onChanged: (_) => setModalState(() {}),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AppTextField(
+                                controller: bankController,
+                                label: '입금 은행 (#{계좌정보})',
+                                hint: '토스뱅크',
+                                prefixIcon: Icons.account_balance_outlined,
+                                onChanged: (_) => setModalState(() {}),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: AppTextField(
+                                controller: holderController,
+                                label: '예금주 성명',
+                                hint: '김원장',
+                                prefixIcon: Icons.person_outline,
+                                onChanged: (_) => setModalState(() {}),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: accountController,
+                          label: '입금 계좌번호',
+                          hint: '3333-01-2345678',
+                          prefixIcon: Icons.credit_card_outlined,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setModalState(() {}),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 18),
+
+                  // 2. Template Editor with Placeholders Chips
+                  const Text(
+                    '문자 서식 양식 편집',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: placeholders.split(',').map((p) {
+                      final tag = p.trim();
+                      return ActionChip(
+                        backgroundColor: const Color(0xFFEFF6FF),
+                        label: Text(tag, style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryBlue, fontWeight: FontWeight.w700)),
+                        onPressed: () {
+                          final currentText = textController.text;
+                          final selection = textController.selection;
+                          final newText = selection.isValid && selection.start >= 0
+                              ? currentText.replaceRange(selection.start, selection.end, tag)
+                              : '$currentText $tag';
+                          textController.text = newText;
+                          setModalState(() {});
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    controller: textController,
+                    label: '문자 본문 (치환 태그 클릭 시 본문에 추가됩니다)',
+                    maxLines: 7,
+                    onChanged: (_) => setModalState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. Live Preview Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: const Border(left: BorderSide(color: AppTheme.softMint, width: 3.5)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.visibility_outlined, size: 14, color: AppTheme.softMint),
+                            SizedBox(width: 6),
+                            Text(
+                              '실제 발송 문자 미리보기',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF334155)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          previewText,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), height: 1.45),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final updatedProfile = profile.copyWith(
+                          studioName: studioNameController.text.trim(),
+                          bankName: bankController.text.trim(),
+                          accountNumber: accountController.text.trim(),
+                          accountHolder: holderController.text.trim(),
+                        );
+                        onSave(textController.text.trim(), updatedProfile);
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('문자 서식 및 상호/계좌 정보가 안전하게 저장되었습니다.')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      child: const Text('서식 & 정보 함께 저장하기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

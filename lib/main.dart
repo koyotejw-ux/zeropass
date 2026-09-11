@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_navigation_screen.dart';
-import 'screens/onboarding_screen.dart';
+import 'screens/studio_setup_wizard_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -11,37 +11,37 @@ void main() async {
   await initializeDateFormatting('ko_KR', null);
 
   final prefs = await SharedPreferences.getInstance();
-  final showOnboarding = !(prefs.getBool('onboarding_completed') ?? false);
+  final showSetupWizard = !(prefs.getBool('setup_wizard_completed') ?? false);
 
   runApp(
     ProviderScope(
-      child: ZeroPassApp(showOnboarding: showOnboarding),
+      child: ZeroPassApp(showSetupWizard: showSetupWizard),
     ),
   );
 }
 
 class ZeroPassApp extends StatefulWidget {
-  final bool showOnboarding;
-  const ZeroPassApp({super.key, required this.showOnboarding});
+  final bool showSetupWizard;
+  const ZeroPassApp({super.key, required this.showSetupWizard});
 
   @override
   State<ZeroPassApp> createState() => _ZeroPassAppState();
 }
 
 class _ZeroPassAppState extends State<ZeroPassApp> {
-  late bool _showOnboarding;
+  late bool _showSetupWizard;
 
   @override
   void initState() {
     super.initState();
-    _showOnboarding = widget.showOnboarding;
+    _showSetupWizard = widget.showSetupWizard;
   }
 
-  void _finishOnboarding() async {
+  void _finishSetupWizard() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_completed', true);
+    await prefs.setBool('setup_wizard_completed', true);
     setState(() {
-      _showOnboarding = false;
+      _showSetupWizard = false;
     });
   }
 
@@ -51,8 +51,8 @@ class _ZeroPassAppState extends State<ZeroPassApp> {
       title: 'ZeroPass (제로패스)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: _showOnboarding
-          ? OnboardingScreen(onFinish: _finishOnboarding)
+      home: _showSetupWizard
+          ? StudioSetupWizardScreen(onFinish: _finishSetupWizard)
           : const HomeNavigationScreen(),
     );
   }

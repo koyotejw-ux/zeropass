@@ -119,24 +119,27 @@ ${member.name.split(' ').first} 회원님의 잔여 패스가 [${member.remainin
   }
 
   /// Launches the native SMS app with recipient and prefilled body.
+  /// Uses strict percent-encoding (%20 instead of +) so SMS apps render exact spaces and newlines.
   static Future<bool> launchNativeSms({
     required String recipientPhone,
     required String body,
   }) async {
     final cleanPhone = recipientPhone.replaceAll(RegExp(r'[^0-9]'), '');
-    final Uri smsUri = Uri(
-      scheme: 'sms',
-      path: cleanPhone,
-      queryParameters: <String, String>{
-        'body': body,
-      },
-    );
+    
+    // Custom strict percent-encoding to ensure space is '%20' and NOT '+'
+    final encodedBody = Uri.encodeComponent(body).replaceAll('+', '%20');
+    final Uri smsUri = Uri.parse('sms:$cleanPhone?body=$encodedBody');
 
     try {
       if (await canLaunchUrl(smsUri)) {
         return await launchUrl(smsUri);
       } else {
-        final fallbackUri = Uri.parse('sms:$cleanPhone?body=${Uri.encodeComponent(body)}');
+        // Fallback for some Android OEM intents
+        final Uri fallbackUri = Uri(
+          scheme: 'sms',
+          path: cleanPhone,
+          query: 'body=$encodedBody',
+        );
         return await launchUrl(fallbackUri);
       }
     } catch (_) {

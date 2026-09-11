@@ -7,7 +7,9 @@ import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/sms_template_service.dart';
+import '../services/coach_mark_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
 
@@ -533,7 +535,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     );
   }
 
-  void _handleOneTouchCheckIn(Member member) {
+  void _handleOneTouchCheckIn(Member member) async {
     HapticFeedback.mediumImpact();
 
     ref.read(passRecordsProvider.notifier).checkInMember(
@@ -547,6 +549,16 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
+    );
+
+    // First-touch coach mark for Check-In
+    await CoachMarkDialog.showIfFirstTime(
+      context: context,
+      coachKey: CoachMarkService.keyCheckIn,
+      title: '첫 번째 출석 체크 완료! 🎉',
+      message: '회원이 도착했을 때 [체크인]을 누르면 이렇게 1초 만에 회차가 차감돼요.\n\n출석 완료 후 카드 아래의 [출석 알림 문자]를 누르면 부모님께 안심 문자를 비용 0원으로 바로 보낼 수 있어요!',
+      tip: '정기권 회원은 출석 기록만 남고, 회차권 회원은 1회씩 자동 차감됩니다.',
+      buttonText: '네, 확인했어요! 👍',
     );
   }
 
