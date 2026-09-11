@@ -490,11 +490,29 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               ),
               const SizedBox(height: 10),
 
+              // Multi-Industry Quick Selection Chips
+              const Text('업종별 간편 선택', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildIndustryChip('보습·입시', '중등수학 정규반', BillingType.monthlyRecurring, 350000, 0),
+                    _buildIndustryChip('음악·피아노', '피아노 클래식반', BillingType.monthlyRecurring, 180000, 0),
+                    _buildIndustryChip('미술·도예공방', '도예 정규반', BillingType.sessionBased, 240000, 4),
+                    _buildIndustryChip('PT·필라테스', '1:1 기구필라테스', BillingType.sessionBased, 700000, 10),
+                    _buildIndustryChip('태권도·체육관', '유소년 태권도', BillingType.monthlyRecurring, 160000, 0),
+                    _buildIndustryChip('댄스·보컬레슨', '보컬 1:1 레슨', BillingType.sessionBased, 320000, 4),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
               // Group
               TextFormField(
                 controller: _groupController,
                 decoration: InputDecoration(
-                  labelText: '그룹/반 명 (예: 중등수학, 기구필라테스, PT반)',
+                  labelText: '그룹/반 명 (예: 중등수학, 기구필라테스, 도예반)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -604,6 +622,34 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildIndustryChip(String label, String group, BillingType type, int fee, int sessions) {
+    final isSelected = _groupController.text == group;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (val) {
+          setState(() {
+            _groupController.text = group;
+            _billingType = type;
+            _feeController.text = fee.toString();
+            if (type == BillingType.sessionBased) {
+              _sessionsController.text = sessions.toString();
+            }
+          });
+        },
+        selectedColor: AppTheme.primaryDark,
+        labelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: isSelected ? Colors.white : AppTheme.textPrimary,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

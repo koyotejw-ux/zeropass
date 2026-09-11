@@ -213,41 +213,43 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             },
                           ),
                   ),
+
+                  // Batch Action Bar placed directly inside body above bottom navigation bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: const Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha((255 * 0.04).round()),
+                          offset: const Offset(0, -3),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _handleBatchCheckIn(context),
+                            icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
+                            label: const Text('남은 회원 일괄 출석 완료'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryDark,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },
           );
         },
-      ),
-      bottomSheet: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.06).round()),
-              offset: const Offset(0, -4),
-              blurRadius: 16,
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _handleBatchCheckIn(context),
-                  icon: const Icon(Icons.done_all, color: Colors.white),
-                  label: const Text('남은 회원 일괄 출석 완료'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryDark,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -309,117 +311,118 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Top Section: Avatar + Full-width Name & Group (Extends all the way across)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Initials Avatar
               CircleAvatar(
-                radius: 22,
+                radius: 20,
                 backgroundColor: isChecked ? AppTheme.softMint.withAlpha((255 * 0.15).round()) : AppTheme.chipBackground,
                 child: Text(
                   initials,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-
-              // Member Info & Badges
+              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        Text(
-                          member.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.chipBackground,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            member.groupName,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      member.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        if (isSessionBased) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isExpiringSoon
-                                  ? AppTheme.danger.withAlpha((255 * 0.12).round())
-                                  : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${member.remainingSessions}/${member.totalSessions}회 남음',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
-                              ),
-                            ),
-                          ),
-                        ] else ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.softMint.withAlpha((255 * 0.12).round()),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              '정기 결제 패스',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.softMint,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.chipBackground,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        member.groupName,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
 
-              // Check-in Action Button
+          // 2. Middle Row: Pass Type / Session Badge & One-touch Check-in Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (isSessionBased) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isExpiringSoon
+                        ? AppTheme.danger.withAlpha((255 * 0.12).round())
+                        : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${member.remainingSessions}/${member.totalSessions}회 남음 ${isExpiringSoon ? "(만료임박)" : ""}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.softMint.withAlpha((255 * 0.12).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    '정기 결제 패스',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.softMint,
+                    ),
+                  ),
+                ),
+              ],
+
+              // Check-in Action Button / Status Badge
               if (isChecked)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: AppTheme.softMint.withAlpha((255 * 0.15).round()),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.check_circle, size: 16, color: AppTheme.softMint),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 5),
                       Text(
-                        todayPass?.status == AttendanceStatus.late ? '지각' : '출석됨',
+                        todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -430,16 +433,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   ),
                 )
               else
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () => _handleOneTouchCheckIn(member),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text(
+                  icon: const Icon(Icons.check, size: 16, color: Colors.white),
+                  label: const Text(
                     '체크인',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
             ],
