@@ -4,6 +4,7 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/data_vault_service.dart';
 import '../theme/app_theme.dart';
+import 'onboarding_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
   const SettingsVaultScreen({super.key});
@@ -65,6 +66,24 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     _buildGuideStep('2', '등·하원 안심 문자', '체크 완료 후 [출석/하원 알림]을 누르면 비용 0원으로 부모님께 즉시 문자가 갑니다.'),
                     const SizedBox(height: 8),
                     _buildGuideStep('3', '청구서 & 입금 장부', '두 번째 탭에서 수강료 청구서를 만들고, 은행 푸시 알림으로 수납을 자동 정리하세요.'),
+                    const SizedBox(height: 14),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) => OnboardingScreen(onFinish: () => Navigator.pop(ctx)),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.help_outline, color: Colors.white, size: 16),
+                      label: const Text('마스코트 패시와 함께하는 온보딩 다시보기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white, width: 1.2),
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -353,12 +372,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   }
 
   Widget _buildProfileRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+        ],
+      ),
     );
   }
 
@@ -376,10 +398,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       builder: (ctx) {
         return Container(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            left: 24,
+            right: 24,
+            top: 24,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -390,33 +412,55 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
+                const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 6),
+                const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                const SizedBox(height: 18),
                 TextField(
                   controller: studioCtrl,
-                  decoration: InputDecoration(labelText: '상호명', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  decoration: InputDecoration(
+                    labelText: '상호명 / 스튜디오명',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
                 TextField(
                   controller: instructorCtrl,
-                  decoration: InputDecoration(labelText: '원장/강사명', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  decoration: InputDecoration(
+                    labelText: '원장 / 대표 강사명',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
                 TextField(
                   controller: bankCtrl,
-                  decoration: InputDecoration(labelText: '은행명', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  decoration: InputDecoration(
+                    labelText: '수납 은행명 (예: 토스뱅크, 국민은행)',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
                 TextField(
                   controller: accountCtrl,
-                  decoration: InputDecoration(labelText: '계좌번호', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  decoration: InputDecoration(
+                    labelText: '수납 계좌번호',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
                 TextField(
                   controller: holderCtrl,
-                  decoration: InputDecoration(labelText: '예금주', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  decoration: InputDecoration(
+                    labelText: '예금주 성명',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 22),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

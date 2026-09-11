@@ -610,7 +610,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     child: Icon(Icons.account_balance, color: AppTheme.primaryBlue),
                   ),
                   title: const Text('계좌 입금 확인'),
-                  subtitle: const Text('은행 통장으로 입금 완료됨'),
+                  subtitle: const Text('은행 통장으로 실시간 무통장 입금 완료'),
                   onTap: () => _confirmPayment(ctx, invoice, 'TRANSFER', invoiceMembers, studio),
                 ),
                 ListTile(
@@ -619,8 +619,26 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     child: Icon(Icons.credit_card, color: AppTheme.softMint),
                   ),
                   title: const Text('오프라인 카드 단말기'),
-                  subtitle: const Text('현장 카드 결제'),
+                  subtitle: const Text('매장/학원 현장 신용·체크카드 결제'),
                   onTap: () => _confirmPayment(ctx, invoice, 'OFFLINE_CARD', invoiceMembers, studio),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFEF3C7),
+                    child: Icon(Icons.qr_code_scanner, color: Color(0xFFD97706)),
+                  ),
+                  title: const Text('간편결제 (카카오페이 / 토스 / 제로페이 QR)'),
+                  subtitle: const Text('매장 비치 QR 코드 또는 송금 링크 결제'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'EASY_PAY', invoiceMembers, studio),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFF3E8FF),
+                    child: Icon(Icons.card_giftcard, color: Color(0xFF9333EA)),
+                  ),
+                  title: const Text('지역화폐 · 교육/스포츠 바우처'),
+                  subtitle: const Text('지역사랑상품권, 평생교육바우처, 스포츠강좌이용권'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'VOUCHER', invoiceMembers, studio),
                 ),
                 ListTile(
                   leading: const CircleAvatar(
@@ -628,7 +646,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     child: Icon(Icons.payments_outlined, color: AppTheme.warning),
                   ),
                   title: const Text('현금 수납'),
-                  subtitle: const Text('현장 현금 수령'),
+                  subtitle: const Text('현장 현금 수령 및 간이 영수'),
                   onTap: () => _confirmPayment(ctx, invoice, 'CASH', invoiceMembers, studio),
                 ),
               ],

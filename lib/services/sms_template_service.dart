@@ -72,9 +72,16 @@ class SmsTemplateService {
     required String paymentMethod,
     int? remainingSessions,
   }) {
-    final methodStr = paymentMethod == 'TRANSFER'
-        ? '계좌이체'
-        : (paymentMethod == 'OFFLINE_CARD' ? '카드결제' : '현금결제');
+    String methodStr = '현금결제';
+    if (paymentMethod == 'TRANSFER') {
+      methodStr = '계좌이체';
+    } else if (paymentMethod == 'OFFLINE_CARD') {
+      methodStr = '신용카드';
+    } else if (paymentMethod == 'EASY_PAY') {
+      methodStr = '간편결제(카카오/토스/제로페이)';
+    } else if (paymentMethod == 'VOUCHER') {
+      methodStr = '바우처/지역화폐';
+    }
     final formattedAmount = _currencyFormat.format(amount);
     final sessionStr = remainingSessions != null ? '\n• 갱신 잔여 회차: $remainingSessions회' : '';
 

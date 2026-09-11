@@ -140,70 +140,116 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
     final isExpiring = isSession && member.remainingSessions <= 1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
         boxShadow: AppTheme.cardShadow,
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
         onTap: () => _openMemberDetailSheet(context, member),
-        leading: CircleAvatar(
-          radius: 22,
-          backgroundColor: AppTheme.chipBackground,
-          child: Text(
-            initials,
-            style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
-          ),
-        ),
-        title: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 6,
-          runSpacing: 4,
-          children: [
-            Text(
-              member.name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppTheme.chipBackground,
-                borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Top Section: Avatar + Name and Group across full width (끝까지 길게 확장)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppTheme.chipBackground,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        Text(
+                          member.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: AppTheme.chipBackground,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            member.groupName,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                member.groupName,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+              const SizedBox(height: 12),
+
+              // 2. Bottom Section: Phone, Registration date, and Pass Type badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.phone_iphone_outlined, size: 14, color: AppTheme.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        member.phone,
+                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '•  등록 ${DateFormat("yy.MM.dd").format(member.registeredAt)}',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isSession
+                          ? (isExpiring
+                              ? AppTheme.danger.withAlpha((255 * 0.12).round())
+                              : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()))
+                          : AppTheme.softMint.withAlpha((255 * 0.12).round()),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isSession ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue) : AppTheme.softMint,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            '${member.phone} • 등록: ${DateFormat('yyyy.MM.dd').format(member.registeredAt)}',
-            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-          ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isSession
-                ? (isExpiring
-                    ? AppTheme.danger.withAlpha((255 * 0.12).round())
-                    : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()))
-                : AppTheme.softMint.withAlpha((255 * 0.12).round()),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isSession ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue) : AppTheme.softMint,
-            ),
+            ],
           ),
         ),
       ),
