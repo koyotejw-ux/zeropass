@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
+import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 
 class PassDashboardScreen extends ConsumerStatefulWidget {
@@ -21,6 +24,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(membersProvider);
     final passRecordsAsync = ref.watch(passRecordsProvider);
+    final studioAsync = ref.watch(studioProfileProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -31,14 +35,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             Text(
               DateFormat('M월 d일 EEEE', 'ko_KR').format(DateTime.now()),
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textSecondary,
               ),
             ),
             const SizedBox(height: 2),
             const Text(
-              '오늘의 패스 체크',
+              '원터치 출결 체크',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -48,6 +52,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             ),
           ],
         ),
+        actions: [
+          // 출결선생 스타일 학부모 출결 문자 발송 설정 바로가기 안내
+          IconButton(
+            icon: const Icon(Icons.mark_chat_read_outlined),
+            tooltip: '출결 알림 안내',
+            onPressed: () => _showAttendanceHelpDialog(context),
+          ),
+        ],
         toolbarHeight: 74,
       ),
       body: membersAsync.when(
@@ -58,6 +70,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Center(child: Text('기록 로딩 오류: $err')),
             data: (passRecords) {
+              final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+
               // Calculate today's stats
               final now = DateTime.now();
               final todayRecords = passRecords.where((r) {
@@ -87,7 +101,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
               return Column(
                 children: [
-                  // 1. Metric Summary Card
+                  // 1. Metric Summary Card (Toss Financial Aesthetics)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                     child: Container(
@@ -101,11 +115,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem('출석', attendedCount, AppTheme.softMint),
+                          _buildStatItem('출석 완료', attendedCount, AppTheme.softMint),
                           _buildDivider(),
                           _buildStatItem('지각/보강', lateCount, AppTheme.warning),
                           _buildDivider(),
-                          _buildStatItem('남은 회원', remainingMembersCount, AppTheme.primaryBlue),
+                          _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue),
                         ],
                       ),
                     ),
@@ -117,7 +131,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                     child: Row(
                       children: [
-                        // Group dropdown / quick chips
                         ...groups.take(4).map((g) {
                           final isSelected = _selectedGroup == g;
                           return Padding(
@@ -147,13 +160,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             ),
                           );
                         }),
-                        // Status Quick Toggle
                         PopupMenuButton<String>(
                           initialValue: _statusFilter,
                           onSelected: (val) => setState(() => _statusFilter = val),
                           itemBuilder: (ctx) => [
                             const PopupMenuItem(value: '전체', child: Text('전체 보기')),
-                            const PopupMenuItem(value: '수업 전', child: Text('수업 전 (미체크)')),
+                            const PopupMenuItem(value: '수업 전', child: Text('수업 전 (출결 대기)')),
                             const PopupMenuItem(value: '체크 완료', child: Text('체크 완료')),
                           ],
                           child: Chip(
@@ -197,7 +209,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                   ? todayRecords.firstWhere((r) => r.memberId == member.id)
                                   : null;
 
-                              return _buildMemberPassCard(context, member, isChecked, todayPass);
+                              return _buildMemberPassCard(context, member, isChecked, todayPass, studio);
                             },
                           ),
                   ),
@@ -226,7 +238,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => _handleBatchCheckIn(context),
                   icon: const Icon(Icons.done_all, color: Colors.white),
-                  label: const Text('남은 회원 전체 출석 완료'),
+                  label: const Text('남은 회원 일괄 출석 완료'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryDark,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -278,6 +290,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     Member member,
     bool isChecked,
     PassRecord? todayPass,
+    StudioProfile studio,
   ) {
     final initials = member.name.isNotEmpty ? member.name.substring(0, 1) : '?';
     final isSessionBased = member.billingType == BillingType.sessionBased;
@@ -295,145 +308,200 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         ),
         boxShadow: AppTheme.cardShadow,
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Initials Avatar
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: isChecked ? AppTheme.softMint.withAlpha((255 * 0.15).round()) : AppTheme.chipBackground,
-            child: Text(
-              initials,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+          Row(
+            children: [
+              // Initials Avatar
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: isChecked ? AppTheme.softMint.withAlpha((255 * 0.15).round()) : AppTheme.chipBackground,
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 14),
+              const SizedBox(width: 14),
 
-          // Member Info & Badges
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              // Member Info & Badges
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: Text(
-                        member.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            member.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.chipBackground,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            member.groupName,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.chipBackground,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        member.groupName,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (isSessionBased) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isExpiringSoon
+                                  ? AppTheme.danger.withAlpha((255 * 0.12).round())
+                                  : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${member.remainingSessions}/${member.totalSessions}회 남음',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.softMint.withAlpha((255 * 0.12).round()),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              '정기 결제 패스',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.softMint,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    if (isSessionBased) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isExpiringSoon
-                              ? AppTheme.danger.withAlpha((255 * 0.12).round())
-                              : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${member.remainingSessions}/${member.totalSessions}회 남음',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
-                          ),
-                        ),
-                      ),
-                    ] else ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppTheme.softMint.withAlpha((255 * 0.12).round()),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          '정기 결제 패스',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.softMint,
-                          ),
+              ),
+
+              // Check-in Action Button
+              if (isChecked)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.softMint.withAlpha((255 * 0.15).round()),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, size: 16, color: AppTheme.softMint),
+                      const SizedBox(width: 4),
+                      Text(
+                        todayPass?.status == AttendanceStatus.late ? '지각' : '출석됨',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.softMint,
                         ),
                       ),
                     ],
-                  ],
+                  ),
+                )
+              else
+                ElevatedButton(
+                  onPressed: () => _handleOneTouchCheckIn(member),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    '체크인',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                ),
+            ],
+          ),
+
+          // 출결선생 스타일: 체크 완료 시 [등원 문자 알림], [하원 문자 알림] 퀵 서식 발송 버튼 제공
+          if (isChecked) ...[
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: AppTheme.borderSubtle),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final msg = SmsTemplateService.generateAttendanceMessage(
+                        studio: studio,
+                        member: member,
+                        time: todayPass?.timestamp ?? DateTime.now(),
+                      );
+                      await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
+                    },
+                    icon: const Icon(Icons.send_rounded, size: 14, color: AppTheme.primaryBlue),
+                    label: const Text('출석 알림 문자', style: TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      side: const BorderSide(color: AppTheme.borderSubtle),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final msg = SmsTemplateService.generateDepartureMessage(
+                        studio: studio,
+                        member: member,
+                        time: DateTime.now(),
+                      );
+                      await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
+                    },
+                    icon: const Icon(Icons.exit_to_app_rounded, size: 14, color: AppTheme.textSecondary),
+                    label: const Text('하원 알림 문자', style: TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      side: const BorderSide(color: AppTheme.borderSubtle),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-
-          // Check-in Action Button
-          if (isChecked)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.softMint.withAlpha((255 * 0.15).round()),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle, size: 16, color: AppTheme.softMint),
-                  const SizedBox(width: 4),
-                  Text(
-                    todayPass?.status == AttendanceStatus.late ? '지각' : '출석됨',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.softMint,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
-            ElevatedButton(
-              onPressed: () => _handleOneTouchCheckIn(member),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text(
-                '체크인',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-              ),
-            ),
+          ],
         ],
       ),
     );
   }
 
   void _handleOneTouchCheckIn(Member member) {
+    HapticFeedback.mediumImpact();
+
     ref.read(passRecordsProvider.notifier).checkInMember(
           member: member,
           status: AttendanceStatus.attended,
@@ -441,7 +509,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${member.name} 출석 체크가 완료되었습니다.'),
+        content: Text('${member.name} 출석 체크 완료 (잔여 회차가 안전하게 차감되었습니다)'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -481,5 +549,26 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         ),
       );
     }
+  }
+
+  void _showAttendanceHelpDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('간편 출결 & 문자 알림 안내'),
+        content: const Text(
+          '1. [체크인] 탭 한 번으로 출석이 기록되고 회차가 자동 차감됩니다.\n'
+          '2. 체크 후 나타나는 [출석 알림 문자] 및 [하원 알림 문자]를 누르면 비용 0원으로 학부모/회원에게 안심 알림 문자를 바로 전송할 수 있습니다.\n'
+          '3. 모든 데이터는 기기에만 저장되어 서버비가 전혀 들지 않습니다.',
+          style: TextStyle(height: 1.5, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
   }
 }

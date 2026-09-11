@@ -6,6 +6,7 @@ import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/bank_notification_filter.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 
@@ -31,6 +32,16 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       appBar: AppBar(
         title: const Text('청구 · 수납 관리'),
         actions: [
+          // 스마트 입금 푸시 알림 수동 테스트 & 감지 시뮬레이터 (출결선생/토스 스타일)
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: '은행 입금 알림 매칭 시뮬레이터',
+            onPressed: () {
+              final members = membersAsync.value ?? [];
+              final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
+              _showBankNotificationSimulator(context, members, unpaid);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add_card_outlined),
             tooltip: '간편 청구서 작성',
@@ -55,15 +66,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               final studio = studioAsync.value ?? StudioProfile.defaultProfile();
               final memberMap = {for (var m in members) m.id: m};
 
-              // Filter Invoices
               final unpaidInvoices = invoices.where((i) => i.status == PaymentStatus.unpaid).toList();
               final paidInvoices = invoices.where((i) => i.status == PaymentStatus.paid).toList();
 
-              // Calculate metrics
               final totalUnpaidAmount = unpaidInvoices.fold<int>(0, (sum, i) => sum + i.amount);
               final totalPaidAmount = paidInvoices.fold<int>(0, (sum, i) => sum + i.amount);
 
-              // Members nearing session expiry (remaining <= 1)
+              // 회차 만료 임박 회원 (1회 이하)
               final expiringMembers = members
                   .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 1)
                   .toList();
@@ -132,7 +141,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     ),
                   ),
 
-                  // 2. Segmented Control & Filter Chips
+                  // 2. Segmented Control
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                     child: Row(
@@ -156,7 +165,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     ),
                   ),
 
-                  // Expiring Sessions Warning Strip (if any)
+                  // Expiring Sessions Warning Strip (with one-tap warning SMS)
                   if (_selectedTab == 0 && expiringMembers.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
@@ -173,7 +182,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                '회차 만료 임박 회원: ${expiringMembers.map((m) => m.name.split(' ').first).join(', ')} (${expiringMembers.length}명)',
+                                '회차 만료 임박 (${expiringMembers.length}명): ${expiringMembers.map((m) => m.name.split(' ').first).join(', ')}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -183,15 +192,22 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                _openQuickInvoiceForMember(context, expiringMembers.first, studio);
+                                _sendExpiryAlert(context, studio, expiringMembers.first);
                               },
-                              child: const Text(
-                                '재등록 청구',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryBlue,
-                                  decoration: TextDecoration.underline,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppTheme.warning),
+                                ),
+                                child: const Text(
+                                  '만료 안내문자',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFB45309),
+                                  ),
                                 ),
                               ),
                             ),
@@ -247,7 +263,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         backgroundColor: AppTheme.primaryBlue,
         icon: const Icon(Icons.edit_note, color: Colors.white),
         label: const Text(
-          '청구서 전송',
+          '새 청구서 작성',
           style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
         ),
       ),
@@ -384,12 +400,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           // Action Buttons
           Row(
             children: [
-              // 1. One-touch SMS / Kakao native send (0 server cost)
+              // 1. One-touch SMS native send
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
                   icon: const Icon(Icons.sms_outlined, size: 16),
-                  label: const Text('문자 서식 전송'),
+                  label: const Text('청구 문자 전송'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -398,15 +414,29 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
               const SizedBox(width: 8),
 
-              // 2. Manual Cash / Card Mark as Paid
+              // 2. One-tap Mark as Paid (with Receipt SMS option)
               if (!isPaid)
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _showPaymentConfirmDialog(context, invoice),
+                    onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
                     icon: const Icon(Icons.check, size: 16, color: Colors.white),
                     label: const Text('수납 확인'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.softMint,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
+                    icon: const Icon(Icons.receipt_outlined, size: 16, color: AppTheme.softMint),
+                    label: const Text('영수 확인 문자'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.softMint,
+                      side: const BorderSide(color: AppTheme.softMint),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -446,7 +476,34 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     }
   }
 
-  void _showPaymentConfirmDialog(BuildContext context, Invoice invoice) {
+  void _sendReceiptSms(
+    BuildContext context,
+    StudioProfile studio,
+    List<Member> members,
+    Invoice invoice,
+  ) async {
+    if (members.isEmpty) return;
+    final msg = SmsTemplateService.generatePaymentReceiptMessage(
+      studio: studio,
+      member: members.first,
+      amount: invoice.amount,
+      paymentMethod: invoice.paymentMethod ?? 'TRANSFER',
+      remainingSessions: members.first.billingType == BillingType.sessionBased ? members.first.remainingSessions : null,
+    );
+    await SmsTemplateService.launchNativeSms(recipientPhone: invoice.recipientPhone, body: msg);
+  }
+
+  void _sendExpiryAlert(BuildContext context, StudioProfile studio, Member member) async {
+    final msg = SmsTemplateService.generateExpiryWarningMessage(studio: studio, member: member);
+    await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
+  }
+
+  void _showPaymentConfirmDialog(
+    BuildContext context,
+    Invoice invoice,
+    List<Member> invoiceMembers,
+    StudioProfile studio,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -477,13 +534,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   ),
                   title: const Text('계좌 입금 확인'),
                   subtitle: const Text('은행 통장으로 입금 완료됨'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    ref.read(invoicesProvider.notifier).markAsPaid(
-                          invoiceId: invoice.id,
-                          paymentMethod: 'TRANSFER',
-                        );
-                  },
+                  onTap: () => _confirmPayment(ctx, invoice, 'TRANSFER', invoiceMembers, studio),
                 ),
                 ListTile(
                   leading: const CircleAvatar(
@@ -491,14 +542,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     child: Icon(Icons.credit_card, color: AppTheme.softMint),
                   ),
                   title: const Text('오프라인 카드 단말기'),
-                  subtitle: const Text('학원/스튜디오 현장 카드 결제'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    ref.read(invoicesProvider.notifier).markAsPaid(
-                          invoiceId: invoice.id,
-                          paymentMethod: 'OFFLINE_CARD',
-                        );
-                  },
+                  subtitle: const Text('현장 카드 결제'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'OFFLINE_CARD', invoiceMembers, studio),
                 ),
                 ListTile(
                   leading: const CircleAvatar(
@@ -507,13 +552,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   ),
                   title: const Text('현금 수납'),
                   subtitle: const Text('현장 현금 수령'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    ref.read(invoicesProvider.notifier).markAsPaid(
-                          invoiceId: invoice.id,
-                          paymentMethod: 'CASH',
-                        );
-                  },
+                  onTap: () => _confirmPayment(ctx, invoice, 'CASH', invoiceMembers, studio),
                 ),
               ],
             ),
@@ -523,16 +562,106 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     );
   }
 
-  void _openQuickInvoiceForMember(BuildContext context, Member member, StudioProfile studio) {
-    _openQuickInvoiceSheet(context, [member], studio, initialMember: member);
+  void _confirmPayment(
+    BuildContext sheetContext,
+    Invoice invoice,
+    String method,
+    List<Member> invoiceMembers,
+    StudioProfile studio,
+  ) async {
+    Navigator.pop(sheetContext);
+    await ref.read(invoicesProvider.notifier).markAsPaid(
+          invoiceId: invoice.id,
+          paymentMethod: method,
+        );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${invoice.title} 수납 처리가 완료되었습니다.'),
+          action: SnackBarAction(
+            label: '영수 문자 발송',
+            textColor: AppTheme.softMint,
+            onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
+          ),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // 은행 앱 푸시 알림 수동 매칭 시뮬레이터 (테스트 & 시연용)
+  void _showBankNotificationSimulator(
+    BuildContext context,
+    List<Member> members,
+    List<Invoice> unpaidInvoices,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('은행 푸시 알림 장부 매칭'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '안드로이드 기기에 수신되는 은행 알림을 필터링하여 자동으로 장부와 대조합니다.',
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            if (unpaidInvoices.isEmpty)
+              const Text('현재 매칭 대기 중인 미납 청구서가 없습니다.')
+            else
+              Column(
+                children: unpaidInvoices.take(2).map((inv) {
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(inv.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    subtitle: Text('${_currencyFormat.format(inv.amount)}원 입금 시뮬레이션'),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        // Simulate banking app push
+                        final event = BankNotificationFilter.parseDepositNotification(
+                          packageName: 'viva.republica.toss',
+                          title: '토스뱅크',
+                          text: '입금 ${_currencyFormat.format(inv.amount)}원 입금 완료',
+                        );
+                        if (event != null) {
+                          ref.read(invoicesProvider.notifier).markAsPaid(invoiceId: inv.id, paymentMethod: 'TRANSFER');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('은행 푸시 감지: ${inv.title} (${_currencyFormat.format(inv.amount)}원) 자동 입금 처리 완료!'),
+                              backgroundColor: AppTheme.softMint,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.softMint,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      ),
+                      child: const Text('자동매칭', style: TextStyle(fontSize: 12)),
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),
+        ],
+      ),
+    );
   }
 
   void _openQuickInvoiceSheet(
     BuildContext context,
     List<Member> allMembers,
-    StudioProfile studio, {
-    Member? initialMember,
-  }) {
+    StudioProfile studio,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -540,7 +669,6 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       builder: (ctx) => _QuickInvoiceModal(
         allMembers: allMembers,
         studio: studio,
-        initialMember: initialMember,
       ),
     );
   }
@@ -549,12 +677,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 class _QuickInvoiceModal extends StatefulWidget {
   final List<Member> allMembers;
   final StudioProfile studio;
-  final Member? initialMember;
 
   const _QuickInvoiceModal({
     required this.allMembers,
     required this.studio,
-    this.initialMember,
   });
 
   @override
@@ -572,9 +698,7 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialMember != null) {
-      _selectMember(widget.initialMember!);
-    } else if (widget.allMembers.isNotEmpty) {
+    if (widget.allMembers.isNotEmpty) {
       _selectMember(widget.allMembers.first);
     }
   }
@@ -583,7 +707,6 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
     _selectedMemberIds.clear();
     _selectedMemberIds.add(m.id);
 
-    // Sibling auto-detection: check if other members share the same phone!
     final siblings = widget.allMembers.where((other) => other.phone == m.phone).toList();
     for (final sib in siblings) {
       _selectedMemberIds.add(sib.id);
@@ -594,8 +717,8 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
         .fold<int>(0, (sum, item) => sum + item.defaultFee);
 
     final title = siblings.length > 1
-        ? '${m.registeredAt.month}월 수강 패스 (${siblings.map((s) => s.name.split(' ').first).join('/')} 형제 합산)'
-        : '${m.name.split(' ').first} 수강 패스 안내';
+        ? '${m.registeredAt.month}월 수강료 (${siblings.map((s) => s.name.split(' ').first).join('/')} 형제 합산)'
+        : '${m.name.split(' ').first} 수강료 안내';
 
     _titleController.text = title;
     _amountController.text = totalDefaultFee.toString();
@@ -754,7 +877,7 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text(
-                      '청구서 생성 완료',
+                      '청구서 등록 완료',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ),
