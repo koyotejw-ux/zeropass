@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/invoice.dart';
@@ -36,6 +37,17 @@ class DataVaultService {
     await file.writeAsString(jsonString);
 
     return file;
+  }
+
+  /// 1-Touch Native Share: Sends backup file to KakaoTalk "My Chat", Google Drive, or Email for 100% Free Zero-Cost Cloud Backup
+  static Future<ShareResult> shareBackupFile(File file) async {
+    return await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'application/json')],
+        subject: '[제로패스] 안심 로컬 데이터 백업 파일',
+        text: '제로패스 원장님 전용 로컬 데이터 백업 파일입니다. 휴대폰 분실 및 기기 변경 시 복원용으로 보관하세요.',
+      ),
+    );
   }
 
   /// Restores from backup JSON string content.
@@ -109,5 +121,16 @@ class DataVaultService {
     await file.writeAsBytes([0xEF, 0xBB, 0xBF, ...utf8.encode(csvData)]);
 
     return file;
+  }
+
+  /// 1-Touch Native Share for Ledger CSV (KakaoTalk / Email / Excel / Drive)
+  static Future<ShareResult> shareLedgerCsv(File file) async {
+    return await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'text/csv')],
+        subject: '[제로패스] 수납 장부 결산 엑셀(CSV)',
+        text: '제로패스 원장님 전용 수납 및 매출 결산 엑셀(CSV) 파일입니다.',
+      ),
+    );
   }
 }

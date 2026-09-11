@@ -168,6 +168,14 @@ class StudioProfileNotifier extends AsyncNotifier<StudioProfile> {
     return await db.getStudioProfile();
   }
 
+  Future<void> reload() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final db = ref.read(databaseServiceProvider);
+      return await db.getStudioProfile();
+    });
+  }
+
   Future<void> updateProfile(StudioProfile profile) async {
     final db = ref.read(databaseServiceProvider);
     await db.updateStudioProfile(profile);

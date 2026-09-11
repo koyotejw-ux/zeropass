@@ -358,7 +358,7 @@ class _MemberDetailModal extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${member.groupName} • ${member.phone}',
+                    '${member.groupName} • ${member.phone}${member.payerName != null && member.payerName!.isNotEmpty ? ' (입금자: ${member.payerName})' : ''}',
                     style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                   ),
                 ],
@@ -511,6 +511,7 @@ class _AddMemberModal extends ConsumerStatefulWidget {
 class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _payerNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _groupController = TextEditingController(text: '일반 클래스');
   final _feeController = TextEditingController(text: '300000');
@@ -557,10 +558,20 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               // Name
               AppTextField(
                 controller: _nameController,
-                label: '회원 이름',
+                label: '회원/학생 이름',
                 hint: '예: 김하늘',
                 prefixIcon: Icons.badge_outlined,
                 validator: (v) => (v == null || v.trim().isEmpty) ? '이름을 입력하세요' : null,
+              ),
+              const SizedBox(height: 12),
+
+              // Payer Name (Parent / Actual Depositor for 100% Bank Auto Matching)
+              AppTextField(
+                controller: _payerNameController,
+                label: '입금자 성함 (학부모 / 보호자명)',
+                hint: '학생명과 다를 경우 입력 (예: 이영희)',
+                prefixIcon: Icons.family_restroom_outlined,
+                helperText: '은행 푸시 알림 수신 시 100% 자동 매칭됩니다',
               ),
               const SizedBox(height: 12),
 
@@ -679,6 +690,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                         totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
                         remainingSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
                         memo: _memoController.text.trim(),
+                        payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : null,
                         registeredAt: DateTime.now(),
                       );
 

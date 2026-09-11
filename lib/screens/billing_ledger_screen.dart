@@ -423,23 +423,51 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
-                  icon: const Icon(Icons.sms_outlined, size: 16),
-                  label: const Text('청구 문자 전송'),
+                  icon: const Icon(Icons.sms_outlined, size: 15),
+                  label: const Text('청구문자'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
 
-              // 2. One-tap Mark as Paid (with Receipt SMS option)
+              // 2. 1-Second Reminder SMS (Only for Unpaid)
+              if (!isPaid) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final reminderMsg = SmsTemplateService.generateUnpaidReminderMessage(
+                        studio: studio,
+                        members: invoiceMembers,
+                        invoice: invoice,
+                      );
+                      SmsTemplateService.launchNativeSms(
+                        recipientPhone: invoice.recipientPhone,
+                        body: reminderMsg,
+                      );
+                    },
+                    icon: const Icon(Icons.notifications_active_outlined, size: 15, color: Color(0xFFD97706)),
+                    label: const Text('1초리마인드', style: TextStyle(color: Color(0xFFD97706), fontSize: 12.5)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFDE68A)),
+                      backgroundColor: const Color(0xFFFFFBEB),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+
+              // 3. One-tap Mark as Paid (with Receipt SMS option)
               if (!isPaid)
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
-                    icon: const Icon(Icons.check, size: 16, color: Colors.white),
-                    label: const Text('수납 확인'),
+                    icon: const Icon(Icons.check, size: 15, color: Colors.white),
+                    label: const Text('수납확인'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.softMint,
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -718,37 +746,53 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             else
               Column(
                 children: unpaidInvoices.take(2).map((inv) {
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(inv.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                    subtitle: Text('${_currencyFormat.format(inv.amount)}원 입금 시뮬레이션'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        // Simulate banking app push
-                        final event = BankNotificationFilter.parseDepositNotification(
-                          packageName: 'viva.republica.toss',
-                          title: '토스뱅크',
-                          text: '입금 ${_currencyFormat.format(inv.amount)}원 입금 완료',
-                        );
-                        if (event != null) {
-                          ref.read(invoicesProvider.notifier).markAsPaid(invoiceId: inv.id, paymentMethod: 'TRANSFER');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('은행 푸시 감지: ${inv.title} (${_currencyFormat.format(inv.amount)}원) 자동 입금 처리 완료!'),
-                              backgroundColor: AppTheme.softMint,
-                              behavior: SnackBarBehavior.floating,
-                            ),
+                    final invoiceMembers = inv.memberIds.map((id) => members.where((m) => m.id == id).firstOrNull).whereType<Member>().toList();
+                    final payerOrStudent = invoiceMembers.isNotEmpty && invoiceMembers.first.payerName != null
+                        ? '${invoiceMembers.first.name} (학부모: ${invoiceMembers.first.payerName})'
+                        : inv.title;
+                    final simSenderName = invoiceMembers.isNotEmpty && invoiceMembers.first.payerName != null
+                        ? invoiceMembers.first.payerName!
+                        : (invoiceMembers.isNotEmpty ? invoiceMembers.first.name.split(' ').first : '입금자');
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(payerOrStudent, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                      subtitle: Text('${_currencyFormat.format(inv.amount)}원 입금 시뮬레이션 (입금자: $simSenderName)'),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          // Simulate banking app push with sender name (payerName or student name)
+                          final event = BankNotificationFilter.parseDepositNotification(
+                            packageName: 'viva.republica.toss',
+                            title: '토스뱅크',
+                            text: '입금 ${_currencyFormat.format(inv.amount)}원 $simSenderName',
                           );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.softMint,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          if (event != null) {
+                            final match = BankNotificationFilter.matchInvoiceWithDeposit(
+                              event: event,
+                              unpaidInvoices: unpaidInvoices,
+                              allMembers: members,
+                            );
+
+                            if (match != null) {
+                              ref.read(invoicesProvider.notifier).markAsPaid(invoiceId: match.invoice.id, paymentMethod: 'TRANSFER');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('은행 알림 감지 [${match.matchType}]: ${match.matchedMemberName ?? match.invoice.title} (${_currencyFormat.format(event.amount)}원) 자동 입금 처리 완료!'),
+                                  backgroundColor: AppTheme.softMint,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.softMint,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        ),
+                        child: const Text('자동매칭', style: TextStyle(fontSize: 12)),
                       ),
-                      child: const Text('자동매칭', style: TextStyle(fontSize: 12)),
-                    ),
-                  );
+                    );
                 }).toList(),
               ),
           ],

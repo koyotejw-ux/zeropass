@@ -14,6 +14,7 @@ class Member {
   final int totalSessions; // For session-based (e.g. 10)
   final int remainingSessions; // For session-based
   final String? memo;
+  final String? payerName; // Optional parent/actual depositor name for 100% bank push matching
   final DateTime registeredAt;
 
   const Member({
@@ -26,6 +27,7 @@ class Member {
     required this.totalSessions,
     required this.remainingSessions,
     this.memo,
+    this.payerName,
     required this.registeredAt,
   });
 
@@ -39,6 +41,7 @@ class Member {
     int? totalSessions,
     int? remainingSessions,
     String? memo,
+    String? payerName,
     DateTime? registeredAt,
   }) {
     return Member(
@@ -51,6 +54,7 @@ class Member {
       totalSessions: totalSessions ?? this.totalSessions,
       remainingSessions: remainingSessions ?? this.remainingSessions,
       memo: memo ?? this.memo,
+      payerName: payerName ?? this.payerName,
       registeredAt: registeredAt ?? this.registeredAt,
     );
   }
@@ -66,6 +70,7 @@ class Member {
       'totalSessions': totalSessions,
       'remainingSessions': remainingSessions,
       'memo': memo,
+      'payerName': payerName,
       'registeredAt': registeredAt.toIso8601String(),
     };
   }
@@ -81,6 +86,7 @@ class Member {
       totalSessions: map['totalSessions'] as int,
       remainingSessions: map['remainingSessions'] as int,
       memo: map['memo'] as String?,
+      payerName: map['payerName'] as String?,
       registeredAt: DateTime.parse(map['registeredAt'] as String),
     );
   }

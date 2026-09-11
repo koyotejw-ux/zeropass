@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/studio_profile.dart';
@@ -202,7 +203,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         context: context,
                         title: '청구서 문자 서식 편집',
                         initialText: profile.invoiceTemplate,
-                        placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{납부기한}',
+                        placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{납부기한}',
                         profile: profile,
                         onSave: (newTemplate, updatedProfile) {
                           final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
@@ -332,17 +333,18 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
                         backgroundColor: Color(0xFFEFF6FF),
-                        child: Icon(Icons.download_for_offline_outlined, color: AppTheme.primaryBlue),
+                        child: Icon(Icons.share_outlined, color: AppTheme.primaryBlue),
                       ),
-                      title: const Text('로컬 백업 파일(.json) 내보내기', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('출석 및 수납 데이터를 안전하게 보관합니다.'),
+                      title: const Text('로컬 백업 파일 생성 & 카톡/드라이브 전송', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('회원·출결·수납 데이터를 백업하여 나에게 카톡/드라이브로 보관합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () async {
                         final file = await DataVaultService.exportEncryptedBackup();
+                        await DataVaultService.shareBackupFile(file);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('백업 파일이 생성되었습니다: ${file.path.split('/').last}'),
+                              content: Text('백업 파일이 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? '\\' : '/').last}'),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -356,20 +358,33 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFECFDF5),
                         child: Icon(Icons.table_view_outlined, color: AppTheme.softMint),
                       ),
-                      title: const Text('전체 수납 내역 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('세무 및 장부 결산을 위한 엑셀 호환 CSV 생성'),
+                      title: const Text('수납 장부 엑셀(CSV) 내보내기 & 공유', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('세무/결산용 엑셀 호환 CSV를 생성하여 카톡/엑셀로 공유합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () async {
                         final file = await DataVaultService.exportLedgerCsv();
+                        await DataVaultService.shareLedgerCsv(file);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('수납 장부 CSV가 생성되었습니다: ${file.path.split('/').last}'),
+                              content: Text('수납 장부 CSV가 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? '\\' : '/').last}'),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
                         }
                       },
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFF0FDF4),
+                        child: Icon(Icons.restore_page_outlined, color: AppTheme.softMint),
+                      ),
+                      title: const Text('백업 데이터 복원하기 (텍스트 / JSON)', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('카카오톡 등으로 보관한 백업 JSON 내용을 입력하여 복원합니다.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _openRestoreDataDialog(context),
                     ),
                     const Divider(height: 16, color: AppTheme.borderSubtle),
                     ListTile(
@@ -598,6 +613,99 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openRestoreDataDialog(BuildContext context) {
+    final jsonController = TextEditingController();
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.85,
+      builder: (ctx) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '백업 데이터 복원하기',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '카카오톡이나 메일로 내보냈던 백업 파일(.json)의 내용을 전체 복사하여 아래에 붙여넣어 주세요.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: jsonController,
+                label: '백업 JSON 내용 붙여넣기',
+                hint: '{\n  "version": "1.0.0",\n  "members": [...]\n}',
+                maxLines: 10,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final text = jsonController.text.trim();
+                    if (text.isEmpty) return;
+
+                    final success = await DataVaultService.restoreFromBackupJson(text);
+                    if (ctx.mounted) Navigator.pop(ctx);
+
+                    if (success) {
+                      await ref.read(membersProvider.notifier).reload();
+                      await ref.read(passRecordsProvider.notifier).reload();
+                      await ref.read(invoicesProvider.notifier).reload();
+                      await ref.read(studioProfileProvider.notifier).reload();
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('🎉 백업 데이터가 완벽하게 복원되었습니다!'),
+                            backgroundColor: AppTheme.softMint,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('올바르지 않은 백업 데이터 형식이거나 복원에 실패했습니다.'),
+                            backgroundColor: AppTheme.danger,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.restore, color: Colors.white),
+                  label: const Text('지금 바로 데이터 복원하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
                 ),
               ),
             ],

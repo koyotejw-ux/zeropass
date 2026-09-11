@@ -91,6 +91,72 @@ class BankNotificationFilter {
 
     return null;
   }
+
+  /// 100% Match Bank Deposit Event with unpaid invoices using:
+  /// 1) Amount exact match
+  /// 2) Member Name match OR Member PayerName (Parent/Actual Depositor) match
+  static InvoiceMatchResult? matchInvoiceWithDeposit({
+    required BankDepositEvent event,
+    required List<dynamic> unpaidInvoices, // List<Invoice>
+    required List<dynamic> allMembers, // List<Member>
+  }) {
+    final memberMap = {for (var m in allMembers) m.id: m};
+
+    for (final inv in unpaidInvoices) {
+      if (inv.amount != event.amount) continue;
+
+      // Check if any member connected to this invoice matches the sender name
+      final invoiceMembers = inv.memberIds
+          .map((id) => memberMap[id])
+          .where((m) => m != null)
+          .toList();
+
+      if (event.senderName == null || event.senderName!.isEmpty) {
+        // Fallback: match by amount if there's only 1 exact amount match
+        return InvoiceMatchResult(invoice: inv, matchedMemberName: null, matchType: '금액 일치');
+      }
+
+      final cleanSender = event.senderName!.replaceAll(' ', '');
+
+      for (final member in invoiceMembers) {
+        final cleanMemberName = member!.name.split(' ').first.replaceAll(' ', '');
+        final cleanPayerName = member.payerName?.replaceAll(' ', '') ?? '';
+
+        // Match 1: Direct member name match
+        if (cleanSender.contains(cleanMemberName) || cleanMemberName.contains(cleanSender)) {
+          return InvoiceMatchResult(
+            invoice: inv,
+            matchedMemberName: member.name,
+            matchType: '회원명 일치',
+          );
+        }
+
+        // Match 2: Parent / Actual depositor (payerName) match
+        if (cleanPayerName.isNotEmpty &&
+            (cleanSender.contains(cleanPayerName) || cleanPayerName.contains(cleanSender))) {
+          return InvoiceMatchResult(
+            invoice: inv,
+            matchedMemberName: '${member.name} (입금자: ${member.payerName})',
+            matchType: '학부모(입금자명) 일치',
+          );
+        }
+      }
+    }
+
+    return null;
+  }
+}
+
+class InvoiceMatchResult {
+  final dynamic invoice;
+  final String? matchedMemberName;
+  final String matchType;
+
+  InvoiceMatchResult({
+    required this.invoice,
+    required this.matchedMemberName,
+    required this.matchType,
+  });
 }
 
 class BankDepositEvent {

@@ -31,8 +31,15 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          try {
+            await db.execute('ALTER TABLE members ADD COLUMN payerName TEXT');
+          } catch (_) {}
+        }
+      },
     );
   }
 
@@ -49,6 +56,7 @@ class DatabaseService {
         totalSessions INTEGER NOT NULL,
         remainingSessions INTEGER NOT NULL,
         memo TEXT,
+        payerName TEXT,
         registeredAt TEXT NOT NULL
       )
     ''');
@@ -135,14 +143,15 @@ class DatabaseService {
       ),
       Member(
         id: 'mem_3',
-        name: '정하율 (쇼팽 피아노)',
+        name: '정하율 (바이올린 초급)',
         phone: '01099881234',
-        groupName: '피아노 클래식반',
+        groupName: '바이올린 주말반',
         billingType: BillingType.monthlyRecurring,
         defaultFee: 180000,
         totalSessions: 0,
         remainingSessions: 0,
-        memo: '자매 회원: 정하린(동생)과 같은 학부모 전화번호',
+        memo: '자매 동시 수강 (하린 학생과 함께 수강)',
+        payerName: '이영희',
         registeredAt: now.subtract(const Duration(days: 90)),
       ),
       Member(
@@ -155,6 +164,7 @@ class DatabaseService {
         totalSessions: 0,
         remainingSessions: 0,
         memo: '형제 묶음 청구 대상 (어머니 연락처 일치)',
+        payerName: '이영희',
         registeredAt: now.subtract(const Duration(days: 90)),
       ),
       Member(
