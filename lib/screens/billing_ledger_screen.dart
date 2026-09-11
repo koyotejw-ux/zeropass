@@ -253,6 +253,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_billing',
         onPressed: () {
           final members = membersAsync.value ?? [];
           final studio = studioAsync.value ?? StudioProfile.defaultProfile();

@@ -123,6 +123,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_member',
         onPressed: () => _openAddMemberDialog(context),
         backgroundColor: AppTheme.primaryDark,
         icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
