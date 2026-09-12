@@ -124,7 +124,7 @@ void main() {
       expect(message.contains('500,000원'), isTrue);
       expect(message.contains(studio.accountNumber), isTrue);
       expect(message.contains('supertoss://send'), isTrue);
-      expect(message.contains('계좌 복사하기'), isTrue);
+      expect(message.contains('계좌 복사'), isTrue);
     });
 
     test('Correctly formats 1-second unpaid reminder message', () {

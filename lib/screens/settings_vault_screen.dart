@@ -203,6 +203,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         context: context,
                         title: '청구서 문자 서식 편집',
                         initialText: profile.invoiceTemplate,
+                        defaultText: StudioProfile.defaultInvoiceTemplate,
                         placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{납부기한}',
                         profile: profile,
                         onSave: (newTemplate, updatedProfile) {
@@ -225,6 +226,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         context: context,
                         title: '출석/등원 문자 서식 편집',
                         initialText: profile.attendanceTemplate,
+                        defaultText: StudioProfile.defaultAttendanceTemplate,
                         placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
                         profile: profile,
                         onSave: (newTemplate, updatedProfile) {
@@ -247,6 +249,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         context: context,
                         title: '하원/수업종료 문자 서식 편집',
                         initialText: profile.departureTemplate,
+                        defaultText: StudioProfile.defaultDepartureTemplate,
                         placeholders: '#{상호명}, #{회원명}',
                         profile: profile,
                         onSave: (newTemplate, updatedProfile) {
@@ -752,6 +755,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     required BuildContext context,
     required String title,
     required String initialText,
+    required String defaultText,
     required String placeholders,
     required StudioProfile profile,
     required Function(String, StudioProfile) onSave,
@@ -769,17 +773,28 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            // Live preview generation
+            // Live preview generation with comprehensive placeholder support
+            final previewBank = bankController.text.trim().isEmpty ? '토스뱅크' : bankController.text.trim();
+            final previewAccount = accountController.text.trim().isEmpty ? '1000-2026-8899' : accountController.text.trim();
+            final previewHolder = holderController.text.trim().isEmpty ? '원장님' : holderController.text.trim();
+            final previewStudio = studioNameController.text.trim().isEmpty ? '스튜디오' : studioNameController.text.trim();
+            final cleanAccOnly = previewAccount.replaceAll(RegExp(r'[^0-9]'), '');
+            final previewCopyAcc = '$previewBank $previewAccount $previewHolder';
+            final previewToss = 'supertoss://send?bank=${Uri.encodeComponent(previewBank)}&account=$cleanAccOnly&amount=250000';
+
             String previewText = textController.text
-                .replaceAll('#{상호명}', studioNameController.text.trim().isEmpty ? '상호명' : studioNameController.text.trim())
+                .replaceAll('#{상호명}', previewStudio)
                 .replaceAll('#{회원명}', '김민준')
                 .replaceAll('#{강사명}', instructorController.text.trim().isEmpty ? '원장님' : instructorController.text.trim())
-                .replaceAll('#{계좌정보}', '${bankController.text.trim()} ${accountController.text.trim()} (${holderController.text.trim()})')
+                .replaceAll('#{계좌정보}', '$previewBank $previewAccount ($previewHolder)')
+                .replaceAll('#{계좌복사용}', previewCopyAcc)
+                .replaceAll('#{토스송금링크}', previewToss)
                 .replaceAll('#{금액}', '250,000')
-                .replaceAll('#{청구제목}', '9월 수강료')
+                .replaceAll('#{청구제목}', '9월 정기 수강료')
+                .replaceAll('#{안내내용}', '9월 정기 수강료')
                 .replaceAll('#{납부기한}', '2026.09.20')
                 .replaceAll('#{출석시간}', '14:30')
-                .replaceAll('#{잔여회차}', '• 잔여 회차: 9회');
+                .replaceAll('#{잔여회차}', '• 잔여 회차 : 9회');
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -788,11 +803,24 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          textController.text = defaultText;
+                          setModalState(() {});
+                        },
+                        icon: const Icon(Icons.restart_alt_rounded, size: 16, color: AppTheme.primaryBlue),
+                        label: const Text('권장 서식 초기화', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),

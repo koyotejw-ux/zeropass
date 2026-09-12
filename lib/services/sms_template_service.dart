@@ -141,20 +141,24 @@ ${member.name.split(' ').first} 회원님의 잔여 패스가 [${member.remainin
     final cleanAccountOnly = studio.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
     final tossLink = 'supertoss://send?bank=${Uri.encodeComponent(studio.bankName)}&account=$cleanAccountOnly&amount=${invoice.amount}';
 
-    return '''
-[${studio.studioName}] 수강료 입금 안내 리마인드
+    return '''[${studio.studioName}] 수강료 입금 안내 리마인드
+
 안녕하세요, ${studio.studioName}입니다.
 $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도래하여 정중히 안내드립니다.
 
-• 입금 금액: $formattedAmount원
-• 입금 계좌: $accountInfo
+────────────────
+[입금 안내]
+• 입금 금액 : $formattedAmount원
+• 납부 기한 : $dueDateStr까지
+• 입금 계좌 : $accountInfo
+────────────────
 
 [간편 입금 안내]
-• 계좌 복사하기: $copyAccountText
-• 토스 송금 바로가기: $tossLink
+• 계좌 복사 : $copyAccountText
+• 토스 송금 : $tossLink
 
-기한 내 확인 부탁드리며, 이미 입금하신 경우 본 안내는 너그러이 양해 부탁드립니다. 감사합니다!
-'''.trim();
+기한 내 확인 부탁드리며, 이미 입금하신 경우 본 안내는 너그러이 양해 부탁드립니다.
+감사합니다.'''.trim();
   }
 
   /// Launches the native SMS app with recipient and prefilled body.
