@@ -49,4 +49,7 @@ app.*.map.json
 *.keystore
 **/android/key.properties
 **/android/local.properties
+/android/build/
+plugins/**/build/
+plugins/**/.gradle/
 
