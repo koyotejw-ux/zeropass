@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 
@@ -254,10 +255,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
               const SizedBox(height: 14),
 
               // Main Prompt & Mascot
-              const Text(
-                '반가워요! 전화번호 뒷자리 4자리를 눌러주세요 🐧',
+              Text(
+                LocalizationService.tr('kiosk_prompt'),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16.5,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFE2E8F0),

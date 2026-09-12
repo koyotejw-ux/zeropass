@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import 'pass_dashboard_screen.dart';
 import 'billing_ledger_screen.dart';
@@ -74,35 +75,35 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
               indicatorColor: _currentIndex == 3
                   ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
                   : AppTheme.primaryBlue.withAlpha((255 * 0.12).round()),
-              destinations: const [
+              destinations: [
                 NavigationDestination(
-                  icon: Icon(Icons.check_circle_outline),
-                  selectedIcon: Icon(Icons.check_circle, color: AppTheme.primaryBlue),
-                  label: '패스 체크',
+                  icon: const Icon(Icons.check_circle_outline),
+                  selectedIcon: const Icon(Icons.check_circle, color: AppTheme.primaryBlue),
+                  label: LocalizationService.tr('tab_pass'),
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long, color: AppTheme.primaryBlue),
-                  label: '청구·수납',
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  selectedIcon: const Icon(Icons.receipt_long, color: AppTheme.primaryBlue),
+                  label: LocalizationService.tr('tab_billing'),
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.people_outline),
-                  selectedIcon: Icon(Icons.people, color: AppTheme.primaryBlue),
-                  label: '회원 관리',
+                  icon: const Icon(Icons.people_outline),
+                  selectedIcon: const Icon(Icons.people, color: AppTheme.primaryBlue),
+                  label: LocalizationService.tr('tab_members'),
                 ),
                 NavigationDestination(
-                  icon: Badge(
+                  icon: const Badge(
                     label: Text('PRO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
                     backgroundColor: Color(0xFFF59E0B),
                     child: Icon(Icons.workspace_premium_outlined),
                   ),
-                  selectedIcon: Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706)),
-                  label: 'PRO 샵',
+                  selectedIcon: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706)),
+                  label: LocalizationService.tr('tab_pro'),
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.shield_outlined),
-                  selectedIcon: Icon(Icons.shield, color: AppTheme.primaryBlue),
-                  label: '설정·보안',
+                  icon: const Icon(Icons.shield_outlined),
+                  selectedIcon: const Icon(Icons.shield, color: AppTheme.primaryBlue),
+                  label: LocalizationService.tr('tab_settings'),
                 ),
               ],
             ),

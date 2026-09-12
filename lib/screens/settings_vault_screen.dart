@@ -5,6 +5,7 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
+import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
@@ -158,6 +159,85 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ],
                 ),
               ),
+
+              // 0. Global Language & Currency Localization Card
+              _buildSectionTitle('🌐 글로벌 언어 및 통화 설정 (Language & Currency)'),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.language_rounded, size: 18, color: AppTheme.primaryBlue),
+                            SizedBox(width: 8),
+                            Text('앱 언어 (Language)', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                        DropdownButton<AppLanguage>(
+                          value: LocalizationService.currentLanguage,
+                          underline: const SizedBox(),
+                          borderRadius: BorderRadius.circular(12),
+                          items: AppLanguage.values.map((lang) {
+                            return DropdownMenuItem<AppLanguage>(
+                              value: lang,
+                              child: Text(lang.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                            );
+                          }).toList(),
+                          onChanged: (lang) {
+                            if (lang != null) {
+                              setState(() {
+                                LocalizationService.setLanguage(lang);
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.monetization_on_outlined, size: 18, color: AppTheme.softMint),
+                            SizedBox(width: 8),
+                            Text('통화 단위 (Currency)', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                        DropdownButton<AppCurrency>(
+                          value: LocalizationService.currentCurrency,
+                          underline: const SizedBox(),
+                          borderRadius: BorderRadius.circular(12),
+                          items: AppCurrency.values.map((cur) {
+                            return DropdownMenuItem<AppCurrency>(
+                              value: cur,
+                              child: Text('${cur.code} (${cur.symbol})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                            );
+                          }).toList(),
+                          onChanged: (cur) {
+                            if (cur != null) {
+                              setState(() {
+                                LocalizationService.setCurrency(cur);
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // 1. Studio Profile Card
               Row(

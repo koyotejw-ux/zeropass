@@ -8,6 +8,7 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/bank_notification_filter.dart';
 import '../services/coach_mark_service.dart';
+import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
@@ -50,7 +51,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('청구 · 수납 관리'),
+        title: Text(LocalizationService.tr('billing_title')),
         actions: [
           // 스마트 입금 푸시 알림 수동 테스트 & 감지 시뮬레이터 (출결선생/토스 스타일)
           IconButton(
@@ -136,7 +137,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${_currencyFormat.format(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount)}원',
+                                      LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 20,
@@ -195,7 +196,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  '${_currencyFormat.format(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount)}원',
+                                  LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
                                   style: const TextStyle(
                                     color: Colors.white,
                             ),
