@@ -255,10 +255,14 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               const SizedBox(height: 12),
 
               // 2. Bottom Section: Phone, Registration date, and Pass Type badge
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
                 children: [
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.phone_iphone_outlined, size: 14, color: AppTheme.textSecondary),
                       const SizedBox(width: 4),

@@ -35,6 +35,8 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -43,7 +45,7 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AdBannerWidget(),
+          if (!isLandscape) const AdBannerWidget(),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -55,41 +57,45 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
                 ),
               ],
             ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: Colors.white,
-          indicatorColor: AppTheme.primaryBlue.withAlpha((255 * 0.12).round()),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.check_circle_outline),
-              selectedIcon: Icon(Icons.check_circle, color: AppTheme.primaryBlue),
-              label: '패스 체크',
+            child: NavigationBar(
+              height: isLandscape ? 54 : 68,
+              selectedIndex: _currentIndex,
+              labelBehavior: isLandscape 
+                  ? NavigationDestinationLabelBehavior.onlyShowSelected 
+                  : NavigationDestinationLabelBehavior.alwaysShow,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              backgroundColor: Colors.white,
+              indicatorColor: AppTheme.primaryBlue.withAlpha((255 * 0.12).round()),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.check_circle_outline),
+                  selectedIcon: Icon(Icons.check_circle, color: AppTheme.primaryBlue),
+                  label: '패스 체크',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long, color: AppTheme.primaryBlue),
+                  label: '청구·수납',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.people_outline),
+                  selectedIcon: Icon(Icons.people, color: AppTheme.primaryBlue),
+                  label: '회원 관리',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.shield_outlined),
+                  selectedIcon: Icon(Icons.shield, color: AppTheme.primaryBlue),
+                  label: '설정·보안',
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long, color: AppTheme.primaryBlue),
-              label: '청구·수납',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.people_outline),
-              selectedIcon: Icon(Icons.people, color: AppTheme.primaryBlue),
-              label: '회원 관리',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.shield_outlined),
-              selectedIcon: Icon(Icons.shield, color: AppTheme.primaryBlue),
-              label: '설정·보안',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
+    );
   }
 }

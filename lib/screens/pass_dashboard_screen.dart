@@ -149,25 +149,31 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     final passRecordsAsync = ref.watch(passRecordsProvider);
     final studioAsync = ref.watch(studioProfileProvider);
 
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        toolbarHeight: isLandscape ? 56 : 74,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              DateFormat('M월 d일 EEEE', 'ko_KR').format(DateTime.now()),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary,
+            if (!isLandscape) ...[
+              Text(
+                DateFormat('M월 d일 EEEE', 'ko_KR').format(DateTime.now()),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            const Text(
+              const SizedBox(height: 2),
+            ],
+            Text(
               '원터치 출결 체크',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: isLandscape ? 18 : 22,
                 fontWeight: FontWeight.w800,
                 color: AppTheme.textPrimary,
                 letterSpacing: -0.8,
@@ -185,8 +191,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           // 패시 마스코트 얼굴 아이콘으로 실전 가이드 모달 호출
           IconButton(
             icon: Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
@@ -207,7 +213,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             onPressed: () => _showAttendanceHelpDialog(context),
           ),
         ],
-        toolbarHeight: 74,
       ),
       body: membersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -250,23 +255,29 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 children: [
                   // 1. Metric Summary Card (Toss Financial Aesthetics)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: isLandscape ? 4 : 8,
+                    ),
                     child: Container(
-                      padding: const EdgeInsets.all(18),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: isLandscape ? 8 : 14,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: AppTheme.cardShadow,
                         border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem('출석 완료', attendedCount, AppTheme.softMint),
+                          _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: isLandscape),
                           _buildDivider(),
-                          _buildStatItem('지각/보강', lateCount, AppTheme.warning),
+                          _buildStatItem('지각/보강', lateCount, AppTheme.warning, isCompact: isLandscape),
                           _buildDivider(),
-                          _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue),
+                          _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue, isCompact: isLandscape),
                         ],
                       ),
                     ),
@@ -401,23 +412,24 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, int count, Color color) {
+  Widget _buildStatItem(String label, int count, Color color, {bool isCompact = false}) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           '$count',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: isCompact ? 17 : 22,
             fontWeight: FontWeight.w800,
             color: color,
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: isCompact ? 2 : 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
+          style: TextStyle(
+            fontSize: isCompact ? 11 : 12,
             fontWeight: FontWeight.w600,
             color: AppTheme.textSecondary,
           ),

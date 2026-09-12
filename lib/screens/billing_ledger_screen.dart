@@ -45,6 +45,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     final invoicesAsync = ref.watch(invoicesProvider);
     final membersAsync = ref.watch(membersProvider);
     final studioAsync = ref.watch(studioProfileProvider);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -102,57 +103,101 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 children: [
                   // 1. Amount Metric Overview Card
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: isLandscape ? 4 : 8,
+                    ),
                     child: Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: isLandscape ? 10 : 20,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: AppTheme.cardShadow,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _selectedTab == 0 ? '수납 대기 총액' : '이번 달 총 수납액',
-                                style: const TextStyle(
-                                  color: Color(0xFF94A3B8),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                      child: isLandscape
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      _selectedTab == 0 ? '수납 대기 총액: ' : '이번 달 총 수납액: ',
+                                      style: const TextStyle(
+                                        color: Color(0xFF94A3B8),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${_currencyFormat.format(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount)}원',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha((255 * 0.1).round()),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha((255 * 0.1).round()),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '${_currencyFormat.format(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount)}원',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                              ],
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _selectedTab == 0 ? '수납 대기 총액' : '이번 달 총 수납액',
+                                      style: const TextStyle(
+                                        color: Color(0xFF94A3B8),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withAlpha((255 * 0.1).round()),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  '${_currencyFormat.format(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount)}원',
+                                  style: const TextStyle(
+                                    color: Colors.white,
                             ),
                           ),
                         ],
@@ -1010,12 +1055,12 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildPresetButton('+1만', 10000),
-              const SizedBox(width: 8),
               _buildPresetButton('+5만', 50000),
-              const SizedBox(width: 8),
               _buildPresetButton('+10만', 100000),
             ],
           ),
