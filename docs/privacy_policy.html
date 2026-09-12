@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>개인정보 처리방침 (Privacy Policy) - 체크앤페이 (Check & Pay)</title>
+    <style>
+        :root { 
+            --primary: #3182F6; 
+            --primary-dark: #1E293B;
+            --bg: #ffffff; 
+            --text: #1E293B; 
+            --text-muted: #64748B;
+            --accent: #EFF6FF; 
+            --success: #10B981;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            line-height: 1.8; 
+            color: var(--text); 
+            background: #f8fafc; 
+            margin: 0; 
+            padding: 40px 20px; 
+        }
+        .wrapper { 
+            max-width: 840px; 
+            margin: 0 auto; 
+            background: var(--bg); 
+            padding: 50px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
+            border: 1px solid #e2e8f0;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            border-bottom: 1px solid #e2e8f0; 
+            padding-bottom: 30px; 
+        }
+        h1 { 
+            color: var(--primary); 
+            font-size: 30px; 
+            margin: 0 0 10px 0; 
+            letter-spacing: -0.5px; 
+            font-weight: 800;
+        }
+        .dev-badge { 
+            display: inline-block; 
+            background: var(--accent); 
+            color: var(--primary); 
+            padding: 6px 18px; 
+            border-radius: 50px; 
+            font-weight: 700; 
+            font-size: 14px; 
+        }
+        .security-badge {
+            display: inline-block;
+            background: #ECFDF5;
+            color: var(--success);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        h2 { 
+            color: var(--primary-dark); 
+            font-size: 20px; 
+            margin-top: 36px; 
+            border-left: 4px solid var(--primary); 
+            padding-left: 14px; 
+            font-weight: 700;
+        }
+        p, li { 
+            color: #334155; 
+            font-size: 15px; 
+        }
+        ul { 
+            padding-left: 20px; 
+            margin: 10px 0; 
+        }
+        .highlight-box {
+            background: #f1f5f9;
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 18px 0;
+            font-size: 14.5px;
+            color: #1e293b;
+        }
+        .contact-section { 
+            margin-top: 45px; 
+            padding: 26px; 
+            background: #f8fafc; 
+            border-radius: 16px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .footer { 
+            text-align: center; 
+            margin-top: 40px; 
+            color: var(--text-muted); 
+            font-size: 13px; 
+        }
+        a { 
+            color: var(--primary); 
+            text-decoration: none; 
+            font-weight: 600; 
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <h1>개인정보 처리방침 (Privacy Policy)</h1>
+            <div class="dev-badge">Developer: JWJ Studio</div><br>
+            <div class="security-badge">🛡️ 100% 로컬 암호화 보관 (Zero External Server Transmission)</div>
+            <p style="margin-top: 15px; color: var(--text-muted); font-size: 14px;">최종 업데이트일(Last Updated): 2026년 9월 12일</p>
+        </div>
+        
+        <section>
+            <h2>1. 기본 방침 및 서비스 소개 (Introduction)</h2>
+            <p><strong>JWJ Studio</strong> (이하 "개발자" 또는 "당사")는 <strong>체크앤페이(Check & Pay, 영문: Check & Pay - Attendance & Billing Manager)</strong>를 이용하는 소상공인, 원장님 및 모든 이용자의 개인정보를 매우 소중하게 생각하며, 대한민국의 『개인정보 보호법』 및 글로벌 표준(GDPR, CCPA)과 Google Play 개발자 정책을 엄격히 준수합니다.</p>
+            <p>본 앱은 학원, 교습소, 피트니스, 필라테스, 공방 등의 사업장 운영을 돕는 <strong>독립형 오프라인 로컬 장부 및 자율 출결 키오스크 유틸리티</strong>입니다.</p>
+
+            <h2>2. 개인정보의 수집 및 보관 방식 (100% On-Device Local Storage)</h2>
+            <div class="highlight-box">
+                <strong>핵심 보안 원칙:</strong> 체크앤페이는 <strong>외부 중앙 서버를 일절 운영하지 않으며, 회원 정보를 외부 클라우드나 제3자 분석 서버로 절대 전송·수집하지 않습니다.</strong>
+            </div>
+            <ul>
+                <li><strong>수집 및 저장되는 정보:</strong> 이용자(운영자)가 앱에 직접 입력한 사업장 정보(상호, 대표자명, 수납계좌), 회원 명부(이름, 전화번호, 잔여 회차, 입금자명), 출결 기록, 청구 및 수납 내역.</li>
+                <li><strong>보관 위치:</strong> 입력된 모든 정보는 이용자의 <strong>스마트폰 기기 내부(SQLite Local Database)</strong>에만 안전하게 보관됩니다.</li>
+                <li><strong>비상 탈출 및 안심 백업:</strong> 원장님이 필요에 따라 직접 [데이터 백업 내보내기] 기능을 실행하는 경우에만 암호화된 JSON/CSV 파일이 생성되어 이용자 본인의 카카오톡, 구글 드라이브 등으로 공유됩니다.</li>
+            </ul>
+
+            <h2>3. 기기 권한 및 백그라운드 이용 목적 (Device Permissions)</h2>
+            <p>앱은 다음 기능 제공을 위해 기기의 로컬 기능 및 기본 앱 연동만을 사용합니다:</p>
+            <ul>
+                <li><strong>기본 SMS/메시지 앱 연동:</strong> 출결 알림 및 수강료 청구서 발송 시, 외부 유료 문자 서버를 거치지 않고 이용자 본인 기기의 기본 문자 앱(또는 메신저)을 직접 호출(Intent)하여 발송합니다. (문자 발송 여부는 운영자가 직접 확인 및 전송)</li>
+                <li><strong>금융 입금 알림 감지(선택 기능):</strong> 앱 내에서 계좌 입금 감지 기능 활성화 시, 검증된 국내 은행 및 핀테크 공식 앱(토스, 카카오뱅크, 국민, 신한, 우리 등)의 수납 푸시 알림만 로컬에서 대조 파싱하며, 개인 메신저나 사적 대화 내용은 절대 읽거나 기록하지 않습니다.</li>
+            </ul>
+
+            <h2>4. 제3자 서비스 및 광고 네트워크 (Third-Party Services)</h2>
+            <p>앱의 유지 및 지속적인 무료 기능 제공, 인앱결제 처리를 위해 다음의 안전한 Google 공식 SDK를 사용합니다:</p>
+            <ul>
+                <li><strong>Google Play Services & Google Play In-App Billing:</strong> PRO 정기 구독 결제 승인, 갱신 및 구매 복원 처리.</li>
+                <li><strong>Google AdMob (Google LLC):</strong> 무료 버전 이용 시 배너 및 전면 광고 제공. 구글의 광고 식별자(AD ID)는 구글의 개인정보처리방침에 따라 안전하게 처리됩니다.</li>
+            </ul>
+
+            <h2>5. 개인정보의 파기 및 보관 주기 (Data Retention & Deletion)</h2>
+            <p>모든 데이터는 이용자의 기기에만 존재하므로, 이용자가 앱 내에서 [회원 삭제], [장부 삭제], [가상 데이터 비우기]를 실행하거나 <strong>앱을 기기에서 삭제(Uninstall)하는 즉시 모든 개인정보와 데이터는 영구적으로 완전 파기</strong>되며 개발자 측에 어떠한 데이터도 남지 않습니다.</p>
+
+            <h2>6. 아동의 개인정보 보호 (Children's Privacy)</h2>
+            <p>체크앤페이는 만 13세 미만 아동으로부터 고의로 개인정보를 수집하지 않으며, 구글 플레이 패밀리 정책을 철저히 준수합니다. 앱에 등록되는 학생/수강생의 출결 및 연락처는 사업장 운영자 본인이 학부모의 사전 동의 하에 관리합니다.</p>
+
+            <h2>7. 개인정보 처리방침의 변경 (Policy Updates)</h2>
+            <p>법률 개정 또는 앱의 기능 변경에 따라 본 개인정보 처리방침이 변경될 수 있으며, 개정 시 본 웹페이지를 통해 변경 사항을 투명하게 공지합니다.</p>
+        </section>
+
+        <div class="contact-section">
+            <strong>문의 및 지원 (Contact Support)</strong><br>
+            서비스명: 체크앤페이 (Check & Pay)<br>
+            개발사: JWJ Studio<br>
+            이메일: <a href="mailto:jwjentp@gmail.com">jwjentp@gmail.com</a><br>
+            웹사이트: <a href="https://koyotejw-ux.github.io/" target="_blank">https://koyotejw-ux.github.io/</a>
+        </div>
+        
+        <div class="footer">
+            © 2026 JWJ Studio. All rights reserved. Check & Pay is a trademark of JWJ Studio.
+        </div>
+    </div>
+</body>
+</html>
