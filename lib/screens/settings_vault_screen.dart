@@ -506,8 +506,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. ZeroPass PRO & Monetization Shortcut Card
-              _buildSectionTitle('💎 제로패스 PRO 멤버십 & 프리미엄 기능'),
+              // 4. CheckAndPay PRO & Monetization Shortcut Card
+              _buildSectionTitle('💎 체크앤페이 PRO 멤버십 & 프리미엄 기능'),
               AnimatedBuilder(
                 animation: MonetizationService.instance,
                 builder: (context, _) {
@@ -546,7 +546,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                   Text(
                                     isNoAds && isKiosk
                                         ? 'PRO 멤버십 활성화 완료 (VIP)'
-                                        : '제로패스 PRO 샵 둘러보기',
+                                        : '체크앤페이 PRO 샵 둘러보기',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w800,
@@ -718,7 +718,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   AppTextField(
                     controller: studioCtrl,
                     label: '상호명 / 스튜디오명',
-                    hint: '예: 제로패스 스튜디오',
+                    hint: '예: 체크앤페이 스튜디오',
                     prefixIcon: Icons.storefront_outlined,
                   ),
                   const SizedBox(height: 14),

@@ -44,8 +44,8 @@ class DataVaultService {
     return await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/json')],
-        subject: '[제로패스] 안심 로컬 데이터 백업 파일',
-        text: '제로패스 원장님 전용 로컬 데이터 백업 파일입니다. 휴대폰 분실 및 기기 변경 시 복원용으로 보관하세요.',
+        subject: '[체크앤페이] 안심 로컬 데이터 백업 파일',
+        text: '체크앤페이 원장님 전용 로컬 데이터 백업 파일입니다. 휴대폰 분실 및 기기 변경 시 복원용으로 보관하세요.',
       ),
     );
   }

@@ -277,7 +277,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(
-                    _currentPage == _pages.length - 1 ? '제로패스 100% 무료 시작하기' : '다음 알아보기',
+                    _currentPage == _pages.length - 1 ? '체크앤페이 100% 무료 시작하기' : '다음 알아보기',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                 ),

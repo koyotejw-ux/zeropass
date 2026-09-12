@@ -132,7 +132,7 @@ class StudioProfile {
 
   factory StudioProfile.fromMap(Map<String, dynamic> map) {
     return StudioProfile(
-      studioName: map['studioName'] as String? ?? '제로패스 스튜디오',
+      studioName: map['studioName'] as String? ?? '체크앤페이 스튜디오',
       instructorName: map['instructorName'] as String? ?? '김원장',
       bankName: map['bankName'] as String? ?? '토스뱅크',
       accountNumber: map['accountNumber'] as String? ?? '1000-1234-5678',

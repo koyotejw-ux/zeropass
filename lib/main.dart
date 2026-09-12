@@ -51,7 +51,7 @@ class _ZeroPassAppState extends State<ZeroPassApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ZeroPass (제로패스)',
+      title: '체크앤페이 (Check & Pay)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: _showSetupWizard
