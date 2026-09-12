@@ -139,11 +139,9 @@ ${member.name.split(' ').first} 회원님의 잔여 패스가 [${member.remainin
     final copyAccountText = '${studio.bankName} ${studio.accountNumber} ${studio.accountHolder}';
     final formattedAmount = _currencyFormat.format(invoice.amount);
     final dueDateStr = DateFormat('yyyy.MM.dd').format(invoice.dueDate);
-    final cleanAccountOnly = studio.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    final tossLink = 'supertoss://send?bank=${Uri.encodeComponent(studio.bankName)}&account=$cleanAccountOnly&amount=${invoice.amount}';
 
-    return '''[${studio.studioName}] 수강료 입금 안내 리마인드
-
+    return '''[${studio.studioName}] 입금 안내 리마인드
+  
 안녕하세요, ${studio.studioName}입니다.
 $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도래하여 정중히 안내드립니다.
 
@@ -155,8 +153,8 @@ $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도�
 ────────────────
 
 [간편 입금 안내]
-• 계좌 복사 : $copyAccountText
-• 토스 송금 : $tossLink
+• 복사용 계좌 : $copyAccountText
+(계좌번호를 복사 후 토스나 은행 앱을 여시면 바로 송금됩니다)
 
 기한 내 확인 부탁드리며, 이미 입금하신 경우 본 안내는 너그러이 양해 부탁드립니다.
 감사합니다.'''.trim();

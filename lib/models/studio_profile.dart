@@ -147,10 +147,10 @@ class StudioProfile {
     );
   }
 
-  static const String defaultInvoiceTemplate = '''[#{상호명}] 수강료 청구 안내
-
+  static const String defaultInvoiceTemplate = '''[#{상호명}] #{청구제목}
+  
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님의 #{청구제목} 안내드립니다.
+#{회원명} 회원님의 수납 내역 안내드립니다.
 
 ────────────────
 [청구 내역]
@@ -160,11 +160,11 @@ class StudioProfile {
 ────────────────
 
 [간편 입금 안내]
-• 계좌 복사 : #{계좌복사용}
-• 토스 송금 : #{토스송금링크}
+• 복사용 계좌 : #{계좌복사용}
+(계좌번호를 복사 후 토스나 은행 앱을 여시면 바로 송금됩니다)
 
 소중한 회원님과 함께할 수 있어 늘 감사드리며,
-입금 확인 즉시 수업 패스가 안전하게 등록·갱신됩니다.
+입금 확인 즉시 등록·갱신됩니다.
 감사합니다.''';
 
   static const String defaultAttendanceTemplate = '''[#{상호명}] 출석 안심 알림

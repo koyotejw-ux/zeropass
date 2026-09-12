@@ -123,8 +123,7 @@ void main() {
       expect(message.contains('홍길동'), isTrue);
       expect(message.contains('500,000원'), isTrue);
       expect(message.contains(studio.accountNumber), isTrue);
-      expect(message.contains('supertoss://send'), isTrue);
-      expect(message.contains('계좌 복사'), isTrue);
+      expect(message.contains('복사용 계좌'), isTrue);
     });
 
     test('Correctly formats 1-second unpaid reminder message', () {
@@ -159,7 +158,7 @@ void main() {
       expect(reminder.contains('리마인드'), isTrue);
       expect(reminder.contains('박서준'), isTrue);
       expect(reminder.contains('200,000원'), isTrue);
-      expect(reminder.contains('supertoss://send'), isTrue);
+      expect(reminder.contains('복사용 계좌'), isTrue);
     });
   });
 }
