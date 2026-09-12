@@ -417,7 +417,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           ),
           const SizedBox(height: 6),
           const Text(
-            '수강료를 입금받으실\n계좌를 등록해 주세요',
+            '수납/회비를 입금받으실\n계좌를 등록해 주세요',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
@@ -428,7 +428,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           ),
           const SizedBox(height: 8),
           const Text(
-            '수강료 청구 문자를 보낼 때 이 계좌가 0원 자동 첨부돼요.',
+            '청구 문자를 보낼 때 토스 송금링크와 함께 0원 자동 첨부돼요.',
             style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 24),

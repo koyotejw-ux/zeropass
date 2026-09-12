@@ -37,6 +37,58 @@ class StudioProfile {
     required this.departureTemplate,
   });
 
+  /// 업종별 대표자 직함 (원장 / 대표 / 코치 / 강사)
+  String get roleTitle {
+    if (category.contains('피트니스') || category.contains('PT') || category.contains('스포츠') || category.contains('수영')) {
+      return '대표 / 트레이너';
+    } else if (category.contains('공방') || category.contains('도예') || category.contains('미술')) {
+      return '대표 / 작가';
+    } else if (category.contains('필라테스') || category.contains('요가') || category.contains('무용') || category.contains('댄스')) {
+      return '원장 / 강사';
+    } else if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('코딩')) {
+      return '원장';
+    }
+    return '대표 / 원장';
+  }
+
+  /// 고객/회원 호칭 (학생 / 회원 / 수강생)
+  String get memberTitle {
+    if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('태권도')) {
+      return '학생 / 수강생';
+    } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스') || category.contains('요가')) {
+      return '회원';
+    } else if (category.contains('공방') || category.contains('공간대여')) {
+      return '이용 고객 / 회원';
+    }
+    return '회원 / 수강생';
+  }
+
+  /// 수강료/이용료/회비 호칭
+  String get feeTitle {
+    if (category.contains('학원') || category.contains('음악') || category.contains('어학')) {
+      return '수강료';
+    } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스')) {
+      return '회비 / 레슨비';
+    } else if (category.contains('공방') || category.contains('공간대여')) {
+      return '이용료 / 재료비';
+    }
+    return '수납 / 회비';
+  }
+
+  /// 사업장 성격 (스튜디오 / 센터 / 학원 / 공방 / 매장)
+  String get placeTitle {
+    if (category.contains('학원') || category.contains('입시') || category.contains('어학')) {
+      return '학원 / 교습소';
+    } else if (category.contains('피트니스') || category.contains('PT') || category.contains('스포츠')) {
+      return '센터 / 피트니스샵';
+    } else if (category.contains('필라테스') || category.contains('요가') || category.contains('댄스')) {
+      return '스튜디오';
+    } else if (category.contains('공방') || category.contains('도예')) {
+      return '공방 / 작업실';
+    }
+    return '사업장 / 매장';
+  }
+
   StudioProfile copyWith({
     String? studioName,
     String? instructorName,

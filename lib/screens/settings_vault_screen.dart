@@ -11,6 +11,7 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
+import 'onboarding_screen.dart';
 import 'studio_setup_wizard_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
@@ -58,6 +59,18 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         title: const Text('설정 · 보안 금고'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.school_outlined),
+            tooltip: '패시의 온보딩 튜토리얼 다시보기',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (ctx) => OnboardingScreen(onFinish: () => Navigator.pop(ctx)),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: '실전 가이드 튜토리얼',
             onPressed: () => _openInteractiveGuide(context),
@@ -102,11 +115,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildGuideStep('1', '출결 체크', '첫 번째 탭에서 [체크인] 누르면 출석 기록 & 잔여 회차가 1회 자동 차감됩니다.'),
+                    _buildGuideStep('1', '출결 & 이용 체크', '첫 번째 탭에서 [체크인] 누르면 출석 일시 기록 & 잔여 회차가 1회 자동 차감됩니다.'),
                     const SizedBox(height: 8),
-                    _buildGuideStep('2', '등·하원 안심 문자', '체크 완료 후 [출석/하원 알림]을 누르면 비용 0원으로 부모님께 즉시 문자가 갑니다.'),
+                    _buildGuideStep('2', '비용 0원 안심 문자', '체크 완료 후 [출석/이용 알림]을 누르면 기본 문자 앱으로 보호자/회원에게 즉시 전송됩니다.'),
                     const SizedBox(height: 8),
-                    _buildGuideStep('3', '청구서 & 입금 장부', '두 번째 탭에서 수강료 청구서를 만들고, 은행 푸시 알림으로 수납을 자동 정리하세요.'),
+                    _buildGuideStep('3', '청구서 & 수납 장부', '두 번째 탭에서 ${profile.feeTitle} 청구서를 만들고, 은행 입금 감지로 미납/완납을 자동 정리하세요.'),
                     const SizedBox(height: 14),
                     Wrap(
                       spacing: 8,
@@ -146,7 +159,28 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
 
               // 1. Studio Profile Card
-              _buildSectionTitle('스튜디오 & 강사 프로필'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSectionTitle('${profile.placeTitle} & ${profile.roleTitle} 프로필'),
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.chipBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      profile.category,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryBlue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -159,11 +193,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   children: [
                     _buildProfileRow('상호 / 브랜드명', profile.studioName),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('사업장 업종 카테고리', profile.category),
+                    _buildProfileRow('업종 카테고리', profile.category),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('원장 / 강사명', profile.instructorName),
+                    _buildProfileRow(profile.roleTitle, profile.instructorName),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('수납 계좌 정보', '${profile.bankName} ${profile.accountNumber}'),
+                    _buildProfileRow('${profile.feeTitle} 수납 계좌', '${profile.bankName} ${profile.accountNumber}'),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow('예금주', profile.accountHolder),
                     const SizedBox(height: 12),
@@ -172,7 +206,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _openEditProfileDialog(context, profile),
                         icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text('프로필 및 수납 계좌 변경'),
+                        label: Text('${profile.placeTitle} 프로필 및 수납 계좌 변경'),
                       ),
                     ),
                   ],
@@ -198,12 +232,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFEFF6FF),
                         child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
                       ),
-                      title: const Text('청구서 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('수강료 청구 시 발송되는 기본 문자 내용을 변경합니다.'),
+                      title: Text('${profile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text('${profile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
                         context: context,
-                        title: '청구서 문자 서식 편집',
+                        title: '${profile.feeTitle} 청구서 문자 서식 편집',
                         initialText: profile.invoiceTemplate,
                         defaultText: StudioProfile.defaultInvoiceTemplate,
                         placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{납부기한}',
@@ -221,12 +255,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFECFDF5),
                         child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
                       ),
-                      title: const Text('출석/등원 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('체크인 시 학부모/회원에게 전송되는 안심 문자를 변경합니다.'),
+                      title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
                         context: context,
-                        title: '출석/등원 문자 서식 편집',
+                        title: '출석 / 입실 문자 서식 편집',
                         initialText: profile.attendanceTemplate,
                         defaultText: StudioProfile.defaultAttendanceTemplate,
                         placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
@@ -244,12 +278,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFFFFBEB),
                         child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
                       ),
-                      title: const Text('하원/수업종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('귀가/퇴실 시 발송되는 안내 문자를 변경합니다.'),
+                      title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
                         context: context,
-                        title: '하원/수업종료 문자 서식 편집',
+                        title: '퇴실 / 일정종료 문자 서식 편집',
                         initialText: profile.departureTemplate,
                         defaultText: StudioProfile.defaultDepartureTemplate,
                         placeholders: '#{상호명}, #{회원명}',
@@ -527,10 +561,32 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+          SizedBox(
+            width: 125,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13.5,
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              softWrap: true,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -617,8 +673,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
 
                   AppTextField(
                     controller: instructorCtrl,
-                    label: '원장 / 대표 강사명',
-                    hint: '예: 홍길동 원장',
+                    label: '대표자 / 담당자 성명 (원장·대표·강사·작가)',
+                    hint: '예: 홍길동 원장, 김코치',
                     prefixIcon: Icons.badge_outlined,
                   ),
                   const SizedBox(height: 14),
@@ -919,8 +975,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         const SizedBox(height: 14),
                         AppTextField(
                           controller: studioNameController,
-                          label: '스튜디오 상호명 (#{상호명})',
-                          hint: '예: 제로패스 음악학원',
+                          label: '사업장 상호/브랜드명 (#{상호명})',
+                          hint: '예: 제로패스 스튜디오 / 학원 / 공방',
                           prefixIcon: Icons.storefront_outlined,
                           onChanged: (_) => setModalState(() {}),
                         ),
