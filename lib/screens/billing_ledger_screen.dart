@@ -754,17 +754,18 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('은행 푸시 알림 장부 매칭'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '안드로이드 기기에 수신되는 은행 알림을 필터링하여 자동으로 장부와 대조합니다.',
-              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            if (unpaidInvoices.isEmpty)
-              const Text('현재 매칭 대기 중인 미납 청구서가 없습니다.')
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '안드로이드 기기에 수신되는 은행 알림을 필터링하여 자동으로 장부와 대조합니다.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              if (unpaidInvoices.isEmpty)
+                const Text('현재 매칭 대기 중인 미납 청구서가 없습니다.')
             else
               Column(
                 children: unpaidInvoices.take(2).map((inv) {
@@ -1025,7 +1026,9 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               ChoiceChip(
                 label: const Text('일주일 후 (+7일)'),
@@ -1034,7 +1037,6 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
                   if (val) setState(() => _dueDate = DateTime.now().add(const Duration(days: 7)));
                 },
               ),
-              const SizedBox(width: 8),
               ChoiceChip(
                 label: Text('${now.month}월 말일까지'),
                 selected: _dueDate.day == monthEnd.day && _dueDate.month == monthEnd.month,
@@ -1042,7 +1044,6 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
                   if (val) setState(() => _dueDate = monthEnd);
                 },
               ),
-              const SizedBox(width: 8),
               ActionChip(
                 avatar: const Icon(Icons.calendar_today_outlined, size: 14),
                 label: Text(DateFormat('yyyy.MM.dd').format(_dueDate)),

@@ -442,9 +442,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           context: context,
                           builder: (c) => AlertDialog(
                             title: const Text('연습 데이터를 모두 비우시겠습니까?'),
-                            content: const Text(
-                              '현재 등록된 가상 회원, 출석 기록, 청구서 내역이 모두 삭제되어 실제 운영 모드로 초기화됩니다.\n(스튜디오 프로필 설정은 유지됩니다.)',
-                              style: TextStyle(height: 1.5, fontSize: 13),
+                            content: const SingleChildScrollView(
+                              child: Text(
+                                '현재 등록된 가상 회원, 출석 기록, 청구서 내역이 모두 삭제되어 실제 운영 모드로 초기화됩니다.\n(스튜디오 프로필 설정은 유지됩니다.)',
+                                style: TextStyle(height: 1.5, fontSize: 13),
+                              ),
                             ),
                             actions: [
                               TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('취소')),

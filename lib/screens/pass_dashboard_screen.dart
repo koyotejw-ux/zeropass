@@ -60,51 +60,53 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               Text('태블릿 자율출결 키오스크', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.star_rounded, color: Color(0xFF2563EB), size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '매장 입구에 거치해 두면 학생들이 직접 뒷번호 4자리만 누르고 입장!',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.star_rounded, color: Color(0xFF2563EB), size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '매장 입구에 거치해 두면 학생들이 직접 뒷번호 4자리만 누르고 입장!',
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              const Text('• 1초 출석 체크 + 잔여 회차 자동 차감\n• 즉시 학부모/회원 안심 문자 전송\n• 관리자 비밀번호(0000) 잠금 보호\n• 타사 월 3~5만원 키오스크 대비 0원 유지비',
-                style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                const SizedBox(height: 14),
+                const Text('• 1초 출석 체크 + 잔여 회차 자동 차감\n• 즉시 학부모/회원 안심 문자 전송\n• 관리자 비밀번호(0000) 잠금 보호\n• 타사 월 3~5만원 키오스크 대비 0원 유지비',
+                  style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text('키오스크 프로 평생 소장권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                    Text('19,900원 (1회)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue)),
-                  ],
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text('키오스크 프로 평생 소장권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      Text('19,900원 (1회)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -713,11 +715,13 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('간편 출결 & 문자 알림 안내'),
-        content: const Text(
-          '1. [체크인] 탭 한 번으로 출석이 기록되고 회차가 자동 차감됩니다.\n'
-          '2. 체크 후 나타나는 [출석 알림 문자] 및 [하원 알림 문자]를 누르면 비용 0원으로 학부모/회원에게 안심 알림 문자를 바로 전송할 수 있습니다.\n'
-          '3. 모든 데이터는 기기에만 저장되어 서버비가 전혀 들지 않습니다.',
-          style: TextStyle(height: 1.5, fontSize: 13),
+        content: const SingleChildScrollView(
+          child: Text(
+            '1. [체크인] 탭 한 번으로 출석이 기록되고 회차가 자동 차감됩니다.\n'
+            '2. 체크 후 나타나는 [출석 알림 문자] 및 [하원 알림 문자]를 누르면 비용 0원으로 학부모/회원에게 안심 알림 문자를 바로 전송할 수 있습니다.\n'
+            '3. 모든 데이터는 기기에만 저장되어 서버비가 전혀 들지 않습니다.',
+            style: TextStyle(height: 1.5, fontSize: 13),
+          ),
         ),
         actions: [
           TextButton(

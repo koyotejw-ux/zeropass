@@ -56,11 +56,13 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 context: context,
                 builder: (c) => AlertDialog(
                   title: const Text('💡 회원 관리 & 실제 데이터 안내'),
-                  content: const Text(
-                    '1. 우측 하단의 [+ 신규 회원 등록] 버튼으로 실제 운영하시는 학생/회원 정보를 바로 추가할 수 있습니다.\n'
-                    '2. 회차권(예: 10회권)과 월 정기권(매월 자동) 중 매장 운영 방식에 맞춰 선택할 수 있습니다.\n'
-                    '3. 연습용 샘플 데이터는 [설정·보안] 탭에서 언제든지 깨끗하게 비우거나 다시 채울 수 있습니다.',
-                    style: TextStyle(height: 1.5, fontSize: 13),
+                  content: const SingleChildScrollView(
+                    child: Text(
+                      '1. 우측 하단의 [+ 신규 회원 등록] 버튼으로 실제 운영하시는 학생/회원 정보를 바로 추가할 수 있습니다.\n'
+                      '2. 회차권(예: 10회권)과 월 정기권(매월 자동) 중 매장 운영 방식에 맞춰 선택할 수 있습니다.\n'
+                      '3. 연습용 샘플 데이터는 [설정·보안] 탭에서 언제든지 깨끗하게 비우거나 다시 채울 수 있습니다.',
+                      style: TextStyle(height: 1.5, fontSize: 13),
+                    ),
                   ),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(c), child: const Text('확인')),
@@ -335,13 +337,8 @@ class _MemberDetailModal extends ConsumerWidget {
     final memberInvoices = invoices.where((i) => i.memberIds.contains(member.id)).toList();
     final currency = NumberFormat('#,###');
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
+    return Padding(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -522,17 +519,8 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        left: 20,
-        right: 20,
-        top: 20,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,

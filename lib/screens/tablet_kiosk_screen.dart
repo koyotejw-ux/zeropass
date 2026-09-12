@@ -131,26 +131,28 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('관리자 키오스크 모드 종료'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '회원들의 무단 화면 조작 방지를 위해 관리자 종료 번호를 입력해주세요.\n(기본 번호: 0000)',
-              style: TextStyle(fontSize: 13, height: 1.4, color: AppTheme.textSecondary),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: passwordCtrl,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: '관리자 비밀번호',
-                border: OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '회원들의 무단 화면 조작 방지를 위해 관리자 종료 번호를 입력해주세요.\n(기본 번호: 0000)',
+                style: TextStyle(fontSize: 13, height: 1.4, color: AppTheme.textSecondary),
               ),
-              autofocus: true,
-            ),
-          ],
+              const SizedBox(height: 14),
+              TextField(
+                controller: passwordCtrl,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: '관리자 비밀번호',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
@@ -196,245 +198,265 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildPortraitKiosk(StudioProfile studio, String dateStr) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        children: [
-          // Top Header (Studio Info & Exit Button)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical - 24,
+        ),
+        child: IntrinsicHeight(
+          child: Column(
             children: [
+              // Top Header (Studio Info & Exit Button)
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFF1E293B),
-                    ),
-                    child: ClipOval(
-                      child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      Text(
-                        studio.studioName,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF1E293B),
+                        ),
+                        child: ClipOval(
+                          child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
                         ),
                       ),
-                      Text(
-                        dateStr,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            studio.studioName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            dateStr,
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
+                    tooltip: '키오스크 종료 (관리자)',
+                    onPressed: _showExitDialog,
+                  ),
                 ],
               ),
-              IconButton(
-                icon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
-                tooltip: '키오스크 종료 (관리자)',
-                onPressed: _showExitDialog,
+              const SizedBox(height: 14),
+
+              // Main Prompt & Mascot
+              const Text(
+                '반가워요! 전화번호 뒷자리 4자리를 눌러주세요 🐧',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFE2E8F0),
+                ),
               ),
+              const SizedBox(height: 14),
+
+              // Digits Box Display
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  final isFilled = index < _digits.length;
+                  final char = isFilled ? _digits[index] : '';
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: 52,
+                    height: 60,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isFilled ? AppTheme.softMint : const Color(0xFF334155),
+                        width: isFilled ? 2.5 : 1.2,
+                      ),
+                      boxShadow: isFilled
+                          ? [
+                              BoxShadow(
+                                color: AppTheme.softMint.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      char,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 12),
+
+              // Status Feedback Banner
+              if (_statusMessage != null)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _isSuccess ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _statusMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.35,
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(height: 20),
+
+              const Spacer(),
+
+              // Number Keypad
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  child: _buildKeypad(),
+                ),
+              ),
+              const Spacer(),
             ],
           ),
-          const Spacer(flex: 1),
-
-          // Main Prompt & Mascot
-          const Text(
-            '반가워요! 전화번호 뒷자리 4자리를 눌러주세요 🐧',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFE2E8F0),
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // Digits Box Display
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(4, (index) {
-              final isFilled = index < _digits.length;
-              final char = isFilled ? _digits[index] : '';
-
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                width: 58,
-                height: 68,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isFilled ? AppTheme.softMint : const Color(0xFF334155),
-                    width: isFilled ? 2.5 : 1.2,
-                  ),
-                  boxShadow: isFilled
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.softMint.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  char,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 14),
-
-          // Status Feedback Banner
-          if (_statusMessage != null)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: _isSuccess ? const Color(0xFF065F46) : const Color(0xFF991B1B),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _statusMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  height: 1.4,
-                ),
-              ),
-            )
-          else
-            const SizedBox(height: 38),
-
-          const Spacer(flex: 1),
-
-          // Number Keypad
-          _buildKeypad(),
-          const Spacer(flex: 1),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildLandscapeKiosk(StudioProfile studio, String dateStr) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-      child: Row(
-        children: [
-          // Left: Studio Info, Mascot, Display
-          Expanded(
-            flex: 5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      studio.studioName,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
-                      onPressed: _showExitDialog,
-                    ),
-                  ],
-                ),
-                Text(dateStr, style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8))),
-                const Spacer(),
-                Center(
-                  child: Container(
-                    width: 110,
-                    height: 110,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFF1E293B),
-                    ),
-                    child: ClipOval(
-                      child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Center(
-                  child: Text(
-                    '전화번호 뒷자리 4자리를 누르면\n1초 만에 출결 체크 & 안심 문자가 전송돼요!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Color(0xFFCBD5E1), height: 1.4),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical - 24,
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Left: Studio Info, Mascot, Display
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    final isFilled = index < _digits.length;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 6),
-                      width: 50,
-                      height: 60,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isFilled ? AppTheme.softMint : const Color(0xFF334155),
-                          width: isFilled ? 2.5 : 1,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          studio.studioName,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
+                          onPressed: _showExitDialog,
+                        ),
+                      ],
+                    ),
+                    Text(dateStr, style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF1E293B),
+                        ),
+                        child: ClipOval(
+                          child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Center(
                       child: Text(
-                        isFilled ? _digits[index] : '',
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    );
-                  }),
-                ),
-                if (_statusMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Center(
-                    child: Text(
-                      _statusMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: _isSuccess ? AppTheme.softMint : Colors.redAccent,
+                        '전화번호 뒷자리 4자리를 누르면\n1초 만에 출결 체크 & 안심 문자가 전송돼요!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Color(0xFFCBD5E1), height: 1.35),
                       ),
                     ),
-                  ),
-                ],
-                const Spacer(),
-              ],
-            ),
-          ),
-          const SizedBox(width: 30),
-
-          // Right: Keypad
-          Expanded(
-            flex: 4,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 340),
-                child: _buildKeypad(),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(4, (index) {
+                        final isFilled = index < _digits.length;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 5),
+                          width: 44,
+                          height: 52,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isFilled ? AppTheme.softMint : const Color(0xFF334155),
+                              width: isFilled ? 2.5 : 1,
+                            ),
+                          ),
+                          child: Text(
+                            isFilled ? _digits[index] : '',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        );
+                      }),
+                    ),
+                    if (_statusMessage != null) ...[
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Text(
+                          _statusMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: _isSuccess ? AppTheme.softMint : Colors.redAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 24),
+
+              // Right: Keypad
+              Expanded(
+                flex: 4,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 300),
+                    child: _buildKeypad(),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

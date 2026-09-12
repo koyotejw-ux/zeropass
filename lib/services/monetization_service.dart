@@ -34,12 +34,20 @@ class MonetizationService extends ChangeNotifier {
   final ValueNotifier<bool> premiumStatusNotifier = ValueNotifier<bool>(false);
 
   Future<void> debugUnlockAll() async {
+    await setDebugUnlock(adsRemoved: true, kioskPro: true);
+  }
+
+  Future<void> setDebugUnlock({bool? adsRemoved, bool? kioskPro}) async {
     final prefs = await SharedPreferences.getInstance();
-    _isAdsRemoved = true;
-    _isKioskProUnlocked = true;
-    await prefs.setBool('is_ads_removed', true);
-    await prefs.setBool('is_kiosk_pro_unlocked', true);
-    premiumStatusNotifier.value = true;
+    if (adsRemoved != null) {
+      _isAdsRemoved = adsRemoved;
+      await prefs.setBool('is_ads_removed', adsRemoved);
+      premiumStatusNotifier.value = adsRemoved;
+    }
+    if (kioskPro != null) {
+      _isKioskProUnlocked = kioskPro;
+      await prefs.setBool('is_kiosk_pro_unlocked', kioskPro);
+    }
     notifyListeners();
   }
 
