@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/invoice.dart';
@@ -161,15 +162,29 @@ $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도�
 감사합니다.'''.trim();
   }
 
+  static const MethodChannel _channel = MethodChannel('com.zeropass.app/sms_launcher');
+
   /// Launches the native SMS app with recipient and prefilled body.
-  /// Uses strict percent-encoding (%20 instead of +) so SMS apps render exact spaces and newlines.
+  /// Uses native Android MethodChannel (Intent.ACTION_SENDTO + extras) to completely bypass
+  /// URI length restrictions and URL truncation, allowing full long LMS/MMS messages.
   static Future<bool> launchNativeSms({
     required String recipientPhone,
     required String body,
   }) async {
     final cleanPhone = recipientPhone.replaceAll(RegExp(r'[^0-9]'), '');
-    
-    // Custom strict percent-encoding to ensure space is '%20' and NOT '+'
+
+    // 1. Try native MethodChannel first (Android: supports 100% full text via Intent Extras, no 80-char/URL limit)
+    try {
+      final result = await _channel.invokeMethod<bool>('launchNativeSms', {
+        'phone': cleanPhone,
+        'body': body,
+      });
+      if (result == true) return true;
+    } catch (_) {
+      // Fall through to fallback
+    }
+
+    // 2. Fallback via url_launcher (iOS, Web, Windows)
     final encodedBody = Uri.encodeComponent(body).replaceAll('+', '%20');
     final Uri smsUri = Uri.parse('sms:$cleanPhone?body=$encodedBody');
 
@@ -177,7 +192,6 @@ $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도�
       if (await canLaunchUrl(smsUri)) {
         return await launchUrl(smsUri);
       } else {
-        // Fallback for some Android OEM intents
         final Uri fallbackUri = Uri(
           scheme: 'sms',
           path: cleanPhone,
