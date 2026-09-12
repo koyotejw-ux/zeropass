@@ -374,7 +374,10 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
                   // Batch Action Bar placed directly inside body above bottom navigation bar
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: isLandscape ? 6 : 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: const Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
@@ -391,12 +394,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () => _handleBatchCheckIn(context),
-                            icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
-                            label: const Text('남은 회원 일괄 출석 완료'),
+                            icon: const Icon(Icons.done_all, color: Colors.white, size: 16),
+                            label: Text(
+                              isLandscape ? '남은 회원 일괄 출석' : '남은 회원 일괄 출석 완료',
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryDark,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: EdgeInsets.symmetric(vertical: isLandscape ? 8 : 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                           ),
                         ),
@@ -527,9 +533,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           const SizedBox(height: 12),
 
           // 2. Middle Row: Pass Type / Session Badge & One-touch Check-in Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               if (isSessionBased) ...[
                 Container(
@@ -570,7 +578,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               // Check-in Action Button / Status Badge
               if (isChecked)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.softMint.withAlpha((255 * 0.15).round()),
                     borderRadius: BorderRadius.circular(10),
@@ -578,12 +586,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.check_circle, size: 16, color: AppTheme.softMint),
+                      const Icon(Icons.check_circle, size: 15, color: AppTheme.softMint),
                       const SizedBox(width: 5),
                       Text(
                         todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.softMint,
                         ),
@@ -594,14 +602,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               else
                 ElevatedButton.icon(
                   onPressed: () => _handleOneTouchCheckIn(member),
-                  icon: const Icon(Icons.check, size: 16, color: Colors.white),
+                  icon: const Icon(Icons.check, size: 15, color: Colors.white),
                   label: const Text(
                     '체크인',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryBlue,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -625,8 +633,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       );
                       await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
                     },
-                    icon: const Icon(Icons.send_rounded, size: 14, color: AppTheme.primaryBlue),
-                    label: const Text('출석 알림 문자', style: TextStyle(fontSize: 12)),
+                    icon: const Icon(Icons.send_rounded, size: 13, color: AppTheme.primaryBlue),
+                    label: const Text('출석 알림', style: TextStyle(fontSize: 11.5)),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       side: const BorderSide(color: AppTheme.borderSubtle),
@@ -644,8 +652,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       );
                       await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
                     },
-                    icon: const Icon(Icons.exit_to_app_rounded, size: 14, color: AppTheme.textSecondary),
-                    label: const Text('하원 알림 문자', style: TextStyle(fontSize: 12)),
+                    icon: const Icon(Icons.exit_to_app_rounded, size: 13, color: AppTheme.textSecondary),
+                    label: const Text('하원 알림', style: TextStyle(fontSize: 11.5)),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       side: const BorderSide(color: AppTheme.borderSubtle),

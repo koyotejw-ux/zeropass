@@ -8,19 +8,22 @@ class MonetizationService extends ChangeNotifier {
   static final MonetizationService instance = MonetizationService._internal();
   MonetizationService._internal();
 
-  // In-App Product IDs
-  static const String productRemoveAdsMonthly = 'zeropass_remove_ads_monthly'; // 광고 제거 월간 구독
-  static const String productRemoveAdsLifetime = 'zeropass_remove_ads_lifetime'; // 광고 제거 평생 소장
-  static const String productKioskLifetime = 'zeropass_kiosk_pro_lifetime'; // 키오스크 자율출결 평생 소장권
+  // In-App Product IDs (100% Recurring Subscriptions)
+  static const String productSubRemoveAdsMonthly = 'zeropass_sub_ads_monthly'; // 광고 제거 월간 (₩1,900/월)
+  static const String productSubKioskMonthly = 'zeropass_sub_kiosk_monthly'; // 태블릿 키오스크 월간 (₩4,900/월)
+  static const String productSubAllInOneMonthly = 'zeropass_sub_vip_monthly'; // 올인원 VIP 패키지 월간 (₩5,900/월)
+  static const String productSubAllInOneYearly = 'zeropass_sub_vip_yearly'; // 올인원 VIP 패키지 연간 (₩59,000/년)
 
-  static const String productIdRemoveAdsMonthly = productRemoveAdsMonthly;
-  static const String productIdRemoveAdsLifetime = productRemoveAdsLifetime;
-  static const String productIdKioskPro = productKioskLifetime;
+  static const String productIdRemoveAdsMonthly = productSubRemoveAdsMonthly;
+  static const String productIdKioskMonthly = productSubKioskMonthly;
+  static const String productIdAllInOneMonthly = productSubAllInOneMonthly;
+  static const String productIdAllInOneYearly = productSubAllInOneYearly;
 
   static const Set<String> _kProductIds = {
-    productRemoveAdsMonthly,
-    productRemoveAdsLifetime,
-    productKioskLifetime,
+    productSubRemoveAdsMonthly,
+    productSubKioskMonthly,
+    productSubAllInOneMonthly,
+    productSubAllInOneYearly,
   };
 
   bool _isAdsRemoved = false;
@@ -92,14 +95,21 @@ class MonetizationService extends ChangeNotifier {
 
   Future<void> _handleSuccessfulPurchase(String productId) async {
     final prefs = await SharedPreferences.getInstance();
-    if (productId == productRemoveAdsMonthly || productId == productRemoveAdsLifetime) {
+    if (productId == productSubRemoveAdsMonthly) {
       _isAdsRemoved = true;
       await prefs.setBool('is_ads_removed', true);
       premiumStatusNotifier.value = true;
-    } else if (productId == productKioskLifetime) {
+    } else if (productId == productSubKioskMonthly) {
       _isKioskProUnlocked = true;
       await prefs.setBool('is_kiosk_pro_unlocked', true);
+    } else if (productId == productSubAllInOneMonthly || productId == productSubAllInOneYearly) {
+      _isAdsRemoved = true;
+      _isKioskProUnlocked = true;
+      await prefs.setBool('is_ads_removed', true);
+      await prefs.setBool('is_kiosk_pro_unlocked', true);
+      premiumStatusNotifier.value = true;
     }
+    notifyListeners();
   }
 
   // AdMob Banner Unit ID (Google official sample test IDs)
