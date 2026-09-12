@@ -532,41 +532,48 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 12,
+                          runSpacing: 8,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFBBF24), size: 24),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '제로패스 PRO 샵',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    isNoAds && isKiosk
-                                        ? '모든 PRO 기능이 활성화되었습니다 (VIP)'
-                                        : '원활한 매장 운영을 위한 평생 소장권 & 광고 제거',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.7),
+                                  child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFBBF24), size: 24),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '제로패스 PRO 샵',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isNoAds && isKiosk
+                                          ? '모든 PRO 기능이 활성화되었습니다 (VIP)'
+                                          : '원활한 매장 운영을 위한 평생 소장권 & 광고 제거',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                             TextButton(
                               onPressed: () async {
@@ -732,10 +739,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: isUnlocked ? const Color(0xFF10B981).withOpacity(0.12) : const Color(0xFF1E293B),
+            color: isUnlocked ? const Color(0xFF10B981).withValues(alpha: 0.12) : const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isUnlocked ? const Color(0xFF10B981).withOpacity(0.4) : const Color(0xFF334155),
+              color: isUnlocked ? const Color(0xFF10B981).withValues(alpha: 0.4) : const Color(0xFF334155),
               width: 1,
             ),
           ),
@@ -744,7 +751,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isUnlocked ? const Color(0xFF10B981).withOpacity(0.2) : Colors.white.withOpacity(0.1),
+                  color: isUnlocked ? const Color(0xFF10B981).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -771,7 +778,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
