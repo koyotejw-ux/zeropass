@@ -14,7 +14,6 @@ import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
 import 'studio_setup_wizard_screen.dart';
-import 'tablet_kiosk_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
   const SettingsVaultScreen({super.key});
@@ -507,7 +506,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. ZeroPass PRO & Monetization Store Card
+              // 4. ZeroPass PRO & Monetization Shortcut Card
               _buildSectionTitle('💎 제로패스 PRO 멤버십 & 프리미엄 기능'),
               AnimatedBuilder(
                 animation: MonetizationService.instance,
@@ -518,11 +517,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   return Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF0F172A),
-                          const Color(0xFF1E293B),
-                        ],
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -532,133 +528,63 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 12,
-                          runSpacing: 8,
+                        Row(
                           children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFBBF24), size: 24),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      '제로패스 PRO 샵',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      isNoAds && isKiosk
-                                          ? '모든 PRO 기능이 활성화되었습니다 (VIP)'
-                                          : '원활한 매장 운영을 위한 평생 소장권 & 광고 제거',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white.withValues(alpha: 0.7),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                await MonetizationService.instance.restorePurchases();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('구매 복원 요청이 완료되었습니다.')),
-                                  );
-                                }
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF94A3B8),
-                                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Text('구매 복원'),
+                              child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFBBF24), size: 26),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isNoAds && isKiosk
+                                        ? 'PRO 멤버십 활성화 완료 (VIP)'
+                                        : '제로패스 PRO 샵 둘러보기',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    isNoAds && isKiosk
+                                        ? '키오스크 및 광고 제거 영구 소장권이 모두 켜져 있습니다.'
+                                        : '무인 태블릿 키오스크 모드 및 평생 광고 제거권을 확인하세요.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 16),
-                        const Divider(color: Color(0xFF334155), height: 1),
-                        const SizedBox(height: 14),
-
-                        // Item 1: 태블릿 자율출결 키오스크 PRO
-                        _buildProStoreItem(
-                          icon: Icons.tablet_mac_rounded,
-                          title: '태블릿 자율출결 키오스크 PRO',
-                          subtitle: '입구 공기계 태블릿에 거치해두고 회원들이 뒷번호로 직접 출결 체크',
-                          priceTag: isKiosk ? '활성화 완료 (영구 소장)' : '₩19,900 (평생 소장)',
-                          isUnlocked: isKiosk,
-                          onTap: () {
-                            if (isKiosk) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
-                              );
-                            } else {
-                              MonetizationService.instance.buyProduct(MonetizationService.productIdKioskPro);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Item 2: 광고 제거권 (영구 소장)
-                        _buildProStoreItem(
-                          icon: Icons.block_flipped,
-                          title: '평생 광고 제거권',
-                          subtitle: '하단 배너 및 모든 팝업 광고 완전 영구 제거',
-                          priceTag: isNoAds ? '활성화 완료 (평생 소장)' : '₩9,900 (평생)',
-                          isUnlocked: isNoAds,
-                          onTap: () {
-                            if (!isNoAds) {
-                              MonetizationService.instance.buyProduct(MonetizationService.productIdRemoveAdsLifetime);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Item 3: 월간 광고 제거 구독권
-                        if (!isNoAds) ...[
-                          _buildProStoreItem(
-                            icon: Icons.autorenew_rounded,
-                            title: '월간 광고 제거 구독',
-                            subtitle: '부담 없는 월정액으로 쾌적하게 사용 (언제든 해지 가능)',
-                            priceTag: '₩1,200 / 월',
-                            isUnlocked: false,
-                            onTap: () {
-                              MonetizationService.instance.buyProduct(MonetizationService.productIdRemoveAdsMonthly);
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-
-                        // Test unlock button for testing
-                        Center(
-                          child: TextButton.icon(
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
                             onPressed: () {
-                              MonetizationService.instance.debugUnlockAll();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('✨ [테스트용] 모든 PRO 기능이 활성화되었습니다!')),
-                              );
+                              HomeNavigationScreen.of(context)?.switchToTab(3); // PRO 샵 탭으로 이동
                             },
-                            icon: const Icon(Icons.flash_on_rounded, size: 14, color: Color(0xFF94A3B8)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF59E0B),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(Icons.shopping_bag_outlined, size: 16),
                             label: const Text(
-                              '개발/테스트 전체 기능 언락 (인앱 검수용)',
-                              style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                              '전용 PRO 샵 탭 바로가기 💎',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
                             ),
                           ),
                         ),
@@ -723,89 +649,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
-  Widget _buildProStoreItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String priceTag,
-    required bool isUnlocked,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: isUnlocked ? const Color(0xFF10B981).withValues(alpha: 0.12) : const Color(0xFF1E293B),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isUnlocked ? const Color(0xFF10B981).withValues(alpha: 0.4) : const Color(0xFF334155),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isUnlocked ? const Color(0xFF10B981).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: isUnlocked ? const Color(0xFF34D399) : Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isUnlocked ? const Color(0xFF10B981) : AppTheme.primaryBlue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  priceTag,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildProfileRow(String label, String value) {
     return Padding(

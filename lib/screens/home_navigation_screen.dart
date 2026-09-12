@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import 'pass_dashboard_screen.dart';
 import 'billing_ledger_screen.dart';
 import 'member_directory_screen.dart';
+import 'pro_store_screen.dart';
 import 'settings_vault_screen.dart';
 import '../widgets/ad_banner_widget.dart';
 
@@ -30,6 +31,7 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
     PassDashboardScreen(),
     BillingLedgerScreen(),
     MemberDirectoryScreen(),
+    ProStoreScreen(),
     SettingsVaultScreen(),
   ];
 
@@ -69,7 +71,9 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
                 });
               },
               backgroundColor: Colors.white,
-              indicatorColor: AppTheme.primaryBlue.withAlpha((255 * 0.12).round()),
+              indicatorColor: _currentIndex == 3
+                  ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
+                  : AppTheme.primaryBlue.withAlpha((255 * 0.12).round()),
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.check_circle_outline),
@@ -85,6 +89,15 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
                   icon: Icon(Icons.people_outline),
                   selectedIcon: Icon(Icons.people, color: AppTheme.primaryBlue),
                   label: '회원 관리',
+                ),
+                NavigationDestination(
+                  icon: Badge(
+                    label: Text('PRO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                    backgroundColor: Color(0xFFF59E0B),
+                    child: Icon(Icons.workspace_premium_outlined),
+                  ),
+                  selectedIcon: Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706)),
+                  label: 'PRO 샵',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.shield_outlined),
