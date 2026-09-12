@@ -816,9 +816,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         child: const Text('자동매칭', style: TextStyle(fontSize: 12)),
                       ),
                     );
-                }).toList(),
-              ),
-          ],
+                  }).toList(),
+                ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),

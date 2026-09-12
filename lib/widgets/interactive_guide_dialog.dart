@@ -355,8 +355,9 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class GuideStepItem {

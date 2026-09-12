@@ -102,20 +102,6 @@ class MonetizationService extends ChangeNotifier {
     }
   }
 
-  /// Manually unlock for testing or promo code
-  Future<void> setDebugUnlock({bool? removeAds, bool? kioskPro}) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (removeAds != null) {
-      _isAdsRemoved = removeAds;
-      await prefs.setBool('is_ads_removed', removeAds);
-      premiumStatusNotifier.value = removeAds;
-    }
-    if (kioskPro != null) {
-      _isKioskProUnlocked = kioskPro;
-      await prefs.setBool('is_kiosk_pro_unlocked', kioskPro);
-    }
-  }
-
   // AdMob Banner Unit ID (Google official sample test IDs)
   static String get bannerAdUnitId {
     if (kIsWeb) return '';
