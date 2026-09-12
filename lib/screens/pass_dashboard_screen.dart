@@ -8,10 +8,12 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/sms_template_service.dart';
 import '../services/coach_mark_service.dart';
+import '../services/monetization_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
+import 'tablet_kiosk_screen.dart';
 
 class PassDashboardScreen extends ConsumerStatefulWidget {
   const PassDashboardScreen({super.key});
@@ -34,6 +36,109 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         HomeNavigationScreen.of(context)?.switchToTab(3); // 설정 탭
       },
     );
+  }
+
+  void _openTabletKioskMode(BuildContext context) {
+    // Check if Kiosk Pro unlocked
+    final isUnlocked = MonetizationService.instance.isKioskProUnlocked;
+
+    if (isUnlocked) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (ctx) => const TabletKioskScreen()),
+      );
+    } else {
+      // Show Kiosk Pro Unlock & Free Trial Offer
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: const [
+              Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 26),
+              SizedBox(width: 8),
+              Text('태블릿 자율출결 키오스크', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.star_rounded, color: Color(0xFF2563EB), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '매장 입구에 거치해 두면 학생들이 직접 뒷번호 4자리만 누르고 입장!',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text('• 1초 출석 체크 + 잔여 회차 자동 차감\n• 즉시 학부모/회원 안심 문자 전송\n• 관리자 비밀번호(0000) 잠금 보호\n• 타사 월 3~5만원 키오스크 대비 0원 유지비',
+                style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text('키오스크 프로 평생 소장권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    Text('19,900원 (1회)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                // Free Trial Run directly!
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const TabletKioskScreen()),
+                );
+              },
+              child: const Text('무료 체험 실행해보기'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await MonetizationService.instance.setDebugUnlock(kioskPro: true);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('🎉 키오스크 프로 모드가 평생 소장권으로 활성화되었습니다!')),
+                  );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (c) => const TabletKioskScreen()),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+              child: const Text('프로 평생 소장권 구매', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -69,6 +174,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
+          // 태블릿 키오스크 모드 진입 버튼 (원장님 핫스팟/거치형)
+          IconButton(
+            icon: const Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue),
+            tooltip: '태블릿 자율출결 키오스크 모드',
+            onPressed: () => _openTabletKioskMode(context),
+          ),
           // 패시 마스코트 얼굴 아이콘으로 실전 가이드 모달 호출
           IconButton(
             icon: Container(

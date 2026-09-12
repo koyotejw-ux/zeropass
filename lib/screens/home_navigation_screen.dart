@@ -4,6 +4,7 @@ import 'pass_dashboard_screen.dart';
 import 'billing_ledger_screen.dart';
 import 'member_directory_screen.dart';
 import 'settings_vault_screen.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class HomeNavigationScreen extends StatefulWidget {
   const HomeNavigationScreen({super.key});
@@ -39,17 +40,21 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.05).round()),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AdBannerWidget(),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha((255 * 0.05).round()),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (index) {
@@ -83,6 +88,8 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 }

@@ -4,11 +4,14 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_navigation_screen.dart';
 import 'screens/studio_setup_wizard_screen.dart';
+import 'services/monetization_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ko_KR', null);
+
+  await MonetizationService.instance.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   final showSetupWizard = !(prefs.getBool('setup_wizard_completed') ?? false);
