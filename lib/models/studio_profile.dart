@@ -4,10 +4,25 @@ class StudioProfile {
   final String bankName;
   final String accountNumber;
   final String accountHolder;
+  final String category;
   final bool autoBankDetectEnabled;
   final String invoiceTemplate;
   final String attendanceTemplate;
   final String departureTemplate;
+
+  static const List<String> businessCategories = [
+    '음악 / 피아노',
+    '입시 / 보습학원',
+    '피트니스 / PT',
+    '필라테스 / 요가',
+    '무용 / 댄스',
+    '태권도 / 무술',
+    '미술 / 도예공방',
+    '수영 / 스포츠',
+    '어학 / 코딩',
+    '스터디룸 / 공간대여',
+    '기타 / 맞춤업종',
+  ];
 
   const StudioProfile({
     required this.studioName,
@@ -15,6 +30,7 @@ class StudioProfile {
     required this.bankName,
     required this.accountNumber,
     required this.accountHolder,
+    this.category = '음악 / 피아노',
     this.autoBankDetectEnabled = true,
     required this.invoiceTemplate,
     required this.attendanceTemplate,
@@ -27,6 +43,7 @@ class StudioProfile {
     String? bankName,
     String? accountNumber,
     String? accountHolder,
+    String? category,
     bool? autoBankDetectEnabled,
     String? invoiceTemplate,
     String? attendanceTemplate,
@@ -38,6 +55,7 @@ class StudioProfile {
       bankName: bankName ?? this.bankName,
       accountNumber: accountNumber ?? this.accountNumber,
       accountHolder: accountHolder ?? this.accountHolder,
+      category: category ?? this.category,
       autoBankDetectEnabled: autoBankDetectEnabled ?? this.autoBankDetectEnabled,
       invoiceTemplate: invoiceTemplate ?? this.invoiceTemplate,
       attendanceTemplate: attendanceTemplate ?? this.attendanceTemplate,
@@ -52,6 +70,7 @@ class StudioProfile {
       'bankName': bankName,
       'accountNumber': accountNumber,
       'accountHolder': accountHolder,
+      'category': category,
       'autoBankDetectEnabled': autoBankDetectEnabled ? 1 : 0,
       'invoiceTemplate': invoiceTemplate,
       'attendanceTemplate': attendanceTemplate,
@@ -66,6 +85,7 @@ class StudioProfile {
       bankName: map['bankName'] as String? ?? '토스뱅크',
       accountNumber: map['accountNumber'] as String? ?? '1000-1234-5678',
       accountHolder: map['accountHolder'] as String? ?? '김원장',
+      category: map['category'] as String? ?? '음악 / 피아노',
       autoBankDetectEnabled: (map['autoBankDetectEnabled'] is int)
           ? (map['autoBankDetectEnabled'] == 1)
           : (map['autoBankDetectEnabled'] as bool? ?? true),
@@ -124,6 +144,7 @@ class StudioProfile {
       bankName: '토스뱅크',
       accountNumber: '1000-2026-8899',
       accountHolder: '김서연',
+      category: '피트니스 / PT',
       autoBankDetectEnabled: true,
       invoiceTemplate: defaultInvoiceTemplate,
       attendanceTemplate: defaultAttendanceTemplate,

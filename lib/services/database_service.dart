@@ -31,12 +31,17 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           try {
             await db.execute('ALTER TABLE members ADD COLUMN payerName TEXT');
+          } catch (_) {}
+        }
+        if (oldVersion < 3) {
+          try {
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN category TEXT DEFAULT "음악 / 피아노"');
           } catch (_) {}
         }
       },
@@ -98,6 +103,7 @@ class DatabaseService {
         bankName TEXT NOT NULL,
         accountNumber TEXT NOT NULL,
         accountHolder TEXT NOT NULL,
+        category TEXT DEFAULT "음악 / 피아노",
         autoBankDetectEnabled INTEGER NOT NULL DEFAULT 1,
         invoiceTemplate TEXT,
         attendanceTemplate TEXT,

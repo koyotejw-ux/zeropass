@@ -21,8 +21,10 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
   final PageController _pageController = PageController();
   int _currentStep = 0;
 
-  // STEP 1: Studio Name
+  // STEP 1: Studio Name & Category
   final TextEditingController _studioNameCtrl = TextEditingController();
+  String _selectedCategory = '음악 / 피아노';
+  final TextEditingController _customCategoryCtrl = TextEditingController();
   final List<String> _studioPresets = [
     '피아노 음악학원',
     '멘토스 수학학원',
@@ -30,6 +32,10 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
     '1:1 바디 PT샵',
     '도예 공방',
     '태권도장',
+    '발레 / 댄스스쿨',
+    '어린이 미술학원',
+    '보컬 / 실용음악',
+    '코딩 / 컴퓨터학원',
   ];
 
   // STEP 2: Bank Account
@@ -61,6 +67,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
   void dispose() {
     _pageController.dispose();
     _studioNameCtrl.dispose();
+    _customCategoryCtrl.dispose();
     _accountNumberCtrl.dispose();
     _accountHolderCtrl.dispose();
     _memberNameCtrl.dispose();
@@ -112,12 +119,16 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
       // 2. Save Studio Profile
       final defaultProfile = StudioProfile.defaultProfile();
+      final finalCategory = _selectedCategory == '기타 / 맞춤업종' && _customCategoryCtrl.text.trim().isNotEmpty
+          ? _customCategoryCtrl.text.trim()
+          : _selectedCategory;
       final studio = StudioProfile(
         studioName: _studioNameCtrl.text.trim().isEmpty ? '나의 프라이빗 스튜디오' : _studioNameCtrl.text.trim(),
         instructorName: _accountHolderCtrl.text.trim().isEmpty ? '대표/원장' : _accountHolderCtrl.text.trim(),
         bankName: _selectedBank,
         accountNumber: _accountNumberCtrl.text.trim().isEmpty ? '3333-01-2345678' : _accountNumberCtrl.text.trim(),
         accountHolder: _accountHolderCtrl.text.trim().isEmpty ? '원장님' : _accountHolderCtrl.text.trim(),
+        category: finalCategory,
         autoBankDetectEnabled: false,
         invoiceTemplate: defaultProfile.invoiceTemplate,
         attendanceTemplate: defaultProfile.attendanceTemplate,
@@ -305,10 +316,58 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             prefixIcon: Icons.storefront_outlined,
             autofocus: true,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           const Text(
-            '자주 사용하는 업종 칩 (터치하면 자동 입력)',
+            '사업장 업종 카테고리',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '선택한 업종에 맞춰 회원 및 출결 관리 기본값이 최적화됩니다.',
+            style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: StudioProfile.businessCategories.map((cat) {
+              final isSelected = _selectedCategory == cat;
+              return ChoiceChip(
+                label: Text(cat, style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppTheme.textPrimary,
+                )),
+                selected: isSelected,
+                selectedColor: AppTheme.primaryBlue,
+                backgroundColor: const Color(0xFFF1F5F9),
+                onSelected: (val) {
+                  if (val) {
+                    setState(() {
+                      _selectedCategory = cat;
+                      if (cat != '기타 / 맞춤업종' && _studioNameCtrl.text.isEmpty) {
+                        _studioNameCtrl.text = '나의 $cat';
+                      }
+                    });
+                  }
+                },
+              );
+            }).toList(),
+          ),
+          if (_selectedCategory == '기타 / 맞춤업종') ...[
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: _customCategoryCtrl,
+              label: '직접 입력 카테고리',
+              hint: '예: 바리스타 학원, 가죽 공방, 보컬 레슨',
+              prefixIcon: Icons.category_outlined,
+            ),
+          ],
+          const SizedBox(height: 18),
+
+          const Text(
+            '자주 사용하는 상호명 칩 (터치하면 자동 입력)',
             style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 10),

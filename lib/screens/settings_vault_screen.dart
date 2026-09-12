@@ -159,6 +159,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   children: [
                     _buildProfileRow('상호 / 브랜드명', profile.studioName),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
+                    _buildProfileRow('사업장 업종 카테고리', profile.category),
+                    const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow('원장 / 강사명', profile.instructorName),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow('수납 계좌 정보', '${profile.bankName} ${profile.accountNumber}'),
@@ -541,85 +543,143 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     final accountCtrl = TextEditingController(text: current.accountNumber);
     final holderCtrl = TextEditingController(text: current.accountHolder);
 
+    String selectedCategory = current.category;
+    final customCategoryCtrl = TextEditingController();
+    bool isCustom = !StudioProfile.businessCategories.contains(current.category) || current.category == '기타 / 맞춤업종';
+    if (isCustom && current.category != '기타 / 맞춤업종') {
+      customCategoryCtrl.text = current.category;
+    }
+
     AppBottomSheet.show(
       context: context,
+      maxHeightRatio: 0.92,
       builder: (ctx) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 6),
-              const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-              const SizedBox(height: 18),
-              AppTextField(
-                controller: studioCtrl,
-                label: '상호명 / 스튜디오명',
-                hint: '예: 제로패스 스튜디오',
-                prefixIcon: Icons.storefront_outlined,
-              ),
-              const SizedBox(height: 14),
-              AppTextField(
-                controller: instructorCtrl,
-                label: '원장 / 대표 강사명',
-                hint: '예: 홍길동 원장',
-                prefixIcon: Icons.badge_outlined,
-              ),
-              const SizedBox(height: 14),
-              AppTextField(
-                controller: bankCtrl,
-                label: '수납 은행명',
-                hint: '예: 토스뱅크, 국민은행',
-                prefixIcon: Icons.account_balance_outlined,
-              ),
-              const SizedBox(height: 14),
-              AppTextField(
-                controller: accountCtrl,
-                label: '수납 계좌번호',
-                hint: '예: 3333-01-2345678',
-                prefixIcon: Icons.credit_card_outlined,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 14),
-              AppTextField(
-                controller: holderCtrl,
-                label: '예금주 성명',
-                hint: '예: 홍길동',
-                prefixIcon: Icons.person_outline,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final updated = current.copyWith(
-                      studioName: studioCtrl.text.trim(),
-                      instructorName: instructorCtrl.text.trim(),
-                      bankName: bankCtrl.text.trim(),
-                      accountNumber: accountCtrl.text.trim(),
-                      accountHolder: holderCtrl.text.trim(),
-                    );
-                    await ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('스튜디오 프로필이 저장되었습니다.')),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 18),
+                  AppTextField(
+                    controller: studioCtrl,
+                    label: '상호명 / 스튜디오명',
+                    hint: '예: 제로패스 스튜디오',
+                    prefixIcon: Icons.storefront_outlined,
                   ),
-                  child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
+                  const SizedBox(height: 14),
+
+                  // Business Category Selector
+                  const Text(
+                    '사업장 업종 카테고리',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: StudioProfile.businessCategories.map((cat) {
+                      final isSelected = selectedCategory == cat;
+                      return ChoiceChip(
+                        label: Text(cat, style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                        )),
+                        selected: isSelected,
+                        selectedColor: AppTheme.primaryBlue,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          if (val) {
+                            setModalState(() {
+                              selectedCategory = cat;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  if (selectedCategory == '기타 / 맞춤업종') ...[
+                    const SizedBox(height: 10),
+                    AppTextField(
+                      controller: customCategoryCtrl,
+                      label: '직접 입력 카테고리',
+                      hint: '예: 바리스타 학원, 가죽 공방, 보컬 레슨',
+                      prefixIcon: Icons.category_outlined,
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+
+                  AppTextField(
+                    controller: instructorCtrl,
+                    label: '원장 / 대표 강사명',
+                    hint: '예: 홍길동 원장',
+                    prefixIcon: Icons.badge_outlined,
+                  ),
+                  const SizedBox(height: 14),
+                  AppTextField(
+                    controller: bankCtrl,
+                    label: '수납 은행명',
+                    hint: '예: 토스뱅크, 국민은행',
+                    prefixIcon: Icons.account_balance_outlined,
+                  ),
+                  const SizedBox(height: 14),
+                  AppTextField(
+                    controller: accountCtrl,
+                    label: '수납 계좌번호',
+                    hint: '예: 3333-01-2345678',
+                    prefixIcon: Icons.credit_card_outlined,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 14),
+                  AppTextField(
+                    controller: holderCtrl,
+                    label: '예금주 성명',
+                    hint: '예: 홍길동',
+                    prefixIcon: Icons.person_outline,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final finalCat = selectedCategory == '기타 / 맞춤업종' && customCategoryCtrl.text.trim().isNotEmpty
+                            ? customCategoryCtrl.text.trim()
+                            : selectedCategory;
+                        final updated = current.copyWith(
+                          studioName: studioCtrl.text.trim(),
+                          instructorName: instructorCtrl.text.trim(),
+                          bankName: bankCtrl.text.trim(),
+                          accountNumber: accountCtrl.text.trim(),
+                          accountHolder: holderCtrl.text.trim(),
+                          category: finalCat,
+                        );
+                        await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('스튜디오 프로필 및 카테고리가 저장되었습니다.')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
