@@ -21,45 +21,13 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
         backgroundColor: const Color(0xFF0F172A),
         elevation: 0,
         toolbarHeight: isLandscape ? 50 : 56,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
-                  SizedBox(width: 4),
-                  Text(
-                    'PRO 구독',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                '프리미엄 멤버십',
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isLandscape ? 16 : 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
+        title: Text(
+          'PRO 멤버십 구독',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isLandscape ? 17 : 19,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         actions: [
           TextButton.icon(
