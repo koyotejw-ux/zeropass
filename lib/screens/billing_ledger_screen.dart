@@ -416,25 +416,26 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Action Buttons
+          // Action Buttons: 반응형 및 위계 구조 재배치
+          // 1행: 보조 알림 액션 (청구문자 + 1초리마인드 2분할, 또는 완료 시 청구문자 단독)
           Row(
             children: [
-              // 1. One-touch SMS native send
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
-                  icon: const Icon(Icons.sms_outlined, size: 15),
-                  label: const Text('청구문자'),
+                  icon: const Icon(Icons.sms_outlined, size: 16),
+                  label: const Text(
+                    '청구문자',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-
-              // 2. 1-Second Reminder SMS (Only for Unpaid)
               if (!isPaid) ...[
+                const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
@@ -448,48 +449,69 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         body: reminderMsg,
                       );
                     },
-                    icon: const Icon(Icons.notifications_active_outlined, size: 15, color: Color(0xFFD97706)),
-                    label: const Text('1초리마인드', style: TextStyle(color: Color(0xFFD97706), fontSize: 12.5)),
+                    icon: const Icon(Icons.notifications_active_outlined, size: 16, color: Color(0xFFD97706)),
+                    label: const Text(
+                      '1초 리마인드',
+                      style: TextStyle(
+                        color: Color(0xFFD97706),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFFDE68A)),
                       backgroundColor: const Color(0xFFFFFBEB),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
               ],
+            ],
+          ),
+          const SizedBox(height: 8),
 
-              // 3. One-tap Mark as Paid (with Receipt SMS option)
-              if (!isPaid)
-                Expanded(
-                  child: ElevatedButton.icon(
+          // 2행: 핵심 주요 액션 (수납확인 / 영수 확인 문자) - 1줄 전체를 시원하게 차지
+          SizedBox(
+            width: double.infinity,
+            child: !isPaid
+                ? ElevatedButton.icon(
                     onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
-                    icon: const Icon(Icons.check, size: 15, color: Colors.white),
-                    label: const Text('수납확인'),
+                    icon: const Icon(Icons.check_circle_outline, size: 18, color: Colors.white),
+                    label: const Text(
+                      '수납확인 완료 처리',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.softMint,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: OutlinedButton.icon(
+                  )
+                : OutlinedButton.icon(
                     onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
-                    icon: const Icon(Icons.receipt_outlined, size: 16, color: AppTheme.softMint),
-                    label: const Text('영수 확인 문자'),
+                    icon: const Icon(Icons.receipt_long_outlined, size: 17, color: AppTheme.softMint),
+                    label: const Text(
+                      '수납완료 영수증 문자 전송',
+                      style: TextStyle(
+                        color: AppTheme.softMint,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.softMint,
-                      side: const BorderSide(color: AppTheme.softMint),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: const BorderSide(color: AppTheme.softMint, width: 1.2),
+                      backgroundColor: AppTheme.softMint.withValues(alpha: 0.04),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                ),
-            ],
           ),
         ],
       ),
