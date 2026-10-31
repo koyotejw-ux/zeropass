@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MonetizationService extends ChangeNotifier {
+/// 최고 수익률(High eCPM)을 위한 AdMob 전면/오프닝/보상형/배너 통합 관리 서비스
+class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   static final MonetizationService instance = MonetizationService._internal();
   MonetizationService._internal();
 
@@ -26,15 +28,82 @@ class MonetizationService extends ChangeNotifier {
     productSubAllInOneYearly,
   };
 
+  // 실서비스 발급 애드몹 광고 단위 ID
+  static const String _adMobAppOpenId = 'ca-app-pub-1377047377548020/4836032810';
+  static const String _adMobBannerId = 'ca-app-pub-1377047377548020/4097666213';
+  static const String _adMobInterstitialId = 'ca-app-pub-1377047377548020/8371953140';
+  static const String _adMobRewardedId = 'ca-app-pub-1377047377548020/6149114482';
+  static const String _adMobRewardedInterstitialId = 'ca-app-pub-1377047377548020/8921697616';
+  static const String _adMobNativeId = 'ca-app-pub-1377047377548020/9883425494';
+
+  // 구글 공식 테스트 단위 ID (디버그 모드용)
+  static const String _testBannerId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String _testInterstitialId = 'ca-app-pub-3940256099942544/1033173712';
+  static const String _testAppOpenId = 'ca-app-pub-3940256099942544/9257395921';
+  static const String _testRewardedId = 'ca-app-pub-3940256099942544/5224354917';
+  static const String _testRewardedInterstitialId = 'ca-app-pub-3940256099942544/5354046379';
+  static const String _testNativeId = 'ca-app-pub-3940256099942544/2247696110';
+
   bool _isAdsRemoved = false;
   bool _isKioskProUnlocked = false;
-  bool get isAdsRemoved => _isAdsRemoved;
+  DateTime? _rewardedAdFreeUntil;
+
+  bool get isAdsRemoved {
+    if (_isAdsRemoved) return true;
+    if (_rewardedAdFreeUntil != null && DateTime.now().isBefore(_rewardedAdFreeUntil!)) {
+      return true;
+    }
+    return false;
+  }
+
   bool get isKioskProUnlocked => _isKioskProUnlocked;
 
+  // 광고 객체 및 로드 상태
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdLoaded = false;
+  DateTime? _lastInterstitialShownTime;
+  int _actionCounter = 0; // 스마트 빈도 조절용 액션 카운터
+
+  AppOpenAd? _appOpenAd;
+  bool _isAppOpenAdLoaded = false;
+  bool _isShowingAppOpenAd = false;
+  DateTime? _appOpenAdLoadTime;
+
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdLoaded = false;
 
   final ValueNotifier<bool> premiumStatusNotifier = ValueNotifier<bool>(false);
+
+  // 단위 ID Getter (릴리즈/디버그 자동 분기)
+  static String get bannerAdUnitId {
+    if (kIsWeb) return '';
+    return kReleaseMode ? _adMobBannerId : _testBannerId;
+  }
+
+  static String get interstitialAdUnitId {
+    if (kIsWeb) return '';
+    return kReleaseMode ? _adMobInterstitialId : _testInterstitialId;
+  }
+
+  static String get appOpenAdUnitId {
+    if (kIsWeb) return '';
+    return kReleaseMode ? _adMobAppOpenId : _testAppOpenId;
+  }
+
+  static String get rewardedAdUnitId {
+    if (kIsWeb) return '';
+    return kReleaseMode ? _adMobRewardedId : _testRewardedId;
+  }
+
+  static String get rewardedInterstitialAdUnitId {
+    if (kIsWeb) return '';
+    return kReleaseMode ? _adMobRewardedInterstitialId : _testRewardedInterstitialId;
+  }
+
+  static String get nativeAdUnitId {
+    if (kIsWeb) return '';
+    return kReleaseMode ? _adMobNativeId : _testNativeId;
+  }
 
   Future<void> debugUnlockAll() async {
     await setDebugUnlock(adsRemoved: true, kioskPro: true);
@@ -54,23 +123,48 @@ class MonetizationService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 보상형 광고 시청 후 24시간 동안 광고 제거 혜택 부여
+  Future<void> grantTemporaryAdFreeHours(int hours) async {
+    final expiry = DateTime.now().add(Duration(hours: hours));
+    _rewardedAdFreeUntil = expiry;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('rewarded_ad_free_until', expiry.toIso8601String());
+    premiumStatusNotifier.value = true;
+    notifyListeners();
+  }
+
   Future<void> initialize() async {
+    WidgetsBinding.instance.addObserver(this);
+
     final prefs = await SharedPreferences.getInstance();
     _isAdsRemoved = prefs.getBool('is_ads_removed') ?? false;
     _isKioskProUnlocked = prefs.getBool('is_kiosk_pro_unlocked') ?? false;
-    premiumStatusNotifier.value = _isAdsRemoved;
+
+    final adFreeStr = prefs.getString('rewarded_ad_free_until');
+    if (adFreeStr != null) {
+      final expiry = DateTime.tryParse(adFreeStr);
+      if (expiry != null && DateTime.now().isBefore(expiry)) {
+        _rewardedAdFreeUntil = expiry;
+      }
+    }
+
+    premiumStatusNotifier.value = isAdsRemoved;
 
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       try {
         await MobileAds.instance.initialize();
-        if (!_isAdsRemoved) {
+
+        // 고수익 풀(Fill) 보장을 위한 백그라운드 프리로드
+        if (!isAdsRemoved) {
+          _loadAppOpenAd();
           _loadInterstitialAd();
+          _loadRewardedAd();
         }
       } catch (e) {
         debugPrint('AdMob initialize error: $e');
       }
 
-      // Initialize IAP listener
+      // 인앱 결제 스트림 초기화
       try {
         final Stream<List<PurchaseDetails>> purchaseUpdated = InAppPurchase.instance.purchaseStream;
         purchaseUpdated.listen(_listenToPurchaseUpdated, onDone: () {}, onError: (error) {
@@ -82,6 +176,218 @@ class MonetizationService extends ChangeNotifier {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // 앱으로 복귀했을 때 앱 오프닝 광고 트리거 (수익 극대화)
+      showAppOpenAdIfAvailable();
+    }
+  }
+
+  // ==========================================
+  // 1. 앱 오프닝 광고 (App Open Ad) - 초고단가 eCPM
+  // ==========================================
+  void _loadAppOpenAd() {
+    if (isAdsRemoved || kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+
+    AppOpenAd.load(
+      adUnitId: appOpenAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: AppOpenAdLoadCallback(
+        onAdLoaded: (ad) {
+          _appOpenAd = ad;
+          _isAppOpenAdLoaded = true;
+          _appOpenAdLoadTime = DateTime.now();
+          debugPrint('AppOpenAd loaded successfully');
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('AppOpenAd failed to load: $error');
+          _isAppOpenAdLoaded = false;
+          _appOpenAd = null;
+        },
+      ),
+    );
+  }
+
+  bool _isAppOpenAdValid() {
+    return _isAppOpenAdLoaded &&
+        _appOpenAd != null &&
+        _appOpenAdLoadTime != null &&
+        DateTime.now().difference(_appOpenAdLoadTime!).inHours < 4;
+  }
+
+  void showAppOpenAdIfAvailable() {
+    if (isAdsRemoved || _isShowingAppOpenAd) return;
+
+    if (!_isAppOpenAdValid()) {
+      _loadAppOpenAd();
+      return;
+    }
+
+    _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+        _isShowingAppOpenAd = true;
+      },
+      onAdDismissedFullScreenContent: (ad) {
+        _isShowingAppOpenAd = false;
+        ad.dispose();
+        _appOpenAd = null;
+        _isAppOpenAdLoaded = false;
+        _loadAppOpenAd(); // 다음 복귀를 위해 프리로드
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        _isShowingAppOpenAd = false;
+        ad.dispose();
+        _appOpenAd = null;
+        _isAppOpenAdLoaded = false;
+        _loadAppOpenAd();
+      },
+    );
+
+    _appOpenAd!.show();
+  }
+
+  // ==========================================
+  // 2. 전면 광고 (Interstitial Ad) - 스마트 쿨다운 & 최고 수익
+  // ==========================================
+  void _loadInterstitialAd() {
+    if (isAdsRemoved || kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+
+    InterstitialAd.load(
+      adUnitId: interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+          _isInterstitialAdLoaded = true;
+          debugPrint('InterstitialAd loaded successfully');
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('InterstitialAd failed to load: $error');
+          _isInterstitialAdLoaded = false;
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  /// 주요 사용자 액션(수납 저장, 명단 등록, 백업 등) 발생 시 호출
+  /// [forceShow]: 쿨다운 무시 강제 노출 여부
+  /// [cooldownSeconds]: 기본 40초 쿨다운
+  /// [actionThreshold]: N회 액션마다 1회 노출
+  void triggerSmartInterstitialAd({
+    bool forceShow = false,
+    int cooldownSeconds = 40,
+    int actionThreshold = 2,
+    VoidCallback? onDismissed,
+  }) {
+    if (isAdsRemoved) {
+      onDismissed?.call();
+      return;
+    }
+
+    _actionCounter++;
+    final now = DateTime.now();
+    final bool isCooldownOver = _lastInterstitialShownTime == null ||
+        now.difference(_lastInterstitialShownTime!).inSeconds >= cooldownSeconds;
+
+    final bool shouldShow = forceShow || (_actionCounter >= actionThreshold && isCooldownOver);
+
+    if (shouldShow && _isInterstitialAdLoaded && _interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _lastInterstitialShownTime = DateTime.now();
+          _actionCounter = 0;
+          _loadInterstitialAd();
+          onDismissed?.call();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _loadInterstitialAd();
+          onDismissed?.call();
+        },
+      );
+      _interstitialAd!.show();
+      _isInterstitialAdLoaded = false;
+      _interstitialAd = null;
+    } else {
+      if (!_isInterstitialAdLoaded) {
+        _loadInterstitialAd();
+      }
+      onDismissed?.call();
+    }
+  }
+
+  // ==========================================
+  // 3. 보상형 광고 (Rewarded Ad) - 자발적 시청 & 최고 eCPM
+  // ==========================================
+  void _loadRewardedAd() {
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+
+    RewardedAd.load(
+      adUnitId: rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+          _isRewardedAdLoaded = true;
+          debugPrint('RewardedAd loaded successfully');
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('RewardedAd failed to load: $error');
+          _isRewardedAdLoaded = false;
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
+  bool get isRewardedAdAvailable => _isRewardedAdLoaded && _rewardedAd != null;
+
+  /// 보상형 광고 재생 (성공 시 onRewarded 콜백 실행)
+  void showRewardedAd({
+    required VoidCallback onRewarded,
+    VoidCallback? onDismissed,
+    VoidCallback? onFailed,
+  }) {
+    if (_isRewardedAdLoaded && _rewardedAd != null) {
+      bool earned = false;
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _rewardedAd = null;
+          _isRewardedAdLoaded = false;
+          _loadRewardedAd();
+          if (earned) {
+            onRewarded();
+          } else {
+            onDismissed?.call();
+          }
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _rewardedAd = null;
+          _isRewardedAdLoaded = false;
+          _loadRewardedAd();
+          onFailed?.call();
+        },
+      );
+
+      _rewardedAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+          earned = true;
+        },
+      );
+    } else {
+      _loadRewardedAd();
+      onFailed?.call();
+    }
+  }
+
+  // ==========================================
+  // 4. 인앱 결제 (IAP) 처리
+  // ==========================================
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
     for (final purchaseDetails in purchaseDetailsList) {
       if (purchaseDetails.status == PurchaseStatus.purchased || purchaseDetails.status == PurchaseStatus.restored) {
@@ -112,70 +418,6 @@ class MonetizationService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // AdMob Banner Unit ID (Google official sample test IDs)
-  static String get bannerAdUnitId {
-    if (kIsWeb) return '';
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111'; // Android sample banner
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/2934735716'; // iOS sample banner
-    }
-    return '';
-  }
-
-  // AdMob Interstitial Unit ID (Google official sample test IDs)
-  static String get interstitialAdUnitId {
-    if (kIsWeb) return '';
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712'; // Android sample interstitial
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/4411468910'; // iOS sample interstitial
-    }
-    return '';
-  }
-
-  void _loadInterstitialAd() {
-    if (_isAdsRemoved || kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
-
-    InterstitialAd.load(
-      adUnitId: interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialAdLoaded = true;
-        },
-        onAdFailedToLoad: (error) {
-          _isInterstitialAdLoaded = false;
-          _interstitialAd = null;
-        },
-      ),
-    );
-  }
-
-  /// Show interstitial ad periodically (e.g. after bulk invoice creation or export)
-  void showInterstitialAdIfReady() {
-    if (_isAdsRemoved) return;
-    if (_isInterstitialAdLoaded && _interstitialAd != null) {
-      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _loadInterstitialAd();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _loadInterstitialAd();
-        },
-      );
-      _interstitialAd!.show();
-      _isInterstitialAdLoaded = false;
-      _interstitialAd = null;
-    } else {
-      _loadInterstitialAd();
-    }
-  }
-
-  /// Fetch IAP products from Google Play
   Future<List<ProductDetails>> fetchProducts() async {
     final bool available = await InAppPurchase.instance.isAvailable();
     if (!available) return [];
@@ -184,29 +426,32 @@ class MonetizationService extends ChangeNotifier {
     return response.productDetails;
   }
 
-  /// Buy a product by string ID
   Future<void> buyProduct(String productId) async {
     try {
       final available = await InAppPurchase.instance.isAvailable();
-      if (!available) {
-        debugPrint('In-App Purchase not available');
-        return;
-      }
+      if (!available) return;
+
       final response = await InAppPurchase.instance.queryProductDetails({productId});
       if (response.productDetails.isNotEmpty) {
         final product = response.productDetails.first;
         final purchaseParam = PurchaseParam(productDetails: product);
         await InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
-      } else {
-        debugPrint('Product not found: $productId');
       }
     } catch (e) {
       debugPrint('buyProduct error: $e');
     }
   }
 
-  /// Restore purchases
   Future<void> restorePurchases() async {
     await InAppPurchase.instance.restorePurchases();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _interstitialAd?.dispose();
+    _appOpenAd?.dispose();
+    _rewardedAd?.dispose();
+    super.dispose();
   }
 }

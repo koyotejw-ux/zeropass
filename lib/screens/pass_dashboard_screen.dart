@@ -6,11 +6,14 @@ import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/chosung_search_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/monetization_service.dart';
+import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/digital_pass_card_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
 import 'tablet_kiosk_screen.dart';
@@ -23,8 +26,16 @@ class PassDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   String _selectedGroup = '전체 그룹';
-  String _statusFilter = '전체'; // '전체', '수업 전', '체크 완료'
+  String _statusFilter = '전체'; // '전체', '출결 대기', '체크 완료', '만료 임박'
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _openInteractiveGuide(BuildContext context) {
     StepByStepPracticeGuideDialog.show(
@@ -143,6 +154,84 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     }
   }
 
+  void _openIndustryPresetDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        '업종 맞춤 1초 프리셋',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '대표님의 업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
+                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              ...IndustryPreset.values.map(
+                (preset) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: AppTheme.chipBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.business_center_outlined, color: AppTheme.primaryBlue, size: 20),
+                  ),
+                  title: Text(preset.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                  subtitle: Text('${preset.sampleStudioName} (${preset.category})', style: const TextStyle(fontSize: 11.5)),
+                  trailing: const Icon(Icons.chevron_right, size: 20),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await StarterPresetService.applyPreset(preset);
+                    ref.invalidate(membersProvider);
+                    ref.invalidate(passRecordsProvider);
+                    ref.invalidate(studioProfileProvider);
+                    ref.invalidate(invoicesProvider);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('🎉 ${preset.label} 맞춤 환경으로 1초 만에 세팅되었습니다!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(membersProvider);
@@ -182,6 +271,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
+          // 업종 맞춤 1초 프리셋 버튼
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706)),
+            tooltip: '업종 맞춤 프리셋 (학원/PT/필라테스/체육관)',
+            onPressed: () => _openIndustryPresetDialog(context),
+          ),
           // 태블릿 키오스크 모드 진입 버튼 (원장님 핫스팟/거치형)
           IconButton(
             icon: const Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue),
@@ -240,44 +335,124 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               // Extract all groups
               final groups = ['전체 그룹', ...members.map((m) => m.groupName).toSet()];
 
-              // Filter members list
+              // Calculate attendance percentage
+              final totalMembersCount = members.length;
+              final attendanceRate = totalMembersCount > 0 ? (checkedMemberIds.length / totalMembersCount) : 0.0;
+
+              // Filter members list using ChosungSearchService and Status filters
               var filteredMembers = members.where((m) {
                 if (_selectedGroup != '전체 그룹' && m.groupName != _selectedGroup) {
                   return false;
                 }
                 final isChecked = checkedMemberIds.contains(m.id);
-                if (_statusFilter == '수업 전' && isChecked) return false;
+                if (_statusFilter == '출결 대기' && isChecked) return false;
                 if (_statusFilter == '체크 완료' && !isChecked) return false;
+                if (_statusFilter == '만료 임박') {
+                  final isSession = m.billingType == BillingType.sessionBased;
+                  if (!isSession || m.remainingSessions > 2) return false;
+                }
+                if (_searchQuery.isNotEmpty) {
+                  if (!ChosungSearchService.matchesAny([m.name, m.phone, m.groupName, m.payerName, m.memo], _searchQuery)) {
+                    return false;
+                  }
+                }
                 return true;
               }).toList();
 
               return Column(
                 children: [
-                  // 1. Metric Summary Card (Toss Financial Aesthetics)
+                  // 0. Korean Chosung & Real-time Smart Search Bar
                   Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: isLandscape ? 4 : 8,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
                     child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: isLandscape ? 8 : 14,
-                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        decoration: InputDecoration(
+                          hintText: '이름·초성(ㅇㄷㅎ)·뒷번호 4자리 검색',
+                          hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
+                          prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 21),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 1. Metric Summary Card with Attendance Progress Bar (Toss Financial Aesthetics)
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: isLandscape ? 4 : 6,
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.all(isLandscape ? 10 : 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: AppTheme.cardShadow,
                         border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: isLandscape),
-                          _buildDivider(),
-                          _buildStatItem('지각/보강', lateCount, AppTheme.warning, isCompact: isLandscape),
-                          _buildDivider(),
-                          _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue, isCompact: isLandscape),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '오늘 출석률 ${(attendanceRate * 100).toInt()}%',
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '${checkedMemberIds.length}명 / 총 $totalMembersCount명',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: attendanceRate,
+                              minHeight: 7,
+                              backgroundColor: const Color(0xFFE2E8F0),
+                              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.softMint),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: isLandscape),
+                              _buildDivider(),
+                              _buildStatItem('지각/보강', lateCount, AppTheme.warning, isCompact: isLandscape),
+                              _buildDivider(),
+                              _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue, isCompact: isLandscape),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -286,10 +461,10 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   // 2. Filter Chips
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                     child: Row(
                       children: [
-                        ...groups.take(4).map((g) {
+                        ...groups.take(5).map((g) {
                           final isSelected = _selectedGroup == g;
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
@@ -304,7 +479,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                               backgroundColor: Colors.white,
                               selectedColor: AppTheme.primaryDark,
                               labelStyle: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected ? Colors.white : AppTheme.textPrimary,
                               ),
@@ -323,13 +498,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           onSelected: (val) => setState(() => _statusFilter = val),
                           itemBuilder: (ctx) => [
                             const PopupMenuItem(value: '전체', child: Text('전체 보기')),
-                            const PopupMenuItem(value: '수업 전', child: Text('수업 전 (출결 대기)')),
-                            const PopupMenuItem(value: '체크 완료', child: Text('체크 완료')),
+                            const PopupMenuItem(value: '출결 대기', child: Text('출결 대기만')),
+                            const PopupMenuItem(value: '체크 완료', child: Text('체크 완료만')),
+                            const PopupMenuItem(value: '만료 임박', child: Text('만료 임박(2회 이하)')),
                           ],
                           child: Chip(
                             label: Row(
                               children: [
-                                Text('상태: $_statusFilter'),
+                                Text('필터: $_statusFilter'),
                                 const Icon(Icons.keyboard_arrow_down, size: 16),
                               ],
                             ),
@@ -526,6 +702,40 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ),
                     ),
                   ],
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  DigitalPassCardDialog.show(
+                    context: context,
+                    member: member,
+                    studio: studio,
+                    latestRecord: todayPass,
+                  );
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.badge_outlined, size: 13, color: AppTheme.primaryBlue),
+                      SizedBox(width: 4),
+                      Text(
+                        '패스 카드',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryBlue,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

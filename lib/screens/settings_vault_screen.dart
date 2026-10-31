@@ -7,6 +7,7 @@ import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
 import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
+import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
@@ -48,6 +49,84 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       onOpenSettings: () {
         HomeNavigationScreen.of(context)?.switchToTab(3); // 설정 탭
       },
+    );
+  }
+
+  void _openIndustryPresetDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        '업종 맞춤 1초 프리셋',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '대표님의 업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
+                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              ...IndustryPreset.values.map(
+                (preset) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: AppTheme.chipBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.business_center_outlined, color: AppTheme.primaryBlue, size: 20),
+                  ),
+                  title: Text(preset.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                  subtitle: Text('${preset.sampleStudioName} (${preset.category})', style: const TextStyle(fontSize: 11.5)),
+                  trailing: const Icon(Icons.chevron_right, size: 20),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await StarterPresetService.applyPreset(preset);
+                    ref.invalidate(membersProvider);
+                    ref.invalidate(passRecordsProvider);
+                    ref.invalidate(studioProfileProvider);
+                    ref.invalidate(invoicesProvider);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('🎉 ${preset.label} 맞춤 환경으로 1초 만에 세팅되었습니다!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -155,6 +234,73 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // 0-1. Industry 1-Second Preset Card
+              _buildSectionTitle('🎯 업종 맞춤 1초 프리셋 & 실전 데이터 로드'),
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '원클릭 업종 프리셋 전환',
+                                style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                '학원 · PT · 필라테스 · 태권도 · 음악공방 맞춤 세팅',
+                                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      '선택하신 업종에 맞춰 출결 안내 문구, 수강료/회비 용어, 맞춤 샘플 회원 데이터가 즉시 구성됩니다.',
+                      style: TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.45),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openIndustryPresetDialog(context),
+                        icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                        label: const Text('내 업종 맞춤 프리셋 선택하기'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD97706),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
                     ),
                   ],
                 ),

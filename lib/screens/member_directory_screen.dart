@@ -6,12 +6,14 @@ import '../models/member.dart';
 import '../models/invoice.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/chosung_search_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/digital_pass_card_dialog.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
   const MemberDirectoryScreen({super.key});
@@ -42,6 +44,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(membersProvider);
+    final studio = ref.watch(studioProfileProvider).value ?? StudioProfile.defaultProfile();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -79,10 +82,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         data: (members) {
           final filtered = members.where((m) {
             if (_searchQuery.isEmpty) return true;
-            final q = _searchQuery.toLowerCase();
-            return m.name.toLowerCase().contains(q) ||
-                m.phone.contains(q) ||
-                m.groupName.toLowerCase().contains(q);
+            return ChosungSearchService.matchesAny(
+              [m.name, m.phone, m.groupName, m.payerName, m.memo],
+              _searchQuery,
+            );
           }).toList();
 
           return Column(
@@ -101,9 +104,9 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                     controller: _searchController,
                     onChanged: (val) => setState(() => _searchQuery = val.trim()),
                     decoration: InputDecoration(
-                      hintText: '이름, 연락처, 그룹명으로 검색',
+                      hintText: '이름, 초성(ㄱㄷㅎ), 연락처, 그룹명 검색',
                       hintStyle: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-                      prefixIcon: const Icon(Icons.search, color: AppTheme.textSecondary),
+                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 21),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear, size: 18),
@@ -158,7 +161,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final member = filtered[index];
-                          return _buildMemberTile(context, member);
+                          return _buildMemberTile(context, member, studio);
                         },
                       ),
               ),
@@ -179,7 +182,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
     );
   }
 
-  Widget _buildMemberTile(BuildContext context, Member member) {
+  Widget _buildMemberTile(BuildContext context, Member member, StudioProfile studio) {
     final initials = member.name.isNotEmpty ? member.name.substring(0, 1) : '?';
     final isSession = member.billingType == BillingType.sessionBased;
     final isExpiring = isSession && member.remainingSessions <= 1;
@@ -200,7 +203,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Top Section: Avatar + Name and Group across full width (끝까지 길게 확장)
+              // 1. Top Section: Avatar + Name, Group, and Digital Pass Card Button
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -248,6 +251,39 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      DigitalPassCardDialog.show(
+                        context: context,
+                        member: member,
+                        studio: studio,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.badge_outlined, size: 13, color: AppTheme.primaryBlue),
+                          SizedBox(width: 4),
+                          Text(
+                            '패스',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

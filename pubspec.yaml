@@ -1,5 +1,5 @@
 name: zeropass
-description: "A new Flutter project."
+description: "체크앤페이(Check & Pay) - 1초 원터치 출결관리 & 학원·교습소·피트니스·공부방 수납 출석체크 키오스크 앱"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -79,6 +79,19 @@ flutter:
   assets:
     - assets/icons/
     - assets/store/
+    - assets/fonts/
+
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/PretendardStd-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PretendardStd-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PretendardStd-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PretendardStd-Bold.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: true
