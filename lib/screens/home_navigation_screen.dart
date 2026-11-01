@@ -42,6 +42,8 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0 ||
         View.of(context).viewInsets.bottom > 0;
 
+    final isCompact = MediaQuery.of(context).size.width < 360;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -67,7 +69,7 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
             child: NavigationBar(
               height: isLandscape ? 54 : 68,
               selectedIndex: _currentIndex,
-              labelBehavior: isLandscape 
+              labelBehavior: (isLandscape || isCompact)
                   ? NavigationDestinationLabelBehavior.onlyShowSelected 
                   : NavigationDestinationLabelBehavior.alwaysShow,
               onDestinationSelected: (index) {

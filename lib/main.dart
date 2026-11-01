@@ -83,6 +83,11 @@ class _ZeroPassAppState extends State<ZeroPassApp> {
       title: '체크앤페이 - 무료 출결관리 & 학원·교습소·PT 회원 수납 출석체크 키오스크',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      builder: (context, child) => MediaQuery.withClampedTextScaling(
+        minScaleFactor: 0.85,
+        maxScaleFactor: 1.15,
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: homeScreen,
     );
   }
