@@ -16,6 +16,7 @@ import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
+import 'onboarding_screen.dart';
 import 'tablet_kiosk_screen.dart';
 
 class PassDashboardScreen extends ConsumerStatefulWidget {
@@ -38,16 +39,135 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   }
 
   void _openInteractiveGuide(BuildContext context) {
-    StepByStepPracticeGuideDialog.show(
-      context,
-      onOpenAddMember: () {
-        HomeNavigationScreen.of(context)?.switchToTab(2); // 회원 관리 탭
-      },
-      onOpenSettings: () {
-        HomeNavigationScreen.of(context)?.switchToTab(3); // 설정 탭
-      },
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF1E293B),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '펭귄 패시의 가이드 센터 🐧',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '원하시는 안내 가이드를 선택해주세요',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              tileColor: const Color(0xFFF8FAFC),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryBlue),
+              ),
+              title: const Text(
+                '서비스 첫걸음 핵심 소개 (온보딩)',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              ),
+              subtitle: const Text(
+                '서버비 0원 출결, 무료 문자, 스마트 장부 기능 둘러보기',
+                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => OnboardingScreen(onFinish: () => Navigator.pop(context))),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              tileColor: const Color(0xFFF8FAFC),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.softMint.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.checklist_rounded, color: AppTheme.softMint),
+              ),
+              title: const Text(
+                '스텝바이스텝 실전 연습 코칭',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              ),
+              subtitle: const Text(
+                '스튜디오 정보 설정부터 실제 회원 등록 및 출결 체크 실습',
+                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
+              onTap: () {
+                Navigator.pop(ctx);
+                StepByStepPracticeGuideDialog.show(
+                  context,
+                  onOpenAddMember: () {
+                    HomeNavigationScreen.of(context)?.switchToTab(2);
+                  },
+                  onOpenSettings: () {
+                    HomeNavigationScreen.of(context)?.switchToTab(3);
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
     );
   }
+
 
   void _openTabletKioskMode(BuildContext context) {
     // Check if Kiosk Pro unlocked
