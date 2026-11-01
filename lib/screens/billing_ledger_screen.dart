@@ -248,8 +248,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             Expanded(
                               child: Text(
                                 '회차 만료 임박 (${expiringMembers.length}명): ${expiringMembers.map((m) => m.name.split(' ').first).join(', ')}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                softWrap: true,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,

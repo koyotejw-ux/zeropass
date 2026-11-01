@@ -196,11 +196,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildGuideStep('1', '출결 & 이용 체크', '첫 번째 탭에서 [체크인] 누르면 출석 일시 기록 & 잔여 회차가 1회 자동 차감됩니다.'),
+                    _buildGuideStep(Icons.check_circle_rounded, '출결 & 이용 체크', '첫 번째 탭에서 [체크인] 누르면 출석 일시 기록 & 잔여 회차가 1회 자동 차감됩니다.'),
                     const SizedBox(height: 8),
-                    _buildGuideStep('2', '비용 0원 안심 문자', '체크 완료 후 [출석/이용 알림]을 누르면 기본 문자 앱으로 보호자/회원에게 즉시 전송됩니다.'),
+                    _buildGuideStep(Icons.mark_chat_read_rounded, '비용 0원 안심 문자', '체크 완료 후 [출석/이용 알림]을 누르면 기본 문자 앱으로 보호자/회원에게 즉시 전송됩니다.'),
                     const SizedBox(height: 8),
-                    _buildGuideStep('3', '청구서 & 수납 장부', '두 번째 탭에서 ${profile.feeTitle} 청구서를 만들고, 은행 입금 감지로 미납/완납을 자동 정리하세요.'),
+                    _buildGuideStep(Icons.receipt_long_rounded, '청구서 & 수납 장부', '두 번째 탭에서 ${profile.feeTitle} 청구서를 만들고, 은행 입금 감지로 미납/완납을 자동 정리하세요.'),
                     const SizedBox(height: 14),
                     Wrap(
                       spacing: 8,
@@ -307,7 +307,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
 
               // 0. Global Language & Currency Localization Card
-              _buildSectionTitle('🌐 글로벌 언어 및 통화 설정 (Language & Currency)'),
+              _buildSectionTitle('글로벌 언어 및 통화 설정 (Language & Currency)', icon: Icons.language_rounded),
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -733,7 +733,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               const SizedBox(height: 24),
 
               // 4. CheckAndPay PRO & Monetization Shortcut Card
-              _buildSectionTitle('💎 체크앤페이 PRO 멤버십 & 프리미엄 기능'),
+              _buildSectionTitle('체크앤페이 PRO 멤버십 & 프리미엄 기능', icon: Icons.workspace_premium_rounded, iconColor: const Color(0xFFD97706)),
               AnimatedBuilder(
                 animation: MonetizationService.instance,
                 builder: (context, _) {
@@ -809,7 +809,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                             ),
                             icon: const Icon(Icons.shopping_bag_outlined, size: 16),
                             label: const Text(
-                              '전용 PRO 샵 탭 바로가기 💎',
+                              '전용 PRO 샵 탭 바로가기',
                               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
                             ),
                           ),
@@ -861,16 +861,25 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {IconData? icon, Color? iconColor}) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.textSecondary,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: iconColor ?? AppTheme.primaryBlue),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1153,16 +1162,20 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
-  Widget _buildGuideStep(String num, String title, String desc) {
+  Widget _buildGuideStep(IconData icon, String title, String desc) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 10,
-          backgroundColor: Colors.white.withAlpha((255 * 0.25).round()),
-          child: Text(
-            num,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha((255 * 0.25).round()),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 14,
+            color: Colors.white,
           ),
         ),
         const SizedBox(width: 8),

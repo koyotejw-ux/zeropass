@@ -228,8 +228,70 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text('• 1초 출석 체크 + 잔여 회차 자동 차감\n• 즉시 학부모/회원 안심 문자 전송\n• 관리자 비밀번호(0000) 잠금 보호\n• 타사 월 3~5만원 키오스크 대비 0원 유지비',
-                  style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.bolt_rounded, size: 16, color: AppTheme.primaryBlue),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '1초 출석 체크 + 잔여 회차 자동 차감',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.mark_chat_read_outlined, size: 16, color: AppTheme.softMint),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '즉시 학부모/회원 안심 문자 전송',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lock_outline_rounded, size: 16, color: Color(0xFFF59E0B)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '관리자 비밀번호(0000) 잠금 보호',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.savings_outlined, size: 16, color: Color(0xFF10B981)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '타사 월 3~5만원 키오스크 대비 0원 유지비',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -375,7 +437,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        toolbarHeight: isLandscape ? 56 : 74,
+        toolbarHeight: isLandscape ? 56 : 72,
+        titleSpacing: 16,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -384,61 +447,79 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               Text(
                 DateFormat('M월 d일 EEEE', 'ko_KR').format(DateTime.now()),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
             ],
-            Text(
-              '원터치 출결 체크',
-              style: TextStyle(
-                fontSize: isLandscape ? 18 : 22,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary,
-                letterSpacing: -0.8,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '원터치 출결 체크',
+                style: TextStyle(
+                  fontSize: isLandscape ? 17 : 20.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                  letterSpacing: -0.6,
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          // 업종 맞춤 1초 프리셋 버튼
+          // 1. 업종 맞춤 1초 프리셋 벡터 버튼
           IconButton(
-            icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706)),
+            icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
             tooltip: '업종 맞춤 프리셋 (학원/PT/필라테스/체육관)',
+            visualDensity: VisualDensity.compact,
             onPressed: () => _openIndustryPresetDialog(context),
           ),
-          // 태블릿 키오스크 모드 진입 버튼 (원장님 핫스팟/거치형)
+          // 2. 태블릿 키오스크 모드 진입 벡터 버튼
           IconButton(
-            icon: const Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue),
+            icon: const Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 22),
             tooltip: '태블릿 자율출결 키오스크 모드',
+            visualDensity: VisualDensity.compact,
             onPressed: () => _openTabletKioskMode(context),
           ),
-          // 패시 마스코트 얼굴 아이콘으로 실전 가이드 모달 호출
-          IconButton(
-            icon: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/icons/splash_icon.png',
-                  fit: BoxFit.cover,
+          // 3. 더보기 벡터 팝업 메뉴 (가이드 & 알림 도움말 통합)
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textPrimary, size: 22),
+            tooltip: '추가 메뉴',
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            onSelected: (val) {
+              if (val == 'guide') {
+                _openInteractiveGuide(context);
+              } else if (val == 'help') {
+                _showAttendanceHelpDialog(context);
+              }
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'guide',
+                child: Row(
+                  children: [
+                    Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue, size: 18),
+                    SizedBox(width: 10),
+                    Text('실전 가이드 튜토리얼', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                  ],
                 ),
               ),
-            ),
-            tooltip: '패시의 스텝바이스텝 가이드',
-            onPressed: () => _openInteractiveGuide(context),
+              const PopupMenuItem(
+                value: 'help',
+                child: Row(
+                  children: [
+                    Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint, size: 18),
+                    SizedBox(width: 10),
+                    Text('출결 문자 알림 안내', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.mark_chat_read_outlined),
-            tooltip: '출결 알림 안내',
-            onPressed: () => _showAttendanceHelpDialog(context),
-          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: membersAsync.when(

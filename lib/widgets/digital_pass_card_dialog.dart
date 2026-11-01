@@ -49,7 +49,7 @@ class DigitalPassCardDialog extends StatelessWidget {
         : '이용 구분: 월 정기권';
 
     final text = '''
-[${studio.studioName}] 모바일 스마트 출결패스 🎫
+[${studio.studioName}] 모바일 스마트 출결패스
 ━━━━━━━━━━━━━━━━
 • 회원명: ${member.name}
 • 등록반: ${member.groupName}
@@ -152,16 +152,18 @@ class DigitalPassCardDialog extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      studio.studioName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.3,
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        studio.studioName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.3,
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(

@@ -438,25 +438,29 @@ class _SignatureKeyVisualHeroState extends State<SignatureKeyVisualHero> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
               ],

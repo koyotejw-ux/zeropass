@@ -98,11 +98,7 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
                   label: LocalizationService.tr('tab_members'),
                 ),
                 NavigationDestination(
-                  icon: const Badge(
-                    label: Text('PRO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-                    backgroundColor: Color(0xFFF59E0B),
-                    child: Icon(Icons.workspace_premium_outlined),
-                  ),
+                  icon: const Icon(Icons.workspace_premium_outlined, color: Color(0xFFD97706)),
                   selectedIcon: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706)),
                   label: LocalizationService.tr('tab_pro'),
                 ),

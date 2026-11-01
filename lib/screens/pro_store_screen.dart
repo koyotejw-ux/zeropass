@@ -169,7 +169,8 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               // Plan 1: [Best] 올인원 VIP 패키지 (월간 ₩5,900 / 연간 ₩59,000)
               _buildStoreProductCard(
                 context: context,
-                badgeText: '★ 가장 인기 있는 올인원 VIP',
+                badgeIcon: Icons.star_rounded,
+                badgeText: '가장 인기 있는 올인원 VIP',
                 badgeColor: const Color(0xFFF59E0B),
                 icon: Icons.auto_awesome_rounded,
                 iconColor: const Color(0xFFFBBF24),
@@ -208,6 +209,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               // Plan 2: 태블릿 자율출결 키오스크 단독 구독 (월 ₩4,900)
               _buildStoreProductCard(
                 context: context,
+                badgeIcon: Icons.tablet_mac_rounded,
                 badgeText: '태블릿 무인 출결 전용',
                 badgeColor: const Color(0xFF3B82F6),
                 icon: Icons.tablet_mac_rounded,
@@ -240,6 +242,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               // Plan 3: 광고 제거 단독 구독 (월 ₩1,900)
               _buildStoreProductCard(
                 context: context,
+                badgeIcon: Icons.block_flipped,
                 badgeText: '광고 없는 쾌적함',
                 badgeColor: const Color(0xFF10B981),
                 icon: Icons.block_flipped,
@@ -356,6 +359,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
 
   Widget _buildStoreProductCard({
     required BuildContext context,
+    IconData? badgeIcon,
     required String badgeText,
     required Color badgeColor,
     required IconData icon,
@@ -404,13 +408,22 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
                 ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: badgeColor,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (badgeIcon != null) ...[
+                      Icon(badgeIcon, size: 12, color: badgeColor),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      badgeText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: badgeColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Container(

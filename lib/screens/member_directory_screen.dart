@@ -334,9 +334,16 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                           ),
                         ],
                       ),
-                      Text(
-                        '•  등록 ${DateFormat("yy.MM.dd").format(member.registeredAt)}',
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 12, color: AppTheme.textTertiary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '등록 ${DateFormat("yy.MM.dd").format(member.registeredAt)}',
+                            style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -475,9 +482,39 @@ class _MemberDetailModal extends ConsumerWidget {
                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            '${member.groupName} • ${member.phone}${member.payerName != null && member.payerName!.isNotEmpty ? ' (입금자: ${member.payerName})' : ''}',
-                            style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.chipBackground,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  member.groupName,
+                                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                                ),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.phone_outlined, size: 12, color: AppTheme.textSecondary),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    member.phone,
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
+                              if (member.payerName != null && member.payerName!.isNotEmpty)
+                                Text(
+                                  '(입금자: ${member.payerName})',
+                                  style: const TextStyle(fontSize: 11.5, color: AppTheme.textTertiary),
+                                ),
+                            ],
                           ),
                         ],
                       ),
