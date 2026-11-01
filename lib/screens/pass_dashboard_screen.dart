@@ -490,18 +490,22 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0 ||
                   View.of(context).viewInsets.bottom > 0;
               final isSearching = _searchQuery.isNotEmpty || _searchFocusNode.hasFocus;
-              final hideHero = isLandscape || isKeyboardOpen || isSearching;
 
-              return Column(
-                children: [
-                  // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar)
-                  if (!hideHero)
-                    SignatureKeyVisualHero(
-                      members: members,
-                      todayRecords: todayRecords,
-                      onOpenKiosk: () => _openTabletKioskMode(context),
-                      onOpenGuide: () => _openInteractiveGuide(context),
-                    ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isShortHeight = constraints.maxHeight < 560;
+                  final hideHero = isLandscape || isKeyboardOpen || isSearching || isShortHeight;
+
+                  return Column(
+                    children: [
+                      // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar)
+                      if (!hideHero)
+                        SignatureKeyVisualHero(
+                          members: members,
+                          todayRecords: todayRecords,
+                          onOpenKiosk: () => _openTabletKioskMode(context),
+                          onOpenGuide: () => _openInteractiveGuide(context),
+                        ),
 
                   // 0. Korean Chosung & Real-time Smart Search Bar
                   Padding(
@@ -693,13 +697,16 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                           )
                                       : null,
                                   icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
-                                  label: Text(
-                                    isSearchActive
-                                        ? (targetCount > 0
-                                            ? '검색 결과 일괄 출석 ($targetCount명)'
-                                            : '검색 회원 출석 완료됨')
-                                        : (isLandscape ? '남은 회원 일괄 출석' : '남은 회원 일괄 출석 완료'),
-                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                                  label: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      isSearchActive
+                                          ? (targetCount > 0
+                                              ? '검색 결과 일괄 출석 ($targetCount명)'
+                                              : '검색 회원 출석 완료됨')
+                                          : (isLandscape ? '남은 회원 일괄 출석' : '남은 회원 일괄 출석 완료'),
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                                    ),
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primaryDark,
@@ -720,9 +727,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             },
           );
         },
-      ),
-    );
-  }
+      );
+    },
+  ),
+);
+}
 
   Widget _buildStatItem(String label, int count, Color color, {bool isCompact = false}) {
     return Column(

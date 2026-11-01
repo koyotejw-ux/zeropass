@@ -409,11 +409,14 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
               const Spacer(),
 
-              // Keypad
+              // Keypad (FittedBox to prevent overflow on small screens)
               Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 340),
-                  child: _buildKeypad(),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 340),
+                    child: _buildKeypad(),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -425,53 +428,68 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildLandscapeKiosk(StudioProfile studio, List<Member> members, String dateStr, String timeStr) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-      child: Column(
-        children: [
-          // Top Header
-          _buildTopHeader(studio, dateStr, timeStr),
-          const SizedBox(height: 10),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 20).clamp(0.0, double.infinity),
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  // Top Header
+                  _buildTopHeader(studio, dateStr, timeStr),
+                  const SizedBox(height: 8),
 
-          // Main 2-Column Split
-          Expanded(
-            child: Row(
-              children: [
-                // Left Column: Mascot, Info, Digit Display, Status
-                Expanded(
-                  flex: 5,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildQuickTestChips(members),
-                      const SizedBox(height: 14),
-                      _buildPromptAndMascot(),
-                      const SizedBox(height: 20),
-                      _buildDigitBoxes(),
-                      if (_statusMessage != null) ...[
-                        const SizedBox(height: 14),
-                        _buildStatusCard(),
+                  // Main 2-Column Split
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Left Column: Mascot, Info, Digit Display, Status
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildQuickTestChips(members),
+                              const SizedBox(height: 10),
+                              _buildPromptAndMascot(),
+                              const SizedBox(height: 14),
+                              _buildDigitBoxes(),
+                              if (_statusMessage != null) ...[
+                                const SizedBox(height: 10),
+                                _buildStatusCard(),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+
+                        // Right Column: Keypad (FittedBox to prevent any vertical/horizontal overflow)
+                        Expanded(
+                          flex: 4,
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 320),
+                                child: _buildKeypad(),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 32),
-
-                // Right Column: Keypad
-                Expanded(
-                  flex: 4,
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 320),
-                      child: _buildKeypad(),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -479,41 +497,53 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF1E293B),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-              ),
-              child: ClipOval(
-                child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  studio.studioName,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -0.4,
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF1E293B),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                ),
+                child: ClipOval(
+                  child: Transform.scale(
+                    scale: 1.18,
+                    child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
                   ),
                 ),
-                Text(
-                  '$dateStr  $timeStr',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 무인 출결 키오스크',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    Text(
+                      '$dateStr  $timeStr',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         IconButton(
           icon: Container(
             padding: const EdgeInsets.all(8),

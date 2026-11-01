@@ -318,16 +318,22 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 spacing: 8,
                 runSpacing: 6,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(Icons.phone_iphone_outlined, size: 14, color: AppTheme.textSecondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        member.phone,
-                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.phone_iphone_outlined, size: 14, color: AppTheme.textSecondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            member.phone,
+                            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
                       Text(
                         '•  등록 ${DateFormat("yy.MM.dd").format(member.registeredAt)}',
                         style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
@@ -503,10 +509,13 @@ class _MemberDetailModal extends ConsumerWidget {
                       );
                     },
                     icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                    label: const Text('+10회 충전'),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('+10회 충전'),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                     ),
                   ),
                 ),
@@ -536,9 +545,12 @@ class _MemberDetailModal extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.send_outlined, size: 16),
-                  label: const Text('청구서 즉시 발송'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('청구서 즉시 발송'),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                   ),
                 ),
               ),

@@ -248,6 +248,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             Expanded(
                               child: Text(
                                 '회차 만료 임박 (${expiringMembers.length}명): ${expiringMembers.map((m) => m.name.split(' ').first).join(', ')}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -348,13 +350,19 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected ? AppTheme.cardShadow : null,
           ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                ),
+              ),
             ),
           ),
         ),
@@ -470,12 +478,15 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
                   icon: const Icon(Icons.sms_outlined, size: 16),
-                  label: const Text(
-                    '청구문자',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '청구문자',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -496,18 +507,21 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                       );
                     },
                     icon: const Icon(Icons.notifications_active_outlined, size: 16, color: Color(0xFFD97706)),
-                    label: const Text(
-                      '1초 리마인드',
-                      style: TextStyle(
-                        color: Color(0xFFD97706),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '1초 리마인드',
+                        style: TextStyle(
+                          color: Color(0xFFD97706),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFFDE68A)),
                       backgroundColor: const Color(0xFFFFFBEB),
-                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
