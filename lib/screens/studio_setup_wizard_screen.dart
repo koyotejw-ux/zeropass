@@ -254,7 +254,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                         )
                       : Text(
-                          _currentStep == 2 ? '등록 완료하고 시작하기 🎉' : '다음으로 넘어가기',
+                          _currentStep == 2 ? '등록 완료하고 시작하기' : '다음으로 넘어가기',
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                         ),
                 ),

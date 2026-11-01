@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ class AttendanceCelebration {
   final bool isDemo;
   final bool isSuccess;
   final String smsMessage;
+  final String? photoPath;
 
   const AttendanceCelebration({
     required this.digits,
@@ -27,6 +29,7 @@ class AttendanceCelebration {
     required this.isDemo,
     required this.isSuccess,
     required this.smsMessage,
+    this.photoPath,
   });
 }
 
@@ -197,6 +200,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         isDemo: false,
         isSuccess: true,
         smsMessage: '${member.name}님이 학원에 정상 출석하였습니다.',
+        photoPath: member.photoPath,
       );
 
       _celebrationTimer?.cancel();
@@ -528,71 +532,115 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildQuickTestChips(List<Member> members) {
+    // Unique test PINs deduplicated cleanly
+    final seenPins = <String>{'1234', '0000'};
+    final items = <_QuickPinItem>[
+      const _QuickPinItem(pin: '1234', tag: '체험 PIN', color: Color(0xFF38BDF8)),
+      const _QuickPinItem(pin: '0000', tag: '관리자 PIN', color: Color(0xFFFBBF24)),
+    ];
+
+    for (final m in members) {
+      final clean = m.phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final last4 = clean.length >= 4 ? clean.substring(clean.length - 4) : clean;
+      if (last4.length == 4 && !seenPins.contains(last4)) {
+        seenPins.add(last4);
+        items.add(_QuickPinItem(pin: last4, tag: m.name, color: const Color(0xFF34D399)));
+        if (items.length >= 5) break;
+      }
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildQuickChip('💡 체험: 1234', '1234', const Color(0xFF38BDF8)),
-          const SizedBox(width: 8),
-          _buildQuickChip('🔐 관리자: 0000', '0000', const Color(0xFFFBBF24)),
-          if (members.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            ...members.take(3).map((m) {
-              final clean = m.phone.replaceAll(RegExp(r'[^0-9]'), '');
-              final last4 = clean.length >= 4 ? clean.substring(clean.length - 4) : clean;
-              if (last4.isEmpty) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _buildQuickChip('👤 ${m.name}: $last4', last4, const Color(0xFF34D399)),
-              );
-            }),
-          ],
-        ],
+        children: items.map((item) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: _buildQuickPinBadge(item),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildQuickChip(String label, String digits, Color accentColor) {
-    return ActionChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w800,
-          color: accentColor,
+  Widget _buildQuickPinBadge(_QuickPinItem item) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _digits = item.pin;
+            _statusMessage = null;
+          });
+          _processCheckIn();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: item.color.withValues(alpha: 0.55), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: item.color.withValues(alpha: 0.12),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                item.tag,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: item.color.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  item.pin,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: item.color,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      backgroundColor: accentColor.withValues(alpha: 0.12),
-      side: BorderSide(color: accentColor.withValues(alpha: 0.35)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onPressed: () {
-        HapticFeedback.lightImpact();
-        setState(() {
-          _digits = digits;
-          _statusMessage = null;
-        });
-        _processCheckIn();
-      },
     );
   }
 
   Widget _buildPromptAndMascot() {
-    return Column(
+    return const Column(
       children: [
-        const Text(
-          '반가워요! 전화번호 뒷자리 4자리를 눌러주세요 🐧',
+        Text(
+          '전화번호 뒷자리 4자리를 입력해주세요',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 16.5,
+            fontSize: 17,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          '터치 즉시 출석이 기록되고 부모님께 안심 문자가 전송돼요',
+        SizedBox(height: 5),
+        Text(
+          '터치 즉시 출석이 기록되고 부모님께 안심 문자가 전송됩니다',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
         ),
@@ -610,34 +658,44 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           margin: const EdgeInsets.symmetric(horizontal: 6),
-          width: 52,
-          height: 62,
+          width: 56,
+          height: 66,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isFilled ? const Color(0xFF38BDF8) : const Color(0xFF334155),
-              width: isFilled ? 2.2 : 1.2,
+              color: isFilled ? const Color(0xFF38BDF8) : const Color(0xFF475569),
+              width: isFilled ? 2.4 : 1.4,
             ),
             boxShadow: isFilled
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                      blurRadius: 10,
+                      color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+                      blurRadius: 12,
                       spreadRadius: 1,
                     ),
                   ]
                 : [],
           ),
-          child: Text(
-            digitChar,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
+          child: isFilled
+              ? Text(
+                  digitChar,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                )
+              : const Text(
+                  '—',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
         );
       }),
     );
@@ -819,15 +877,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           width: double.infinity,
           height: double.infinity,
           decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -0.2),
-              radius: 1.25,
-              colors: [
-                Color(0xFF063A27), // Cyber Emerald Core Glow
-                Color(0xFF091F18),
-                Color(0xFF040D12), // Deep Obsidian Abyss
-              ],
-            ),
+            color: Color(0xFF0F172A), // Clean, simple high-end slate void
           ),
           child: SafeArea(
             child: LayoutBuilder(
@@ -851,19 +901,22 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
+                              color: const Color(0xFF1E293B),
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ClipOval(
-                                  child: Image.asset(
-                                    'assets/icons/splash_icon.png',
-                                    width: 22,
-                                    height: 22,
-                                    fit: BoxFit.cover,
+                                  child: Transform.scale(
+                                    scale: 1.18,
+                                    child: Image.asset(
+                                      'assets/icons/splash_icon.png',
+                                      width: 22,
+                                      height: 22,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -879,7 +932,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -895,76 +948,57 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
-                          // 2. Animated Concentric Ripple Rings & 3D Mascot Check Badge
+                          // 2. Avatar Circle: Member Photo if registered, else Edge-to-edge Penguin
                           Stack(
-                            alignment: Alignment.center,
+                            alignment: Alignment.bottomRight,
                             children: [
-                              // Ripple Ring 2
                               Container(
-                                width: isLandscape ? 130 : 160,
-                                height: isLandscape ? 130 : 160,
+                                width: isLandscape ? 90 : 108,
+                                height: isLandscape ? 90 : 108,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.08),
-                                  border: Border.all(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                                    width: 1.5,
-                                  ),
+                                  color: const Color(0xFF1E293B),
+                                  border: Border.all(color: const Color(0xFF10B981), width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.35),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              // Ripple Ring 1
-                              Container(
-                                width: isLandscape ? 100 : 120,
-                                height: isLandscape ? 100 : 120,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.16),
-                                  border: Border.all(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.45),
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                              // Center Mascot Avatar
-                              Stack(
-                                alignment: Alignment.bottomRight,
-                                children: [
-                                  Container(
-                                    width: isLandscape ? 74 : 88,
-                                    height: isLandscape ? 74 : 88,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFF0F172A),
-                                      border: Border.all(color: const Color(0xFF10B981), width: 3),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.6),
-                                          blurRadius: 28,
-                                          spreadRadius: 4,
+                                child: ClipOval(
+                                  child: celebration.photoPath != null &&
+                                          celebration.photoPath!.isNotEmpty &&
+                                          File(celebration.photoPath!).existsSync()
+                                      ? Image.file(
+                                          File(celebration.photoPath!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Transform.scale(
+                                          scale: 1.18,
+                                          child: Image.asset(
+                                            'assets/icons/splash_icon.png',
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                    child: ClipOval(
-                                      child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
-                                    ),
-                                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
-                                  ),
-                                ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
                               ),
                             ],
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 22),
 
                           // 3. Huge 전면 4자리 출결 번호 Display
                           Column(
@@ -988,19 +1022,12 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                     height: isLandscape ? 64 : 74,
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0F172A).withValues(alpha: 0.95),
-                                      borderRadius: BorderRadius.circular(18),
+                                      color: const Color(0xFF1E293B),
+                                      borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: const Color(0xFF10B981),
-                                        width: 2.5,
+                                        width: 1.8,
                                       ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.5),
-                                          blurRadius: 18,
-                                          spreadRadius: 2,
-                                        ),
-                                      ],
                                     ),
                                     child: Text(
                                       d,
@@ -1020,7 +1047,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
                           // 4. Main Celebratory Announcement & Member Name
                           Text(
-                            '🎉 ${celebration.memberName}',
+                            celebration.memberName,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: isLandscape ? 24 : 28,
@@ -1094,8 +1121,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                       Expanded(
                                         child: Text(
                                           celebration.isDemo
-                                              ? '💡 스마트 체험 시뮬레이션: 가상 1회 차감 및 알림 발송 완료'
-                                              : '📱 학부모님 안심 알림(문자) 전송 완료',
+                                              ? '스마트 체험 시뮬레이션: 가상 1회 차감 및 알림 발송 완료'
+                                              : '학부모님 안심 알림(문자) 전송 완료',
                                           style: TextStyle(
                                             color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
                                             fontSize: 12.5,
@@ -1168,4 +1195,16 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     ),
   );
   }
+}
+
+class _QuickPinItem {
+  final String pin;
+  final String tag;
+  final Color color;
+
+  const _QuickPinItem({
+    required this.pin,
+    required this.tag,
+    required this.color,
+  });
 }

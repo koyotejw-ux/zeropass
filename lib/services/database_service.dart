@@ -31,7 +31,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -42,6 +42,11 @@ class DatabaseService {
         if (oldVersion < 3) {
           try {
             await db.execute('ALTER TABLE studio_profile ADD COLUMN category TEXT DEFAULT "음악 / 피아노"');
+          } catch (_) {}
+        }
+        if (oldVersion < 4) {
+          try {
+            await db.execute('ALTER TABLE members ADD COLUMN photoPath TEXT');
           } catch (_) {}
         }
       },
@@ -62,7 +67,8 @@ class DatabaseService {
         remainingSessions INTEGER NOT NULL,
         memo TEXT,
         payerName TEXT,
-        registeredAt TEXT NOT NULL
+        registeredAt TEXT NOT NULL,
+        photoPath TEXT
       )
     ''');
 

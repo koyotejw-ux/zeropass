@@ -32,10 +32,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       CoachMarkDialog.showIfFirstTime(
         context: context,
         coachKey: CoachMarkService.keySettingsTab,
-        title: '로컬 100% 보안 금고 🛡️',
+        title: '로컬 100% 보안 금고',
         message: '제로패스는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
         tip: '스튜디오 상호명, 수납 계좌번호, 자동 문자 양식 편집도 모두 여기서 관리하실 수 있습니다.',
-        buttonText: '안심하고 사용할게요! 🔒',
+        buttonText: '안심하고 사용할게요',
       );
     });
   }
@@ -115,7 +115,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('🎉 ${preset.label} 맞춤 환경으로 1초 만에 세팅되었습니다!'),
+                          content: Text('${preset.label} 맞춤 환경으로 세팅되었습니다.'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -240,7 +240,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
 
               // 0-1. Industry 1-Second Preset Card
-              _buildSectionTitle('🎯 업종 맞춤 1초 프리셋 & 실전 데이터 로드'),
+              _buildSectionTitle('업종 맞춤 프리셋 & 실전 데이터 로드'),
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(18),
@@ -1118,7 +1118,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('🎉 백업 데이터가 완벽하게 복원되었습니다!'),
+                            content: Text('백업 데이터가 복원되었습니다.'),
                             backgroundColor: AppTheme.softMint,
                             behavior: SnackBarBehavior.floating,
                           ),

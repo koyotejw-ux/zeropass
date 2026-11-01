@@ -73,7 +73,7 @@ class DigitalPassCardDialog extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('📋 출결패스 정보가 클립보드에 복사되었습니다.'),
+        content: Text('출결패스 정보가 클립보드에 복사되었습니다.'),
         duration: Duration(seconds: 2),
       ),
     );

@@ -39,16 +39,20 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0 ||
+        View.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!isLandscape) const AdBannerWidget(),
+      bottomNavigationBar: isKeyboardOpen
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isLandscape) const AdBannerWidget(),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,

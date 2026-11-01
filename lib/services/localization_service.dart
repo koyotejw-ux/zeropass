@@ -290,10 +290,10 @@ class LocalizationService {
 
     // Kiosk
     'kiosk_prompt': {
-      'ko': '반가워요! 전화번호 뒷자리 4자리를 눌러주세요 🐧',
-      'en': 'Welcome! Please enter the last 4 digits of your phone 🐧',
-      'ja': 'ようこそ！電話番号の下4桁を入力してください 🐧',
-      'es': '¡Bienvenido! Ingrese los últimos 4 dígitos de su teléfono 🐧',
+      'ko': '전화번호 뒷자리 4자리를 입력해주세요',
+      'en': 'Please enter the last 4 digits of your phone',
+      'ja': '電話番号の下4桁を入力してください',
+      'es': 'Ingrese los últimos 4 dígitos de su teléfono',
     },
     'kiosk_exit_prompt': {
       'ko': '키오스크 종료 (관리자)',

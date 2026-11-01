@@ -14,7 +14,7 @@ class CoachMarkDialog extends StatelessWidget {
     required this.title,
     required this.message,
     this.tip,
-    this.buttonText = '알겠어요, 해볼게요! ✨',
+    this.buttonText = '확인했습니다',
     this.onConfirm,
   });
 
@@ -24,7 +24,7 @@ class CoachMarkDialog extends StatelessWidget {
     required String title,
     required String message,
     String? tip,
-    String buttonText = '알겠어요, 해볼게요! ✨',
+    String buttonText = '확인했습니다',
     VoidCallback? onConfirm,
   }) async {
     final should = await CoachMarkService.shouldShow(coachKey);
@@ -91,7 +91,7 @@ class CoachMarkDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                '패시의 꿀팁 코칭 💡',
+                '패시의 꿀팁 코칭',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,

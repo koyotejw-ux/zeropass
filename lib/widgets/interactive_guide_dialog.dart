@@ -295,7 +295,7 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('🎉 가상 데이터가 모두 비워졌습니다. 이제 대표님의 진짜 회원을 등록해 보세요!'),
+                          content: Text('가상 데이터가 모두 비워졌습니다. 이제 대표님의 진짜 회원을 등록해 보세요!'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );

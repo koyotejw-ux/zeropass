@@ -16,6 +16,7 @@ class Member {
   final String? memo;
   final String? payerName; // Optional parent/actual depositor name for 100% bank push matching
   final DateTime registeredAt;
+  final String? photoPath; // Local file path or asset URI for member profile photo
 
   const Member({
     required this.id,
@@ -29,6 +30,7 @@ class Member {
     this.memo,
     this.payerName,
     required this.registeredAt,
+    this.photoPath,
   });
 
   Member copyWith({
@@ -43,6 +45,7 @@ class Member {
     String? memo,
     String? payerName,
     DateTime? registeredAt,
+    String? photoPath,
   }) {
     return Member(
       id: id ?? this.id,
@@ -56,6 +59,7 @@ class Member {
       memo: memo ?? this.memo,
       payerName: payerName ?? this.payerName,
       registeredAt: registeredAt ?? this.registeredAt,
+      photoPath: photoPath ?? this.photoPath,
     );
   }
 
@@ -72,6 +76,7 @@ class Member {
       'memo': memo,
       'payerName': payerName,
       'registeredAt': registeredAt.toIso8601String(),
+      'photoPath': photoPath,
     };
   }
 
@@ -88,6 +93,7 @@ class Member {
       memo: map['memo'] as String?,
       payerName: map['payerName'] as String?,
       registeredAt: DateTime.parse(map['registeredAt'] as String),
+      photoPath: map['photoPath'] as String?,
     );
   }
 }

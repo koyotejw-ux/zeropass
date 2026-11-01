@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/member.dart';
 import '../models/invoice.dart';
@@ -33,10 +36,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       CoachMarkDialog.showIfFirstTime(
         context: context,
         coachKey: CoachMarkService.keyMemberTab,
-        title: '수강생(회원) 명부 관리 📋',
+        title: '수강생(회원) 명부 관리',
         message: '등록된 회원들의 남은 회차와 수업 그룹, 출결 이력을 한눈에 볼 수 있는 공간이에요.\n\n새로운 학생이나 회원이 등록하면 언제든 우측 하단 [+ 회원 등록]으로 10초 만에 추가하세요!',
         tip: '회원 카드를 터치하면 출결 타임라인 확인, 회차 충전(+10회), 청구서 즉시 발송이 가능해요.',
-        buttonText: '회원 명부 둘러보기 🚀',
+        buttonText: '회원 명부 둘러보기',
       );
     });
   }
@@ -58,7 +61,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               showDialog(
                 context: context,
                 builder: (c) => AlertDialog(
-                  title: const Text('💡 회원 관리 & 실제 데이터 안내'),
+                  title: const Text('회원 관리 및 데이터 안내'),
                   content: const SingleChildScrollView(
                     child: Text(
                       '1. 우측 하단의 [+ 신규 회원 등록] 버튼으로 실제 운영하시는 학생/회원 정보를 바로 추가할 수 있습니다.\n'
@@ -207,16 +210,34 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppTheme.chipBackground,
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryDark,
-                      ),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.chipBackground,
+                      border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                    ),
+                    child: ClipOval(
+                      child: member.photoPath != null &&
+                              member.photoPath!.isNotEmpty &&
+                              File(member.photoPath!).existsSync()
+                          ? Image.file(
+                              File(member.photoPath!),
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                            )
+                          : Center(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primaryDark,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -386,19 +407,77 @@ class _MemberDetailModal extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    member.name,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${member.groupName} • ${member.phone}${member.payerName != null && member.payerName!.isNotEmpty ? ' (입금자: ${member.payerName})' : ''}',
-                    style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _updatePhoto(context, ref, member),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.chipBackground,
+                              border: Border.all(color: AppTheme.borderSubtle, width: 1.2),
+                            ),
+                            child: ClipOval(
+                              child: member.photoPath != null &&
+                                      member.photoPath!.isNotEmpty &&
+                                      File(member.photoPath!).existsSync()
+                                  ? Image.file(
+                                      File(member.photoPath!),
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        member.name.isNotEmpty ? member.name.substring(0, 1) : '?',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.primaryDark,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.primaryBlue,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 10, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            member.name,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${member.groupName} • ${member.phone}${member.payerName != null && member.payerName!.isNotEmpty ? ' (입금자: ${member.payerName})' : ''}',
+                            style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -536,6 +615,66 @@ class _MemberDetailModal extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _updatePhoto(BuildContext context, WidgetRef ref, Member member) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text('${member.name} 사진 관리', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 14),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
+              title: const Text('카메라로 직접 촬영'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final picker = ImagePicker();
+                final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85, maxWidth: 800);
+                if (picked != null) {
+                  final appDir = await getApplicationDocumentsDirectory();
+                  final fileName = 'member_${member.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                  final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+                  await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: savedImage.path));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
+              title: const Text('갤러리에서 사진 선택'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final picker = ImagePicker();
+                final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 800);
+                if (picked != null) {
+                  final appDir = await getApplicationDocumentsDirectory();
+                  final fileName = 'member_${member.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                  final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+                  await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: savedImage.path));
+                }
+              },
+            ),
+            if (member.photoPath != null && member.photoPath!.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
+                title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: ''));
+                },
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _AddMemberModal extends ConsumerStatefulWidget {
@@ -556,6 +695,75 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
   final _memoController = TextEditingController();
 
   BillingType _billingType = BillingType.sessionBased;
+  String? _photoPath;
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 85, maxWidth: 800);
+      if (picked == null) return;
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'member_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+
+      setState(() {
+        _photoPath = savedImage.path;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('사진 등록 실패: $e')),
+        );
+      }
+    }
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            const Text('회원 사진 등록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 14),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
+              title: const Text('카메라로 직접 촬영'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
+              title: const Text('갤러리에서 사진 선택'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            if (_photoPath != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
+                title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() => _photoPath = null);
+                },
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -581,7 +789,75 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+
+              // Member Photo Picker Avatar
+              Center(
+                child: GestureDetector(
+                  onTap: _showPhotoOptions,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 82,
+                        height: 82,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFF1F5F9),
+                          border: Border.all(color: AppTheme.borderSubtle, width: 1.5),
+                        ),
+                        child: ClipOval(
+                          child: _photoPath != null && File(_photoPath!).existsSync()
+                              ? Image.file(
+                                  File(_photoPath!),
+                                  width: 82,
+                                  height: 82,
+                                  fit: BoxFit.cover,
+                                )
+                              : const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo_rounded, size: 28, color: AppTheme.primaryBlue),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      '사진 등록',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.primaryBlue,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _photoPath != null ? Icons.edit : Icons.add,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Center(
+                child: Text(
+                  '등록된 사진은 키오스크 출석 체크 시 전면에 표시됩니다',
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // Name
               AppTextField(
@@ -720,6 +996,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                         memo: _memoController.text.trim(),
                         payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : null,
                         registeredAt: DateTime.now(),
+                        photoPath: _photoPath,
                       );
 
                       ref.read(membersProvider.notifier).addMember(newMember);

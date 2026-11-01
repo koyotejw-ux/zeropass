@@ -33,10 +33,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       CoachMarkDialog.showIfFirstTime(
         context: context,
         coachKey: CoachMarkService.keyBillingTab,
-        title: '수강료 청구 & 수납 장부 💰',
+        title: '수강료 청구 및 수납 장부',
         message: '매월 나가는 수강료 청구 문자를 0원으로 보내고 입금 내역을 관리할 수 있는 장부예요.\n\n우측 하단 [+]를 누르면 동일 연락처의 형제자매까지 자동 합산하여 청구서를 작성할 수 있어요!',
         tip: '수납이 확인되면 [수납 완료] 버튼을 눌러 계좌이체/카드/현금 결제 수단별로 깔끔하게 장부에 기록하세요.',
-        buttonText: '장부 둘러보기 ✨',
+        buttonText: '장부 둘러보기',
       );
     });
   }
@@ -1175,7 +1175,7 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(
-                    _sendSmsRightNow ? '청구서 등록 및 즉시 문자 발송 ✉️' : '청구서 장부 등록 완료',
+                    _sendSmsRightNow ? '청구서 등록 및 즉시 문자 발송' : '청구서 장부 등록 완료',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
                   ),
                 ),

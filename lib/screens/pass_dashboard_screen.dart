@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,13 +30,23 @@ class PassDashboardScreen extends ConsumerStatefulWidget {
 
 class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
   String _selectedGroup = '전체 그룹';
   String _statusFilter = '전체'; // '전체', '출결 대기', '체크 완료', '만료 임박'
 
   @override
+  void initState() {
+    super.initState();
+    _searchFocusNode.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -71,7 +82,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '펭귄 패시의 가이드 센터 🐧',
+                      '패시 가이드 센터',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -258,7 +269,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 if (ctx.mounted) Navigator.pop(ctx);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('🎉 키오스크 프로 모드가 평생 소장권으로 활성화되었습니다!')),
+                    const SnackBar(content: Text('키오스크 프로 모드가 활성화되었습니다.')),
                   );
                   Navigator.push(
                     context,
@@ -338,7 +349,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('🎉 ${preset.label} 맞춤 환경으로 1초 만에 세팅되었습니다!'),
+                          content: Text('${preset.label} 맞춤 환경으로 세팅되었습니다.'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -476,10 +487,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 return true;
               }).toList();
 
+              final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0 ||
+                  View.of(context).viewInsets.bottom > 0;
+              final isSearching = _searchQuery.isNotEmpty || _searchFocusNode.hasFocus;
+              final hideHero = isLandscape || isKeyboardOpen || isSearching;
+
               return Column(
                 children: [
                   // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar)
-                  if (!isLandscape)
+                  if (!hideHero)
                     SignatureKeyVisualHero(
                       members: members,
                       todayRecords: todayRecords,
@@ -499,6 +515,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ),
                       child: TextField(
                         controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _searchFocusNode.unfocus(),
                         onChanged: (val) => setState(() => _searchQuery = val.trim()),
                         decoration: InputDecoration(
                           hintText: '이름·초성(ㅇㄷㅎ)·뒷번호 4자리 검색',
@@ -510,6 +529,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _searchQuery = '');
+                                    _searchFocusNode.unfocus();
                                   },
                                 )
                               : null,
@@ -621,7 +641,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             ),
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(18, 4, 18, 90),
+                            padding: EdgeInsets.fromLTRB(18, 4, 18, isKeyboardOpen ? 12 : 90),
+                            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                             itemCount: filteredMembers.length,
                             itemBuilder: (context, index) {
                               final member = filteredMembers[index];
@@ -635,42 +656,64 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           ),
                   ),
 
-                  // Batch Action Bar placed directly inside body above bottom navigation bar
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: isLandscape ? 6 : 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: const Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha((255 * 0.04).round()),
-                          offset: const Offset(0, -3),
-                          blurRadius: 10,
+                  // Batch Action Bar placed directly inside body above bottom navigation bar / keyboard
+                  Builder(
+                    builder: (ctx) {
+                      final searchRemainingMembers = filteredMembers.where((m) => !checkedMemberIds.contains(m.id)).toList();
+                      final isSearchActive = _searchQuery.isNotEmpty;
+                      final targetCount = isSearchActive ? searchRemainingMembers.length : remainingMembersCount;
+
+                      return Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: isLandscape ? 6 : (isKeyboardOpen ? 8 : 10),
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _handleBatchCheckIn(context),
-                            icon: const Icon(Icons.done_all, color: Colors.white, size: 16),
-                            label: Text(
-                              isLandscape ? '남은 회원 일괄 출석' : '남은 회원 일괄 출석 완료',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: const Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha((255 * 0.05).round()),
+                              offset: const Offset(0, -3),
+                              blurRadius: 10,
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryDark,
-                              padding: EdgeInsets.symmetric(vertical: isLandscape ? 8 : 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
+                          ],
+                        ),
+                        child: SafeArea(
+                          top: false,
+                          bottom: !isKeyboardOpen,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: targetCount > 0
+                                      ? () => _handleBatchCheckIn(
+                                            context,
+                                            targetMembers: isSearchActive ? filteredMembers : null,
+                                          )
+                                      : null,
+                                  icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
+                                  label: Text(
+                                    isSearchActive
+                                        ? (targetCount > 0
+                                            ? '검색 결과 일괄 출석 ($targetCount명)'
+                                            : '검색 회원 출석 완료됨')
+                                        : (isLandscape ? '남은 회원 일괄 출석' : '남은 회원 일괄 출석 완료'),
+                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryDark,
+                                    disabledBackgroundColor: Colors.grey.shade400,
+                                    padding: EdgeInsets.symmetric(vertical: isLandscape ? 8 : (isKeyboardOpen ? 10 : 12)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ],
               );
@@ -745,16 +788,37 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: isChecked ? AppTheme.softMint.withAlpha((255 * 0.15).round()) : AppTheme.chipBackground,
-                child: Text(
-                  initials,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isChecked ? AppTheme.softMint.withAlpha((255 * 0.15).round()) : AppTheme.chipBackground,
+                  border: Border.all(
+                    color: isChecked ? AppTheme.softMint : AppTheme.borderSubtle,
+                    width: 0.8,
                   ),
+                ),
+                child: ClipOval(
+                  child: member.photoPath != null &&
+                          member.photoPath!.isNotEmpty &&
+                          File(member.photoPath!).existsSync()
+                      ? Image.file(
+                          File(member.photoPath!),
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                        )
+                      : Center(
+                          child: Text(
+                            initials,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+                            ),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -985,15 +1049,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     await CoachMarkDialog.showIfFirstTime(
       context: context,
       coachKey: CoachMarkService.keyCheckIn,
-      title: '첫 번째 출석 체크 완료! 🎉',
+      title: '첫 번째 출석 체크 완료',
       message: '회원이 도착했을 때 [체크인]을 누르면 이렇게 1초 만에 회차가 차감돼요.\n\n출석 완료 후 카드 아래의 [출석 알림 문자]를 누르면 부모님께 안심 문자를 비용 0원으로 바로 보낼 수 있어요!',
       tip: '정기권 회원은 출석 기록만 남고, 회차권 회원은 1회씩 자동 차감됩니다.',
-      buttonText: '네, 확인했어요! 👍',
+      buttonText: '확인',
     );
   }
 
-  void _handleBatchCheckIn(BuildContext context) async {
-    final members = ref.read(membersProvider).value ?? [];
+  void _handleBatchCheckIn(BuildContext context, {List<Member>? targetMembers}) async {
+    final members = targetMembers ?? (ref.read(membersProvider).value ?? []);
     final passRecords = ref.read(passRecordsProvider).value ?? [];
     final now = DateTime.now();
 
@@ -1007,7 +1071,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     if (remaining.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('오늘 남은 출석 대상 회원이 없습니다.'),
+          content: Text('출석 대상 회원이 없습니다.'),
           behavior: SnackBarBehavior.floating,
         ),
       );

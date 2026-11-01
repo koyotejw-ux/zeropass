@@ -113,8 +113,8 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             children: [
                               Text(
                                 isAllInOne
-                                    ? '대표님은 올인원 VIP 구독 이용 중 👑'
-                                    : '부담 없는 월정액 구독 멤버십 🚀',
+                                    ? '대표님은 올인원 VIP 구독 이용 중'
+                                    : '부담 없는 월정액 구독 멤버십',
                                 style: TextStyle(
                                   fontSize: isLandscape ? 15 : 16.5,
                                   fontWeight: FontWeight.w800,
@@ -185,7 +185,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 priceText: '₩5,900 / 월',
                 priceSubtext: '또는 연간 결제 시 ₩59,000 / 년 (2개월 무료 혜택)',
                 isUnlocked: isAllInOne,
-                actionButtonText: isAllInOne ? 'VIP 구독 활성화 완료 (이용 중) ✨' : '올인원 VIP 구독 시작하기 (₩5,900/월)',
+                actionButtonText: isAllInOne ? 'VIP 구독 활성화 완료 (이용 중)' : '올인원 VIP 구독 시작하기 (₩5,900/월)',
                 secondaryButtonText: isAllInOne ? null : '연간 구독으로 2개월 할인받기 (₩59,000/년)',
                 onAction: () {
                   if (isAllInOne) {
@@ -223,7 +223,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 priceText: isKiosk ? '키오스크 활성화 완료 (이용 중)' : '₩4,900 / 월',
                 priceSubtext: '구글 플레이 매월 자동 갱신 (언제든 취소 가능)',
                 isUnlocked: isKiosk,
-                actionButtonText: isKiosk ? '키오스크 모드 바로 실행 📱' : '키오스크 구독 시작하기 (₩4,900/월)',
+                actionButtonText: isKiosk ? '키오스크 모드 바로 실행' : '키오스크 구독 시작하기 (₩4,900/월)',
                 onAction: () {
                   if (isKiosk) {
                     Navigator.push(
@@ -254,7 +254,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 priceText: isNoAds ? '광고 제거 활성화 완료 (이용 중)' : '₩1,900 / 월',
                 priceSubtext: '부담 없는 월정액 (언제든 구글 플레이에서 해지)',
                 isUnlocked: isNoAds,
-                actionButtonText: isNoAds ? '광고 제거 구독 중 ✨' : '광고 제거 구독하기 (₩1,900/월)',
+                actionButtonText: isNoAds ? '광고 제거 구독 중' : '광고 제거 구독하기 (₩1,900/월)',
                 onAction: () {
                   if (!isNoAds) {
                     MonetizationService.instance.buyProduct(MonetizationService.productIdRemoveAdsMonthly);
@@ -309,7 +309,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                     MonetizationService.instance.debugUnlockAll();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('✨ [테스트용] 모든 PRO 구독 기능이 활성화되었습니다!'),
+                        content: Text('[테스트용] 모든 PRO 구독 기능이 활성화되었습니다.'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
