@@ -15,6 +15,7 @@ import '../theme/app_theme.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
+import '../widgets/signature_key_visual_hero.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
 import 'tablet_kiosk_screen.dart';
@@ -455,10 +456,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               // Extract all groups
               final groups = ['전체 그룹', ...members.map((m) => m.groupName).toSet()];
 
-              // Calculate attendance percentage
-              final totalMembersCount = members.length;
-              final attendanceRate = totalMembersCount > 0 ? (checkedMemberIds.length / totalMembersCount) : 0.0;
-
               // Filter members list using ChosungSearchService and Status filters
               var filteredMembers = members.where((m) {
                 if (_selectedGroup != '전체 그룹' && m.groupName != _selectedGroup) {
@@ -481,6 +478,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
               return Column(
                 children: [
+                  // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar)
+                  if (!isLandscape)
+                    SignatureKeyVisualHero(
+                      members: members,
+                      todayRecords: todayRecords,
+                      onOpenKiosk: () => _openTabletKioskMode(context),
+                      onOpenGuide: () => _openInteractiveGuide(context),
+                    ),
+
                   // 0. Korean Chosung & Real-time Smart Search Bar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
@@ -514,69 +520,30 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     ),
                   ),
 
-                  // 1. Metric Summary Card with Attendance Progress Bar (Toss Financial Aesthetics)
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: isLandscape ? 4 : 6,
-                    ),
-                    child: Container(
-                      padding: EdgeInsets.all(isLandscape ? 10 : 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: AppTheme.cardShadow,
-                        border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '오늘 출석률 ${(attendanceRate * 100).toInt()}%',
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                '${checkedMemberIds.length}명 / 총 $totalMembersCount명',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: LinearProgressIndicator(
-                              value: attendanceRate,
-                              minHeight: 7,
-                              backgroundColor: const Color(0xFFE2E8F0),
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.softMint),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: isLandscape),
-                              _buildDivider(),
-                              _buildStatItem('지각/보강', lateCount, AppTheme.warning, isCompact: isLandscape),
-                              _buildDivider(),
-                              _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue, isCompact: isLandscape),
-                            ],
-                          ),
-                        ],
+                  // Landscape Compact Metric Card Fallback
+                  if (isLandscape)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: AppTheme.cardShadow,
+                          border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: true),
+                            _buildDivider(),
+                            _buildStatItem('지각/보강', lateCount, AppTheme.warning, isCompact: true),
+                            _buildDivider(),
+                            _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue, isCompact: true),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
                   // 2. Filter Chips
                   SingleChildScrollView(
