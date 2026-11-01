@@ -14,12 +14,22 @@ class AdBannerWidget extends StatefulWidget {
 class _AdBannerWidgetState extends State<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _isBannerLoaded = false;
+  int? _lastWidth;
 
   @override
   void initState() {
     super.initState();
-    _checkAndLoadBanner();
     MonetizationService.instance.premiumStatusNotifier.addListener(_onPremiumChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentWidth = MediaQuery.sizeOf(context).width.truncate();
+    if (_lastWidth != currentWidth && currentWidth > 0) {
+      _lastWidth = currentWidth;
+      _loadAdaptiveBanner(currentWidth);
+    }
   }
 
   @override
@@ -39,27 +49,44 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     }
   }
 
-  void _checkAndLoadBanner() {
+  Future<void> _loadAdaptiveBanner(int width) async {
     if (MonetizationService.instance.isAdsRemoved) return;
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
 
     final adUnitId = MonetizationService.bannerAdUnitId;
     if (adUnitId.isEmpty) return;
 
-    _bannerAd = BannerAd(
+    // Dispose old ad when screen width or orientation changes
+    await _bannerAd?.dispose();
+    _bannerAd = null;
+
+    AdSize bannerSize = AdSize.banner;
+    try {
+      final adaptiveSize = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+      if (adaptiveSize != null) {
+        bannerSize = adaptiveSize;
+      }
+    } catch (_) {
+      bannerSize = AdSize.banner;
+    }
+
+    if (!mounted) return;
+
+    final ad = BannerAd(
       adUnitId: adUnitId,
-      size: AdSize.banner,
+      size: bannerSize,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (ad) {
+        onAdLoaded: (loadedAd) {
           if (mounted) {
             setState(() {
+              _bannerAd = loadedAd as BannerAd;
               _isBannerLoaded = true;
             });
           }
         },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
+        onAdFailedToLoad: (failedAd, error) {
+          failedAd.dispose();
           if (mounted) {
             setState(() {
               _isBannerLoaded = false;
@@ -67,7 +94,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
           }
         },
       ),
-    )..load();
+    );
+
+    await ad.load();
   }
 
   @override
@@ -76,15 +105,22 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
       return const SizedBox.shrink();
     }
 
+    final adSize = _bannerAd!.size;
+
     return Container(
-      width: _bannerAd!.size.width.toDouble(),
-      height: _bannerAd!.size.height.toDouble(),
+      width: double.infinity,
+      height: adSize.height.toDouble(),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey.shade200, width: 0.8)),
       ),
-      child: AdWidget(ad: _bannerAd!),
+      child: SizedBox(
+        width: adSize.width.toDouble(),
+        height: adSize.height.toDouble(),
+        child: AdWidget(ad: _bannerAd!),
+      ),
     );
   }
 }
+
