@@ -9,6 +9,27 @@ import '../providers/app_providers.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 
+/// 출석 완료 축하 오버레이 데이터 모델
+class AttendanceCelebration {
+  final String digits;
+  final String memberName;
+  final String passStatus;
+  final String timeStr;
+  final bool isDemo;
+  final bool isSuccess;
+  final String smsMessage;
+
+  const AttendanceCelebration({
+    required this.digits,
+    required this.memberName,
+    required this.passStatus,
+    required this.timeStr,
+    required this.isDemo,
+    required this.isSuccess,
+    required this.smsMessage,
+  });
+}
+
 /// 최고급 프리미엄 인터랙티브 태블릿 키오스크 모드 (Tablet Kiosk Screen)
 ///
 /// 학원·교습소·PT 스튜디오 카운터에 거치하여 학생들이 직접 4자리 전화번호를 누르고 출석하는 화면입니다.
@@ -28,7 +49,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   bool _isSuccess = false;
   bool _isProcessing = false;
   Timer? _clockTimer;
+  Timer? _celebrationTimer;
   DateTime _currentTime = DateTime.now();
+  AttendanceCelebration? _celebration;
 
   @override
   void initState() {
@@ -46,6 +69,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   @override
   void dispose() {
     _clockTimer?.cancel();
+    _celebrationTimer?.cancel();
     super.dispose();
   }
 
@@ -116,22 +140,27 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     // 3. 일치 회원이 없을 때 -> 스마트 체험 테스트 시뮬레이션 가동!
     if (matchedMembers.isEmpty) {
       HapticFeedback.heavyImpact();
-      await Future.delayed(const Duration(milliseconds: 350));
+      await Future.delayed(const Duration(milliseconds: 250));
+
+      final celebration = AttendanceCelebration(
+        digits: enteredCode,
+        memberName: '김패시 학생',
+        passStatus: '10회권 (잔여 9회)',
+        timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
+        isDemo: true,
+        isSuccess: true,
+        smsMessage: '김패시 학생이 학원에 정상 출석하였습니다.',
+      );
+
+      _celebrationTimer?.cancel();
+      _celebrationTimer = Timer(const Duration(seconds: 8), _dismissCelebration);
 
       setState(() {
         _isProcessing = false;
         _isSuccess = true;
-        _statusMessage = '🎉 [체험 테스트 완료]\n김패시 학생 ($enteredCode) 출석 체크!\n10회권 잔여 9회 차감 · 안심 문자 가상 전송 완료 🚀';
+        _celebration = celebration;
+        _statusMessage = null;
         _digits = '';
-      });
-
-      // 4초 후 상태 메시지 자동 초기화
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) {
-          setState(() {
-            _statusMessage = null;
-          });
-        }
       });
       return;
     }
@@ -160,26 +189,44 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           ? '${member.remainingSessions - 1}회 남음'
           : '정기권 패스';
 
+      final celebration = AttendanceCelebration(
+        digits: enteredCode,
+        memberName: member.name,
+        passStatus: remaining,
+        timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
+        isDemo: false,
+        isSuccess: true,
+        smsMessage: '${member.name}님이 학원에 정상 출석하였습니다.',
+      );
+
+      _celebrationTimer?.cancel();
+      _celebrationTimer = Timer(const Duration(seconds: 8), _dismissCelebration);
+
       HapticFeedback.heavyImpact();
       setState(() {
         _isProcessing = false;
         _isSuccess = true;
-        _statusMessage = '반가워요, ${member.name}님! 🎉\n출석 체크 완료! ($remaining)\n보호자 안심 문자가 전송되었습니다.';
+        _celebration = celebration;
+        _statusMessage = null;
         _digits = '';
-      });
-
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) {
-          setState(() {
-            _statusMessage = null;
-          });
-        }
       });
     } catch (e) {
       setState(() {
         _isProcessing = false;
         _isSuccess = false;
         _statusMessage = '출결 처리 중 오류가 발생했습니다: $e';
+        _digits = '';
+      });
+    }
+  }
+
+  /// 출석 완료 축하 화면 닫기 및 출결 입력창으로 즉시 복귀
+  void _dismissCelebration() {
+    _celebrationTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _celebration = null;
+        _statusMessage = null;
         _digits = '';
       });
     }
@@ -308,14 +355,20 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F19), // Ultra Deep Obsidian Kiosk
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isLandscape = constraints.maxWidth > constraints.maxHeight;
+        child: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
-            return isLandscape
-                ? _buildLandscapeKiosk(studio, members, dateStr, timeStr)
-                : _buildPortraitKiosk(studio, members, dateStr, timeStr);
-          },
+                return isLandscape
+                    ? _buildLandscapeKiosk(studio, members, dateStr, timeStr)
+                    : _buildPortraitKiosk(studio, members, dateStr, timeStr);
+              },
+            ),
+            if (_celebration != null)
+              _buildFullScreenAttendanceSuccess(_celebration!, studio),
+          ],
         ),
       ),
     );
@@ -741,5 +794,378 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         ),
       ),
     );
+  }
+
+  /// 일반 매장 키오스크 방식의 전면 출석 완료 화면 (전면 대형 4자리 번호 표시 및 애니메이션)
+  Widget _buildFullScreenAttendanceSuccess(AttendanceCelebration celebration, StudioProfile studio) {
+    return Positioned.fill(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _dismissCelebration,
+        child: TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 360),
+          curve: Curves.easeOutBack,
+          tween: Tween(begin: 0.0, end: 1.0),
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value.clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: 0.9 + (0.1 * value),
+                child: child,
+              ),
+            );
+          },
+          child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0, -0.2),
+              radius: 1.25,
+              colors: [
+                Color(0xFF063A27), // Cyber Emerald Core Glow
+                Color(0xFF091F18),
+                Color(0xFF040D12), // Deep Obsidian Abyss
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isLandscape = constraints.maxWidth > constraints.maxHeight;
+
+                return SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isLandscape ? 32 : 24,
+                    vertical: isLandscape ? 14 : 20,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - (isLandscape ? 28 : 40),
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // 1. Top Store Brand & Live Stamp Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ClipOval(
+                                  child: Image.asset(
+                                    'assets/icons/splash_icon.png',
+                                    width: 22,
+                                    height: 22,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 스마트 출결 키오스크',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    celebration.timeStr,
+                                    style: const TextStyle(
+                                      color: Color(0xFF34D399),
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // 2. Animated Concentric Ripple Rings & 3D Mascot Check Badge
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Ripple Ring 2
+                              Container(
+                                width: isLandscape ? 130 : 160,
+                                height: isLandscape ? 130 : 160,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              // Ripple Ring 1
+                              Container(
+                                width: isLandscape ? 100 : 120,
+                                height: isLandscape ? 100 : 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.16),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.45),
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                              // Center Mascot Avatar
+                              Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Container(
+                                    width: isLandscape ? 74 : 88,
+                                    height: isLandscape ? 74 : 88,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color(0xFF0F172A),
+                                      border: Border.all(color: const Color(0xFF10B981), width: 3),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.6),
+                                          blurRadius: 28,
+                                          spreadRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipOval(
+                                      child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // 3. Huge 전면 4자리 출결 번호 Display
+                          Column(
+                            children: [
+                              const Text(
+                                '입력하신 출결 번호',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF94A3B8),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: celebration.digits.split('').map((d) {
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                                    width: isLandscape ? 56 : 64,
+                                    height: isLandscape ? 64 : 74,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: const Color(0xFF10B981),
+                                        width: 2.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                                          blurRadius: 18,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      d,
+                                      style: TextStyle(
+                                        fontSize: isLandscape ? 28 : 34,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          // 4. Main Celebratory Announcement & Member Name
+                          Text(
+                            '🎉 ${celebration.memberName}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: isLandscape ? 24 : 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.6,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '출석 체크가 정상 완료되었습니다!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: isLandscape ? 15 : 17,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF34D399),
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // 5. Store-Grade Status Cards (Remaining Pass & Safe Parent SMS)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 460),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF111827).withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.confirmation_num_rounded, color: Color(0xFF38BDF8), size: 18),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            '이용권 잔여 현황',
+                                            style: TextStyle(
+                                              color: Color(0xFF94A3B8),
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Text(
+                                        celebration.passStatus,
+                                        style: const TextStyle(
+                                          color: Color(0xFF10B981),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(color: Color(0xFF1F2937), height: 18),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        celebration.isDemo ? Icons.tips_and_updates_rounded : Icons.mark_chat_read_rounded,
+                                        color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFF38BDF8),
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          celebration.isDemo
+                                              ? '💡 스마트 체험 시뮬레이션: 가상 1회 차감 및 알림 발송 완료'
+                                              : '📱 학부모님 안심 알림(문자) 전송 완료',
+                                          style: TextStyle(
+                                            color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // 6. Big Store-Style [확인] Action Button (Returns to PIN Check-in screen)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 460),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  _dismissCelebration();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF10B981),
+                                  foregroundColor: Colors.white,
+                                  elevation: 12,
+                                  shadowColor: const Color(0xFF10B981).withValues(alpha: 0.6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, size: 24),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      '확인 (다음 출석하기)',
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          const Text(
+                            '확인 버튼 또는 화면을 터치하면 즉시 다음 출석을 진행합니다',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
   }
 }
