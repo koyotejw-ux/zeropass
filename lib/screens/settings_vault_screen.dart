@@ -14,7 +14,6 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import 'home_navigation_screen.dart';
-import 'onboarding_screen.dart';
 import 'studio_setup_wizard_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
@@ -139,22 +138,52 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       appBar: AppBar(
         title: const Text('설정 · 보안 금고'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.school_outlined),
-            tooltip: '패시의 온보딩 튜토리얼 다시보기',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (ctx) => OnboardingScreen(onFinish: () => Navigator.pop(ctx)),
+          // Tab 4 필수 전용 기능: 안심 100% 로컬 금고 데이터 전체 암호화 백업 & 공유
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    try {
+                      final backupFile = await DataVaultService.exportEncryptedBackup();
+                      await DataVaultService.shareBackupFile(backupFile);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('백업 파일 생성 오류: $e')),
+                        );
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.shield_outlined, color: AppTheme.primaryBlue, size: 16),
+                        SizedBox(width: 5),
+                        Text(
+                          '금고 백업',
+                          style: TextStyle(
+                            color: AppTheme.primaryBlue,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: '실전 가이드 튜토리얼',
-            onPressed: () => _openInteractiveGuide(context),
+              ),
+            ),
           ),
         ],
       ),

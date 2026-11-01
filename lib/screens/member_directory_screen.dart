@@ -11,6 +11,7 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/chosung_search_service.dart';
 import '../services/coach_mark_service.dart';
+import '../services/data_vault_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
@@ -54,28 +55,59 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       appBar: AppBar(
         title: const Text('회원 명부 관리'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: '회원 등록 & 이용 팁',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (c) => AlertDialog(
-                  title: const Text('회원 관리 및 데이터 안내'),
-                  content: const SingleChildScrollView(
-                    child: Text(
-                      '1. 우측 하단의 [+ 신규 회원 등록] 버튼으로 실제 운영하시는 학생/회원 정보를 바로 추가할 수 있습니다.\n'
-                      '2. 회차권(예: 10회권)과 월 정기권(매월 자동) 중 매장 운영 방식에 맞춰 선택할 수 있습니다.\n'
-                      '3. 연습용 샘플 데이터는 [설정·보안] 탭에서 언제든지 깨끗하게 비우거나 다시 채울 수 있습니다.',
-                      style: TextStyle(height: 1.5, fontSize: 13),
+          // Tab 2 필수 전용 기능: 회원 명부 엑셀(CSV) 원터치 내보내기 & 공유
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    final members = membersAsync.value ?? [];
+                    if (members.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('내보낼 등록 회원이 없습니다.')),
+                      );
+                      return;
+                    }
+                    try {
+                      final file = await DataVaultService.exportMembersCsv();
+                      await DataVaultService.shareMembersCsv(file);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('CSV 내보내기 오류: $e')),
+                        );
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryDark.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.primaryDark.withValues(alpha: 0.25)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.file_download_outlined, color: AppTheme.primaryDark, size: 16),
+                        SizedBox(width: 5),
+                        Text(
+                          '명부 엑셀',
+                          style: TextStyle(
+                            color: AppTheme.primaryDark,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(c), child: const Text('확인')),
-                  ],
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ],
       ),

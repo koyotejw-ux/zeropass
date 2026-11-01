@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
+import '../models/studio_profile.dart';
 
 /// ZeroPass 포트폴리오급 대표 시그니처 키비주얼 (Signature Key Visual Hero)
 ///
@@ -10,6 +11,7 @@ import '../models/pass_record.dart';
 class SignatureKeyVisualHero extends StatefulWidget {
   final List<Member> members;
   final List<PassRecord> todayRecords;
+  final StudioProfile? studio;
   final VoidCallback? onOpenKiosk;
   final VoidCallback? onOpenGuide;
 
@@ -17,6 +19,7 @@ class SignatureKeyVisualHero extends StatefulWidget {
     super.key,
     required this.members,
     required this.todayRecords,
+    this.studio,
     this.onOpenKiosk,
     this.onOpenGuide,
   });
@@ -168,42 +171,31 @@ class _SignatureKeyVisualHeroState extends State<SignatureKeyVisualHero> {
                         ),
                         const SizedBox(width: 8),
 
-                        // Kiosk Pro & Key Visual Badge
-                        InkWell(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            widget.onOpenKiosk?.call();
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
+                        // Studio Brand & Category Badge (Non-redundant identifier)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF60A5FA)),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.studio?.studioName ?? '로컬 보안 볼트',
+                                style: const TextStyle(
+                                  color: Color(0xFFE2E8F0),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.35),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.tablet_mac_rounded, size: 12, color: Colors.white),
-                                SizedBox(width: 4),
-                                Text(
-                                  '무인 키오스크',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
                         ),
                       ],

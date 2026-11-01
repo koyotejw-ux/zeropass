@@ -133,4 +133,49 @@ class DataVaultService {
       ),
     );
   }
+
+  /// Exports member directory to CSV format for instructors/staff.
+  static Future<File> exportMembersCsv() async {
+    final members = await DatabaseService.instance.getMembers();
+
+    final List<List<dynamic>> rows = [
+      ['회원ID', '이름', '연락처', '수업그룹', '결제유형', '기본금액(원)', '총회차', '잔여회차', '보호자/입금자', '등록일'],
+    ];
+
+    for (final m in members) {
+      rows.add([
+        m.id,
+        m.name,
+        m.phone,
+        m.groupName,
+        m.billingType == BillingType.monthlyRecurring ? '월정기권' : '회차권',
+        m.defaultFee,
+        m.totalSessions,
+        m.remainingSessions,
+        m.payerName ?? '-',
+        DateFormat('yyyy-MM-dd').format(m.registeredAt),
+      ]);
+    }
+
+    final csvData = const ListToCsvConverter().convert(rows);
+    final dir = await getApplicationDocumentsDirectory();
+    final dateStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+    final file = File('${dir.path}/zeropass_members_$dateStr.csv');
+    // Prepend UTF-8 BOM for Excel compatibility in Korean Windows
+    await file.writeAsBytes([0xEF, 0xBB, 0xBF, ...utf8.encode(csvData)]);
+
+    return file;
+  }
+
+  /// 1-Touch Native Share for Member Directory CSV (KakaoTalk / Email / Excel / Drive)
+  static Future<ShareResult> shareMembersCsv(File file) async {
+    return await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'text/csv')],
+        subject: '[제로패스] 회원 명부 엑셀(CSV) 내보내기',
+        text: '제로패스 등록 회원 전체 명부 엑셀(CSV) 파일입니다. (100% 로컬 생성)',
+      ),
+    );
+  }
 }
+

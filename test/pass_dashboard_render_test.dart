@@ -73,9 +73,8 @@ void main() {
     expect(find.text('원터치 출결 체크'), findsOneWidget);
     // Verify member name rendered
     expect(find.text('최준혁'), findsOneWidget);
-    // Verify vector icon buttons
-    expect(find.byIcon(Icons.auto_awesome_rounded), findsOneWidget);
+    // Verify essential kiosk button
+    expect(find.text('무인 키오스크'), findsOneWidget);
     expect(find.byIcon(Icons.tablet_mac_rounded), findsWidgets);
-    expect(find.byIcon(Icons.more_vert_rounded), findsOneWidget);
   });
 }

@@ -53,26 +53,45 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       appBar: AppBar(
         title: Text(LocalizationService.tr('billing_title')),
         actions: [
-          // 스마트 입금 푸시 알림 수동 테스트 & 감지 시뮬레이터 (출결선생/토스 스타일)
-          IconButton(
-            icon: const Icon(Icons.notifications_active_outlined),
-            tooltip: '은행 입금 알림 매칭 시뮬레이터',
-            onPressed: () {
-              final members = membersAsync.value ?? [];
-              final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
-              _showBankNotificationSimulator(context, members, unpaid);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_card_outlined),
-            tooltip: '간편 청구서 작성',
-            onPressed: () {
-              final members = membersAsync.value ?? [];
-              final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-              if (members.isNotEmpty) {
-                _openQuickInvoiceSheet(context, members, studio);
-              }
-            },
+          // Tab 1 필수 전용 기능: 은행 입금 자동 매칭 시뮬레이터 (간편 청구서 작성은 하단 FAB로 단일화)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    final members = membersAsync.value ?? [];
+                    final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
+                    _showBankNotificationSimulator(context, members, unpaid);
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.notifications_active_outlined, color: Color(0xFF059669), size: 16),
+                        SizedBox(width: 5),
+                        Text(
+                          '입금 감지',
+                          style: TextStyle(
+                            color: Color(0xFF059669),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

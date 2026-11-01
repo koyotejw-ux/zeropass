@@ -11,7 +11,6 @@ import '../services/chosung_search_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/monetization_service.dart';
-import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
@@ -348,84 +347,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     }
   }
 
-  void _openIndustryPresetDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
-                      SizedBox(width: 8),
-                      Text(
-                        '업종 맞춤 1초 프리셋',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '대표님의 업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
-                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              ...IndustryPreset.values.map(
-                (preset) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                      color: AppTheme.chipBackground,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.business_center_outlined, color: AppTheme.primaryBlue, size: 20),
-                  ),
-                  title: Text(preset.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                  subtitle: Text('${preset.sampleStudioName} (${preset.category})', style: const TextStyle(fontSize: 11.5)),
-                  trailing: const Icon(Icons.chevron_right, size: 20),
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    await StarterPresetService.applyPreset(preset);
-                    ref.invalidate(membersProvider);
-                    ref.invalidate(passRecordsProvider);
-                    ref.invalidate(studioProfileProvider);
-                    ref.invalidate(invoicesProvider);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${preset.label} 맞춤 환경으로 세팅되었습니다.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(membersProvider);
@@ -470,56 +391,42 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 1. 업종 맞춤 1초 프리셋 벡터 버튼
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
-            tooltip: '업종 맞춤 프리셋 (학원/PT/필라테스/체육관)',
-            visualDensity: VisualDensity.compact,
-            onPressed: () => _openIndustryPresetDialog(context),
-          ),
-          // 2. 태블릿 키오스크 모드 진입 벡터 버튼
-          IconButton(
-            icon: const Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 22),
-            tooltip: '태블릿 자율출결 키오스크 모드',
-            visualDensity: VisualDensity.compact,
-            onPressed: () => _openTabletKioskMode(context),
-          ),
-          // 3. 더보기 벡터 팝업 메뉴 (가이드 & 알림 도움말 통합)
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textPrimary, size: 22),
-            tooltip: '추가 메뉴',
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onSelected: (val) {
-              if (val == 'guide') {
-                _openInteractiveGuide(context);
-              } else if (val == 'help') {
-                _showAttendanceHelpDialog(context);
-              }
-            },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(
-                value: 'guide',
-                child: Row(
-                  children: [
-                    Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue, size: 18),
-                    SizedBox(width: 10),
-                    Text('실전 가이드 튜토리얼', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                  ],
+          // Tab 0 필수 전용 기능: 매장 입구 무인 자율출결 키오스크 모드 (중복 제거 & 단일 필수 메뉴 집중)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _openTabletKioskMode(context),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 17),
+                        SizedBox(width: 5),
+                        Text(
+                          '무인 키오스크',
+                          style: TextStyle(
+                            color: AppTheme.primaryBlue,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const PopupMenuItem(
-                value: 'help',
-                child: Row(
-                  children: [
-                    Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint, size: 18),
-                    SizedBox(width: 10),
-                    Text('출결 문자 알림 안내', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(width: 4),
         ],
       ),
       body: membersAsync.when(
@@ -584,6 +491,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         SignatureKeyVisualHero(
                           members: members,
                           todayRecords: todayRecords,
+                          studio: studio,
                           onOpenKiosk: () => _openTabletKioskMode(context),
                           onOpenGuide: () => _openInteractiveGuide(context),
                         ),
@@ -1168,6 +1076,41 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       return;
     }
 
+    // UX 고도화: 대량 일괄 출석 처리 전 확인 다이얼로그 (실수 터치 방지)
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.done_all_rounded, color: AppTheme.primaryBlue, size: 24),
+            SizedBox(width: 8),
+            Text('일괄 출석 체크', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+          ],
+        ),
+        content: Text(
+          '오늘 아직 출석하지 않은 회원 ${remaining.length}명을 모두 출석 완료 처리하시겠습니까?\n\n(회차권 회원은 잔여 회차가 1회씩 안전하게 차감됩니다)',
+          style: const TextStyle(fontSize: 13.5, height: 1.45, color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('일괄 출석 완료', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     await ref.read(passRecordsProvider.notifier).batchCheckInAll(remaining);
 
     if (context.mounted) {
@@ -1180,27 +1123,5 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       );
     }
   }
-
-  void _showAttendanceHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('간편 출결 & 문자 알림 안내'),
-        content: const SingleChildScrollView(
-          child: Text(
-            '1. [체크인] 탭 한 번으로 출석이 기록되고 회차가 자동 차감됩니다.\n'
-            '2. 체크 후 나타나는 [출석 알림 문자] 및 [하원 알림 문자]를 누르면 비용 0원으로 학부모/회원에게 안심 알림 문자를 바로 전송할 수 있습니다.\n'
-            '3. 모든 데이터는 기기에만 저장되어 서버비가 전혀 들지 않습니다.',
-            style: TextStyle(height: 1.5, fontSize: 13),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
 }
+
