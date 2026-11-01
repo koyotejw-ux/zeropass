@@ -365,34 +365,30 @@ class _SignatureKeyVisualHeroState extends State<SignatureKeyVisualHero> {
                           width: 1,
                         ),
                       ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildPillarCapsule(
-                              icon: Icons.bolt_rounded,
-                              iconColor: const Color(0xFF38BDF8),
-                              label: '1초 출결',
-                              value: '원터치 차감',
-                            ),
-                            _buildVerticalDivider(),
-                            _buildPillarCapsule(
-                              icon: Icons.chat_bubble_rounded,
-                              iconColor: const Color(0xFF34D399),
-                              label: '0원 통신비',
-                              value: '기본문자 발송',
-                            ),
-                            _buildVerticalDivider(),
-                            _buildPillarCapsule(
-                              icon: Icons.lock_outline_rounded,
-                              iconColor: const Color(0xFFFBBF24),
-                              label: '100% 로컬',
-                              value: '외부유출 제로',
-                            ),
-                          ],
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildPillarCapsule(
+                            icon: Icons.bolt_rounded,
+                            iconColor: const Color(0xFF38BDF8),
+                            label: '1초 출결',
+                            value: '원터치 차감',
+                          ),
+                          _buildVerticalDivider(),
+                          _buildPillarCapsule(
+                            icon: Icons.chat_bubble_rounded,
+                            iconColor: const Color(0xFF34D399),
+                            label: '0원 통신비',
+                            value: '기본문자 발송',
+                          ),
+                          _buildVerticalDivider(),
+                          _buildPillarCapsule(
+                            icon: Icons.lock_outline_rounded,
+                            iconColor: const Color(0xFFFBBF24),
+                            label: '100% 로컬',
+                            value: '외부유출 제로',
+                          ),
+                        ],
                       ),
                     ),
                   ],
