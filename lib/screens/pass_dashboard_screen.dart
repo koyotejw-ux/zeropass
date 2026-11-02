@@ -692,7 +692,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                             targetMembers: isSearchActive ? filteredMembers : null,
                                           )
                                       : null,
-                                  icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
+                                  icon: Icon(
+                                    Icons.done_all_rounded,
+                                    color: targetCount > 0 ? Colors.white : AppTheme.textTertiary,
+                                    size: 18,
+                                  ),
                                   label: FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
@@ -700,15 +704,32 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                           ? (targetCount > 0
                                               ? '검색 결과 일괄 출석 ($targetCount명)'
                                               : '검색 회원 출석 완료됨')
-                                          : (isLandscape ? '남은 회원 일괄 출석' : '남은 회원 일괄 출석 완료'),
-                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                                          : (targetCount > 0
+                                              ? (isLandscape ? '남은 회원 일괄 출석 ($targetCount명)' : '남은 회원 일괄 출석 완료 ($targetCount명)')
+                                              : (members.isEmpty ? '등록된 출석 대상 회원 없음' : '오늘 모든 회원 출석 완료')),
+                                      style: TextStyle(
+                                        fontWeight: targetCount > 0 ? FontWeight.w700 : FontWeight.w600,
+                                        fontSize: 14.5,
+                                        color: targetCount > 0 ? Colors.white : AppTheme.textTertiary,
+                                      ),
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primaryDark,
-                                    disabledBackgroundColor: Colors.grey.shade400,
-                                    padding: EdgeInsets.symmetric(vertical: isLandscape ? 8 : (isKeyboardOpen ? 10 : 12)),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: AppTheme.chipBackground,
+                                    disabledForegroundColor: AppTheme.textTertiary,
+                                    elevation: targetCount > 0 ? 1 : 0,
+                                    side: BorderSide(
+                                      color: targetCount > 0 ? Colors.transparent : AppTheme.borderSubtle,
+                                      width: 1,
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: isLandscape ? 8 : (isKeyboardOpen ? 10 : 12),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
                               ),
