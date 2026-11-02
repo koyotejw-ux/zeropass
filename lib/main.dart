@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_navigation_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/studio_setup_wizard_screen.dart';
+import 'screens/tablet_kiosk_screen.dart';
 import 'services/monetization_service.dart';
 import 'theme/app_theme.dart';
 
@@ -17,12 +18,14 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final showOnboarding = !(prefs.getBool('onboarding_completed') ?? false);
   final showSetupWizard = !(prefs.getBool('setup_wizard_completed') ?? false);
+  final isKioskDedicated = prefs.getBool('is_kiosk_dedicated_mode') ?? false;
 
   runApp(
     ProviderScope(
       child: ZeroPassApp(
         showOnboarding: showOnboarding,
         showSetupWizard: showSetupWizard,
+        isKioskDedicated: isKioskDedicated,
       ),
     ),
   );
@@ -31,10 +34,12 @@ void main() async {
 class ZeroPassApp extends StatefulWidget {
   final bool showOnboarding;
   final bool showSetupWizard;
+  final bool isKioskDedicated;
   const ZeroPassApp({
     super.key,
     required this.showOnboarding,
     required this.showSetupWizard,
+    this.isKioskDedicated = false,
   });
 
   @override
@@ -75,6 +80,8 @@ class _ZeroPassAppState extends State<ZeroPassApp> {
       homeScreen = OnboardingScreen(onFinish: _finishOnboarding);
     } else if (_showSetupWizard) {
       homeScreen = StudioSetupWizardScreen(onFinish: _finishSetupWizard);
+    } else if (widget.isKioskDedicated) {
+      homeScreen = const TabletKioskScreen();
     } else {
       homeScreen = const HomeNavigationScreen();
     }

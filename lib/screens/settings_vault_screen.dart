@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/coach_mark_service.dart';
@@ -15,6 +16,7 @@ import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
 import 'home_navigation_screen.dart';
 import 'studio_setup_wizard_screen.dart';
+import 'tablet_kiosk_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
   const SettingsVaultScreen({super.key});
@@ -24,9 +26,12 @@ class SettingsVaultScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
+  bool _isKioskDedicated = false;
+
   @override
   void initState() {
     super.initState();
+    _loadKioskDedicatedMode();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       CoachMarkDialog.showIfFirstTime(
         context: context,
@@ -37,6 +42,133 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         buttonText: '안심하고 사용할게요',
       );
     });
+  }
+
+  Future<void> _loadKioskDedicatedMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _isKioskDedicated = prefs.getBool('is_kiosk_dedicated_mode') ?? false;
+      });
+    }
+  }
+
+  Future<void> _setKioskDedicatedMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_kiosk_dedicated_mode', value);
+    if (mounted) {
+      setState(() {
+        _isKioskDedicated = value;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? '무인 키오스크 전용 모드가 활성화되었습니다. 이제 앱 실행 시 출결 화면으로 바로 진입합니다.'
+                : '무인 키오스크 전용 모드가 해제되었습니다. 앱 실행 시 원장님 대시보드로 진입합니다.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _showAppPinningGuideDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.screen_lock_portrait_rounded, color: AppTheme.primaryBlue, size: 24),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '안드로이드 앱 화면 고정 가이드',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '학생들이 유튜브를 보거나 다른 앱으로 이탈하지 못하도록 기기를 완벽한 무인 키오스크로 잠그는 방법입니다.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.45),
+              ),
+              const SizedBox(height: 14),
+              _buildPinStep('1단계: 안드로이드 설정', '스마트폰/태블릿의 [설정] > [보안 및 개인정보 보호] (또는 생체 인식 및 보안) 메뉴로 이동합니다.'),
+              const SizedBox(height: 10),
+              _buildPinStep('2단계: 앱 고정 켜기', '[기타 보안 설정] > [앱 고정] (또는 화면 고정) 항목을 찾아 켭니다.'),
+              const SizedBox(height: 10),
+              _buildPinStep('3단계: 제로패스 고정', '제로패스 키오스크 화면을 켠 뒤, 최근 사용 앱 버튼(III)을 누르고 제로패스 아이콘을 터치하여 [이 앱 고정]을 선택합니다.'),
+              const SizedBox(height: 10),
+              _buildPinStep('해제 방법 (원장님만 가능)', '뒤로가기 버튼과 최근 앱 버튼을 동시에 길게 누르면 기기 화면 잠금(패턴/PIN)이 풀리며 해제됩니다.'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.verified_user_rounded, color: AppTheme.primaryBlue, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '앱 내부에서도 우측 상단 자물쇠 터치 시 관리자 비밀번호(0000)가 없으면 대시보드로 나갈 수 없도록 이중 보호됩니다.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.4, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('확인했습니다', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPinStep(String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 5),
+          width: 6,
+          height: 6,
+          decoration: const BoxDecoration(
+            color: AppTheme.primaryBlue,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.textPrimary)),
+              const SizedBox(height: 2),
+              Text(desc, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _openInteractiveGuide(BuildContext context) {
@@ -732,7 +864,105 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. 문자 알림 및 청구 양식 관리 (사용자 정의 서식)
+              // 4. Unattended Entrance Kiosk Device Settings (입구 거치용 무인 출결 태블릿 설정)
+              _buildSectionTitle('무인 출결 키오스크 기기 설정 (입구 거치용)', icon: Icons.tablet_mac_rounded),
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '앱 실행 시 키오스크 자동 실행',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                                ),
+                                SizedBox(height: 3),
+                                Text(
+                                  '입구 거치 태블릿으로 설정 시 관리자 대시보드 없이 바로 출결 키오스크로 시작합니다.',
+                                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _isKioskDedicated,
+                            activeThumbColor: AppTheme.primaryBlue,
+                            onChanged: (val) => _setKioskDedicatedMode(val),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 20, color: AppTheme.borderSubtle),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFEFF6FF),
+                          child: Icon(Icons.touch_app_rounded, color: AppTheme.primaryBlue),
+                        ),
+                        title: const Text('출결 키오스크 전체화면 즉시 실행', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('학생 출석체크 전용 전체화면을 지금 즉시 테스트하거나 시작합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 16, color: AppTheme.borderSubtle),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFECFDF5),
+                          child: Icon(Icons.screen_lock_portrait_rounded, color: AppTheme.softMint),
+                        ),
+                        title: const Text('안드로이드 앱 화면 고정(Pinning) 가이드', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('학생들이 홈 화면이나 유튜브 등으로 나가지 못하게 기기를 고정 잠금합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () => _showAppPinningGuideDialog(context),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Icon(Icons.lock_rounded, size: 18, color: Color(0xFFD97706)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '안심 보안 잠금: 등록된 학생이 있을 때는 키오스크에 회원 명단/PIN이 일체 표시되지 않으며, 우측 상단 자물쇠 터치 시 관리자 비밀번호(0000)를 입력해야만 원장님 화면으로 나갈 수 있습니다.',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.45),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 5. 문자 알림 및 청구 양식 관리 (사용자 정의 서식)
               _buildSectionTitle('문자 알림 및 청구 서식 관리', icon: Icons.edit_note_rounded),
               Material(
                 color: Colors.white,

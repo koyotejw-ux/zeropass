@@ -9,6 +9,7 @@ import '../providers/app_providers.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mascot_avatar.dart';
+import 'home_navigation_screen.dart';
 
 /// 출석 완료 축하 오버레이 데이터 모델
 class AttendanceCelebration {
@@ -240,6 +241,17 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     }
   }
 
+  void _exitToDashboard() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeNavigationScreen()),
+      );
+    }
+  }
+
   /// 마스터 비밀번호 0000 입력 시 원터치 종료 다이얼로그
   void _showMasterExitDialog() {
     showDialog(
@@ -272,7 +284,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Navigator.pop(context);
+              _exitToDashboard();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
@@ -286,75 +298,87 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     );
   }
 
-  /// 자물쇠 버튼 탭 시 키오스크 탈출 팝업 (간편 0000 원터치 포함)
+  /// 자물쇠 버튼 탭 시 관리자 비밀번호 확인 다이얼로그 (학생의 무단 이탈 방지)
   void _showExitDialog() {
+    final pinController = TextEditingController();
+    String? errorMessage;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        actionsOverflowButtonSpacing: 8,
-        actionsOverflowDirection: VerticalDirection.down,
-        actionsAlignment: MainAxisAlignment.end,
-        title: const Row(
-          children: [
-            Icon(Icons.lock_rounded, color: Color(0xFFFBBF24), size: 26),
-            SizedBox(width: 10),
-            Text(
-              '관리자 모드 복귀',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_rounded, color: Color(0xFFFBBF24), size: 26),
+              SizedBox(width: 10),
+              Text(
+                '관리자 모드 복귀',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '학생의 무단 화면 조작을 방지하는 안전 잠금장치입니다.\n관리자 비밀번호 4자리를 입력해 주세요. (기본값: 0000)',
+                style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13.5, height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: pinController,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                obscureText: true,
+                autofocus: true,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  letterSpacing: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: '••••',
+                  hintStyle: const TextStyle(color: Color(0xFF64748B), letterSpacing: 10),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  errorText: errorMessage,
+                  errorStyle: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('닫기', style: TextStyle(color: Color(0xFF94A3B8))),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (pinController.text.trim() == '0000') {
+                  Navigator.pop(ctx);
+                  _exitToDashboard();
+                } else {
+                  setDialogState(() {
+                    errorMessage = '비밀번호가 일치하지 않습니다.';
+                  });
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              ),
+              child: const Text('확인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '학생 및 회원의 무단 화면 조작을 방지하는 안전 잠금장치입니다.\n관리자 비밀번호 기본값은 [0000] 입니다.',
-              style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13.5, height: 1.5),
-            ),
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF38BDF8), size: 20),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '키패드에서 0000을 입력하셔도 즉시 관리자로 복귀할 수 있습니다.',
-                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('닫기', style: TextStyle(color: Color(0xFF94A3B8))),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            ),
-            child: const Text('관리자 즉시 복귀 (0000)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }
@@ -567,33 +591,24 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildQuickTestChips(List<Member> members) {
-    // Unique test PINs deduplicated cleanly
-    final seenPins = <String>{'1234', '0000'};
-    final items = <_QuickPinItem>[
-      const _QuickPinItem(pin: '1234', tag: '체험 PIN', color: Color(0xFF38BDF8)),
-      const _QuickPinItem(pin: '0000', tag: '관리자 PIN', color: Color(0xFFFBBF24)),
-    ];
-
-    for (final m in members) {
-      final clean = m.phone.replaceAll(RegExp(r'[^0-9]'), '');
-      final last4 = clean.length >= 4 ? clean.substring(clean.length - 4) : clean;
-      if (last4.length == 4 && !seenPins.contains(last4)) {
-        seenPins.add(last4);
-        items.add(_QuickPinItem(pin: last4, tag: m.primaryName, color: const Color(0xFF34D399)));
-        if (items.length >= 5) break;
-      }
+    // 등록된 학생이 있는 실제 운영 환경에서는 학생 개인정보 및 관리자 PIN 유출을 방지하기 위해 칩을 일체 노출하지 않습니다.
+    if (members.isNotEmpty) {
+      return const SizedBox.shrink();
     }
 
+    // 학생이 0명인 초기 체험/테스트 모드에서만 키패드 동작 확인용 데모 핀 노출 (관리자 PIN은 보안상 숨김)
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: items.map((item) {
-          return Padding(
+        children: [
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _buildQuickPinBadge(item),
-          );
-        }).toList(),
+            child: _buildQuickPinBadge(
+              const _QuickPinItem(pin: '1234', tag: '체험 데모 번호 (1234)', color: Color(0xFF38BDF8)),
+            ),
+          ),
+        ],
       ),
     );
   }
