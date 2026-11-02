@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
+import 'mascot_avatar.dart';
 
 class StepByStepPracticeGuideDialog extends ConsumerStatefulWidget {
   final VoidCallback onOpenAddMember;
@@ -90,25 +91,15 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
             // Top Header: Mascot Passy winking face + Step indicator
             Row(
               children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF1E293B),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withAlpha((255 * 0.2).round()),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/icons/splash_icon.png',
-                      fit: BoxFit.cover,
+                ZeroPassMascotAvatar(
+                  size: 52,
+                  isLightMode: true,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withAlpha((255 * 0.2).round()),
+                      blurRadius: 10,
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(width: 12),
                 Expanded(

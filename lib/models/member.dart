@@ -33,6 +33,48 @@ class Member {
     this.photoPath,
   });
 
+  /// 회원의 순수 이름만 추출 (부차적인 괄호, 코스 표기 등을 제외하여 1줄 표시 보장)
+  /// 예: '강지훈 (바디프로필 PT)' -> '강지훈'
+  /// 예: '이도현(중2 수학반)' -> '이도현'
+  /// 예: '박민지 [1:1 필라테스]' -> '박민지'
+  /// 예: '정하율' -> '정하율'
+  String get primaryName {
+    final trimmed = name.trim();
+    // 1. 괄호 표기 매칭 ( ) [ ] < > { }
+    final bracketMatch = RegExp(r'^(.*?)\s*[\(\[\<\{](.+?)[\)\]\>\}]').firstMatch(trimmed);
+    if (bracketMatch != null && bracketMatch.group(1)!.trim().isNotEmpty) {
+      return bracketMatch.group(1)!.trim();
+    }
+    // 2. 구분 기호 표기 매칭 (- / · |)
+    final delimiterMatch = RegExp(r'^(.*?)\s*[-–—/·|]\s*(.+)$').firstMatch(trimmed);
+    if (delimiterMatch != null && delimiterMatch.group(1)!.trim().isNotEmpty) {
+      return delimiterMatch.group(1)!.trim();
+    }
+    return trimmed;
+  }
+
+  /// 이름 뒤에 붙어있던 부차적 부가 태그/과정명/비고 정보 분리
+  /// 예: '강지훈 (바디프로필 PT)' -> '바디프로필 PT'
+  /// 예: '이도현(중2 수학반)' -> '중2 수학반'
+  String? get secondaryTag {
+    final trimmed = name.trim();
+    final bracketMatch = RegExp(r'^(.*?)\s*[\(\[\<\{](.+?)[\)\]\>\}]').firstMatch(trimmed);
+    if (bracketMatch != null && bracketMatch.group(2)!.trim().isNotEmpty) {
+      return bracketMatch.group(2)!.trim();
+    }
+    final delimiterMatch = RegExp(r'^(.*?)\s*[-–—/·|]\s*(.+)$').firstMatch(trimmed);
+    if (delimiterMatch != null && delimiterMatch.group(2)!.trim().isNotEmpty) {
+      return delimiterMatch.group(2)!.trim();
+    }
+    return null;
+  }
+
+  /// 1글자 이니셜 (아바타용)
+  String get initial {
+    final p = primaryName;
+    return p.isNotEmpty ? p.substring(0, 1) : '?';
+  }
+
   Member copyWith({
     String? id,
     String? name,

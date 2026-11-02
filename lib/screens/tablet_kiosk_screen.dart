@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,11 +8,13 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/mascot_avatar.dart';
 
 /// 출석 완료 축하 오버레이 데이터 모델
 class AttendanceCelebration {
   final String digits;
   final String memberName;
+  final String? programTag;
   final String passStatus;
   final String timeStr;
   final bool isDemo;
@@ -24,6 +25,7 @@ class AttendanceCelebration {
   const AttendanceCelebration({
     required this.digits,
     required this.memberName,
+    this.programTag,
     required this.passStatus,
     required this.timeStr,
     required this.isDemo,
@@ -148,6 +150,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       final celebration = AttendanceCelebration(
         digits: enteredCode,
         memberName: '김패시 학생',
+        programTag: '체험 시뮬레이션',
         passStatus: '10회권 (잔여 9회)',
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: true,
@@ -194,12 +197,13 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
       final celebration = AttendanceCelebration(
         digits: enteredCode,
-        memberName: member.name,
+        memberName: member.primaryName,
+        programTag: member.secondaryTag,
         passStatus: remaining,
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: false,
         isSuccess: true,
-        smsMessage: '${member.name}님이 학원에 정상 출석하였습니다.',
+        smsMessage: '${member.primaryName}님이 학원에 정상 출석하였습니다.',
         photoPath: member.photoPath,
       );
 
@@ -506,20 +510,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         Expanded(
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF1E293B),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                ),
-                child: ClipOval(
-                  child: Transform.scale(
-                    scale: 1.18,
-                    child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-                  ),
-                ),
+              ZeroPassMascotAvatar(
+                size: 44,
+                isLightMode: true,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -585,7 +579,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       final last4 = clean.length >= 4 ? clean.substring(clean.length - 4) : clean;
       if (last4.length == 4 && !seenPins.contains(last4)) {
         seenPins.add(last4);
-        items.add(_QuickPinItem(pin: last4, tag: m.name, color: const Color(0xFF34D399)));
+        items.add(_QuickPinItem(pin: last4, tag: m.primaryName, color: const Color(0xFF34D399)));
         if (items.length >= 5) break;
       }
     }
@@ -895,7 +889,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     );
   }
 
-  /// 일반 매장 키오스크 방식의 전면 출석 완료 화면 (전면 대형 4자리 번호 표시 및 애니메이션)
+  /// 일반 매장 키오스크 방식의 전면 출석 완료 화면 (전면 대형 4자리 번호 표시 및 반응형 무결점 레이아웃)
   Widget _buildFullScreenAttendanceSuccess(AttendanceCelebration celebration, StudioProfile studio) {
     return Positioned.fill(
       child: GestureDetector(
@@ -915,242 +909,271 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
             );
           },
           child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            color: Color(0xFF0F172A), // Clean, simple high-end slate void
-          ),
-          child: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isLandscape = constraints.maxWidth > constraints.maxHeight;
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFF0F172A), // Clean, simple high-end slate void
+            ),
+            child: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isLandscape = constraints.maxWidth > constraints.maxHeight;
+                  final isCompact = constraints.maxHeight < 680;
+                  final vGap = isLandscape ? 8.0 : (isCompact ? 10.0 : 16.0);
+                  final avatarSize = isLandscape ? 72.0 : (isCompact ? 80.0 : 96.0);
+                  final digitBoxWidth = ((constraints.maxWidth - 64) / 4).clamp(40.0, 58.0);
+                  final digitBoxHeight = digitBoxWidth * 1.15;
 
-                return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isLandscape ? 32 : 24,
-                    vertical: isLandscape ? 14 : 20,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - (isLandscape ? 28 : 40),
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 24 : 20,
+                      vertical: isLandscape ? 12 : 16,
                     ),
-                    child: IntrinsicHeight(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - (isLandscape ? 24 : 32),
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // 1. Top Store Brand & Live Stamp Pill
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                          // 1. Top Store Brand & Live Stamp Pill (FittedBox & Flexible로 오버플로우 방지)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: constraints.maxWidth - (isLandscape ? 48 : 24),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ClipOval(
-                                  child: Transform.scale(
-                                    scale: 1.18,
-                                    child: Image.asset(
-                                      'assets/icons/splash_icon.png',
-                                      width: 22,
-                                      height: 22,
-                                      fit: BoxFit.cover,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E293B),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const ZeroPassMascotAvatar(
+                                    size: 22,
+                                    isLightMode: true,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 스마트 출결 키오스크',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 스마트 출결 키오스크',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    celebration.timeStr,
-                                    style: const TextStyle(
-                                      color: Color(0xFF34D399),
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w800,
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      celebration.timeStr,
+                                      style: const TextStyle(
+                                        color: Color(0xFF34D399),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          SizedBox(height: vGap),
 
-                          // 2. Avatar Circle: Member Photo if registered, else Edge-to-edge Penguin
-                          Stack(
-                            alignment: Alignment.bottomRight,
-                            children: [
-                              Container(
-                                width: isLandscape ? 90 : 108,
-                                height: isLandscape ? 90 : 108,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(0xFF1E293B),
-                                  border: Border.all(color: const Color(0xFF10B981), width: 3),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.35),
-                                      blurRadius: 18,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: ClipOval(
-                                  child: celebration.photoPath != null &&
-                                          celebration.photoPath!.isNotEmpty &&
-                                          File(celebration.photoPath!).existsSync()
-                                      ? Image.file(
-                                          File(celebration.photoPath!),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Transform.scale(
-                                          scale: 1.18,
-                                          child: Image.asset(
-                                            'assets/icons/splash_icon.png',
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                                child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                          // 2. Avatar Circle: Member Photo if registered, else Naturally Masked 3D Penguin
+                          ZeroPassMascotAvatar(
+                            size: avatarSize,
+                            photoPath: celebration.photoPath,
+                            isLightMode: true,
+                            border: Border.all(color: const Color(0xFF10B981), width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                blurRadius: 18,
+                                offset: const Offset(0, 4),
                               ),
                             ],
+                            badge: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
+                            ),
                           ),
 
-                          const SizedBox(height: 22),
+                          SizedBox(height: vGap),
 
-                          // 3. Huge 전면 4자리 출결 번호 Display
+                          // 3. Huge 전면 4자리 출결 번호 Display (반응형 FittedBox & 동적 스케일링으로 오버플로우 원천 차단)
                           Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Text(
                                 '입력하신 출결 번호',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF94A3B8),
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: celebration.digits.split('').map((d) {
-                                  return Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                                    width: isLandscape ? 56 : 64,
-                                    height: isLandscape ? 64 : 74,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF1E293B),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: const Color(0xFF10B981),
-                                        width: 1.8,
+                              SizedBox(height: vGap * 0.4),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: celebration.digits.split('').map((d) {
+                                    return Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                                      width: digitBoxWidth,
+                                      height: digitBoxHeight,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1E293B),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: const Color(0xFF10B981),
+                                          width: 1.8,
+                                        ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      d,
-                                      style: TextStyle(
-                                        fontSize: isLandscape ? 28 : 34,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
+                                      child: Text(
+                                        d,
+                                        style: TextStyle(
+                                          fontSize: digitBoxWidth * 0.52,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ],
                           ),
 
-                          const SizedBox(height: 22),
+                          SizedBox(height: vGap),
 
-                          // 4. Main Celebratory Announcement & Member Name
-                          Text(
-                            celebration.memberName,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: isLandscape ? 24 : 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.6,
+                          // 4. Main Celebratory Announcement & Member Name (1줄 순수 이름 + 부차 과정 배지 분리)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    celebration.memberName,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: isLandscape ? 22 : 26,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: -0.6,
+                                    ),
+                                  ),
+                                ),
+                                if (celebration.programTag != null &&
+                                    celebration.programTag!.isNotEmpty) ...[
+                                  const SizedBox(height: 5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1E293B),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 0.8),
+                                    ),
+                                    child: Text(
+                                      celebration.programTag!,
+                                      style: const TextStyle(
+                                        color: Color(0xFF38BDF8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '출석 체크가 정상 완료되었습니다!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: isLandscape ? 15 : 17,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF34D399),
-                              letterSpacing: -0.3,
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '출석 체크가 정상 완료되었습니다!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: isLandscape ? 14 : 16,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF34D399),
+                                letterSpacing: -0.3,
+                              ),
                             ),
                           ),
 
-                          const SizedBox(height: 18),
+                          SizedBox(height: vGap),
 
                           // 5. Store-Grade Status Cards (Remaining Pass & Safe Parent SMS)
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 460),
+                            constraints: const BoxConstraints(maxWidth: 440),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF111827).withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(22),
+                                borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                               ),
                               child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Row(
-                                        children: [
-                                          Icon(Icons.confirmation_num_rounded, color: Color(0xFF38BDF8), size: 18),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            '이용권 잔여 현황',
-                                            style: TextStyle(
-                                              color: Color(0xFF94A3B8),
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w600,
+                                      const Flexible(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.confirmation_num_rounded, color: Color(0xFF38BDF8), size: 18),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              '이용권 잔여 현황',
+                                              style: TextStyle(
+                                                color: Color(0xFF94A3B8),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                      Text(
-                                        celebration.passStatus,
-                                        style: const TextStyle(
-                                          color: Color(0xFF10B981),
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w900,
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          celebration.passStatus,
+                                          textAlign: TextAlign.end,
+                                          style: const TextStyle(
+                                            color: Color(0xFF10B981),
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w900,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const Divider(color: Color(0xFF1F2937), height: 18),
+                                  const Divider(color: Color(0xFF1F2937), height: 16),
                                   Row(
                                     children: [
                                       Icon(
@@ -1166,7 +1189,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                               : '학부모님 안심 알림(문자) 전송 완료',
                                           style: TextStyle(
                                             color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
-                                            fontSize: 12.5,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
@@ -1178,14 +1201,14 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          SizedBox(height: vGap),
 
                           // 6. Big Store-Style [확인] Action Button (Returns to PIN Check-in screen)
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 460),
+                            constraints: const BoxConstraints(maxWidth: 440),
                             child: SizedBox(
                               width: double.infinity,
-                              height: 56,
+                              height: isLandscape ? 48 : 52,
                               child: ElevatedButton(
                                 onPressed: () {
                                   HapticFeedback.lightImpact();
@@ -1194,19 +1217,19 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF10B981),
                                   foregroundColor: Colors.white,
-                                  elevation: 12,
-                                  shadowColor: const Color(0xFF10B981).withValues(alpha: 0.6),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                  elevation: 8,
+                                  shadowColor: const Color(0xFF10B981).withValues(alpha: 0.5),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
                                 child: const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.check_circle_rounded, size: 24),
-                                    SizedBox(width: 10),
+                                    Icon(Icons.check_circle_rounded, size: 22),
+                                    SizedBox(width: 8),
                                     Text(
                                       '확인 (다음 출석하기)',
                                       style: TextStyle(
-                                        fontSize: 17,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: -0.4,
                                       ),
@@ -1217,24 +1240,24 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 12),
+                          SizedBox(height: vGap * 0.5),
 
                           const Text(
                             '확인 버튼 또는 화면을 터치하면 즉시 다음 출석을 진행합니다',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 

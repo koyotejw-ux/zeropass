@@ -1,0 +1,247 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:zeropass/models/member.dart';
+import 'package:zeropass/screens/tablet_kiosk_screen.dart';
+import 'package:zeropass/widgets/mascot_avatar.dart';
+import 'package:zeropass/widgets/member_name_badge.dart';
+
+void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('ko_KR', null);
+  });
+  group('ZeroPassMascotAvatar Widget Tests', () {
+    testWidgets('Renders 3D transparent mascot inside ClipOval when photoPath is null', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ZeroPassMascotAvatar(
+              size: 52,
+              isLightMode: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(ZeroPassMascotAvatar), findsOneWidget);
+      expect(find.byType(ClipOval), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
+    });
+
+    testWidgets('Renders badge overlay when provided', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ZeroPassMascotAvatar(
+              size: 80,
+              badge: Icon(Icons.check_circle, key: Key('test_badge')),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('test_badge')), findsOneWidget);
+    });
+
+    testWidgets('Renders properly without overflow on ultra-narrow 320dp width', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ZeroPassMascotAvatar(size: 60),
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('TabletKioskScreen Celebration Overflow Resilience Tests', () {
+    testWidgets('Kiosk check-in celebration screen renders with ZERO overflow on Galaxy Z Fold 4 outer screen (340dp width)', (tester) async {
+      tester.view.physicalSize = const Size(340, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: TabletKioskScreen(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tap "체험 PIN 1234" to trigger celebration screen
+      final demoChip = find.text('1234');
+      expect(demoChip, findsOneWidget);
+      await tester.tap(demoChip);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Verify celebration screen elements are visible
+      expect(find.text('김패시 학생'), findsOneWidget);
+      expect(find.text('10회권 (잔여 9회)'), findsOneWidget);
+      expect(find.byType(ZeroPassMascotAvatar), findsWidgets);
+
+      // Verify absolute zero overflow
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Kiosk check-in celebration screen renders with ZERO overflow on ultra-narrow 320dp width', (tester) async {
+      tester.view.physicalSize = const Size(320, 600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: TabletKioskScreen(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final demoChip = find.text('1234');
+      await tester.tap(demoChip);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('김패시 학생'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Kiosk check-in celebration screen renders with ZERO overflow in short landscape (700x340)', (tester) async {
+      tester.view.physicalSize = const Size(700, 340);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: TabletKioskScreen(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final demoChip = find.text('1234');
+      await tester.tap(demoChip);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('김패시 학생'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Member Name & Secondary Tag Separation Tests (Two-line Prevention)', () {
+    test('Member.primaryName and secondaryTag parse correctly across various formats', () {
+      final now = DateTime.now();
+
+      final m1 = Member(
+        id: '1',
+        name: '강지훈 (바디프로필 PT)',
+        phone: '01011112222',
+        groupName: 'PT 화목반',
+        billingType: BillingType.sessionBased,
+        defaultFee: 800000,
+        totalSessions: 10,
+        remainingSessions: 2,
+        registeredAt: now,
+      );
+      expect(m1.primaryName, '강지훈');
+      expect(m1.secondaryTag, '바디프로필 PT');
+      expect(m1.initial, '강');
+
+      final m2 = Member(
+        id: '2',
+        name: '이도현(중2 수학반)',
+        phone: '01033334444',
+        groupName: '수학반',
+        billingType: BillingType.monthlyRecurring,
+        defaultFee: 300000,
+        totalSessions: 0,
+        remainingSessions: 0,
+        registeredAt: now,
+      );
+      expect(m2.primaryName, '이도현');
+      expect(m2.secondaryTag, '중2 수학반');
+      expect(m2.initial, '이');
+
+      final m3 = Member(
+        id: '3',
+        name: '최예원 [도예 주말반]',
+        phone: '01055556666',
+        groupName: '도예반',
+        billingType: BillingType.sessionBased,
+        defaultFee: 200000,
+        totalSessions: 4,
+        remainingSessions: 4,
+        registeredAt: now,
+      );
+      expect(m3.primaryName, '최예원');
+      expect(m3.secondaryTag, '도예 주말반');
+
+      final m4 = Member(
+        id: '4',
+        name: '정하율',
+        phone: '01077778888',
+        groupName: '음악반',
+        billingType: BillingType.monthlyRecurring,
+        defaultFee: 150000,
+        totalSessions: 0,
+        remainingSessions: 0,
+        registeredAt: now,
+      );
+      expect(m4.primaryName, '정하율');
+      expect(m4.secondaryTag, isNull);
+    });
+
+    testWidgets('MemberNameBadge renders pure single-line name and secondary tag without 2-line break', (tester) async {
+      final member = Member(
+        id: '1',
+        name: '강지훈 (바디프로필 PT)',
+        phone: '01011112222',
+        groupName: 'PT 화목반',
+        billingType: BillingType.sessionBased,
+        defaultFee: 800000,
+        totalSessions: 10,
+        remainingSessions: 2,
+        registeredAt: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 200, // constrained width
+              child: MemberNameBadge(
+                member: member,
+                showGroupName: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('강지훈'), findsOneWidget);
+      expect(find.text('바디프로필 PT'), findsOneWidget);
+      expect(find.text('PT 화목반'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+}

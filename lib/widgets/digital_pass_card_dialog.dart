@@ -6,6 +6,7 @@ import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
 import '../theme/app_theme.dart';
+import 'member_name_badge.dart';
 
 /// Toss/Apple Wallet-style Digital Membership & Check-in Pass Card Dialog
 /// Allows instant mobile pass verification & sharing via KakaoTalk/SMS
@@ -51,7 +52,7 @@ class DigitalPassCardDialog extends StatelessWidget {
     final text = '''
 [${studio.studioName}] 모바일 스마트 출결패스
 ━━━━━━━━━━━━━━━━
-• 회원명: ${member.name}
+• 회원명: ${member.primaryName}${member.secondaryTag != null ? ' (${member.secondaryTag})' : ''}
 • 등록반: ${member.groupName}
 • 상태: $statusText
 • $sessionInfo
@@ -63,13 +64,13 @@ class DigitalPassCardDialog extends StatelessWidget {
     await SharePlus.instance.share(
       ShareParams(
         text: text,
-        subject: '[${studio.studioName}] ${member.name}님의 모바일 출결패스',
+        subject: '[${studio.studioName}] ${member.primaryName}님의 모바일 출결패스',
       ),
     );
   }
 
   void _copyToClipboard(BuildContext context) {
-    final text = '[${studio.studioName}] ${member.name} 모바일 패스 확인되었습니다.';
+    final text = '[${studio.studioName}] ${member.primaryName} 모바일 패스 확인되었습니다.';
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -233,14 +234,16 @@ class DigitalPassCardDialog extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      member.name,
-                                      style: const TextStyle(
+                                    MemberNameBadge(
+                                      member: member,
+                                      isDark: true,
+                                      nameStyle: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 26,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: -0.5,
                                       ),
+                                      showGroupName: false,
                                     ),
                                   ],
                                 ),

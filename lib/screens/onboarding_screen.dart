@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/mascot_avatar.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onFinish;
@@ -119,26 +120,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Stack(
                   alignment: Alignment.bottomRight,
                   children: [
-                    Container(
-                      width: 170,
-                      height: 170,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF1E293B),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.22),
-                            blurRadius: 28,
-                            spreadRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/icons/splash_icon.png',
-                          fit: BoxFit.cover,
+                    ZeroPassMascotAvatar(
+                      size: 170,
+                      isLightMode: true,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.22),
+                          blurRadius: 28,
+                          spreadRadius: 4,
                         ),
-                      ),
+                      ],
                     ),
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -303,25 +294,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  Container(
-                    width: 170,
-                    height: 170,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF1E293B),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.25),
-                          blurRadius: 20,
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/icons/splash_icon.png',
-                        fit: BoxFit.cover,
+                  ZeroPassMascotAvatar(
+                    size: 170,
+                    isLightMode: true,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.25),
+                        blurRadius: 20,
                       ),
-                    ),
+                    ],
                   ),
                   Container(
                     padding: const EdgeInsets.all(8),

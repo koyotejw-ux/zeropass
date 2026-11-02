@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
+import 'mascot_avatar.dart';
 
 /// ZeroPass 포트폴리오급 대표 시그니처 키비주얼 (Signature Key Visual Hero)
 ///
@@ -227,27 +228,14 @@ class _SignatureKeyVisualHeroState extends State<SignatureKeyVisualHero> {
                                   ),
                                 ),
                               ),
-                              // Mascot Circle (Scaled edge-to-edge Penguin without 0)
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(0xFF1E293B),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                    width: 1.5,
-                                  ),
+                              // Mascot Circle (Naturally masked 3D Penguin Mascot)
+                              ZeroPassMascotAvatar(
+                                size: 52,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  width: 1.5,
                                 ),
-                                child: ClipOval(
-                                  child: Transform.scale(
-                                    scale: 1.18,
-                                    child: Image.asset(
-                                      'assets/icons/splash_icon.png',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
+                                isLightMode: true,
                               ),
                             ],
                           ),

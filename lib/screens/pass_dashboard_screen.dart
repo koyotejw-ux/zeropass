@@ -15,6 +15,8 @@ import '../theme/app_theme.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
+import '../widgets/mascot_avatar.dart';
+import '../widgets/member_name_badge.dart';
 import '../widgets/signature_key_visual_hero.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
@@ -65,16 +67,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           children: [
             Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF1E293B),
-                  ),
-                  child: ClipOval(
-                    child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-                  ),
+                const ZeroPassMascotAvatar(
+                  size: 44,
+                  isLightMode: true,
                 ),
                 const SizedBox(width: 14),
                 const Column(
@@ -686,7 +681,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         ),
                         child: SafeArea(
                           top: false,
-                          bottom: !isKeyboardOpen,
+                          bottom: false,
                           child: Row(
                             children: [
                               Expanded(
@@ -775,7 +770,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     PassRecord? todayPass,
     StudioProfile studio,
   ) {
-    final initials = member.name.isNotEmpty ? member.name.substring(0, 1) : '?';
+    final initials = member.initial;
     final isSessionBased = member.billingType == BillingType.sessionBased;
     final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
 
@@ -794,7 +789,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Section: Avatar + Full-width Name & Group (Extends all the way across)
+          // 1. Top Section: Avatar + Single-line Name with Course Badge & Subtitle Group
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -833,36 +828,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    Text(
-                      member.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.chipBackground,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        member.groupName,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: MemberNameBadge(
+                  member: member,
+                  showGroupName: true,
                 ),
               ),
               InkWell(

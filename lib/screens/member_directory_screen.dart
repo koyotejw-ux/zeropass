@@ -18,6 +18,7 @@ import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
+import '../widgets/member_name_badge.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
   const MemberDirectoryScreen({super.key});
@@ -218,7 +219,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   }
 
   Widget _buildMemberTile(BuildContext context, Member member, StudioProfile studio) {
-    final initials = member.name.isNotEmpty ? member.name.substring(0, 1) : '?';
+    final initials = member.initial;
     final isSession = member.billingType == BillingType.sessionBased;
     final isExpiring = isSession && member.remainingSessions <= 1;
 
@@ -238,7 +239,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Top Section: Avatar + Name, Group, and Digital Pass Card Button
+              // 1. Top Section: Avatar + Single-line Name with Course Badge & Subtitle Group
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -274,36 +275,9 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        Text(
-                          member.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                          decoration: BoxDecoration(
-                            color: AppTheme.chipBackground,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            member.groupName,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: MemberNameBadge(
+                      member: member,
+                      showGroupName: true,
                     ),
                   ),
                   InkWell(
@@ -479,7 +453,7 @@ class _MemberDetailModal extends ConsumerWidget {
                                     )
                                   : Center(
                                       child: Text(
-                                        member.name.isNotEmpty ? member.name.substring(0, 1) : '?',
+                                        member.initial,
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w800,
@@ -509,9 +483,14 @@ class _MemberDetailModal extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            member.name,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                          MemberNameBadge(
+                            member: member,
+                            nameStyle: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                            ),
+                            showGroupName: false,
                           ),
                           const SizedBox(height: 2),
                           Wrap(
@@ -572,7 +551,7 @@ class _MemberDetailModal extends ConsumerWidget {
                       ref.read(membersProvider.notifier).addSessions(member.id, 10);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${member.name} 잔여 회차 10회가 추가되었습니다.'),
+                          content: Text('${member.primaryName} 잔여 회차 10회가 추가되었습니다.'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -597,7 +576,7 @@ class _MemberDetailModal extends ConsumerWidget {
                       id: 'inv_${const Uuid().v4().substring(0, 8)}',
                       memberIds: [member.id],
                       recipientPhone: member.phone,
-                      title: '${member.name.split(' ').first} 수강 패스 재등록 안내',
+                      title: '${member.primaryName} 수강 패스 재등록 안내',
                       amount: member.defaultFee,
                       dueDate: DateTime.now().add(const Duration(days: 5)),
                       status: PaymentStatus.unpaid,

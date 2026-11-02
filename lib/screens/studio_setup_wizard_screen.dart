@@ -7,6 +7,7 @@ import '../providers/app_providers.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
+import '../widgets/mascot_avatar.dart';
 
 class StudioSetupWizardScreen extends ConsumerStatefulWidget {
   final VoidCallback onFinish;
@@ -275,16 +276,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         children: [
           const SizedBox(height: 12),
           // Mascot passy avatar
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF1E293B),
-            ),
-            child: ClipOval(
-              child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-            ),
+          const ZeroPassMascotAvatar(
+            size: 60,
+            isLightMode: true,
           ),
           const SizedBox(height: 20),
           const Text(
@@ -399,16 +393,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF1E293B),
-            ),
-            child: ClipOval(
-              child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-            ),
+          const ZeroPassMascotAvatar(
+            size: 60,
+            isLightMode: true,
           ),
           const SizedBox(height: 20),
           const Text(
@@ -492,16 +479,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF1E293B),
-            ),
-            child: ClipOval(
-              child: Image.asset('assets/icons/splash_icon.png', fit: BoxFit.cover),
-            ),
+          const ZeroPassMascotAvatar(
+            size: 60,
+            isLightMode: true,
           ),
           const SizedBox(height: 20),
           const Text(

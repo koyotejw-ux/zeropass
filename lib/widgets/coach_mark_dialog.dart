@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/coach_mark_service.dart';
 import '../theme/app_theme.dart';
+import 'mascot_avatar.dart';
 
 class CoachMarkDialog extends StatelessWidget {
   final String title;
@@ -60,26 +61,16 @@ class CoachMarkDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
             // Passy Winking Avatar
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF1E293B),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withAlpha((255 * 0.25).round()),
-                    blurRadius: 16,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/icons/splash_icon.png',
-                  fit: BoxFit.cover,
+            ZeroPassMascotAvatar(
+              size: 80,
+              isLightMode: true,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryBlue.withAlpha((255 * 0.25).round()),
+                  blurRadius: 16,
+                  spreadRadius: 2,
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 18),
 
