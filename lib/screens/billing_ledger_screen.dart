@@ -434,16 +434,41 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   Expanded(
                     child: currentList.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.receipt_long_outlined, size: 48, color: AppTheme.textTertiary),
-                                const SizedBox(height: 12),
-                                Text(
-                                  _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
-                                  style: const TextStyle(fontSize: 15, color: AppTheme.textSecondary),
-                                ),
-                              ],
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.receipt_long_outlined, size: 52, color: AppTheme.textTertiary),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    '우측 하단 [+] 또는 아래 버튼을 눌러\n첫 청구서를 간편하게 발행해보세요.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      final members = membersAsync.value ?? [];
+                                      final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+                                      _openQuickInvoiceSheet(context, members, studio);
+                                    },
+                                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                                    label: const Text('첫 청구서 작성하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primaryBlue,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      elevation: 0,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           )
                         : ListView.builder(
@@ -471,9 +496,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         onPressed: () {
           final members = membersAsync.value ?? [];
           final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-          if (members.isNotEmpty) {
-            _openQuickInvoiceSheet(context, members, studio);
-          }
+          _openQuickInvoiceSheet(context, members, studio);
         },
         backgroundColor: AppTheme.primaryBlue,
         icon: const Icon(Icons.edit_note, color: Colors.white),
@@ -1077,6 +1100,9 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _directNameController = TextEditingController();
+  bool _isDirectInputMode = false;
+  bool _autoRegisterMember = true;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   final NumberFormat _currencyFormat = NumberFormat('#,###');
   bool _sendSmsRightNow = true;
@@ -1086,31 +1112,49 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
     super.initState();
     if (widget.allMembers.isNotEmpty) {
       _selectMember(widget.allMembers.first);
+    } else {
+      _isDirectInputMode = true;
+      final now = DateTime.now();
+      final feeWord = widget.studio.feeTitle;
+      _titleController.text = '${now.month}월 $feeWord 안내';
+      _amountController.text = '250000';
     }
   }
 
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _amountController.dispose();
+    _phoneController.dispose();
+    _directNameController.dispose();
+    super.dispose();
+  }
+
   void _selectMember(Member m) {
-    _selectedMemberIds.clear();
-    _selectedMemberIds.add(m.id);
+    setState(() {
+      _isDirectInputMode = false;
+      _selectedMemberIds.clear();
+      _selectedMemberIds.add(m.id);
 
-    final siblings = widget.allMembers.where((other) => other.phone == m.phone).toList();
-    for (final sib in siblings) {
-      _selectedMemberIds.add(sib.id);
-    }
+      final siblings = widget.allMembers.where((other) => other.phone == m.phone).toList();
+      for (final sib in siblings) {
+        _selectedMemberIds.add(sib.id);
+      }
 
-    final totalDefaultFee = widget.allMembers
-        .where((item) => _selectedMemberIds.contains(item.id))
-        .fold<int>(0, (sum, item) => sum + item.defaultFee);
+      final totalDefaultFee = widget.allMembers
+          .where((item) => _selectedMemberIds.contains(item.id))
+          .fold<int>(0, (sum, item) => sum + item.defaultFee);
 
-    final now = DateTime.now();
-    final feeWord = widget.studio.feeTitle;
-    final title = siblings.length > 1
-        ? '${now.month}월 $feeWord (${siblings.map((s) => s.name.split(' ').first).join('/')} 형제·가족 합산)'
-        : '${m.name.split(' ').first} ${now.month}월 $feeWord 안내';
+      final now = DateTime.now();
+      final feeWord = widget.studio.feeTitle;
+      final title = siblings.length > 1
+          ? '${now.month}월 $feeWord (${siblings.map((s) => s.primaryName).join('/')} 형제·가족 합산)'
+          : '${m.primaryName} ${now.month}월 $feeWord 안내';
 
-    _titleController.text = title;
-    _amountController.text = totalDefaultFee.toString();
-    _phoneController.text = m.phone;
+      _titleController.text = title;
+      _amountController.text = (totalDefaultFee > 0 ? totalDefaultFee : 250000).toString();
+      _phoneController.text = m.phone;
+    });
   }
 
   void _addAmount(int add) {
@@ -1139,9 +1183,15 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '간편 청구서 작성',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              const Row(
+                children: [
+                  Icon(Icons.edit_note, color: AppTheme.primaryBlue, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    '간편 청구서 작성',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                  ),
+                ],
               ),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -1151,41 +1201,161 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
           ),
           const SizedBox(height: 12),
 
-          // Select Target Member
+          // If no members are registered, show helpful guidance + demo data load button
+          if (widget.allMembers.isEmpty)
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: AppTheme.primaryBlue, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        '등록된 회원이 없어도 바로 작성 가능',
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  const Text(
+                    '수신인 성함과 연락처를 직접 입력하시면 청구서 등록과 동시에 회원 명부에도 자동으로 등록할 수 있습니다.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF3B82F6), height: 1.4),
+                  ),
+                  const SizedBox(height: 10),
+                  Consumer(
+                    builder: (ctx, ref, _) => OutlinedButton.icon(
+                      onPressed: () async {
+                        final db = ref.read(databaseServiceProvider);
+                        await db.restoreSampleData();
+                        await ref.read(membersProvider.notifier).reload();
+                        await ref.read(invoicesProvider.notifier).reload();
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('체험용 샘플 회원 5명이 등록되었습니다. 다시 청구서를 작성해보세요!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 15, color: AppTheme.primaryBlue),
+                      label: const Text('체험용 샘플 회원 5명 불러오기', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF93C5FD)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Select Target Member or Direct Input
           Text(
-            '${widget.studio.memberTitle} 선택 (동일 연락처 가족 자동 묶음)',
+            '${widget.studio.memberTitle} 선택 및 대상자 지정',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: widget.allMembers.map((m) {
-                final isSelected = _selectedMemberIds.contains(m.id);
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(m.name),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      setState(() {
-                        _selectMember(m);
-                      });
-                    },
-                    selectedColor: AppTheme.primaryDark,
-                    labelStyle: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+          if (widget.allMembers.isNotEmpty)
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  ...widget.allMembers.map((m) {
+                    final isSelected = !_isDirectInputMode && _selectedMemberIds.contains(m.id);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(m.primaryName),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          if (val) {
+                            _selectMember(m);
+                          }
+                        },
+                        selectedColor: AppTheme.primaryDark,
+                        labelStyle: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  }),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      avatar: Icon(
+                        Icons.add,
+                        size: 16,
+                        color: _isDirectInputMode ? Colors.white : AppTheme.primaryBlue,
+                      ),
+                      label: const Text('직접 입력'),
+                      selected: _isDirectInputMode,
+                      onSelected: (val) {
+                        setState(() {
+                          _isDirectInputMode = true;
+                          _selectedMemberIds.clear();
+                          if (_directNameController.text.trim().isNotEmpty) {
+                            _titleController.text = '${_directNameController.text.trim()} ${now.month}월 $feeWord 안내';
+                          }
+                        });
+                      },
+                      selectedColor: AppTheme.primaryBlue,
+                      labelStyle: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _isDirectInputMode ? Colors.white : AppTheme.primaryBlue,
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                );
-              }).toList(),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+
+          // Direct Name Input & Auto-register Option
+          if (_isDirectInputMode) ...[
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: _directNameController,
+              label: '${widget.studio.memberTitle} 성함 / 수신인 성함',
+              hint: '예: 김철수',
+              prefixIcon: Icons.person_outline,
+              onChanged: (val) {
+                final name = val.trim();
+                if (name.isNotEmpty) {
+                  _titleController.text = '$name ${now.month}월 $feeWord 안내';
+                }
+              },
+            ),
+            const SizedBox(height: 6),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _autoRegisterMember,
+              onChanged: (val) => setState(() => _autoRegisterMember = val ?? true),
+              title: Text(
+                '${widget.studio.memberTitle} 명부에도 신규 회원으로 자동 등록하기',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+            ),
+          ],
+          const SizedBox(height: 14),
 
           // Title & Quick Presets
           AppTextField(
@@ -1227,6 +1397,7 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
               _buildPresetButton('+1만', 10000),
               _buildPresetButton('+5만', 50000),
               _buildPresetButton('+10만', 100000),
+              _buildPresetButton('+30만', 300000),
             ],
           ),
           const SizedBox(height: 14),
@@ -1296,41 +1467,127 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
             controlAffinity: ListTileControlAffinity.leading,
             dense: true,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           Consumer(
             builder: (ctx, ref, _) {
               return SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    final amount = int.tryParse(_amountController.text.replaceAll(',', '')) ?? 0;
-                    if (amount <= 0 || _selectedMemberIds.isEmpty) return;
+                  onPressed: () async {
+                    final amount = int.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0;
+                    final phone = _phoneController.text.trim();
+                    final title = _titleController.text.trim();
 
-                    final newInvoice = Invoice(
-                      id: 'inv_${const Uuid().v4().substring(0, 8)}',
-                      memberIds: _selectedMemberIds.toList(),
-                      recipientPhone: _phoneController.text.trim(),
-                      title: _titleController.text.trim(),
-                      amount: amount,
-                      dueDate: _dueDate,
-                      status: PaymentStatus.unpaid,
-                    );
+                    if (amount <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('청구 금액을 0원보다 크게 입력해주세요.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
 
-                    ref.read(invoicesProvider.notifier).addInvoice(newInvoice);
-                    Navigator.pop(context);
+                    if (phone.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('수신인 연락처를 입력해주세요.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${newInvoice.title} (${_currencyFormat.format(amount)}원) 청구서가 등록되었습니다.'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                    if (_isDirectInputMode) {
+                      final directName = _directNameController.text.trim();
+                      if (directName.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('청구 대상자의 이름을 입력해주세요.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
 
-                    // If checked, open SMS sender bottom sheet immediately
-                    if (_sendSmsRightNow) {
-                      final members = widget.allMembers.where((m) => newInvoice.memberIds.contains(m.id)).toList();
-                      widget.onSendSms(newInvoice, members);
+                      String memberId = 'mem_${const Uuid().v4().substring(0, 8)}';
+                      Member? newMember;
+                      if (_autoRegisterMember) {
+                        newMember = Member(
+                          id: memberId,
+                          name: directName,
+                          phone: phone,
+                          groupName: '일반',
+                          billingType: BillingType.monthlyRecurring,
+                          defaultFee: amount,
+                          totalSessions: 0,
+                          remainingSessions: 0,
+                          registeredAt: DateTime.now(),
+                        );
+                        await ref.read(membersProvider.notifier).addMember(newMember);
+                      }
+
+                      final newInvoice = Invoice(
+                        id: 'inv_${const Uuid().v4().substring(0, 8)}',
+                        memberIds: [memberId],
+                        recipientPhone: phone,
+                        title: title.isEmpty ? '$directName ${now.month}월 $feeWord 안내' : title,
+                        amount: amount,
+                        dueDate: _dueDate,
+                        status: PaymentStatus.unpaid,
+                      );
+
+                      await ref.read(invoicesProvider.notifier).addInvoice(newInvoice);
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${newInvoice.title} (${_currencyFormat.format(amount)}원) 청구서가 등록되었습니다.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+
+                      if (_sendSmsRightNow) {
+                        widget.onSendSms(newInvoice, newMember != null ? [newMember] : []);
+                      }
+                    } else {
+                      if (_selectedMemberIds.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('청구 대상 회원을 선택해주세요.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final newInvoice = Invoice(
+                        id: 'inv_${const Uuid().v4().substring(0, 8)}',
+                        memberIds: _selectedMemberIds.toList(),
+                        recipientPhone: phone,
+                        title: title.isEmpty ? '${now.month}월 $feeWord 안내' : title,
+                        amount: amount,
+                        dueDate: _dueDate,
+                        status: PaymentStatus.unpaid,
+                      );
+
+                      await ref.read(invoicesProvider.notifier).addInvoice(newInvoice);
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${newInvoice.title} (${_currencyFormat.format(amount)}원) 청구서가 등록되었습니다.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+
+                      if (_sendSmsRightNow) {
+                        final members = widget.allMembers.where((m) => newInvoice.memberIds.contains(m.id)).toList();
+                        widget.onSendSms(newInvoice, members);
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

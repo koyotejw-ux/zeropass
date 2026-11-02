@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:zeropass/models/member.dart';
+import 'package:zeropass/models/invoice.dart';
+import 'package:zeropass/models/studio_profile.dart';
+import 'package:zeropass/providers/app_providers.dart';
+import 'package:zeropass/screens/settings_vault_screen.dart';
+
+class MockStudioProfileNotifier extends StudioProfileNotifier {
+  final StudioProfile mockProfile;
+  MockStudioProfileNotifier(this.mockProfile);
+
+  @override
+  Future<StudioProfile> build() async {
+    return mockProfile;
+  }
+}
+
+void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('ko_KR', null);
+  });
+
+  group('Billing & Quick Invoice Resilience Tests', () {
+    test('Direct member creation generates valid Member with single-line primaryName', () {
+      final directMember = Member(
+        id: 'mem_direct_test',
+        name: '박서준 (신규 상담)',
+        phone: '010-9876-5432',
+        groupName: '일반',
+        billingType: BillingType.monthlyRecurring,
+        defaultFee: 250000,
+        totalSessions: 0,
+        remainingSessions: 0,
+        registeredAt: DateTime.now(),
+      );
+
+      expect(directMember.primaryName, equals('박서준'));
+      expect(directMember.secondaryTag, equals('신규 상담'));
+      expect(directMember.phone, equals('010-9876-5432'));
+      expect(directMember.defaultFee, equals(250000));
+    });
+
+    test('Invoice model handles direct member ID without requiring pre-existing member in store', () {
+      final invoice = Invoice(
+        id: 'inv_direct_1',
+        memberIds: ['mem_direct_test'],
+        recipientPhone: '01098765432',
+        title: '박서준 11월 수강료 안내',
+        amount: 250000,
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+        status: PaymentStatus.unpaid,
+      );
+
+      expect(invoice.memberIds, contains('mem_direct_test'));
+      expect(invoice.amount, equals(250000));
+      expect(invoice.status, equals(PaymentStatus.unpaid));
+      expect(invoice.recipientPhone, equals('01098765432'));
+    });
+  });
+
+  group('Settings & Vault Screen UI Architecture Tests', () {
+    testWidgets('SettingsVaultScreen renders Studio Profile and Security Vault prior to Guide Center', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.75;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final profile = StudioProfile.defaultProfile().copyWith(
+        studioName: '마스터 아카데미',
+        category: '학원/교습소',
+        instructorName: '김원장',
+        bankName: '국민은행',
+        accountNumber: '123-456-789012',
+        accountHolder: '김원장',
+        autoBankDetectEnabled: true,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            studioProfileProvider.overrideWith(() => MockStudioProfileNotifier(profile)),
+          ],
+          child: const MaterialApp(
+            home: SettingsVaultScreen(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Check top title
+      expect(find.text('설정 · 보안 금고'), findsOneWidget);
+
+      // 1. Studio Profile Card is rendered
+      expect(find.textContaining('프로필'), findsWidgets);
+      expect(find.text('마스터 아카데미'), findsOneWidget);
+      expect(find.text('김원장'), findsWidgets);
+
+      // 2. Local Data Vault is rendered
+      expect(find.textContaining('로컬 데이터 보안 금고'), findsOneWidget);
+      expect(find.textContaining('로컬 백업 파일 생성'), findsOneWidget);
+
+      // Scroll to Bank Push Security
+      await tester.scrollUntilVisible(
+        find.textContaining('금융 푸시 필터 보안 설정'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('금융 푸시 필터 보안 설정'), findsOneWidget);
+
+      // Scroll down to reveal Guide Center card if needed
+      await tester.scrollUntilVisible(
+        find.text('원장님 실전 가이드 센터'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      // 6. Consolidated Guide Center entry card is rendered
+      expect(find.text('원장님 실전 가이드 센터'), findsOneWidget);
+      expect(find.text('실전 가이드 센터 열기'), findsOneWidget);
+
+      // Verify tapping '실전 가이드 센터 열기' opens the consolidated guide bottom sheet
+      await tester.tap(find.text('실전 가이드 센터 열기'));
+      await tester.pumpAndSettle();
+
+      // Inside bottom sheet modal:
+      expect(find.text('스텝바이스텝 4단계 실전 연습 가이드'), findsOneWidget);
+      expect(find.text('초간단 3단계 핵심 이용 가이드'), findsOneWidget);
+      expect(find.text('원클릭 업종 프리셋 전환'), findsOneWidget);
+      expect(find.text('매장 셋업 위저드 다시 실행'), findsOneWidget);
+      expect(find.text('자주 묻는 질문 (FAQ)'), findsOneWidget);
+    });
+  });
+}
