@@ -6,7 +6,6 @@ import '../providers/app_providers.dart';
 import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
 import '../services/localization_service.dart';
-import '../services/monetization_service.dart';
 import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
@@ -355,8 +354,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ),
                   child: const Icon(Icons.storefront_rounded, color: AppTheme.softMint, size: 22),
                 ),
-                title: const Text('매장 셋업 위저드 다시 실행', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
-                subtitle: const Text('상호명, 업종, 수납 계좌, 첫 회원 등록 마법사 재실행', style: TextStyle(fontSize: 11.5)),
+                title: const Text('매장 셋업 위저드 다시 실행', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                subtitle: const Text('상호명, 업종, 수납 계좌, 첫 회원 등록 마법사 재실행', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -389,22 +388,22 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       SizedBox(width: 8),
                       Text(
                         '자주 묻는 질문 (FAQ)',
-                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                       ),
                     ],
                   ),
                   SizedBox(height: 10),
-                  Text('Q. 문자 발송 비용이 왜 0원인가요?', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                  SizedBox(height: 2),
-                  Text('A. 유료 외부 문자 서버 대신 원장님의 스마트폰 기본 무료 문자를 활용하므로 월 통신비 지출이 0원입니다.', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary, height: 1.4)),
+                  Text('Q. 문자 발송 비용이 왜 0원인가요?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  SizedBox(height: 3),
+                  Text('A. 유료 외부 문자 서버 대신 원장님의 스마트폰 기본 무료 문자를 활용하므로 월 통신비 지출이 0원입니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
                   Divider(height: 16),
-                  Text('Q. 개인정보가 외부 서버에 전송되나요?', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                  SizedBox(height: 2),
-                  Text('A. 중앙 서버를 두지 않는 100% 온디바이스 로컬 암호화 저장소로, 외부 유출이 원천 차단됩니다.', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary, height: 1.4)),
+                  Text('Q. 개인정보가 외부 서버에 전송되나요?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  SizedBox(height: 3),
+                  Text('A. 중앙 서버를 두지 않는 100% 온디바이스 로컬 암호화 저장소로, 외부 유출이 원천 차단됩니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
                   Divider(height: 16),
-                  Text('Q. 태블릿 무인 키오스크 관리자 비밀번호는?', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                  SizedBox(height: 2),
-                  Text('A. 기본 마스터 비밀번호는 [0000]이며, 키패드에서 0000을 입력하면 원장님 대시보드로 즉시 복귀합니다.', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary, height: 1.4)),
+                  Text('Q. 태블릿 무인 키오스크 관리자 비밀번호는?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  SizedBox(height: 3),
+                  Text('A. 기본 마스터 비밀번호는 [0000]이며, 키패드에서 0000을 입력하면 원장님 대시보드로 즉시 복귀합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
                 ],
               ),
             ),
@@ -423,53 +422,23 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       appBar: AppBar(
         title: const Text('설정 · 보안 금고'),
         actions: [
-          // Tab 4 필수 전용 기능: 안심 100% 로컬 금고 데이터 전체 암호화 백업 & 공유
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 14),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    try {
-                      final backupFile = await DataVaultService.exportEncryptedBackup();
-                      await DataVaultService.shareBackupFile(backupFile);
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('백업 파일 생성 오류: $e')),
-                        );
-                      }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.shield_outlined, color: AppTheme.primaryBlue, size: 16),
-                        SizedBox(width: 5),
-                        Text(
-                          '금고 백업',
-                          style: TextStyle(
-                            color: AppTheme.primaryBlue,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          IconButton(
+            tooltip: '로컬 금고 암호화 백업',
+            icon: const Icon(Icons.shield_outlined, color: AppTheme.primaryBlue),
+            onPressed: () async {
+              try {
+                final backupFile = await DataVaultService.exportEncryptedBackup();
+                await DataVaultService.shareBackupFile(backupFile);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('백업 파일 생성 오류: $e')),
+                  );
+                }
+              }
+            },
           ),
+          const SizedBox(width: 6),
         ],
       ),
       body: studioAsync.when(
@@ -558,8 +527,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           backgroundColor: Color(0xFFEFF6FF),
                           child: Icon(Icons.share_outlined, color: AppTheme.primaryBlue),
                         ),
-                        title: const Text('로컬 백업 파일 생성 & 카톡/드라이브 전송', style: TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: const Text('회원·출결·수납 데이터를 백업하여 나에게 카톡/드라이브로 보관합니다.'),
+                        title: const Text('로컬 백업 파일 생성 & 카톡/드라이브 전송', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('회원·출결·수납 데이터를 암호화하여 카톡/드라이브로 안전 보관합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () async {
                           final file = await DataVaultService.exportEncryptedBackup();
@@ -581,8 +550,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           backgroundColor: Color(0xFFECFDF5),
                           child: Icon(Icons.table_view_outlined, color: AppTheme.softMint),
                         ),
-                        title: const Text('수납 장부 엑셀(CSV) 내보내기 & 공유', style: TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: const Text('세무/결산용 엑셀 호환 CSV를 생성하여 카톡/엑셀로 공유합니다.'),
+                        title: const Text('수납 장부 엑셀(CSV) 내보내기 & 공유', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('세무/결산용 엑셀 호환 CSV를 생성하여 카톡/엑셀로 공유합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () async {
                           final file = await DataVaultService.exportLedgerCsv();
@@ -604,8 +573,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           backgroundColor: Color(0xFFF0FDF4),
                           child: Icon(Icons.restore_page_outlined, color: AppTheme.softMint),
                         ),
-                        title: const Text('백업 데이터 복원하기 (텍스트 / JSON)', style: TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: const Text('카카오톡 등으로 보관한 백업 JSON 내용을 입력하여 복원합니다.'),
+                        title: const Text('백업 데이터 복원하기 (텍스트 / JSON)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('카카오톡 등으로 보관한 백업 JSON 내용을 입력하여 복원합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () => _openRestoreDataDialog(context),
                       ),
@@ -616,8 +585,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           backgroundColor: Color(0xFFFEF2F2),
                           child: Icon(Icons.cleaning_services_outlined, color: AppTheme.danger),
                         ),
-                        title: const Text('체험용 가상 데이터 비우기 (실제 운영 시작)', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.danger)),
-                        subtitle: const Text('샘플 5명 데이터를 모두 지우고 실제 회원만 등록합니다.'),
+                        title: const Text('체험용 가상 데이터 비우기 (실제 운영 시작)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.danger)),
+                        subtitle: const Text('샘플 5명 데이터를 모두 지우고 실제 회원만 등록합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () async {
                           final confirm = await showDialog<bool>(
@@ -681,8 +650,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           backgroundColor: Color(0xFFF3E8FF),
                           child: Icon(Icons.restart_alt, color: Colors.purple),
                         ),
-                        title: const Text('체험용 샘플 데이터 다시 불러오기', style: TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: const Text('학원/PT/공방 연습용 5명 예시 데이터를 다시 채웁니다.'),
+                        title: const Text('체험용 샘플 데이터 다시 불러오기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('학원/PT/공방 연습용 5명 예시 데이터를 다시 채웁니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () async {
                           final db = ref.read(databaseServiceProvider);
@@ -783,8 +752,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFEFF6FF),
                         child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
                       ),
-                      title: Text('${profile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${profile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.'),
+                      title: Text('${profile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                      subtitle: Text('${profile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.', style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
                         context: context,
@@ -806,8 +775,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFECFDF5),
                         child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
                       ),
-                      title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.'),
+                      title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                      subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
                         context: context,
@@ -829,8 +798,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         backgroundColor: Color(0xFFFFFBEB),
                         child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
                       ),
-                      title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.'),
+                      title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                      subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _openTemplateEditorDialog(
                         context: context,
@@ -873,7 +842,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               Icon(Icons.language_rounded, size: 18, color: AppTheme.primaryBlue),
                               SizedBox(width: 8),
                               Expanded(
-                                child: Text('앱 언어', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                                child: Text('앱 언어', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                               ),
                             ],
                           ),
@@ -885,7 +854,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           items: AppLanguage.values.map((lang) {
                             return DropdownMenuItem<AppLanguage>(
                               value: lang,
-                              child: Text(lang.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                              child: Text(lang.label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                             );
                           }).toList(),
                           onChanged: (lang) {
@@ -908,7 +877,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               Icon(Icons.monetization_on_outlined, size: 18, color: AppTheme.softMint),
                               SizedBox(width: 8),
                               Expanded(
-                                child: Text('통화 단위', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                                child: Text('통화 단위', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                               ),
                             ],
                           ),
@@ -920,7 +889,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           items: AppCurrency.values.map((cur) {
                             return DropdownMenuItem<AppCurrency>(
                               value: cur,
-                              child: Text('${cur.code} (${cur.symbol})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                              child: Text('${cur.code} (${cur.symbol})', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                             );
                           }).toList(),
                           onChanged: (cur) {
@@ -971,12 +940,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               children: [
                                 Text(
                                   '원장님 실전 가이드 센터',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                                  style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                                 ),
-                                SizedBox(height: 2),
+                                SizedBox(height: 3),
                                 Text(
                                   '스텝바이스텝 연습 · 업종 프리셋 · 셋업 마법사 · FAQ',
-                                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
                                 ),
                               ],
                             ),
@@ -987,7 +956,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       const SizedBox(height: 12),
                       const Text(
                         '화면 마커를 따라 터치하며 배우는 4단계 실전 튜토리얼부터 업종별(학원/PT/필라테스/공방) 원클릭 프리셋까지 필요한 모든 가이드를 한 곳에서 이용하실 수 있습니다.',
-                        style: TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.45),
+                        style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.45),
                       ),
                       const SizedBox(height: 14),
                       Wrap(
@@ -1006,7 +975,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () => _openGuideCenterSheet(context, profile),
                           icon: const Icon(Icons.explore_rounded, size: 18),
-                          label: const Text('실전 가이드 센터 열기', style: TextStyle(fontWeight: FontWeight.w800)),
+                          label: const Text('실전 가이드 센터 열기', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryBlue,
                             foregroundColor: Colors.white,
@@ -1021,96 +990,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 7. CheckAndPay PRO & Monetization Shortcut Card
-              _buildSectionTitle('체크앤페이 PRO 멤버십 & 프리미엄 기능', icon: Icons.workspace_premium_rounded, iconColor: const Color(0xFFD97706)),
-              AnimatedBuilder(
-                animation: MonetizationService.instance,
-                builder: (context, _) {
-                  final isNoAds = MonetizationService.instance.isAdsRemoved;
-                  final isKiosk = MonetizationService.instance.isKioskProUnlocked;
-
-                  return Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: AppTheme.cardShadow,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFBBF24), size: 26),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isNoAds && isKiosk
-                                        ? 'PRO 멤버십 활성화 완료 (VIP)'
-                                        : '체크앤페이 PRO 샵 둘러보기',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    isNoAds && isKiosk
-                                        ? '키오스크 및 광고 제거 영구 소장권이 모두 켜져 있습니다.'
-                                        : '무인 태블릿 키오스크 모드 및 평생 광고 제거권을 확인하세요.',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white.withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              HomeNavigationScreen.of(context)?.switchToTab(3);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF59E0B),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            icon: const Icon(Icons.shopping_bag_outlined, size: 16),
-                            label: const Text(
-                              '전용 PRO 샵 탭 바로가기',
-                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // 8. Compliance & Legal Terms Card
+              // 7. Compliance & Legal Terms Card
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -1128,7 +1008,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         Expanded(
                           child: Text(
                             '법적 고지 및 규정 준수 (Compliance)',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                           ),
                         ),
                       ],
@@ -1137,7 +1017,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     Text(
                       '본 앱은 오프라인 장부 및 메시지 서식 도구이며, 모든 데이터는 기기에만 암호화 보관됩니다. 원격 중앙 서버 및 제3자 분석 서버로 데이터를 전송하지 않습니다.\n회원 정보 수집 동의 및 회원과의 수납·거래 책임은 운영자 본인에게 있습니다.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         color: AppTheme.textSecondary,
                         height: 1.5,
                       ),
@@ -1164,7 +1044,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         children: [
           Icon(icon, size: 13, color: AppTheme.textSecondary),
           const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
         ],
       ),
     );
@@ -1183,7 +1063,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textSecondary,
               ),
@@ -1497,11 +1377,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               children: [
                 TextSpan(
                   text: '$title: ',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
                 ),
                 TextSpan(
                   text: desc,
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
+                  style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
                 ),
               ],
             ),

@@ -16,17 +16,18 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Dark Luxury Pro Theme
+      backgroundColor: AppTheme.background, // Unified with AppTheme
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: AppTheme.background,
         elevation: 0,
         toolbarHeight: isLandscape ? 50 : 56,
         title: Text(
-          'PRO 멤버십 구독',
+          '체크앤페이 PRO 샵',
           style: TextStyle(
-            color: Colors.white,
-            fontSize: isLandscape ? 17 : 19,
+            color: AppTheme.textPrimary,
+            fontSize: isLandscape ? 18 : 20,
             fontWeight: FontWeight.w800,
+            letterSpacing: -0.4,
           ),
         ),
         actions: [
@@ -42,17 +43,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 );
               }
             },
-            icon: const Icon(Icons.restore, size: 15, color: Color(0xFF94A3B8)),
+            icon: const Icon(Icons.restore_rounded, size: 16, color: AppTheme.textSecondary),
             label: const Text(
               '구독 복원',
               style: TextStyle(
-                color: Color(0xFF94A3B8),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
         ],
       ),
       body: AnimatedBuilder(
@@ -65,30 +66,30 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
           return ListView(
             padding: EdgeInsets.fromLTRB(
               16,
-              isLandscape ? 6 : 12,
+              isLandscape ? 6 : 10,
               16,
               isLandscape ? 36 : 90,
             ),
             children: [
-              // 1. Pro Value Proposition Hero Card (100% Subscription Focus)
+              // 1. Pro Value Proposition Hero Card (VIP Prestige Banner)
               Container(
                 padding: EdgeInsets.all(isLandscape ? 16 : 20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E293B), Color(0xFF334155)],
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -104,9 +105,9 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.diamond_rounded, color: Color(0xFFFBBF24), size: 26),
+                          child: const Icon(Icons.diamond_rounded, color: Color(0xFFFBBF24), size: 28),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,20 +117,21 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                                     ? '대표님은 올인원 VIP 구독 이용 중'
                                     : '부담 없는 월정액 구독 멤버십',
                                 style: TextStyle(
-                                  fontSize: isLandscape ? 15 : 16.5,
+                                  fontSize: isLandscape ? 16 : 17.5,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
+                                  letterSpacing: -0.3,
                                 ),
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(height: 4),
                               Text(
                                 isAllInOne
                                     ? '태블릿 키오스크와 광고 없는 최적의 매장 환경이 활성화되어 있습니다.'
-                                    : '월 커피 한두 잔 비용으로 학원/매장의 출결과 장부를 스마트하게 혁신하세요.',
+                                    : '월 커피 한두 잔 비용으로 학원·매장의 출결과 장부를 스마트하게 혁신하세요.',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  height: 1.4,
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  height: 1.45,
                                 ),
                               ),
                             ],
@@ -137,32 +139,39 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _buildFeaturePill(Icons.autorenew_rounded, '언제든 위약금 0원 해지'),
                         _buildFeaturePill(Icons.tablet_android_rounded, '공기계 태블릿 키오스크'),
                         _buildFeaturePill(Icons.block_flipped, '100% 광고 없는 쾌적함'),
-                        _buildFeaturePill(Icons.verified_user_outlined, '구글 플레이 안전 정기결제'),
+                        _buildFeaturePill(Icons.verified_user_outlined, 'Google Play 안전 결제'),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
               // 2. Section Title
-              const Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 10),
-                child: Text(
-                  '월간 정기 구독 플랜 (구글 플레이)',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFE2E8F0),
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 12),
+                child: Row(
+                  children: const [
+                    Icon(Icons.workspace_premium_rounded, size: 18, color: Color(0xFFD97706)),
+                    SizedBox(width: 6),
+                    Text(
+                      '정기 구독 플랜 (Google Play)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -171,9 +180,10 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 context: context,
                 badgeIcon: Icons.star_rounded,
                 badgeText: '가장 인기 있는 올인원 VIP',
-                badgeColor: const Color(0xFFF59E0B),
+                badgeColor: const Color(0xFFD97706),
+                badgeBgColor: const Color(0xFFFEF3C7),
                 icon: Icons.auto_awesome_rounded,
-                iconColor: const Color(0xFFFBBF24),
+                iconColor: const Color(0xFFD97706),
                 title: '올인원 VIP 패키지 구독 (추천)',
                 description: '무인 태블릿 키오스크 + 광고 완전 제거를 하나의 정기 구독으로 모두 누리는 최고 가성비 플랜입니다.',
                 features: const [
@@ -204,16 +214,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                         MonetizationService.instance.buyProduct(MonetizationService.productIdAllInOneYearly);
                       },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               // Plan 2: 태블릿 자율출결 키오스크 단독 구독 (월 ₩4,900)
               _buildStoreProductCard(
                 context: context,
                 badgeIcon: Icons.tablet_mac_rounded,
                 badgeText: '태블릿 무인 출결 전용',
-                badgeColor: const Color(0xFF3B82F6),
+                badgeColor: const Color(0xFF2563EB),
+                badgeBgColor: const Color(0xFFEFF6FF),
                 icon: Icons.tablet_mac_rounded,
-                iconColor: const Color(0xFF60A5FA),
+                iconColor: const Color(0xFF2563EB),
                 title: '태블릿 키오스크 단독 구독',
                 description: '학원·공방·피트니스 센터 입구 공기계 태블릿에 거치해두고 회원들이 자율 출석 체크하는 기능만 가볍게 구독하세요.',
                 features: const [
@@ -237,16 +248,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   }
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               // Plan 3: 광고 제거 단독 구독 (월 ₩1,900)
               _buildStoreProductCard(
                 context: context,
                 badgeIcon: Icons.block_flipped,
                 badgeText: '광고 없는 쾌적함',
-                badgeColor: const Color(0xFF10B981),
+                badgeColor: const Color(0xFF059669),
+                badgeBgColor: const Color(0xFFECFDF5),
                 icon: Icons.block_flipped,
-                iconColor: const Color(0xFF34D399),
+                iconColor: const Color(0xFF059669),
                 title: '광고 제거 단독 구독',
                 description: '하단 배너 및 팝업 광고를 완전히 없애 화면을 널찍하고 쾌적하게 사용하고 싶으신 대표님께 추천합니다.',
                 features: const [
@@ -257,53 +269,54 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 priceText: isNoAds ? '광고 제거 활성화 완료 (이용 중)' : '₩1,900 / 월',
                 priceSubtext: '부담 없는 월정액 (언제든 구글 플레이에서 해지)',
                 isUnlocked: isNoAds,
-                actionButtonText: isNoAds ? '광고 제거 구독 중' : '광고 제거 구독하기 (₩1,900/월)',
+                actionButtonText: isNoAds ? '광고 제거 이용 중' : '광고 제거 구독하기 (₩1,900/월)',
                 onAction: () {
                   if (!isNoAds) {
                     MonetizationService.instance.buyProduct(MonetizationService.productIdRemoveAdsMonthly);
                   }
                 },
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 22),
 
               // 3. Subscription Management Notice
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                  boxShadow: AppTheme.cardShadow,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
+                  children: const [
+                    Row(
                       children: [
-                        Icon(Icons.help_outline, color: AppTheme.softMint, size: 18),
+                        Icon(Icons.shield_outlined, color: AppTheme.primaryBlue, size: 20),
                         SizedBox(width: 8),
                         Text(
                           '정기 구독 안내 및 해지 방법',
                           style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 10),
                     Text(
                       '• 모든 플랜은 구글 플레이(Google Play) 공식 정기 결제로 안전하게 결제됩니다.\n• 언제든지 [Google Play 스토어 앱 > 우측 상단 프로필 > 결제 및 정기 결제]에서 터치 한 번으로 위약금 없이 즉시 해지하실 수 있습니다.\n• 스마트폰을 교체하거나 재설치하셔도 상단 [구독 복원] 버튼으로 이용 권한이 즉시 동기화됩니다.',
                       style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.white.withValues(alpha: 0.7),
-                        height: 1.5,
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary,
+                        height: 1.6,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               // Developer Testing Unlock Button
               Center(
@@ -317,10 +330,10 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.flash_on_rounded, size: 14, color: Color(0xFF64748B)),
+                  icon: const Icon(Icons.flash_on_rounded, size: 15, color: AppTheme.textTertiary),
                   label: const Text(
                     '개발/검수용 전체 구독 기능 언락 (스토어 심사용)',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -333,22 +346,22 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
 
   Widget _buildFeaturePill(IconData icon, String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: const Color(0xFFFBBF24)),
-          const SizedBox(width: 4),
+          Icon(icon, size: 13, color: const Color(0xFFFBBF24)),
+          const SizedBox(width: 5),
           Text(
             text,
             style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
           ),
@@ -362,6 +375,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
     IconData? badgeIcon,
     required String badgeText,
     required Color badgeColor,
+    required Color badgeBgColor,
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -376,23 +390,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
     VoidCallback? onSecondaryAction,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isUnlocked
-              ? const Color(0xFF10B981).withValues(alpha: 0.5)
-              : const Color(0xFF334155),
-          width: isUnlocked ? 1.5 : 1.0,
+              ? const Color(0xFF10B981)
+              : const Color(0xFFE2E8F0),
+          width: isUnlocked ? 1.8 : 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,23 +410,23 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
+                  color: badgeBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (badgeIcon != null) ...[
-                      Icon(badgeIcon, size: 12, color: badgeColor),
-                      const SizedBox(width: 4),
+                      Icon(badgeIcon, size: 14, color: badgeColor),
+                      const SizedBox(width: 5),
                     ],
                     Text(
                       badgeText,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: badgeColor,
                       ),
@@ -427,57 +435,58 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
+                  color: iconColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 20, color: iconColor),
+                child: Icon(icon, size: 22, color: iconColor),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
 
           // Title & Description
           Text(
             title,
             style: const TextStyle(
-              fontSize: 17,
+              fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: AppTheme.textPrimary,
               letterSpacing: -0.4,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
             description,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: Colors.white.withValues(alpha: 0.7),
-              height: 1.4,
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary,
+              height: 1.45,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Features List
           ...features.map(
             (f) => Padding(
-              padding: const EdgeInsets.only(bottom: 5),
+              padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.check, size: 13, color: AppTheme.softMint),
+                    child: Icon(Icons.check_circle_rounded, size: 15, color: AppTheme.softMint),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       f,
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFCBD5E1),
-                        height: 1.3,
+                        fontSize: 13,
+                        color: Color(0xFF334155),
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
                       ),
                     ),
                   ),
@@ -486,33 +495,33 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFF334155), height: 1),
-          const SizedBox(height: 12),
+          const Divider(color: AppTheme.borderSubtle, height: 1),
+          const SizedBox(height: 14),
 
-          // Price & Subtext with Wrap to prevent right overflow
-          Wrap(
-            direction: Axis.vertical,
-            spacing: 2,
+          // Price & Subtext
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 priceText,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: isUnlocked ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                  color: isUnlocked ? const Color(0xFF059669) : const Color(0xFFD97706),
                   letterSpacing: -0.5,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
                 priceSubtext,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.white.withValues(alpha: 0.5),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: AppTheme.textSecondary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           // Primary Action Button
           SizedBox(
@@ -521,36 +530,55 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               onPressed: onAction,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isUnlocked
-                    ? const Color(0xFF065F46)
-                    : const Color(0xFFF59E0B),
+                    ? const Color(0xFF059669)
+                    : const Color(0xFFD97706),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: Text(
-                actionButtonText,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isUnlocked) ...[
+                    const Icon(Icons.check_circle_rounded, size: 18, color: Colors.white),
+                    const SizedBox(width: 6),
+                  ],
+                  Flexible(
+                    child: Text(
+                      actionButtonText,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
           // Optional Secondary Action Button (e.g. Yearly discount)
           if (secondaryButtonText != null && onSecondaryAction != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: onSecondaryAction,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFF59E0B)),
-                  foregroundColor: const Color(0xFFFBBF24),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  side: const BorderSide(color: Color(0xFFD97706), width: 1.2),
+                  backgroundColor: const Color(0xFFFFFBEB),
+                  foregroundColor: const Color(0xFFB45309),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
                   secondaryButtonText,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ),
             ),

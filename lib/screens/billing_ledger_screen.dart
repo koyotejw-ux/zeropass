@@ -228,33 +228,40 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: _selectedTab == 0
-                                                ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
-                                                : const Color(0xFF10B981).withAlpha((255 * 0.18).round()),
-                                            shape: BoxShape.circle,
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: _selectedTab == 0
+                                                  ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
+                                                  : const Color(0xFF10B981).withAlpha((255 * 0.18).round()),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              _selectedTab == 0 ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
+                                              color: _selectedTab == 0 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
+                                              size: 16,
+                                            ),
                                           ),
-                                          child: Icon(
-                                            _selectedTab == 0 ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
-                                            color: _selectedTab == 0 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
-                                            size: 16,
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              _selectedTab == 0 ? '수납 대기 (미납 총액)' : '이번 달 총 수납액',
+                                              style: const TextStyle(
+                                                color: Color(0xFF94A3B8),
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _selectedTab == 0 ? '수납 대기 (미납 총액)' : '이번 달 총 수납액',
-                                          style: const TextStyle(
-                                            color: Color(0xFF94A3B8),
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
+                                    const SizedBox(width: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                       decoration: BoxDecoration(
@@ -452,19 +459,20 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                     style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
                                   ),
                                   const SizedBox(height: 18),
-                                  ElevatedButton.icon(
+                                  OutlinedButton.icon(
                                     onPressed: () {
                                       final members = membersAsync.value ?? [];
                                       final studio = studioAsync.value ?? StudioProfile.defaultProfile();
                                       _openQuickInvoiceSheet(context, members, studio);
                                     },
-                                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                                    label: const Text('첫 청구서 작성하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.primaryBlue,
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
+                                    label: const Text('첫 청구서 작성하기', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14)),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppTheme.primaryBlue,
+                                      side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
+                                      backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                      elevation: 0,
                                     ),
                                   ),
                                 ],
