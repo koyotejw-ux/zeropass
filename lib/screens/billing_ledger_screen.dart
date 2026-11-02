@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/responsive_dialog_actions.dart';
 
 class BillingLedgerScreen extends ConsumerStatefulWidget {
   const BillingLedgerScreen({super.key});
@@ -121,7 +122,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
               return Column(
                 children: [
-                  // 1. Amount Metric Overview Card
+                  // 1. Amount Metric Overview Card with Strong Visual Hierarchy & Status Contrast
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 18,
@@ -129,55 +130,93 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     ),
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: isLandscape ? 10 : 20,
+                        horizontal: 20,
+                        vertical: isLandscape ? 12 : 20,
                       ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: AppTheme.cardShadow,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha((255 * 0.25).round()),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: _selectedTab == 0
+                              ? const Color(0xFFF59E0B).withAlpha((255 * 0.25).round())
+                              : const Color(0xFF10B981).withAlpha((255 * 0.25).round()),
+                          width: 1.2,
+                        ),
                       ),
                       child: isLandscape
                           ? Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      _selectedTab == 0 ? '수납 대기 총액: ' : '이번 달 총 수납액: ',
-                                      style: const TextStyle(
-                                        color: Color(0xFF94A3B8),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _selectedTab == 0 ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
+                                        color: _selectedTab == 0 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
+                                        size: 22,
                                       ),
-                                    ),
-                                    Text(
-                                      LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _selectedTab == 0 ? '수납 대기 (미납 총액): ' : '이번 달 총 수납액: ',
+                                        style: const TextStyle(
+                                          color: Color(0xFF94A3B8),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: -0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha((255 * 0.1).round()),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
+                                    color: _selectedTab == 0
+                                        ? const Color(0xFFD97706).withAlpha((255 * 0.25).round())
+                                        : const Color(0xFF059669).withAlpha((255 * 0.25).round()),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: _selectedTab == 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                                      width: 1,
                                     ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _selectedTab == 0 ? Icons.error_outline_rounded : Icons.verified_rounded,
+                                        size: 13,
+                                        color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
+                                        style: TextStyle(
+                                          color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -185,43 +224,133 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Top Header Row: Category Icon & Title + Status Badge
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      _selectedTab == 0 ? '수납 대기 총액' : '이번 달 총 수납액',
-                                      style: const TextStyle(
-                                        color: Color(0xFF94A3B8),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: _selectedTab == 0
+                                                ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
+                                                : const Color(0xFF10B981).withAlpha((255 * 0.18).round()),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            _selectedTab == 0 ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
+                                            color: _selectedTab == 0 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
+                                            size: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _selectedTab == 0 ? '수납 대기 (미납 총액)' : '이번 달 총 수납액',
+                                          style: const TextStyle(
+                                            color: Color(0xFF94A3B8),
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withAlpha((255 * 0.1).round()),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                        color: _selectedTab == 0
+                                            ? const Color(0xFFD97706).withAlpha((255 * 0.22).round())
+                                            : const Color(0xFF059669).withAlpha((255 * 0.22).round()),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: _selectedTab == 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                                          width: 1,
                                         ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _selectedTab == 0 ? Icons.error_outline_rounded : Icons.verified_rounded,
+                                            size: 13,
+                                            color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _selectedTab == 0 ? '${unpaidInvoices.length}건 미납 대기' : '${paidInvoices.length}건 완납',
+                                            style: TextStyle(
+                                              color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                const SizedBox(height: 12),
+
+                                // Hero Amount Typography
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -1.0,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Secondary Info Bar (Comparative Balance & Progress)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha((255 * 0.05).round()),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.white.withAlpha((255 * 0.08).round())),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.pie_chart_outline_rounded,
+                                            size: 14,
+                                            color: Colors.white.withAlpha((255 * 0.6).round()),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '전체 ${invoices.length}건 중 ${paidInvoices.length}건 수납',
+                                            style: TextStyle(
+                                              color: Colors.white.withAlpha((255 * 0.75).round()),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Text(
+                                        _selectedTab == 0
+                                            ? '완납: ${LocalizationService.formatAmount(totalPaidAmount)}'
+                                            : '미납: ${LocalizationService.formatAmount(totalUnpaidAmount)}',
+                                        style: TextStyle(
+                                          color: _selectedTab == 0 ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
 
@@ -644,48 +773,41 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 maxLines: 8,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: const Text('취소'),
-                    ),
+              ResponsiveDialogActions(
+                breakpoint: 320,
+                secondary: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        Navigator.pop(ctx);
-                        final success = await SmsTemplateService.launchNativeSms(
-                          recipientPhone: invoice.recipientPhone,
-                          body: textController.text.trim(),
-                        );
-                        if (!success && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('문자 앱을 실행할 수 없습니다. 번호를 확인해주세요.'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
-                      label: const Text('문자 앱으로 전송'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
+                  child: const Text('취소'),
+                ),
+                primary: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final success = await SmsTemplateService.launchNativeSms(
+                      recipientPhone: invoice.recipientPhone,
+                      body: textController.text.trim(),
+                    );
+                    if (!success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('문자 앱을 실행할 수 없습니다. 번호를 확인해주세요.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
+                  label: const Text('문자 앱으로 전송'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -831,7 +953,17 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('은행 푸시 알림 장부 매칭'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actionsOverflowButtonSpacing: 8,
+        actionsOverflowDirection: VerticalDirection.down,
+        actionsAlignment: MainAxisAlignment.end,
+        title: const Row(
+          children: [
+            Icon(Icons.sync_alt_rounded, color: AppTheme.primaryBlue, size: 22),
+            SizedBox(width: 8),
+            Text('은행 푸시 알림 장부 매칭', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1228,15 +1360,13 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
   }
 
   Widget _buildPresetButton(String label, int amount) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: () => setState(() => _addAmount(amount)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+    return OutlinedButton(
+      onPressed: () => setState(() => _addAmount(amount)),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
+      child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
     );
   }
 }

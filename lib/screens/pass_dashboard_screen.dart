@@ -195,11 +195,20 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          actionsOverflowButtonSpacing: 8,
+          actionsOverflowDirection: VerticalDirection.down,
+          actionsAlignment: MainAxisAlignment.end,
           title: Row(
             children: const [
               Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 26),
               SizedBox(width: 8),
-              Text('태블릿 자율출결 키오스크', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text('태블릿 자율출결 키오스크', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                ),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -301,8 +310,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
                     children: const [
                       Text('키오스크 프로 평생 소장권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                       Text('19,900원 (1회)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue)),
@@ -1081,6 +1093,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actionsOverflowButtonSpacing: 8,
+        actionsOverflowDirection: VerticalDirection.down,
+        actionsAlignment: MainAxisAlignment.end,
         title: const Row(
           children: [
             Icon(Icons.done_all_rounded, color: AppTheme.primaryBlue, size: 24),

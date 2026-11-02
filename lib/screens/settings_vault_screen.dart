@@ -52,78 +52,73 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   }
 
   void _openIndustryPresetDialog(BuildContext context) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
-                      SizedBox(width: 8),
-                      Text(
-                        '업종 맞춤 1초 프리셋',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '대표님의 업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
-                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              ...IndustryPreset.values.map(
-                (preset) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                      color: AppTheme.chipBackground,
-                      borderRadius: BorderRadius.circular(12),
+      maxHeightRatio: 0.85,
+      builder: (ctx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: Color(0xFFD97706), size: 22),
+                    SizedBox(width: 8),
+                    Text(
+                      '업종 맞춤 1초 프리셋',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                     ),
-                    child: const Icon(Icons.business_center_outlined, color: AppTheme.primaryBlue, size: 20),
-                  ),
-                  title: Text(preset.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                  subtitle: Text('${preset.sampleStudioName} (${preset.category})', style: const TextStyle(fontSize: 11.5)),
-                  trailing: const Icon(Icons.chevron_right, size: 20),
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    await StarterPresetService.applyPreset(preset);
-                    ref.invalidate(membersProvider);
-                    ref.invalidate(passRecordsProvider);
-                    ref.invalidate(studioProfileProvider);
-                    ref.invalidate(invoicesProvider);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${preset.label} 맞춤 환경으로 세팅되었습니다.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
+                  ],
                 ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '대표님의 업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
+              style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            ...IndustryPreset.values.map(
+              (preset) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: AppTheme.chipBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.business_center_outlined, color: AppTheme.primaryBlue, size: 20),
+                ),
+                title: Text(preset.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                subtitle: Text('${preset.sampleStudioName} (${preset.category})', style: const TextStyle(fontSize: 11.5)),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await StarterPresetService.applyPreset(preset);
+                  ref.invalidate(membersProvider);
+                  ref.invalidate(passRecordsProvider);
+                  ref.invalidate(studioProfileProvider);
+                  ref.invalidate(invoicesProvider);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${preset.label} 맞춤 환경으로 세팅되었습니다.'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -695,7 +690,19 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (c) => AlertDialog(
-                            title: const Text('연습 데이터를 모두 비우시겠습니까?'),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            actionsOverflowButtonSpacing: 8,
+                            actionsOverflowDirection: VerticalDirection.down,
+                            actionsAlignment: MainAxisAlignment.end,
+                            title: const Row(
+                              children: [
+                                Icon(Icons.cleaning_services_rounded, color: AppTheme.danger, size: 22),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text('연습 데이터를 모두 비우시겠습니까?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                                ),
+                              ],
+                            ),
                             content: const SingleChildScrollView(
                               child: Text(
                                 '현재 등록된 가상 회원, 출석 기록, 청구서 내역이 모두 삭제되어 실제 운영 모드로 초기화됩니다.\n(스튜디오 프로필 설정은 유지됩니다.)',
@@ -703,11 +710,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               ),
                             ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('취소')),
-                              ElevatedButton(
+                              TextButton(
+                                onPressed: () => Navigator.pop(c, false),
+                                child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+                              ),
+                              ElevatedButton.icon(
                                 onPressed: () => Navigator.pop(c, true),
+                                icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.white),
+                                label: const Text('깨끗이 비우기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-                                child: const Text('깨끗이 비우기', style: TextStyle(color: Colors.white)),
                               ),
                             ],
                           ),
@@ -1342,28 +1353,53 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           onChanged: (_) => setModalState(() {}),
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppTextField(
-                                controller: bankController,
-                                label: '입금 은행 (#{계좌정보})',
-                                hint: '토스뱅크',
-                                prefixIcon: Icons.account_balance_outlined,
-                                onChanged: (_) => setModalState(() {}),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: AppTextField(
-                                controller: holderController,
-                                label: '예금주 성명',
-                                hint: '김원장',
-                                prefixIcon: Icons.person_outline,
-                                onChanged: (_) => setModalState(() {}),
-                              ),
-                            ),
-                          ],
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            if (constraints.maxWidth < 320) {
+                              return Column(
+                                children: [
+                                  AppTextField(
+                                    controller: bankController,
+                                    label: '입금 은행 (#{계좌정보})',
+                                    hint: '토스뱅크',
+                                    prefixIcon: Icons.account_balance_outlined,
+                                    onChanged: (_) => setModalState(() {}),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  AppTextField(
+                                    controller: holderController,
+                                    label: '예금주 성명',
+                                    hint: '김원장',
+                                    prefixIcon: Icons.person_outline,
+                                    onChanged: (_) => setModalState(() {}),
+                                  ),
+                                ],
+                              );
+                            }
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: AppTextField(
+                                    controller: bankController,
+                                    label: '입금 은행 (#{계좌정보})',
+                                    hint: '토스뱅크',
+                                    prefixIcon: Icons.account_balance_outlined,
+                                    onChanged: (_) => setModalState(() {}),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: AppTextField(
+                                    controller: holderController,
+                                    label: '예금주 성명',
+                                    hint: '김원장',
+                                    prefixIcon: Icons.person_outline,
+                                    onChanged: (_) => setModalState(() {}),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 12),
                         AppTextField(

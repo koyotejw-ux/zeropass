@@ -266,20 +266,41 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (c) => AlertDialog(
-                      title: const Text('연습 데이터를 비우시겠습니까?'),
-                      content: const Text(
-                        '연습용 가상 데이터 5명을 모두 지우고 대표님의 실제 회원만 등록할 수 있는 깨끗한 상태로 만듭니다.\n(언제든 설정 탭에서 연습 데이터를 다시 불러올 수 있습니다.)',
-                        style: TextStyle(height: 1.5, fontSize: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      actionsOverflowButtonSpacing: 8,
+                      actionsOverflowDirection: VerticalDirection.down,
+                      actionsAlignment: MainAxisAlignment.end,
+                      title: const Row(
+                        children: [
+                          Icon(Icons.cleaning_services_rounded, color: AppTheme.primaryBlue, size: 22),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '연습 데이터를 비우시겠습니까?',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
+                      ),
+                      content: const SingleChildScrollView(
+                        child: Text(
+                          '연습용 가상 데이터 5명을 모두 지우고 대표님의 실제 회원만 등록할 수 있는 깨끗한 상태로 만듭니다.\n(언제든 설정 탭에서 연습 데이터를 다시 불러올 수 있습니다.)',
+                          style: TextStyle(height: 1.5, fontSize: 13),
+                        ),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(c, false),
-                          child: const Text('취소'),
+                          child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
                         ),
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: () => Navigator.pop(c, true),
-                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-                          child: const Text('비우고 시작하기'),
+                          icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
+                          label: const Text('비우고 시작하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryBlue,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ],
                     ),
@@ -329,26 +350,29 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
             ),
             const SizedBox(height: 10),
 
-            // Bottom Navigation buttons
+            // Bottom Navigation buttons: responsive wrap if width is constrained
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (_currentStep > 0)
-                  TextButton(
+                  TextButton.icon(
                     onPressed: () => setState(() => _currentStep--),
-                    child: const Text('이전 단계', style: TextStyle(color: AppTheme.textSecondary)),
+                    icon: const Icon(Icons.arrow_back_rounded, size: 16, color: AppTheme.textSecondary),
+                    label: const Text('이전 단계', style: TextStyle(color: AppTheme.textSecondary)),
                   )
                 else
                   const SizedBox(width: 80),
                 if (_currentStep < _steps.length - 1)
-                  TextButton(
+                  TextButton.icon(
                     onPressed: () => setState(() => _currentStep++),
-                    child: const Text('다음 단계로 넘어가기', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700)),
+                    label: const Text('다음 단계', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700)),
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primaryBlue),
                   )
                 else
-                  TextButton(
+                  TextButton.icon(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('닫기', style: TextStyle(color: AppTheme.textSecondary)),
+                    icon: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textSecondary),
+                    label: const Text('닫기', style: TextStyle(color: AppTheme.textSecondary)),
                   ),
               ],
             ),

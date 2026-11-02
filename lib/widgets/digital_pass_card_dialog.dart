@@ -440,44 +440,96 @@ class DigitalPassCardDialog extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              // Action Buttons Row
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _sharePass(context),
-                      icon: const Icon(Icons.share_rounded, size: 18),
-                      label: const Text('카톡 / 문자 공유'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+              // Action Buttons with responsive layout
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 320;
+                  if (isCompact) {
+                    return Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _sharePass(context),
+                            icon: const Icon(Icons.share_rounded, size: 18),
+                            label: const Text('카톡 / 문자 공유'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryBlue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _copyToClipboard(context),
+                                icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 18),
+                                label: const Text('패스 복사', style: TextStyle(color: Colors.white)),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: Colors.white.withAlpha((255 * 0.2).round())),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton.filledTonal(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withAlpha((255 * 0.15).round()),
+                                padding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _sharePass(context),
+                          icon: const Icon(Icons.share_rounded, size: 18),
+                          label: const Text('카톡 / 문자 공유'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton.filledTonal(
-                    onPressed: () => _copyToClipboard(context),
-                    icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 20),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withAlpha((255 * 0.15).round()),
-                      padding: const EdgeInsets.all(14),
-                    ),
-                    tooltip: '출결패스 복사',
-                  ),
-                  const SizedBox(width: 6),
-                  IconButton.filledTonal(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withAlpha((255 * 0.15).round()),
-                      padding: const EdgeInsets.all(14),
-                    ),
-                  ),
-                ],
+                      const SizedBox(width: 10),
+                      IconButton.filledTonal(
+                        onPressed: () => _copyToClipboard(context),
+                        icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 20),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withAlpha((255 * 0.15).round()),
+                          padding: const EdgeInsets.all(14),
+                        ),
+                        tooltip: '출결패스 복사',
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton.filledTonal(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withAlpha((255 * 0.15).round()),
+                          padding: const EdgeInsets.all(14),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),

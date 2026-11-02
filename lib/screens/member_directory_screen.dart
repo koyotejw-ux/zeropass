@@ -703,55 +703,57 @@ class _MemberDetailModal extends ConsumerWidget {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            Text('${member.name} 사진 관리', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 14),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
-              title: const Text('카메라로 직접 촬영'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final picker = ImagePicker();
-                final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85, maxWidth: 800);
-                if (picked != null) {
-                  final appDir = await getApplicationDocumentsDirectory();
-                  final fileName = 'member_${member.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                  final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
-                  await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: savedImage.path));
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
-              title: const Text('갤러리에서 사진 선택'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final picker = ImagePicker();
-                final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 800);
-                if (picked != null) {
-                  final appDir = await getApplicationDocumentsDirectory();
-                  final fileName = 'member_${member.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                  final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
-                  await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: savedImage.path));
-                }
-              },
-            ),
-            if (member.photoPath != null && member.photoPath!.isNotEmpty)
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Text('${member.name} 사진 관리', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 14),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
-                title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
+                title: const Text('카메라로 직접 촬영'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: ''));
+                  final picker = ImagePicker();
+                  final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85, maxWidth: 800);
+                  if (picked != null) {
+                    final appDir = await getApplicationDocumentsDirectory();
+                    final fileName = 'member_${member.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                    final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+                    await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: savedImage.path));
+                  }
                 },
               ),
-            const SizedBox(height: 12),
-          ],
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
+                title: const Text('갤러리에서 사진 선택'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final picker = ImagePicker();
+                  final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 800);
+                  if (picked != null) {
+                    final appDir = await getApplicationDocumentsDirectory();
+                    final fileName = 'member_${member.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                    final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+                    await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: savedImage.path));
+                  }
+                },
+              ),
+              if (member.photoPath != null && member.photoPath!.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
+                  title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: ''));
+                  },
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -806,41 +808,43 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            const Text('회원 사진 등록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 14),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
-              title: const Text('카메라로 직접 촬영'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickPhoto(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
-              title: const Text('갤러리에서 사진 선택'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickPhoto(ImageSource.gallery);
-              },
-            ),
-            if (_photoPath != null)
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              const Text('회원 사진 등록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 14),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
-                title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
+                title: const Text('카메라로 직접 촬영'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  setState(() => _photoPath = null);
+                  _pickPhoto(ImageSource.camera);
                 },
               ),
-            const SizedBox(height: 12),
-          ],
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
+                title: const Text('갤러리에서 사진 선택'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickPhoto(ImageSource.gallery);
+                },
+              ),
+              if (_photoPath != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
+                  title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    setState(() => _photoPath = null);
+                  },
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -1019,31 +1023,57 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               ),
               const SizedBox(height: 14),
 
-              // Default Fee & Sessions
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      controller: _feeController,
-                      label: '수강료 (원)',
-                      hint: '300000',
-                      prefixIcon: Icons.payments_outlined,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  if (_billingType == BillingType.sessionBased) ...[
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: AppTextField(
-                        controller: _sessionsController,
-                        label: '총 등록 회차',
-                        hint: '10',
-                        prefixIcon: Icons.confirmation_number_outlined,
-                        keyboardType: TextInputType.number,
+              // Default Fee & Sessions (Responsive side-by-side or stacked)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 320;
+                  if (isCompact && _billingType == BillingType.sessionBased) {
+                    return Column(
+                      children: [
+                        AppTextField(
+                          controller: _feeController,
+                          label: '수강료 (원)',
+                          hint: '300000',
+                          prefixIcon: Icons.payments_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: _sessionsController,
+                          label: '총 등록 회차',
+                          hint: '10',
+                          prefixIcon: Icons.confirmation_number_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: _feeController,
+                          label: '수강료 (원)',
+                          hint: '300000',
+                          prefixIcon: Icons.payments_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
                       ),
-                    ),
-                  ],
-                ],
+                      if (_billingType == BillingType.sessionBased) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppTextField(
+                            controller: _sessionsController,
+                            label: '총 등록 회차',
+                            hint: '10',
+                            prefixIcon: Icons.confirmation_number_outlined,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 14),
 

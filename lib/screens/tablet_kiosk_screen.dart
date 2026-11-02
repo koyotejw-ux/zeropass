@@ -243,6 +243,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        actionsOverflowButtonSpacing: 8,
+        actionsOverflowDirection: VerticalDirection.down,
+        actionsAlignment: MainAxisAlignment.end,
         title: const Row(
           children: [
             Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF38BDF8), size: 28),
@@ -286,6 +289,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        actionsOverflowButtonSpacing: 8,
+        actionsOverflowDirection: VerticalDirection.down,
+        actionsAlignment: MainAxisAlignment.end,
         title: const Row(
           children: [
             Icon(Icons.lock_rounded, color: Color(0xFFFBBF24), size: 26),
