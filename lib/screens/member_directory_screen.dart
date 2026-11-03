@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../models/member.dart';
 import '../models/invoice.dart';
 import '../models/studio_profile.dart';
+import '../models/custom_category_template.dart';
 import '../providers/app_providers.dart';
 import '../services/chosung_search_service.dart';
 import '../services/coach_mark_service.dart';
@@ -831,6 +832,10 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
 
   @override
   Widget build(BuildContext context) {
+    final customCatAsync = ref.watch(customCategoryProvider);
+    final customCatState = customCatAsync.value ??
+        CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: SingleChildScrollView(
@@ -954,20 +959,59 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               ),
               const SizedBox(height: 14),
 
-              // Multi-Industry Quick Selection Chips
-              const Text('업종별 간편 템플릿', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+              // Multi-Industry Quick Selection Templates
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('업종별 간편 템플릿 (원터치 자동 입력)',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                  Text('${customCatState.memberTemplates.length}개 서식',
+                      style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                ],
+              ),
               const SizedBox(height: 6),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: [
-                    _buildIndustryChip('보습·입시', '중등수학 정규반', BillingType.monthlyRecurring, 350000, 0),
-                    _buildIndustryChip('음악·피아노', '피아노 클래식반', BillingType.monthlyRecurring, 180000, 0),
-                    _buildIndustryChip('미술·도예공방', '도예 정규반', BillingType.sessionBased, 240000, 4),
-                    _buildIndustryChip('PT·필라테스', '1:1 기구필라테스', BillingType.sessionBased, 700000, 10),
-                    _buildIndustryChip('태권도·체육관', '유소년 태권도', BillingType.monthlyRecurring, 160000, 0),
-                    _buildIndustryChip('댄스·보컬레슨', '보컬 1:1 레슨', BillingType.sessionBased, 320000, 4),
-                  ],
+                  children: customCatState.memberTemplates.map((template) {
+                    final isSelected = _groupController.text == template.groupName &&
+                        _billingType == template.billingType;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          template.billingType == BillingType.sessionBased
+                              ? Icons.confirmation_number_outlined
+                              : Icons.calendar_month_outlined,
+                          size: 14,
+                          color: isSelected ? Colors.white : AppTheme.primaryBlue,
+                        ),
+                        label: Text(
+                          template.label.contains('만')
+                              ? template.label
+                              : '${template.label} (${template.defaultFee ~/ 10000}만)',
+                        ),
+                        selected: isSelected,
+                        selectedColor: AppTheme.primaryDark,
+                        labelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        onSelected: (val) {
+                          setState(() {
+                            _groupController.text = template.groupName;
+                            _billingType = template.billingType;
+                            _feeController.text = template.defaultFee.toString();
+                            if (template.billingType == BillingType.sessionBased) {
+                              _sessionsController.text = template.defaultSessions.toString();
+                            }
+                          });
+                        },
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
               const SizedBox(height: 14),
@@ -978,6 +1022,43 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                 label: '수업 / 클래스 그룹',
                 hint: '예: 중등수학, 기구필라테스, 도예반',
                 prefixIcon: Icons.group_outlined,
+              ),
+              const SizedBox(height: 6),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ...customCatState.groupCategories.map((group) {
+                      final isSelected = _groupController.text == group;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(group),
+                          selected: isSelected,
+                          selectedColor: AppTheme.primaryDark,
+                          labelStyle: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : AppTheme.textPrimary,
+                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          onSelected: (val) {
+                            if (val) setState(() => _groupController.text = group);
+                          },
+                        ),
+                      );
+                    }),
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 14, color: AppTheme.primaryBlue),
+                      label: const Text('새 그룹 추가',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      backgroundColor: const Color(0xFFEFF6FF),
+                      side: const BorderSide(color: Color(0xFFBFDBFE)),
+                      onPressed: () => _showQuickAddGroupDialog(context),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 14),
 
@@ -1114,30 +1195,34 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
     );
   }
 
-  Widget _buildIndustryChip(String label, String group, BillingType type, int fee, int sessions) {
-    final isSelected = _groupController.text == group;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (val) {
-          setState(() {
-            _groupController.text = group;
-            _billingType = type;
-            _feeController.text = fee.toString();
-            if (type == BillingType.sessionBased) {
-              _sessionsController.text = sessions.toString();
-            }
-          });
-        },
-        selectedColor: AppTheme.primaryDark,
-        labelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: isSelected ? Colors.white : AppTheme.textPrimary,
+  void _showQuickAddGroupDialog(BuildContext context) {
+    final groupInputCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('새 수업/그룹 등록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: AppTextField(
+          controller: groupInputCtrl,
+          label: '그룹 이름',
+          hint: '예: 고등 내신반, 1:1 기구필라',
+          prefixIcon: Icons.group_add_outlined,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('취소')),
+          ElevatedButton(
+            onPressed: () async {
+              final name = groupInputCtrl.text.trim();
+              if (name.isNotEmpty) {
+                await ref.read(customCategoryProvider.notifier).addGroupCategory(name);
+                setState(() => _groupController.text = name);
+                if (dlgCtx.mounted) Navigator.pop(dlgCtx);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+            child: const Text('추가 및 선택', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

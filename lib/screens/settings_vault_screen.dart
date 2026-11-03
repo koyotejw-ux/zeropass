@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/member.dart';
 import '../models/studio_profile.dart';
+import '../models/custom_category_template.dart';
 import '../providers/app_providers.dart';
 import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
@@ -636,6 +639,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('설정 로딩 오류: $err')),
         data: (profile) {
+          final customCatAsync = ref.watch(customCategoryProvider);
+          final categoryState = customCatAsync.value ??
+              CustomCategoryState.getDefaultsForIndustry(profile.category);
           return ListView(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 90),
             children: [
@@ -1043,7 +1049,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 5. 문자 알림 및 청구 양식 관리 (사용자 정의 서식)
+              // 5. 업종별 맞춤 카테고리 및 청구 템플릿 관리
+              _buildCustomCategorySection(context, profile, categoryState),
+
+              // 6. 문자 알림 및 청구 양식 관리 (사용자 정의 서식)
               _buildSectionTitle('문자 알림 및 청구 서식 관리', icon: Icons.edit_note_rounded),
               Material(
                 color: Colors.white,
@@ -1977,6 +1986,692 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomCategorySection(
+    BuildContext context,
+    StudioProfile profile,
+    CustomCategoryState categoryState,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('업종별 맞춤 카테고리 및 청구 서식 관리', icon: Icons.category_rounded),
+        Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+              boxShadow: AppTheme.cardShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Info banner
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.tune_rounded, color: AppTheme.primaryBlue, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '어떤 업종이든 100% 맞춤형! 학생 등록 그룹과 청구서 항목을 대표님 사업장 특성에 맞게 자유롭게 편집하세요.',
+                          style: TextStyle(fontSize: 12.5, color: Colors.blueGrey[800], height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // 1. Group Categories
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEFF6FF),
+                    child: Icon(Icons.groups_outlined, color: AppTheme.primaryBlue),
+                  ),
+                  title: const Text('수업 / 반 그룹 카테고리 관리', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                  subtitle: Text(
+                    '등록된 그룹 ${categoryState.groupCategories.length}개 (${categoryState.groupCategories.take(3).join(', ')}${categoryState.groupCategories.length > 3 ? ' 외' : ''})',
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () => _openGroupCategoryManager(context),
+                ),
+                const Divider(height: 16, color: AppTheme.borderSubtle),
+
+                // 2. Member Registration Quick Templates
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFECFDF5),
+                    child: Icon(Icons.playlist_add_check_rounded, color: AppTheme.softMint),
+                  ),
+                  title: const Text('학생 등록 간편 템플릿 관리', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                  subtitle: Text(
+                    '등록된 템플릿 ${categoryState.memberTemplates.length}개 (선택 시 그룹·금액·회차 원터치 채움)',
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () => _openMemberTemplateManager(context),
+                ),
+                const Divider(height: 16, color: AppTheme.borderSubtle),
+
+                // 3. Invoice Item & Fee Templates
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFF3E8FF),
+                    child: Icon(Icons.receipt_long_rounded, color: Color(0xFF8B5CF6)),
+                  ),
+                  title: const Text('청구 항목 및 금액 템플릿 관리', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                  subtitle: Text(
+                    '등록된 항목 ${categoryState.invoiceTemplates.length}개 (정규수강료, 교재비, 재등록 등)',
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () => _openInvoiceTemplateManager(context),
+                ),
+                const Divider(height: 16, color: AppTheme.borderSubtle),
+
+                // 4. One-touch Industry Preset Reset
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFFFBEB),
+                    child: Icon(Icons.auto_fix_high_rounded, color: AppTheme.warning),
+                  ),
+                  title: const Text('원터치 업종별 프리셋 불러오기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                  subtitle: const Text(
+                    '학원, 피트니스, 필라테스, 태권도, 음악/공방 템플릿으로 원클릭 초기화',
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () => _openIndustryPresetResetDialog(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  void _openGroupCategoryManager(BuildContext context) {
+    final textController = TextEditingController();
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.85,
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final catState = ref.watch(customCategoryProvider).value ??
+                CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('수업 / 반 그룹 카테고리 관리', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  const Text('학생 등록 시 선택할 수 있는 수업 그룹 목록입니다. 불필요한 항목은 삭제하고 새로운 그룹을 자유롭게 추가하세요.',
+                      style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
+                  const SizedBox(height: 18),
+
+                  // Add new group row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: textController,
+                          label: '새 그룹 이름',
+                          hint: '예: 고등 내신반, 1:1 기구필라',
+                          prefixIcon: Icons.add_circle_outline,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final name = textController.text.trim();
+                            if (name.isNotEmpty) {
+                              await ref.read(customCategoryProvider.notifier).addGroupCategory(name);
+                              textController.clear();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('\'$name\' 그룹이 추가되었습니다.'), duration: const Duration(seconds: 1)),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('추가', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text('현재 등록된 그룹 (${catState.groupCategories.length}개)',
+                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 10),
+
+                  if (catState.groupCategories.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      alignment: Alignment.center,
+                      child: const Text('등록된 그룹이 없습니다. 상단에서 추가해보세요.', style: TextStyle(color: AppTheme.textSecondary)),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: catState.groupCategories.map((group) {
+                        return Chip(
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          label: Text(group, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                          deleteIcon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF94A3B8)),
+                          onDeleted: () async {
+                            await ref.read(customCategoryProvider.notifier).removeGroupCategory(group);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('\'$group\' 그룹이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
+                              );
+                            }
+                          },
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: Color(0xFFE2E8F0))),
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openMemberTemplateManager(BuildContext context) {
+    final currencyFormat = NumberFormat('#,###');
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final catState = ref.watch(customCategoryProvider).value ??
+                CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text('학생 등록 간편 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _openAddMemberTemplateDialog(context, catState),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('새 템플릿', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text('회원 등록 시 탭 한 번으로 그룹명, 수강유형, 기본 수강료를 자동 입력해 주는 편리한 템플릿입니다.',
+                      style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
+                  const SizedBox(height: 18),
+
+                  if (catState.memberTemplates.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      alignment: Alignment.center,
+                      child: const Text('등록된 템플릿이 없습니다. 우측 상단에서 새 템플릿을 만들어보세요.', style: TextStyle(color: AppTheme.textSecondary)),
+                    )
+                  else
+                    ...catState.memberTemplates.map((template) {
+                      final isSession = template.billingType == BillingType.sessionBased;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: isSession ? const Color(0xFFEFF6FF) : const Color(0xFFECFDF5),
+                              radius: 18,
+                              child: Icon(
+                                isSession ? Icons.confirmation_number_outlined : Icons.calendar_month_outlined,
+                                color: isSession ? AppTheme.primaryBlue : AppTheme.softMint,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(template.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${template.groupName} · ${isSession ? '회차형 (${template.defaultSessions}회)' : '정기월납'} · ${currencyFormat.format(template.defaultFee)}원',
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
+                              onPressed: () async {
+                                await ref.read(customCategoryProvider.notifier).removeMemberTemplate(template.id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('\'${template.label}\' 템플릿이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openAddMemberTemplateDialog(BuildContext context, CustomCategoryState catState) {
+    final labelCtrl = TextEditingController();
+    final groupCtrl = TextEditingController(text: catState.groupCategories.isNotEmpty ? catState.groupCategories.first : '일반');
+    final feeCtrl = TextEditingController(text: '300000');
+    final sessionsCtrl = TextEditingController(text: '10');
+    BillingType billingType = BillingType.monthlyRecurring;
+
+    showDialog(
+      context: context,
+      builder: (dlgContext) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('새 학생 등록 템플릿', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppTextField(
+                      controller: labelCtrl,
+                      label: '템플릿 표시 이름',
+                      hint: '예: 중등 수학 정규반, 1:1 PT 10회',
+                      prefixIcon: Icons.badge_outlined,
+                    ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: groupCtrl,
+                      label: '수업 / 그룹명',
+                      hint: '예: 중등수학, 기구필라테스',
+                      prefixIcon: Icons.group_outlined,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('수강 유형', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                    const SizedBox(height: 6),
+                    SegmentedButton<BillingType>(
+                      segments: const [
+                        ButtonSegment(value: BillingType.monthlyRecurring, label: Text('정기 월납')),
+                        ButtonSegment(value: BillingType.sessionBased, label: Text('회차 차감형')),
+                      ],
+                      selected: {billingType},
+                      onSelectionChanged: (val) => setDlgState(() => billingType = val.first),
+                    ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: feeCtrl,
+                      label: '기본 수강료 (원)',
+                      hint: '300000',
+                      prefixIcon: Icons.payments_outlined,
+                      keyboardType: TextInputType.number,
+                    ),
+                    if (billingType == BillingType.sessionBased) ...[
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: sessionsCtrl,
+                        label: '기본 회차',
+                        hint: '10',
+                        prefixIcon: Icons.confirmation_number_outlined,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(dlgContext), child: const Text('취소')),
+                ElevatedButton(
+                  onPressed: () async {
+                    final label = labelCtrl.text.trim();
+                    final group = groupCtrl.text.trim();
+                    final fee = int.tryParse(feeCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                    final sessions = int.tryParse(sessionsCtrl.text.trim()) ?? 0;
+
+                    if (label.isEmpty || group.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('템플릿명과 그룹명을 입력해주세요.')));
+                      return;
+                    }
+
+                    final newTemplate = MemberCategoryTemplate(
+                      id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
+                      label: label,
+                      groupName: group,
+                      billingType: billingType,
+                      defaultFee: fee,
+                      defaultSessions: billingType == BillingType.sessionBased ? sessions : 0,
+                    );
+
+                    await ref.read(customCategoryProvider.notifier).saveMemberTemplate(newTemplate);
+                    if (dlgContext.mounted) Navigator.pop(dlgContext);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+                  child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openInvoiceTemplateManager(BuildContext context) {
+    final currencyFormat = NumberFormat('#,###');
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final catState = ref.watch(customCategoryProvider).value ??
+                CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text('청구 항목 및 금액 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _openAddInvoiceTemplateDialog(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B5CF6),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('새 항목 추가', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text('청구서 작성 시 자주 사용하는 수납 항목과 권장 금액을 등록해 두면 터치 한 번으로 빠르게 청구서를 작성할 수 있습니다.',
+                      style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
+                  const SizedBox(height: 18),
+
+                  if (catState.invoiceTemplates.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      alignment: Alignment.center,
+                      child: const Text('등록된 청구 항목이 없습니다. 우측 상단에서 새 항목을 등록해보세요.', style: TextStyle(color: AppTheme.textSecondary)),
+                    )
+                  else
+                    ...catState.invoiceTemplates.map((template) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const CircleAvatar(
+                              backgroundColor: Color(0xFFF3E8FF),
+                              radius: 18,
+                              child: Icon(Icons.receipt_long_rounded, color: Color(0xFF8B5CF6), size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(template.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                                      if (template.category != null && template.category!.isNotEmpty) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE0E7FF),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(template.category!, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA))),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('기본 청구 금액 : ₩${currencyFormat.format(template.defaultAmount)}',
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
+                              onPressed: () async {
+                                await ref.read(customCategoryProvider.notifier).removeInvoiceTemplate(template.id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('\'${template.title}\' 항목이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openAddInvoiceTemplateDialog(BuildContext context) {
+    final titleCtrl = TextEditingController();
+    final amountCtrl = TextEditingController(text: '100000');
+    final tagCtrl = TextEditingController(text: '정기수납');
+
+    showDialog(
+      context: context,
+      builder: (dlgContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('새 청구 항목 추가', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTextField(
+                  controller: titleCtrl,
+                  label: '청구 항목명',
+                  hint: '예: 교재비 / 워크북, PT 10회 재등록',
+                  prefixIcon: Icons.receipt_outlined,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: amountCtrl,
+                  label: '기본 청구 금액 (원)',
+                  hint: '50000',
+                  prefixIcon: Icons.payments_outlined,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: tagCtrl,
+                  label: '분류 태그 (선택)',
+                  hint: '예: 정기수납, 교재/재료, 레슨비',
+                  prefixIcon: Icons.label_outline_rounded,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dlgContext), child: const Text('취소')),
+            ElevatedButton(
+              onPressed: () async {
+                final title = titleCtrl.text.trim();
+                final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                final tag = tagCtrl.text.trim();
+
+                if (title.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('청구 항목명을 입력해주세요.')));
+                  return;
+                }
+
+                final newTemplate = InvoiceItemTemplate(
+                  id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                  title: title,
+                  defaultAmount: amount,
+                  category: tag.isEmpty ? null : tag,
+                );
+
+                await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
+                if (dlgContext.mounted) Navigator.pop(dlgContext);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openIndustryPresetResetDialog(BuildContext context) {
+    final presets = [
+      {'category': '입시 / 보습학원', 'title': '📚 학원 · 공부방 · 보습학원', 'desc': '초·중·고등반, 정규수강료, 교재비, 특강비'},
+      {'category': '피트니스 / PT', 'title': '🏋️ 피트니스 · PT · 헬스', 'desc': '1:1 PT, 듀엣, 헬스회원권, 락커/운동복'},
+      {'category': '필라테스 / 요가', 'title': '🧘 필라테스 · 요가 · 댄스', 'desc': '개인 기구필라, 소그룹 리포머, 요가정기권'},
+      {'category': '태권도 / 무술', 'title': '🥋 태권도 · 체육관 · 무술', 'desc': '유치부, 초등부, 시범단, 정기심사비, 도복비'},
+      {'category': '음악 / 피아노', 'title': '🎨 음악 · 피아노 · 미술공방', 'desc': '피아노기초, 도예정규반, 가마소성비, 악보비'},
+      {'category': '기타 / 맞춤업종', 'title': '🏢 기타 / 맞춤업종 (범용)', 'desc': '일반 정규반, 10회 이용권, 소모품/재료비'},
+    ];
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.85,
+      builder: (ctx) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('원터치 업종별 프리셋 불러오기', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              const Text('선택하신 업종에 가장 최적화된 그룹 및 청구 서식으로 일괄 재구성합니다. 기존 서식은 해당 업종의 기본 템플릿으로 교체됩니다.',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
+              const SizedBox(height: 16),
+              ...presets.map((p) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    tileColor: const Color(0xFFF8FAFC),
+                    title: Text(p['title']!, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                    subtitle: Text(p['desc']!, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textSecondary),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await ref.read(customCategoryProvider.notifier).resetToIndustry(p['category']!);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${p['title']} 템플릿 프리셋이 성공적으로 적용되었습니다.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              }),
+              const SizedBox(height: 20),
+            ],
+          ),
         );
       },
     );

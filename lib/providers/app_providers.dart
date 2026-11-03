@@ -3,6 +3,8 @@ import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/invoice.dart';
 import '../models/studio_profile.dart';
+import '../models/custom_category_template.dart';
+import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
 
 // Database Instance Provider
@@ -194,3 +196,76 @@ class StudioProfileNotifier extends AsyncNotifier<StudioProfile> {
 final studioProfileProvider = AsyncNotifierProvider<StudioProfileNotifier, StudioProfile>(() {
   return StudioProfileNotifier();
 });
+
+// Custom Category Service Provider
+final customCategoryServiceProvider = Provider<CustomCategoryService>((ref) {
+  return CustomCategoryService.instance;
+});
+
+// Custom Category State AsyncNotifier
+class CustomCategoryNotifier extends AsyncNotifier<CustomCategoryState> {
+  @override
+  Future<CustomCategoryState> build() async {
+    final studioProfile = await ref.watch(studioProfileProvider.future).catchError((_) => StudioProfile.defaultProfile());
+    final service = ref.read(customCategoryServiceProvider);
+    return await service.loadCategories(industryCategory: studioProfile.category);
+  }
+
+  Future<void> reload() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final studioProfile = await ref.read(studioProfileProvider.future).catchError((_) => StudioProfile.defaultProfile());
+      final service = ref.read(customCategoryServiceProvider);
+      return await service.loadCategories(industryCategory: studioProfile.category);
+    });
+  }
+
+  Future<void> addGroupCategory(String group) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.addGroupCategory(group);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> removeGroupCategory(String group) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.removeGroupCategory(group);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> saveMemberTemplate(MemberCategoryTemplate template) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.saveMemberTemplate(template);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> removeMemberTemplate(String id) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.removeMemberTemplate(id);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> saveInvoiceTemplate(InvoiceItemTemplate template) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.saveInvoiceTemplate(template);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> removeInvoiceTemplate(String id) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.removeInvoiceTemplate(id);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> resetToIndustry(String industryCategory) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final service = ref.read(customCategoryServiceProvider);
+      return await service.resetToIndustry(industryCategory);
+    });
+  }
+}
+
+final customCategoryProvider = AsyncNotifierProvider<CustomCategoryNotifier, CustomCategoryState>(() {
+  return CustomCategoryNotifier();
+});
+

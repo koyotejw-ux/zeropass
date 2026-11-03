@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
+import '../models/custom_category_template.dart';
 import '../providers/app_providers.dart';
 import '../services/bank_notification_filter.dart';
 import '../services/coach_mark_service.dart';
@@ -1088,7 +1089,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
   }
 }
 
-class _QuickInvoiceModal extends StatefulWidget {
+class _QuickInvoiceModal extends ConsumerStatefulWidget {
   final List<Member> allMembers;
   final StudioProfile studio;
   final Function(Invoice, List<Member>) onSendSms;
@@ -1100,10 +1101,10 @@ class _QuickInvoiceModal extends StatefulWidget {
   });
 
   @override
-  State<_QuickInvoiceModal> createState() => _QuickInvoiceModalState();
+  ConsumerState<_QuickInvoiceModal> createState() => _QuickInvoiceModalState();
 }
 
-class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
+class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
   final Set<String> _selectedMemberIds = {};
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
@@ -1170,17 +1171,14 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
     _amountController.text = (current + add).toString();
   }
 
-  void _applyTitlePreset(String preset) {
-    setState(() {
-      _titleController.text = preset;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final feeWord = widget.studio.feeTitle;
     final now = DateTime.now();
     final monthEnd = DateTime(now.year, now.month + 1, 0);
+    final customCatAsync = ref.watch(customCategoryProvider);
+    final customCatState = customCatAsync.value ??
+        CustomCategoryState.getDefaultsForIndustry(widget.studio.category);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -1365,23 +1363,65 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
           ],
           const SizedBox(height: 14),
 
-          // Title & Quick Presets
+          // Custom Invoice Item Templates (Title + Amount auto-fill)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('업종별 청구 템플릿 (제목·금액 원터치 자동 완성)',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+              InkWell(
+                onTap: () => _showQuickAddInvoiceTemplateDialog(context),
+                borderRadius: BorderRadius.circular(6),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_circle_outline, size: 14, color: Color(0xFF8B5CF6)),
+                      SizedBox(width: 3),
+                      Text('새 서식 추가',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF8B5CF6))),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ...customCatState.invoiceTemplates.map((template) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      avatar: const Icon(Icons.receipt_long_rounded, size: 14, color: Color(0xFF8B5CF6)),
+                      label: Text('${template.title} (₩${_currencyFormat.format(template.defaultAmount)})'),
+                      backgroundColor: const Color(0xFFF8FAFC),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                      onPressed: () {
+                        setState(() {
+                          _titleController.text = template.title.replaceAll('#{월}', '${now.month}월');
+                          _amountController.text = template.defaultAmount.toString();
+                        });
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Title
           AppTextField(
             controller: _titleController,
             label: '청구 제목',
             hint: '예: ${now.month}월 정기 $feeWord 안내',
             prefixIcon: Icons.description_outlined,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _buildTitleChip('${now.month}월 정기 $feeWord'),
-              _buildTitleChip('10회권 갱신 $feeWord'),
-              _buildTitleChip('교재비 / 재료비'),
-              _buildTitleChip('바우처 / 특별레슨비'),
-            ],
           ),
           const SizedBox(height: 14),
 
@@ -1616,11 +1656,77 @@ class _QuickInvoiceModalState extends State<_QuickInvoiceModal> {
     );
   }
 
-  Widget _buildTitleChip(String label) {
-    return ActionChip(
-      backgroundColor: const Color(0xFFF1F5F9),
-      label: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-      onPressed: () => _applyTitlePreset(label),
+  void _showQuickAddInvoiceTemplateDialog(BuildContext context) {
+    final titleCtrl = TextEditingController();
+    final amountCtrl = TextEditingController(text: '100000');
+    final tagCtrl = TextEditingController(text: '정기수납');
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('새 청구 서식 추가', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppTextField(
+                controller: titleCtrl,
+                label: '청구 항목명',
+                hint: '예: 교재비 / 워크북, PT 10회 재등록',
+                prefixIcon: Icons.receipt_outlined,
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                controller: amountCtrl,
+                label: '기본 청구 금액 (원)',
+                hint: '50000',
+                prefixIcon: Icons.payments_outlined,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                controller: tagCtrl,
+                label: '분류 태그 (선택)',
+                hint: '예: 정기수납, 교재/재료, 레슨비',
+                prefixIcon: Icons.label_outline_rounded,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('취소')),
+          ElevatedButton(
+            onPressed: () async {
+              final title = titleCtrl.text.trim();
+              final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+              final tag = tagCtrl.text.trim();
+
+              if (title.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('청구 항목명을 입력해주세요.')));
+                return;
+              }
+
+              final newTemplate = InvoiceItemTemplate(
+                id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                title: title,
+                defaultAmount: amount,
+                category: tag.isEmpty ? null : tag,
+              );
+
+              await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
+              setState(() {
+                _titleController.text = title;
+                _amountController.text = amount.toString();
+              });
+              if (dlgCtx.mounted) Navigator.pop(dlgCtx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+            child: const Text('추가 및 적용', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:uuid/uuid.dart';
 import '../models/member.dart';
 import '../models/invoice.dart';
+import 'custom_category_service.dart';
 import 'database_service.dart';
 
 enum IndustryPreset {
@@ -45,6 +46,9 @@ class StarterPresetService {
       where: 'id = ?',
       whereArgs: [1],
     );
+
+    // 1-1. Update Custom Categories and Invoice Templates for this industry
+    await CustomCategoryService.instance.resetToIndustry(preset.category);
 
     // 2. Clear old members & seed industry-specific members
     await db.delete('pass_records');
