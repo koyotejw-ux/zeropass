@@ -8,6 +8,7 @@ import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/chosung_search_service.dart';
+import '../services/database_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/monetization_service.dart';
@@ -180,10 +181,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     final isUnlocked = MonetizationService.instance.isKioskProUnlocked;
 
     if (isUnlocked) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (ctx) => const TabletKioskScreen()),
-      );
+      _showKioskLaunchSelector(context);
     } else {
       // Show Kiosk Pro Unlock & Free Trial Offer
       showDialog(
@@ -323,11 +321,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                // Free Trial Run directly!
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (c) => const TabletKioskScreen()),
-                );
+                _showKioskLaunchSelector(context);
               },
               child: const Text('무료 체험 실행해보기'),
             ),
@@ -339,10 +333,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('키오스크 프로 모드가 활성화되었습니다.')),
                   );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (c) => const TabletKioskScreen()),
-                  );
+                  _showKioskLaunchSelector(context);
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
@@ -352,6 +343,173 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         ),
       );
     }
+  }
+
+  /// 키오스크 시작 전 학생 데이터 존재 여부 확인 및 [학생 운영용] vs [원장님 기능 테스트용] 분기
+  void _showKioskLaunchSelector(BuildContext context) {
+    final members = ref.read(membersProvider).value ?? [];
+
+    // 1. 등록된 학생이 0명인 경우 -> 데이터 부재 안내 및 샘플 등록 / 테스트 모드 선택 모달
+    if (members.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B), size: 26),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text('학생 데이터 등록 필요', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          content: const Text(
+            '등록된 원생 데이터가 없어 학생용 키오스크를 바로 실행할 수 없습니다.\n\n샘플 학생 5명을 등록하여 즉시 학생 모드를 시작하시거나, 기능 테스트 모드로 키오스크를 체험해 보세요.',
+            style: TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textPrimary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('닫기'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
+                );
+              },
+              icon: const Icon(Icons.science_rounded, size: 16),
+              label: const Text('기능 테스트 모드'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await DatabaseService.instance.restoreSampleData();
+                await ref.read(membersProvider.notifier).reload();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 학생용 키오스크를 시작합니다.')),
+                  );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+              icon: const Icon(Icons.group_add_rounded, size: 16, color: Colors.white),
+              label: const Text('샘플 5명 등록 후 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // 2. 학생이 등록되어 있는 경우 -> [📱 학생용 운영 키오스크] vs [🧪 원장님 기능 테스트] 선택 바텀시트
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text(
+                '무인 출결 키오스크 실행 모드 선택',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '실제 학생 출석용 또는 원장님 기능 테스트 중 선택하세요.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.35), width: 1.2),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEFF6FF),
+                    child: Icon(Icons.touch_app_rounded, color: AppTheme.primaryBlue),
+                  ),
+                  title: const Text(
+                    '학생 출결 키오스크 (실제 운영용)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: const Text(
+                    '입구 태블릿 거치용 전체화면. 체험 핀이 일체 노출되지 않는 클린 화면입니다.',
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: const Color(0xFF6366F1).withValues(alpha: 0.35), width: 1.2),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEEF2FF),
+                    child: Icon(Icons.science_rounded, color: Color(0xFF6366F1)),
+                  ),
+                  title: const Text(
+                    '키오스크 기능 테스트 (체험 모드)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: const Text(
+                    '1234 체험 핀으로 출결 완료 축하 및 알림 화면 결과를 즉시 확인합니다.',
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override

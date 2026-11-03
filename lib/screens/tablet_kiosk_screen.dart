@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/database_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mascot_avatar.dart';
@@ -39,17 +40,24 @@ class AttendanceCelebration {
 /// 최고급 프리미엄 인터랙티브 태블릿 키오스크 모드 (Tablet Kiosk Screen)
 ///
 /// 학원·교습소·PT 스튜디오 카운터에 거치하여 학생들이 직접 4자리 전화번호를 누르고 출석하는 화면입니다.
-/// - 등록 회원이 없거나 테스트 시: '1234' 등 체험 번호 자동 감지 및 실시간 출결 시뮬레이션
+/// - [isTestMode] false (기본값): 실제 학생 운영용 키오스크 (체험 핀 일체 숨김, 미등록 번호 시 에러 안내)
+/// - [isTestMode] true: 원장님 기능 테스트 모드 (1234 체험 핀 노출 및 출결 축하 결과 시뮬레이션 표출)
 /// - 관리자 마스터 비밀번호 '0000' 입력 시 키오스크 즉시 종료 복귀 프로세스 제공
 /// - 글래스모피즘 네온 핀패드, 햅틱 피드백, 실시간 디지털 시계 탑재
 class TabletKioskScreen extends ConsumerStatefulWidget {
-  const TabletKioskScreen({super.key});
+  final bool isTestMode;
+
+  const TabletKioskScreen({
+    super.key,
+    this.isTestMode = false,
+  });
 
   @override
   ConsumerState<TabletKioskScreen> createState() => _TabletKioskScreenState();
 }
 
 class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
+  late bool _localTestMode;
   String _digits = '';
   String? _statusMessage;
   bool _isSuccess = false;
@@ -62,6 +70,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   @override
   void initState() {
     super.initState();
+    _localTestMode = widget.isTestMode;
     // 1초 주기로 실시간 시계 갱신
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
@@ -143,20 +152,20 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       return clean.endsWith(enteredCode);
     }).toList();
 
-    // 3. 일치 회원이 없을 때 -> 스마트 체험 테스트 시뮬레이션 가동!
-    if (matchedMembers.isEmpty) {
+    // 3. 기능 테스트 모드인 경우: 1234 또는 테스트 번호 입력 시 출결 축하 화면 즉시 표출
+    if (_localTestMode) {
       HapticFeedback.heavyImpact();
       await Future.delayed(const Duration(milliseconds: 250));
 
       final celebration = AttendanceCelebration(
         digits: enteredCode,
         memberName: '김패시 학생',
-        programTag: '체험 시뮬레이션',
+        programTag: '기능 테스트 시뮬레이션',
         passStatus: '10회권 (잔여 9회)',
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: true,
         isSuccess: true,
-        smsMessage: '김패시 학생이 학원에 정상 출석하였습니다.',
+        smsMessage: '[테스트 알림] 김패시 학생이 학원에 정상 출석하였습니다.',
       );
 
       _celebrationTimer?.cancel();
@@ -167,6 +176,18 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         _isSuccess = true;
         _celebration = celebration;
         _statusMessage = null;
+        _digits = '';
+      });
+      return;
+    }
+
+    // 4. 학생용(운영용) 모드: 등록되지 않은 번호인 경우 가상 축하 화면 절대 노출 금지 및 에러 안내
+    if (matchedMembers.isEmpty) {
+      HapticFeedback.heavyImpact();
+      setState(() {
+        _isProcessing = false;
+        _isSuccess = false;
+        _statusMessage = '등록되지 않은 번호($enteredCode)입니다.\n선생님께 확인을 요청해 주세요.';
         _digits = '';
       });
       return;
@@ -390,25 +411,195 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     final dateStr = DateFormat('yyyy년 MM월 dd일 (E)', 'ko_KR').format(_currentTime);
     final timeStr = DateFormat('HH:mm:ss').format(_currentTime);
 
+    final showEmptyState = members.isEmpty && !_localTestMode;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F19), // Ultra Deep Obsidian Kiosk
       body: SafeArea(
         child: Stack(
           children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isLandscape = constraints.maxWidth > constraints.maxHeight;
+            showEmptyState
+                ? _buildEmptyMembersView(studio, dateStr, timeStr)
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
-                return isLandscape
-                    ? _buildLandscapeKiosk(studio, members, dateStr, timeStr)
-                    : _buildPortraitKiosk(studio, members, dateStr, timeStr);
-              },
-            ),
+                      return isLandscape
+                          ? _buildLandscapeKiosk(studio, members, dateStr, timeStr)
+                          : _buildPortraitKiosk(studio, members, dateStr, timeStr);
+                    },
+                  ),
             if (_celebration != null)
               _buildFullScreenAttendanceSuccess(_celebration!, studio),
           ],
         ),
       ),
+    );
+  }
+
+  /// 학생용 키오스크 실행 시 등록된 원생 데이터가 0명일 때 노출되는 빈 상태 안내 뷰
+  Widget _buildEmptyMembersView(StudioProfile studio, String dateStr, String timeStr) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 24).clamp(0.0, double.infinity),
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  _buildTopHeader(studio, dateStr, timeStr),
+                  const Spacer(),
+                  Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                            ),
+                            child: const Icon(Icons.person_off_rounded, color: Color(0xFFFBBF24), size: 36),
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '학생 데이터 없음',
+                              style: TextStyle(
+                                color: Color(0xFFFBBF24),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '등록된 학생 데이터가 없어\n키오스크 모드를 실행할 수 없습니다',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            '키오스크는 등록된 학생의 전화번호 뒷자리로 확인됩니다.\n샘플 학생을 등록하거나 기능 테스트 모드로 체험해 보세요.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 13,
+                              height: 1.45,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton.icon(
+                              onPressed: _isProcessing
+                                  ? null
+                                  : () async {
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      setState(() => _isProcessing = true);
+                                      try {
+                                        await DatabaseService.instance.restoreSampleData();
+                                        await ref.read(membersProvider.notifier).reload();
+                                        if (mounted) {
+                                          messenger.showSnackBar(
+                                            const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 키오스크를 시작합니다.')),
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() => _isProcessing = false);
+                                        }
+                                      }
+                                    },
+                              icon: _isProcessing
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.group_add_rounded, size: 20),
+                              label: Text(
+                                _isProcessing ? '샘플 학생 생성 중...' : '샘플 학생 5명 바로 등록하기',
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryBlue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _localTestMode = true;
+                                });
+                              },
+                              icon: const Icon(Icons.science_rounded, size: 18, color: Color(0xFFA5B4FC)),
+                              label: const Text(
+                                '기능 테스트 모드로 체험하기',
+                                style: TextStyle(color: Color(0xFFA5B4FC), fontWeight: FontWeight.w700, fontSize: 13.5),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: const Color(0xFF6366F1).withValues(alpha: 0.5)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: _exitToDashboard,
+                            icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Color(0xFF94A3B8)),
+                            label: const Text(
+                              '관리자 대시보드로 복귀',
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -544,18 +735,41 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 무인 출결 키오스크',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.4,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 무인 출결 키오스크',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
                         ),
-                      ),
+                        if (_localTestMode) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFF818CF8), width: 0.8),
+                            ),
+                            child: const Text(
+                              '테스트 모드',
+                              style: TextStyle(
+                                color: Color(0xFFA5B4FC),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     FittedBox(
@@ -591,22 +805,38 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildQuickTestChips(List<Member> members) {
-    // 등록된 학생이 있는 실제 운영 환경에서는 학생 개인정보 및 관리자 PIN 유출을 방지하기 위해 칩을 일체 노출하지 않습니다.
-    if (members.isNotEmpty) {
+    // 학생용(운영용) 모드에서는 어떠한 경우에도 체험용 핀 칩을 일체 노출하지 않습니다.
+    if (!_localTestMode) {
       return const SizedBox.shrink();
     }
 
-    // 학생이 0명인 초기 체험/테스트 모드에서만 키패드 동작 확인용 데모 핀 노출 (관리자 PIN은 보안상 숨김)
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    // 원장님 기능 테스트 모드에서만 상단 배지 및 1234 체험 칩 노출
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF312E81).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.6)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _buildQuickPinBadge(
-              const _QuickPinItem(pin: '1234', tag: '체험 데모 번호 (1234)', color: Color(0xFF38BDF8)),
+          const Icon(Icons.science_rounded, color: Color(0xFFA5B4FC), size: 18),
+          const SizedBox(width: 8),
+          const Flexible(
+            child: Text(
+              '원장님 테스트 모드',
+              style: TextStyle(
+                color: Color(0xFFA5B4FC),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+          ),
+          const SizedBox(width: 10),
+          _buildQuickPinBadge(
+            const _QuickPinItem(pin: '1234', tag: '체험 PIN', color: Color(0xFF38BDF8)),
           ),
         ],
       ),

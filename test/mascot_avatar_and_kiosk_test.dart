@@ -3,9 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:zeropass/models/member.dart';
+import 'package:zeropass/models/studio_profile.dart';
+import 'package:zeropass/providers/app_providers.dart';
 import 'package:zeropass/screens/tablet_kiosk_screen.dart';
 import 'package:zeropass/widgets/mascot_avatar.dart';
 import 'package:zeropass/widgets/member_name_badge.dart';
+
+class MockEmptyMembersNotifier extends MembersNotifier {
+  @override
+  Future<List<Member>> build() async => [];
+}
+
+class MockStudioProfileNotifier extends StudioProfileNotifier {
+  @override
+  Future<StudioProfile> build() async => StudioProfile.defaultProfile();
+}
 
 void main() {
   setUpAll(() async {
@@ -64,7 +76,7 @@ void main() {
     });
   });
 
-  group('TabletKioskScreen Celebration Overflow Resilience Tests', () {
+  group('TabletKioskScreen Celebration Overflow Resilience Tests (Test Mode)', () {
     testWidgets('Kiosk check-in celebration screen renders with ZERO overflow on Galaxy Z Fold 4 outer screen (340dp width)', (tester) async {
       tester.view.physicalSize = const Size(340, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -72,16 +84,21 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: TabletKioskScreen(),
+        ProviderScope(
+          overrides: [
+            membersProvider.overrideWith(() => MockEmptyMembersNotifier()),
+            studioProfileProvider.overrideWith(() => MockStudioProfileNotifier()),
+          ],
+          child: const MaterialApp(
+            home: TabletKioskScreen(isTestMode: true),
           ),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      // Tap "체험 PIN 1234" to trigger celebration screen
+      // Verify "원장님 테스트 모드" banner and tap "체험 PIN 1234" to trigger celebration screen
+      expect(find.text('원장님 테스트 모드'), findsOneWidget);
       final demoChip = find.text('1234');
       expect(demoChip, findsOneWidget);
       await tester.tap(demoChip);
@@ -95,6 +112,7 @@ void main() {
 
       // Verify absolute zero overflow
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
     });
 
     testWidgets('Kiosk check-in celebration screen renders with ZERO overflow on ultra-narrow 320dp width', (tester) async {
@@ -104,9 +122,13 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: TabletKioskScreen(),
+        ProviderScope(
+          overrides: [
+            membersProvider.overrideWith(() => MockEmptyMembersNotifier()),
+            studioProfileProvider.overrideWith(() => MockStudioProfileNotifier()),
+          ],
+          child: const MaterialApp(
+            home: TabletKioskScreen(isTestMode: true),
           ),
         ),
       );
@@ -120,6 +142,7 @@ void main() {
 
       expect(find.text('김패시 학생'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
     });
 
     testWidgets('Kiosk check-in celebration screen renders with ZERO overflow in short landscape (700x340)', (tester) async {
@@ -129,9 +152,13 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: TabletKioskScreen(),
+        ProviderScope(
+          overrides: [
+            membersProvider.overrideWith(() => MockEmptyMembersNotifier()),
+            studioProfileProvider.overrideWith(() => MockStudioProfileNotifier()),
+          ],
+          child: const MaterialApp(
+            home: TabletKioskScreen(isTestMode: true),
           ),
         ),
       );
@@ -145,6 +172,61 @@ void main() {
 
       expect(find.text('김패시 학생'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  });
+
+  group('TabletKioskScreen Mode Separation & Empty State Tests', () {
+    testWidgets('Student mode with NO members renders empty state and HIDES test chips', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            membersProvider.overrideWith(() => MockEmptyMembersNotifier()),
+            studioProfileProvider.overrideWith(() => MockStudioProfileNotifier()),
+          ],
+          child: const MaterialApp(
+            home: TabletKioskScreen(isTestMode: false),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Empty state guidance should be visible
+      expect(find.text('학생 데이터 없음'), findsOneWidget);
+      expect(find.text('등록된 학생 데이터가 없어\n키오스크 모드를 실행할 수 없습니다'), findsOneWidget);
+      expect(find.text('샘플 학생 5명 바로 등록하기'), findsOneWidget);
+      expect(find.text('기능 테스트 모드로 체험하기'), findsOneWidget);
+
+      // Demo PIN '1234' chip should NOT be visible
+      expect(find.text('1234'), findsNothing);
+      expect(find.text('원장님 테스트 모드'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('Switching from empty state to test mode reveals test chips and 1234', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            membersProvider.overrideWith(() => MockEmptyMembersNotifier()),
+            studioProfileProvider.overrideWith(() => MockStudioProfileNotifier()),
+          ],
+          child: const MaterialApp(
+            home: TabletKioskScreen(isTestMode: false),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tap "기능 테스트 모드로 체험하기"
+      await tester.tap(find.text('기능 테스트 모드로 체험하기'));
+      await tester.pumpAndSettle();
+
+      // Now keypad and test mode banner with 1234 chip should appear
+      expect(find.text('원장님 테스트 모드'), findsOneWidget);
+      expect(find.text('1234'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
     });
   });
 
