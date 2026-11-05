@@ -20,6 +20,7 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
 import '../widgets/member_name_badge.dart';
+import '../widgets/sequential_dispatch_modal.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
   const MemberDirectoryScreen({super.key});
@@ -57,6 +58,57 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       appBar: AppBar(
         title: const Text('회원 명부 관리'),
         actions: [
+          // Tab 2 보조 기능: 순차 릴레이 단체발송 마법사
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    final members = membersAsync.value ?? [];
+                    if (members.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('등록된 회원이 없습니다.')),
+                      );
+                      return;
+                    }
+                    final invoices = ref.read(invoicesProvider).value ?? [];
+                    SequentialDispatchModal.show(
+                      context: context,
+                      allMembers: members,
+                      studio: studio,
+                      invoices: invoices,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3182F6).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF3182F6).withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.mark_chat_unread_outlined, color: AppTheme.primaryBlue, size: 16),
+                        SizedBox(width: 4),
+                        Text(
+                          '순차 발송',
+                          style: TextStyle(
+                            color: AppTheme.primaryBlue,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           // Tab 2 필수 전용 기능: 회원 명부 엑셀(CSV) 원터치 내보내기 & 공유
           Center(
             child: Padding(
@@ -160,10 +212,11 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 ),
               ),
 
-              // Total count badge
+              // Total count badge & Quick batch action
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '등록 회원 총 ${filtered.length}명',
@@ -171,6 +224,40 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        final invoices = ref.read(invoicesProvider).value ?? [];
+                        SequentialDispatchModal.show(
+                          context: context,
+                          allMembers: filtered,
+                          studio: studio,
+                          invoices: invoices,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3182F6).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.send_rounded, size: 13, color: AppTheme.primaryBlue),
+                            SizedBox(width: 4),
+                            Text(
+                              '순차 릴레이 발송',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

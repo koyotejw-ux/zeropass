@@ -16,6 +16,8 @@ import '../services/coach_mark_service.dart';
 import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/kakao_share_service.dart';
+import '../services/sequential_dispatch_service.dart';
+import '../widgets/sequential_dispatch_modal.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
@@ -561,6 +563,67 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                     fontWeight: FontWeight.w800,
                                     color: Color(0xFFB45309),
                                   ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // 미납자 전체 순차 릴레이 독촉 발송 배너
+                  if (_selectedTab == 0 && unpaidInvoices.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.mark_chat_unread_outlined, size: 16, color: AppTheme.primaryBlue),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '미납 회원 ${unpaidInvoices.length}명 대기 중',
+                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: () {
+                                final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
+                                final unpaidMembersList = members.where((m) => unpaidMemberIds.contains(m.id)).toList();
+                                SequentialDispatchModal.show(
+                                  context: context,
+                                  allMembers: unpaidMembersList,
+                                  studio: studio,
+                                  invoices: unpaidInvoices,
+                                  initialTemplateType: DispatchTemplateType.billing,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryBlue,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '미납 순차 발송',
+                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Colors.white),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
