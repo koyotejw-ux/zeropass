@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../models/custom_category_template.dart';
+import '../models/vendor.dart';
+import '../models/expense_item.dart';
 import '../providers/app_providers.dart';
 import '../services/bank_notification_filter.dart';
 import '../services/coach_mark_service.dart';
 import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
+import '../services/kakao_share_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
@@ -25,7 +30,9 @@ class BillingLedgerScreen extends ConsumerStatefulWidget {
 }
 
 class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
-  int _selectedTab = 0; // 0: 미납 / 청구 대상, 1: 수납 완료 내역
+  int _selectedTab = 0; // 0: 미납 / 청구 대상, 1: 수납 완료 내역, 2: 지출 / 매입 장부
+  String _selectedExpenseCategory = '전체';
+  String _selectedExpensePayFilter = '전체';
   final NumberFormat _currencyFormat = NumberFormat('#,###');
 
   @override
@@ -48,6 +55,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     final invoicesAsync = ref.watch(invoicesProvider);
     final membersAsync = ref.watch(membersProvider);
     final studioAsync = ref.watch(studioProfileProvider);
+    final expensesAsync = ref.watch(expensesProvider);
+    final vendorsAsync = ref.watch(vendorsProvider);
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
@@ -55,46 +64,94 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       appBar: AppBar(
         title: Text(LocalizationService.tr('billing_title')),
         actions: [
-          // Tab 1 필수 전용 기능: 은행 입금 자동 매칭 시뮬레이터 (간편 청구서 작성은 하단 FAB로 단일화)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 14),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    final members = membersAsync.value ?? [];
-                    final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
-                    _showBankNotificationSimulator(context, members, unpaid);
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.notifications_active_outlined, color: Color(0xFF059669), size: 16),
-                        SizedBox(width: 5),
-                        Text(
-                          '입금 감지',
-                          style: TextStyle(
-                            color: Color(0xFF059669),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
+          IconButton(
+            icon: const Icon(Icons.share_outlined, size: 20),
+            tooltip: '동료 원장님께 제로패스 추천 (카톡)',
+            onPressed: () {
+              final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+              final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
+              KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 ZeroPass 추천');
+            },
+          ),
+          if (_selectedTab == 2)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 14),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      final vendors = vendorsAsync.value ?? [];
+                      _openVendorManagementSheet(context, vendors);
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.business_center_outlined, color: Color(0xFF4F46E5), size: 16),
+                          SizedBox(width: 5),
+                          Text(
+                            '거래처 수첩',
+                            style: TextStyle(
+                              color: Color(0xFF4F46E5),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 14),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      final members = membersAsync.value ?? [];
+                      final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
+                      _showBankNotificationSimulator(context, members, unpaid);
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.notifications_active_outlined, color: Color(0xFF059669), size: 16),
+                          SizedBox(width: 5),
+                          Text(
+                            '입금 감지',
+                            style: TextStyle(
+                              color: Color(0xFF059669),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
       body: invoicesAsync.when(
@@ -114,12 +171,95 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               final totalUnpaidAmount = unpaidInvoices.fold<int>(0, (sum, i) => sum + i.amount);
               final totalPaidAmount = paidInvoices.fold<int>(0, (sum, i) => sum + i.amount);
 
+              final expenses = expensesAsync.value ?? [];
+              final vendors = vendorsAsync.value ?? [];
+              final paidExpenses = expenses.where((e) => e.isPaid).toList();
+              final unpaidExpenses = expenses.where((e) => !e.isPaid).toList();
+              final totalExpenseAmount = expenses.fold<int>(0, (sum, e) => sum + e.amount);
+              final netProfit = totalPaidAmount - totalExpenseAmount;
+
               // 회차 만료 임박 회원 (1회 이하)
               final expiringMembers = members
                   .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 1)
                   .toList();
 
               final currentList = _selectedTab == 0 ? unpaidInvoices : paidInvoices;
+
+              final Color cardBorderColor = _selectedTab == 0
+                  ? const Color(0xFFF59E0B).withAlpha((255 * 0.25).round())
+                  : _selectedTab == 1
+                      ? const Color(0xFF10B981).withAlpha((255 * 0.25).round())
+                      : const Color(0xFFF43F5E).withAlpha((255 * 0.25).round());
+
+              final IconData heroIcon = _selectedTab == 0
+                  ? Icons.pending_actions_rounded
+                  : _selectedTab == 1
+                      ? Icons.check_circle_rounded
+                      : Icons.shopping_bag_outlined;
+
+              final Color heroIconColor = _selectedTab == 0
+                  ? const Color(0xFFFBBF24)
+                  : _selectedTab == 1
+                      ? const Color(0xFF34D399)
+                      : const Color(0xFFFB7185);
+
+              final String heroTitle = _selectedTab == 0
+                  ? '수납 대기 (미납 총액)'
+                  : _selectedTab == 1
+                      ? '이번 달 총 수납액'
+                      : '이번 달 총 지출액';
+
+              final int heroAmount = _selectedTab == 0
+                  ? totalUnpaidAmount
+                  : _selectedTab == 1
+                      ? totalPaidAmount
+                      : totalExpenseAmount;
+
+              final Color badgeBgColor = _selectedTab == 0
+                  ? const Color(0xFFD97706).withAlpha((255 * 0.22).round())
+                  : _selectedTab == 1
+                      ? const Color(0xFF059669).withAlpha((255 * 0.22).round())
+                      : const Color(0xFFE11D48).withAlpha((255 * 0.22).round());
+
+              final Color badgeBorderColor = _selectedTab == 0
+                  ? const Color(0xFFF59E0B)
+                  : _selectedTab == 1
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFF43F5E);
+
+              final IconData badgeIcon = _selectedTab == 0
+                  ? Icons.error_outline_rounded
+                  : _selectedTab == 1
+                      ? Icons.verified_rounded
+                      : Icons.account_balance_wallet_outlined;
+
+              final Color badgeTextColor = _selectedTab == 0
+                  ? const Color(0xFFFDE68A)
+                  : _selectedTab == 1
+                      ? const Color(0xFFA7F3D0)
+                      : const Color(0xFFFECDD3);
+
+              final String badgeText = _selectedTab == 0
+                  ? '${unpaidInvoices.length}건 미납 대기'
+                  : _selectedTab == 1
+                      ? '${paidInvoices.length}건 완납'
+                      : '${expenses.length}건 지출 (${paidExpenses.length}건 완납 / ${unpaidExpenses.length}건 대기)';
+
+              final String infoBarLeftText = _selectedTab == 0
+                  ? '전체 ${invoices.length}건 중 ${paidInvoices.length}건 수납'
+                  : '당월 순이익: ${netProfit >= 0 ? '+' : ''}${LocalizationService.formatAmount(netProfit)} (${netProfit >= 0 ? '흑자' : '적자'})';
+
+              final String infoBarRightText = _selectedTab == 0
+                  ? '완납: ${LocalizationService.formatAmount(totalPaidAmount)}'
+                  : _selectedTab == 1
+                      ? '지출: ${LocalizationService.formatAmount(totalExpenseAmount)}'
+                      : '수납: ${LocalizationService.formatAmount(totalPaidAmount)}';
+
+              final Color infoBarRightColor = _selectedTab == 0
+                  ? const Color(0xFF34D399)
+                  : _selectedTab == 1
+                      ? const Color(0xFFFB7185)
+                      : const Color(0xFF34D399);
 
               return Column(
                 children: [
@@ -149,9 +289,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                           ),
                         ],
                         border: Border.all(
-                          color: _selectedTab == 0
-                              ? const Color(0xFFF59E0B).withAlpha((255 * 0.25).round())
-                              : const Color(0xFF10B981).withAlpha((255 * 0.25).round()),
+                          color: cardBorderColor,
                           width: 1.2,
                         ),
                       ),
@@ -163,13 +301,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                   child: Row(
                                     children: [
                                       Icon(
-                                        _selectedTab == 0 ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
-                                        color: _selectedTab == 0 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
+                                        heroIcon,
+                                        color: heroIconColor,
                                         size: 22,
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        _selectedTab == 0 ? '수납 대기 (미납 총액): ' : '이번 달 총 수납액: ',
+                                        '$heroTitle: ',
                                         style: const TextStyle(
                                           color: Color(0xFF94A3B8),
                                           fontSize: 13,
@@ -177,7 +315,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                         ),
                                       ),
                                       Text(
-                                        LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
+                                        LocalizationService.formatAmount(heroAmount),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 22,
@@ -191,12 +329,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: _selectedTab == 0
-                                        ? const Color(0xFFD97706).withAlpha((255 * 0.25).round())
-                                        : const Color(0xFF059669).withAlpha((255 * 0.25).round()),
+                                    color: badgeBgColor,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: _selectedTab == 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                                      color: badgeBorderColor,
                                       width: 1,
                                     ),
                                   ),
@@ -204,15 +340,15 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        _selectedTab == 0 ? Icons.error_outline_rounded : Icons.verified_rounded,
+                                        badgeIcon,
                                         size: 13,
-                                        color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                        color: badgeTextColor,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        _selectedTab == 0 ? '${unpaidInvoices.length}건 미납' : '${paidInvoices.length}건 완료',
+                                        badgeText,
                                         style: TextStyle(
-                                          color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                          color: badgeTextColor,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w800,
                                         ),
@@ -235,21 +371,19 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                           Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
-                                              color: _selectedTab == 0
-                                                  ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
-                                                  : const Color(0xFF10B981).withAlpha((255 * 0.18).round()),
+                                              color: heroIconColor.withAlpha((255 * 0.18).round()),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
-                                              _selectedTab == 0 ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
-                                              color: _selectedTab == 0 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
+                                              heroIcon,
+                                              color: heroIconColor,
                                               size: 16,
                                             ),
                                           ),
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              _selectedTab == 0 ? '수납 대기 (미납 총액)' : '이번 달 총 수납액',
+                                              heroTitle,
                                               style: const TextStyle(
                                                 color: Color(0xFF94A3B8),
                                                 fontSize: 13.5,
@@ -266,12 +400,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                       decoration: BoxDecoration(
-                                        color: _selectedTab == 0
-                                            ? const Color(0xFFD97706).withAlpha((255 * 0.22).round())
-                                            : const Color(0xFF059669).withAlpha((255 * 0.22).round()),
+                                        color: badgeBgColor,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: _selectedTab == 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                                          color: badgeBorderColor,
                                           width: 1,
                                         ),
                                       ),
@@ -279,15 +411,15 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            _selectedTab == 0 ? Icons.error_outline_rounded : Icons.verified_rounded,
+                                            badgeIcon,
                                             size: 13,
-                                            color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                            color: badgeTextColor,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            _selectedTab == 0 ? '${unpaidInvoices.length}건 미납 대기' : '${paidInvoices.length}건 완납',
+                                            badgeText,
                                             style: TextStyle(
-                                              color: _selectedTab == 0 ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0),
+                                              color: badgeTextColor,
                                               fontSize: 11.5,
                                               fontWeight: FontWeight.w800,
                                             ),
@@ -304,7 +436,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    LocalizationService.formatAmount(_selectedTab == 0 ? totalUnpaidAmount : totalPaidAmount),
+                                    LocalizationService.formatAmount(heroAmount),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 32,
@@ -335,7 +467,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
-                                            '전체 ${invoices.length}건 중 ${paidInvoices.length}건 수납',
+                                            infoBarLeftText,
                                             style: TextStyle(
                                               color: Colors.white.withAlpha((255 * 0.75).round()),
                                               fontSize: 12,
@@ -345,11 +477,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                         ],
                                       ),
                                       Text(
-                                        _selectedTab == 0
-                                            ? '완납: ${LocalizationService.formatAmount(totalPaidAmount)}'
-                                            : '미납: ${LocalizationService.formatAmount(totalUnpaidAmount)}',
+                                        infoBarRightText,
                                         style: TextStyle(
-                                          color: _selectedTab == 0 ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                                          color: infoBarRightColor,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -376,8 +506,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             padding: const EdgeInsets.all(3),
                             child: Row(
                               children: [
-                                _buildTabButton('미납 / 청구 대상 (${unpaidInvoices.length})', 0),
-                                _buildTabButton('수납 완료 내역 (${paidInvoices.length})', 1),
+                                _buildTabButton('미납 / 청구 (${unpaidInvoices.length})', 0),
+                                _buildTabButton('수납 완료 (${paidInvoices.length})', 1),
+                                _buildTabButton('지출 / 매입 (${expenses.length})', 2),
                               ],
                             ),
                           ),
@@ -438,61 +569,63 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                       ),
                     ),
 
-                  // 3. Invoice List
+                  // 3. Invoice or Expense List
                   Expanded(
-                    child: currentList.isEmpty
-                        ? Center(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.receipt_long_outlined, size: 52, color: AppTheme.textTertiary),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                    child: _selectedTab == 2
+                        ? _buildExpenseListView(context, expenses, vendors, studio)
+                        : (currentList.isEmpty
+                            ? Center(
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.receipt_long_outlined, size: 52, color: AppTheme.textTertiary),
+                                      const SizedBox(height: 14),
+                                      Text(
+                                        _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        '우측 하단 [+] 또는 아래 버튼을 눌러\n첫 청구서를 간편하게 발행해보세요.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          final members = membersAsync.value ?? [];
+                                          final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+                                          _openQuickInvoiceSheet(context, members, studio);
+                                        },
+                                        icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
+                                        label: const Text('첫 청구서 작성하기', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14)),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppTheme.primaryBlue,
+                                          side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
+                                          backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    '우측 하단 [+] 또는 아래 버튼을 눌러\n첫 청구서를 간편하게 발행해보세요.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  OutlinedButton.icon(
-                                    onPressed: () {
-                                      final members = membersAsync.value ?? [];
-                                      final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-                                      _openQuickInvoiceSheet(context, members, studio);
-                                    },
-                                    icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
-                                    label: const Text('첫 청구서 작성하기', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14)),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppTheme.primaryBlue,
-                                      side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
-                                      backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
-                                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(18, 8, 18, 90),
-                            itemCount: currentList.length,
-                            itemBuilder: (context, index) {
-                              final invoice = currentList[index];
-                              final invoiceMembers = invoice.memberIds
-                                  .map((id) => memberMap[id])
-                                  .whereType<Member>()
-                                  .toList();
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(18, 8, 18, 90),
+                                itemCount: currentList.length,
+                                itemBuilder: (context, index) {
+                                  final invoice = currentList[index];
+                                  final invoiceMembers = invoice.memberIds
+                                      .map((id) => memberMap[id])
+                                      .whereType<Member>()
+                                      .toList();
 
-                              return _buildInvoiceCard(context, invoice, invoiceMembers, studio);
-                            },
-                          ),
+                                  return _buildInvoiceCard(context, invoice, invoiceMembers, studio);
+                                },
+                              )),
                   ),
                 ],
               );
@@ -500,20 +633,34 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab_billing',
-        onPressed: () {
-          final members = membersAsync.value ?? [];
-          final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-          _openQuickInvoiceSheet(context, members, studio);
-        },
-        backgroundColor: AppTheme.primaryBlue,
-        icon: const Icon(Icons.edit_note, color: Colors.white),
-        label: const Text(
-          '새 청구서 작성',
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
-        ),
-      ),
+      floatingActionButton: _selectedTab == 2
+          ? FloatingActionButton.extended(
+              heroTag: 'fab_expense',
+              onPressed: () {
+                final curVendors = vendorsAsync.value ?? [];
+                _openAddExpenseSheet(context, curVendors);
+              },
+              backgroundColor: const Color(0xFFE11D48),
+              icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+              label: const Text(
+                '새 지출 등록',
+                style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+            )
+          : FloatingActionButton.extended(
+              heroTag: 'fab_billing',
+              onPressed: () {
+                final members = membersAsync.value ?? [];
+                final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+                _openQuickInvoiceSheet(context, members, studio);
+              },
+              backgroundColor: AppTheme.primaryBlue,
+              icon: const Icon(Icons.edit_note, color: Colors.white),
+              label: const Text(
+                '새 청구서 작성',
+                style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+            ),
     );
   }
 
@@ -650,28 +797,58 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           const SizedBox(height: 14),
 
           // Action Buttons: 반응형 및 위계 구조 재배치
-          // 1행: 보조 알림 액션 (청구문자 + 1초리마인드 2분할, 또는 완료 시 청구문자 단독)
+          // 1행: 보조 알림 액션 (카톡 청구 / 문자 청구 / 1초 리마인드)
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
-                  icon: const Icon(Icons.sms_outlined, size: 16),
-                  label: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '청구문자',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              if (!isPaid) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
+                        studio: studio,
+                        members: invoiceMembers,
+                        invoice: invoice,
+                      );
+                      await KakaoShareService.shareMessage(
+                        text: kakaoMsg,
+                        subject: '[${studio.studioName}] 수강료 청구 안내',
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_rounded, size: 14, color: Color(0xFF381E1F)),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '카톡 청구',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF381E1F)),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFEE500).withValues(alpha: 0.16),
+                      side: const BorderSide(color: Color(0xFFFEE500), width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
+                    icon: const Icon(Icons.sms_outlined, size: 16),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '문자 청구',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
                 ),
-              ),
-              if (!isPaid) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
@@ -705,53 +882,90 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     ),
                   ),
                 ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // 2행: 핵심 주요 액션 (수납확인 / 영수 확인 문자) - 1줄 전체를 시원하게 차지
-          SizedBox(
-            width: double.infinity,
-            child: !isPaid
-                ? ElevatedButton.icon(
-                    onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
-                    icon: const Icon(Icons.check_circle_outline, size: 18, color: Colors.white),
-                    label: const Text(
-                      '수납확인 완료 처리',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: Colors.white,
+              ] else ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      if (invoiceMembers.isEmpty) return;
+                      final kakaoMsg = KakaoShareService.generateReceiptKakaoMessage(
+                        studio: studio,
+                        member: invoiceMembers.first,
+                        invoice: invoice,
+                      );
+                      await KakaoShareService.shareMessage(
+                        text: kakaoMsg,
+                        subject: '[${studio.studioName}] 수납 확인 영수증',
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_rounded, size: 14, color: Color(0xFF381E1F)),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '카톡 영수증 (0원)',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF381E1F)),
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.softMint,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFEE500).withValues(alpha: 0.16),
+                      side: const BorderSide(color: Color(0xFFFEE500), width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                  )
-                : OutlinedButton.icon(
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
                     onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
                     icon: const Icon(Icons.receipt_long_outlined, size: 17, color: AppTheme.softMint),
-                    label: const Text(
-                      '수납완료 영수증 문자 전송',
-                      style: TextStyle(
-                        color: AppTheme.softMint,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '영수증 문자 전송',
+                        style: TextStyle(
+                          color: AppTheme.softMint,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                        ),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.softMint,
                       side: const BorderSide(color: AppTheme.softMint, width: 1.2),
                       backgroundColor: AppTheme.softMint.withValues(alpha: 0.04),
-                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
+                ),
+              ],
+            ],
           ),
+          if (!isPaid) ...[
+            const SizedBox(height: 8),
+            // 2행: 핵심 주요 액션 (수납확인 완료 처리) - 1줄 전체를 시원하게 차지
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
+                icon: const Icon(Icons.check_circle_outline, size: 18, color: Colors.white),
+                label: const Text(
+                  '수납확인 완료 처리',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.softMint,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -784,7 +998,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    '청구 문자 내용 확인 & 편집',
+                    '청구서 전송 방법 선택',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                   IconButton(
@@ -795,16 +1009,57 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                '수신: ${invoice.recipientPhone} (전송 전 내용을 자유롭게 수정할 수 있습니다)',
+                '수신: ${invoice.recipientPhone} (토스 1초 무료 송금 링크 자동 포함)',
                 style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+
+              // 1. 카카오톡 0원 직접 전송 버튼 (최우선 추천)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
+                      studio: studio,
+                      members: members,
+                      invoice: invoice,
+                    );
+                    final ok = await KakaoShareService.shareMessage(
+                      text: kakaoMsg,
+                      subject: '[${studio.studioName}] 수강료 청구 안내',
+                    );
+                    if (ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('카카오톡 공유가 실행되었습니다. (복사 완료)'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF191919), size: 17),
+                  label: const Text(
+                    '카카오톡 0원 전송 (토스 간편송금 포함)',
+                    style: TextStyle(color: Color(0xFF191919), fontWeight: FontWeight.w800, fontSize: 14.5),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFEE500),
+                    foregroundColor: const Color(0xFF191919),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
               AppTextField(
                 controller: textController,
-                label: '문자 본문 내용',
-                maxLines: 8,
+                label: '문자 본문 내용 (수정 가능)',
+                maxLines: 6,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               ResponsiveDialogActions(
                 breakpoint: 320,
                 secondary: OutlinedButton(
@@ -832,7 +1087,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     }
                   },
                   icon: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
-                  label: const Text('문자 앱으로 전송'),
+                  label: const Text('기본 문자 앱으로 전송'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryBlue,
                     foregroundColor: Colors.white,
@@ -965,9 +1220,18 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         SnackBar(
           content: Text('${invoice.title} 수납 처리가 완료되었습니다.'),
           action: SnackBarAction(
-            label: '영수 문자 발송',
-            textColor: AppTheme.softMint,
-            onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
+            label: '카톡 영수증',
+            textColor: const Color(0xFFFEE500),
+            onPressed: () {
+              if (invoiceMembers.isNotEmpty) {
+                final kakaoMsg = KakaoShareService.generateReceiptKakaoMessage(
+                  studio: studio,
+                  member: invoiceMembers.first,
+                  invoice: invoice.copyWith(status: PaymentStatus.paid, paymentMethod: method, paidAt: DateTime.now()),
+                );
+                KakaoShareService.shareMessage(text: kakaoMsg, subject: '[${studio.studioName}] 수납 확인 영수증');
+              }
+            },
           ),
           duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
@@ -976,7 +1240,1019 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     }
   }
 
-  // 은행 앱 푸시 알림 수동 매칭 시뮬레이터 (테스트 & 시연용)
+  // ==========================================
+  // 체크인 페이: 지출/매입 장부 및 거래처 관리 UI
+  // ==========================================
+
+  Widget _buildExpenseListView(
+    BuildContext context,
+    List<ExpenseItem> expenses,
+    List<Vendor> vendors,
+    StudioProfile studio,
+  ) {
+    final payFilters = ['전체', '완납', '미지급'];
+    final categoryFilters = ['전체', '교재비', '임대료', '강사료', '소모품비', '시설관리', '공과금', '기타'];
+
+    var filtered = List<ExpenseItem>.from(expenses);
+    if (_selectedExpensePayFilter == '완납') {
+      filtered = filtered.where((e) => e.isPaid).toList();
+    } else if (_selectedExpensePayFilter == '미지급') {
+      filtered = filtered.where((e) => !e.isPaid).toList();
+    }
+    if (_selectedExpenseCategory != '전체') {
+      filtered = filtered.where((e) => e.category == _selectedExpenseCategory).toList();
+    }
+    filtered.sort((a, b) => b.date.compareTo(a.date));
+
+    return Column(
+      children: [
+        // 1. Filter strip (결제상태 & 카테고리)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // 결제 상태 필터
+                ...payFilters.map((p) {
+                  final isSel = _selectedExpensePayFilter == p;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: FilterChip(
+                      label: Text(
+                        p,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                          color: isSel ? Colors.white : AppTheme.textPrimary,
+                        ),
+                      ),
+                      selected: isSel,
+                      selectedColor: const Color(0xFFE11D48),
+                      backgroundColor: Colors.white,
+                      checkmarkColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: isSel ? const Color(0xFFE11D48) : AppTheme.borderSubtle),
+                      ),
+                      onSelected: (val) {
+                        if (val) setState(() => _selectedExpensePayFilter = p);
+                      },
+                    ),
+                  );
+                }),
+                const SizedBox(width: 6),
+                Container(height: 18, width: 1, color: AppTheme.borderSubtle),
+                const SizedBox(width: 8),
+                // 카테고리 필터
+                ...categoryFilters.map((c) {
+                  final isSel = _selectedExpenseCategory == c;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: FilterChip(
+                      label: Text(
+                        c,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                          color: isSel ? const Color(0xFF4F46E5) : AppTheme.textSecondary,
+                        ),
+                      ),
+                      selected: isSel,
+                      selectedColor: const Color(0xFFEEF2FF),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: isSel ? const Color(0xFF6366F1) : AppTheme.borderSubtle),
+                      ),
+                      onSelected: (val) {
+                        setState(() => _selectedExpenseCategory = val ? c : '전체');
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+
+        // 2. List or Empty state
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.account_balance_wallet_outlined, size: 52, color: Color(0xFFCBD5E1)),
+                        const SizedBox(height: 14),
+                        const Text(
+                          '기록된 지출/매입 내역이 없습니다',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          '학원·스튜디오 운영에 지출된 교재비, 임대료, 강사료를 기록하고\n실시간 손익과 순이익을 한눈에 관리하세요.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                        ),
+                        const SizedBox(height: 18),
+                        OutlinedButton.icon(
+                          onPressed: () => _openAddExpenseSheet(context, vendors),
+                          icon: const Icon(Icons.add, size: 18, color: Color(0xFFE11D48)),
+                          label: const Text(
+                            '첫 지출 등록하기',
+                            style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFE11D48),
+                            side: const BorderSide(color: Color(0xFFE11D48), width: 1.2),
+                            backgroundColor: const Color(0xFFFFF1F2),
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 90),
+                  itemCount: filtered.length,
+                  itemBuilder: (ctx, idx) {
+                    final exp = filtered[idx];
+                    return _buildExpenseCard(context, exp, vendors, studio);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpenseCard(
+    BuildContext context,
+    ExpenseItem expense,
+    List<Vendor> vendors,
+    StudioProfile studio,
+  ) {
+    final vendor = vendors.where((v) => v.id == expense.vendorId || v.name == expense.vendorName).firstOrNull;
+    final dateStr = DateFormat('yyyy.MM.dd').format(expense.date);
+    final isInstructor = expense.category == '강사료' || vendor?.category == '강사/코치료';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(
+          color: expense.isPaid ? AppTheme.borderSubtle : const Color(0xFFFECDD3),
+          width: expense.isPaid ? 1 : 1.4,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Category, Date, Status toggle pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      expense.category,
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    dateStr,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () async {
+                  await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(expense.isPaid ? '미지급 상태로 변경되었습니다.' : '지급 완료(완납) 처리되었습니다.'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: expense.isPaid ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: expense.isPaid ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        expense.isPaid ? Icons.check_circle_outline : Icons.pending_actions_outlined,
+                        size: 13,
+                        color: expense.isPaid ? const Color(0xFF059669) : const Color(0xFFE11D48),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        expense.isPaid ? '완납' : '미지급 대기',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: expense.isPaid ? const Color(0xFF059669) : const Color(0xFFE11D48),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Title & Amount
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  expense.title,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '- ${_currencyFormat.format(expense.amount)}원',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFE11D48),
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Vendor & Account Info
+          Row(
+            children: [
+              const Icon(Icons.storefront_outlined, size: 14, color: AppTheme.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                expense.vendorName,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+              ),
+              if (vendor?.bankName != null && vendor?.accountNumber != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  '• ${vendor!.bankName} ${vendor.accountNumber}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy_rounded, size: 13, color: AppTheme.primaryBlue),
+                  tooltip: '계좌번호 복사',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: '${vendor.bankName} ${vendor.accountNumber} ${vendor.accountHolder ?? ''}'));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${vendor.bankName} 계좌번호가 복사되었습니다.'), behavior: SnackBarBehavior.floating),
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+
+          if (expense.memo != null && expense.memo!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              '메모: ${expense.memo}',
+              style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+            ),
+          ],
+
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+
+          // Action row: 카톡 발주서 / 강사 정산서 / 수정 / 삭제
+          Row(
+            children: [
+              // Kakao Order / Receipt button
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final kakaoMsg = KakaoShareService.generateVendorOrderKakaoMessage(
+                      studio: studio,
+                      vendorName: expense.vendorName,
+                      title: expense.title,
+                      amount: expense.amount,
+                      bankInfo: vendor != null && vendor.accountNumber != null
+                          ? '${vendor.bankName} ${vendor.accountNumber} (${vendor.accountHolder ?? ''})'
+                          : null,
+                      memo: expense.memo,
+                    );
+                    await KakaoShareService.shareMessage(
+                      text: kakaoMsg,
+                      subject: '[${studio.studioName}] 발주 및 입금 확인',
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_rounded, size: 14, color: Color(0xFF381E1F)),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '카톡 발주/입금서',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF381E1F)),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFEE500).withValues(alpha: 0.18),
+                    side: const BorderSide(color: Color(0xFFFEE500), width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+
+              if (isInstructor) ...[
+                const SizedBox(width: 6),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final kakaoMsg = KakaoShareService.generateStaffSettlementKakaoMessage(
+                        studio: studio,
+                        staffName: expense.vendorName,
+                        amount: expense.amount,
+                        period: '${expense.date.month}월',
+                        details: '${expense.title} (${expense.paymentMethod})',
+                      );
+                      await KakaoShareService.shareMessage(
+                        text: kakaoMsg,
+                        subject: '[${studio.studioName}] 강사료 정산서',
+                      );
+                    },
+                    icon: const Icon(Icons.badge_outlined, size: 14, color: Color(0xFF4F46E5)),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '강사 정산서',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF4F46E5)),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEEF2FF),
+                      side: const BorderSide(color: Color(0xFF6366F1), width: 1.1),
+                      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(width: 6),
+              // Edit button
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.textSecondary),
+                tooltip: '지출 수정',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: () => _openAddExpenseSheet(context, vendors, expense),
+              ),
+              // Delete button
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFEF4444)),
+                tooltip: '지출 삭제',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (dCtx) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text('지출 내역 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      content: Text('\'${expense.title}\' 지출 내역을 장부에서 삭제하시겠습니까?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                          child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await ref.read(expensesProvider.notifier).deleteExpense(expense.id);
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openAddExpenseSheet(
+    BuildContext context,
+    List<Vendor> vendors, [
+    ExpenseItem? editExpense,
+  ]) {
+    final titleCtrl = TextEditingController(text: editExpense?.title ?? '');
+    final amountCtrl = TextEditingController(text: editExpense != null ? editExpense.amount.toString() : '');
+    final memoCtrl = TextEditingController(text: editExpense?.memo ?? '');
+    String selectedCategory = editExpense?.category ?? '교재비';
+    String selectedMethod = editExpense?.paymentMethod ?? '계좌이체';
+    bool isPaid = editExpense?.isPaid ?? true;
+    final DateTime selectedDate = editExpense?.date ?? DateTime.now();
+    Vendor? selectedVendor = editExpense?.vendorId != null
+        ? vendors.where((v) => v.id == editExpense!.vendorId).firstOrNull
+        : (vendors.isNotEmpty ? vendors.first : null);
+    String directVendorName = editExpense?.vendorName ?? (selectedVendor?.name ?? '');
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.92,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      editExpense == null ? '새 지출/매입 등록' : '지출 내역 수정',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                    ),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(sheetCtx)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // 거래처 선택 드롭다운 또는 직접 입력
+                const Text('거래처 (납품처/수취인)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                const SizedBox(height: 6),
+                if (vendors.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.borderSubtle),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<Vendor>(
+                        isExpanded: true,
+                        value: selectedVendor,
+                        hint: const Text('거래처를 선택하세요'),
+                        items: vendors.map((v) {
+                          return DropdownMenuItem<Vendor>(
+                            value: v,
+                            child: Text('${v.name} (${v.category})', style: const TextStyle(fontSize: 14)),
+                          );
+                        }).toList(),
+                        onChanged: (newV) {
+                          if (newV != null) {
+                            setSheetState(() {
+                              selectedVendor = newV;
+                              directVendorName = newV.name;
+                              if (newV.category.contains('교재')) selectedCategory = '교재비';
+                              if (newV.category.contains('임대')) selectedCategory = '임대료';
+                              if (newV.category.contains('강사')) selectedCategory = '강사료';
+                              if (newV.category.contains('소모품')) selectedCategory = '소모품비';
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                AppTextField(
+                  controller: TextEditingController(text: directVendorName)
+                    ..selection = TextSelection.collapsed(offset: directVendorName.length),
+                  label: '거래처 상호 직접 입력',
+                  hint: '예: (주)영재교육, 우리건물 관리단, 홍길동 코치',
+                  prefixIcon: Icons.storefront_outlined,
+                  onChanged: (val) => directVendorName = val,
+                ),
+                const SizedBox(height: 12),
+
+                // 지출 품목명
+                AppTextField(
+                  controller: titleCtrl,
+                  label: '지출 항목 / 품목명',
+                  hint: '예: 5월 수학 워크북 30부, 스튜디오 월세, 소독 비품',
+                  prefixIcon: Icons.shopping_bag_outlined,
+                ),
+                const SizedBox(height: 12),
+
+                // 지출 금액
+                AppTextField(
+                  controller: amountCtrl,
+                  label: '지출 금액 (원)',
+                  hint: '100000',
+                  keyboardType: TextInputType.number,
+                  prefixIcon: Icons.payments_outlined,
+                ),
+                const SizedBox(height: 8),
+
+                // 빠른 금액 가산 버튼
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [10000, 50000, 100000, 500000, 1000000].map((amt) {
+                    return OutlinedButton(
+                      onPressed: () {
+                        final cur = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                        amountCtrl.text = (cur + amt).toString();
+                        setSheetState(() {});
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: Text('+${amt ~/ 10000}만원', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                // 분류 카테고리 선택
+                const Text('지출 분류', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: ['교재비', '임대료', '강사료', '소모품비', '시설관리', '공과금', '기타'].map((cat) {
+                    final isSel = selectedCategory == cat;
+                    return ChoiceChip(
+                      label: Text(cat, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? Colors.white : AppTheme.textPrimary)),
+                      selected: isSel,
+                      selectedColor: const Color(0xFFE11D48),
+                      backgroundColor: Colors.white,
+                      onSelected: (val) {
+                        if (val) setSheetState(() => selectedCategory = cat);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                // 결제 수단
+                const Text('결제 수단', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: ['계좌이체', '신용카드', '현금', '간편결제'].map((m) {
+                    final isSel = selectedMethod == m;
+                    return ChoiceChip(
+                      label: Text(m, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? Colors.white : AppTheme.textPrimary)),
+                      selected: isSel,
+                      selectedColor: AppTheme.primaryBlue,
+                      backgroundColor: Colors.white,
+                      onSelected: (val) {
+                        if (val) setSheetState(() => selectedMethod = m);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                // 완납 여부 스위치
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('지급 완료 (완납)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  subtitle: Text(isPaid ? '대금 이체 완료' : '미지급 / 외상 대기 상태', style: const TextStyle(fontSize: 12)),
+                  value: isPaid,
+                  activeThumbColor: const Color(0xFF10B981),
+                  onChanged: (val) => setSheetState(() => isPaid = val),
+                ),
+                const SizedBox(height: 8),
+
+                // 메모
+                AppTextField(
+                  controller: memoCtrl,
+                  label: '비고 / 메모 (선택)',
+                  hint: '예: 5월 10일 정산 예정, 택배 수령 완료',
+                  prefixIcon: Icons.notes_outlined,
+                ),
+                const SizedBox(height: 20),
+
+                // Submit button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final title = titleCtrl.text.trim();
+                      final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                      final vName = directVendorName.trim().isEmpty ? '일반 거래처' : directVendorName.trim();
+
+                      if (title.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('지출 품목명을 입력해주세요.')));
+                        return;
+                      }
+                      if (amount <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('금액을 올바르게 입력해주세요.')));
+                        return;
+                      }
+
+                      final item = ExpenseItem(
+                        id: editExpense?.id ?? 'exp_${DateTime.now().millisecondsSinceEpoch}',
+                        vendorId: selectedVendor?.id,
+                        vendorName: vName,
+                        title: title,
+                        amount: amount,
+                        date: selectedDate,
+                        category: selectedCategory,
+                        paymentMethod: selectedMethod,
+                        isPaid: isPaid,
+                        memo: memoCtrl.text.trim().isEmpty ? null : memoCtrl.text.trim(),
+                        createdAt: editExpense?.createdAt ?? DateTime.now(),
+                      );
+
+                      if (editExpense == null) {
+                        await ref.read(expensesProvider.notifier).addExpense(item);
+                      } else {
+                        await ref.read(expensesProvider.notifier).updateExpense(item);
+                      }
+
+                      if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${item.title} (${_currencyFormat.format(amount)}원) 지출이 저장되었습니다.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE11D48),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Text(
+                      editExpense == null ? '지출 내역 등록 완료' : '수정 내용 저장',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openVendorManagementSheet(BuildContext context, List<Vendor> vendors) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.85,
+      builder: (sheetCtx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.business_center_outlined, color: Color(0xFF4F46E5), size: 22),
+                    SizedBox(width: 8),
+                    Text(
+                      '거래처 수첩 (B2B 납품처)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(sheetCtx)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '교재사, 기구사, 관리사무소, 파트너 강사의 계좌 및 연락처 목록입니다.',
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 12),
+
+            // 새 거래처 등록 버튼
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _openAddEditVendorDialog(context),
+                icon: const Icon(Icons.add, size: 18, color: Color(0xFF4F46E5)),
+                label: const Text('새 거래처 등록하기', style: TextStyle(color: Color(0xFF4F46E5), fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF6366F1), width: 1.2),
+                  backgroundColor: const Color(0xFFEEF2FF),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            if (vendors.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 30),
+                child: Center(
+                  child: Text('등록된 거래처가 없습니다.', style: TextStyle(color: AppTheme.textTertiary)),
+                ),
+              )
+            else
+              ...vendors.map((v) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  v.name,
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    v.category,
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.textSecondary),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => _openAddEditVendorDialog(context, v),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFEF4444)),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (dCtx) => AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      title: const Text('거래처 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      content: Text('\'${v.name}\' 거래처를 삭제하시겠습니까?'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
+                                        ElevatedButton(
+                                          onPressed: () => Navigator.pop(dCtx, true),
+                                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                                          child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await ref.read(vendorsProvider.notifier).deleteVendor(v.id);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      if (v.bankName != null && v.accountNumber != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.account_balance, size: 13, color: AppTheme.textSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${v.bankName} ${v.accountNumber} (${v.accountHolder ?? ''})',
+                              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy_rounded, size: 12, color: AppTheme.primaryBlue),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: '${v.bankName} ${v.accountNumber} ${v.accountHolder ?? ''}'));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('${v.bankName} 계좌번호가 복사되었습니다.'), behavior: SnackBarBehavior.floating),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (v.phone != null && v.phone!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.phone_outlined, size: 13, color: AppTheme.textSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              v.phone!,
+                              style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                            ),
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: () => launchUrl(Uri.parse('tel:${v.phone}')),
+                              child: const Text('통화', style: TextStyle(fontSize: 11.5, color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (v.memo != null && v.memo!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '메모: ${v.memo}',
+                          style: const TextStyle(fontSize: 11.5, color: AppTheme.textTertiary),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openAddEditVendorDialog(BuildContext context, [Vendor? editVendor]) {
+    final nameCtrl = TextEditingController(text: editVendor?.name ?? '');
+    final bankCtrl = TextEditingController(text: editVendor?.bankName ?? '');
+    final accountCtrl = TextEditingController(text: editVendor?.accountNumber ?? '');
+    final holderCtrl = TextEditingController(text: editVendor?.accountHolder ?? '');
+    final phoneCtrl = TextEditingController(text: editVendor?.phone ?? '');
+    final memoCtrl = TextEditingController(text: editVendor?.memo ?? '');
+    String selectedCategory = editVendor?.category ?? '교재/교구';
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text(
+            editVendor == null ? '새 거래처 등록' : '거래처 정보 수정',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTextField(
+                  controller: nameCtrl,
+                  label: '상호 / 거래처명 (필수)',
+                  hint: '예: (주)에듀프라임 교재총판',
+                  prefixIcon: Icons.storefront_outlined,
+                ),
+                const SizedBox(height: 10),
+                const Text('거래처 분류', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: ['교재/교구', '시설/기구', '임대/관리비', '강사/코치료', '소모품/비품', '기타'].map((cat) {
+                    final isSel = selectedCategory == cat;
+                    return ChoiceChip(
+                      label: Text(cat, style: TextStyle(fontSize: 11.5, color: isSel ? Colors.white : AppTheme.textPrimary)),
+                      selected: isSel,
+                      selectedColor: const Color(0xFF6366F1),
+                      backgroundColor: Colors.white,
+                      onSelected: (val) {
+                        if (val) setDlgState(() => selectedCategory = cat);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  controller: bankCtrl,
+                  label: '입금 은행',
+                  hint: '예: 국민은행, 신한은행, 카카오뱅크',
+                  prefixIcon: Icons.account_balance,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  controller: accountCtrl,
+                  label: '계좌번호',
+                  hint: '숫자만 또는 하이픈 포함',
+                  prefixIcon: Icons.payment,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  controller: holderCtrl,
+                  label: '예금주',
+                  hint: '예: 김영수 (에듀프라임)',
+                  prefixIcon: Icons.person_outline,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  controller: phoneCtrl,
+                  label: '연락처 (선택)',
+                  hint: '010-0000-0000',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  controller: memoCtrl,
+                  label: '메모 (선택)',
+                  hint: '담당자명, 정기 발주일 등',
+                  prefixIcon: Icons.note_outlined,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('취소')),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('거래처 상호를 입력해주세요.')));
+                  return;
+                }
+
+                final vendor = Vendor(
+                  id: editVendor?.id ?? 'vnd_${DateTime.now().millisecondsSinceEpoch}',
+                  name: name,
+                  category: selectedCategory,
+                  bankName: bankCtrl.text.trim().isEmpty ? null : bankCtrl.text.trim(),
+                  accountNumber: accountCtrl.text.trim().isEmpty ? null : accountCtrl.text.trim(),
+                  accountHolder: holderCtrl.text.trim().isEmpty ? null : holderCtrl.text.trim(),
+                  phone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
+                  memo: memoCtrl.text.trim().isEmpty ? null : memoCtrl.text.trim(),
+                  createdAt: editVendor?.createdAt ?? DateTime.now(),
+                );
+
+                if (editVendor == null) {
+                  await ref.read(vendorsProvider.notifier).addVendor(vendor);
+                } else {
+                  await ref.read(vendorsProvider.notifier).updateVendor(vendor);
+                }
+
+                if (dlgCtx.mounted) Navigator.pop(dlgCtx);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
+              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   void _showBankNotificationSimulator(
     BuildContext context,
     List<Member> members,

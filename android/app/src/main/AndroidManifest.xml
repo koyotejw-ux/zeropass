@@ -49,5 +49,17 @@
             <action android:name="android.intent.action.SENDTO"/>
             <data android:scheme="sms"/>
         </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="kakaotalk"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="supertoss"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
     </queries>
 </manifest>

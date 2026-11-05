@@ -6,6 +6,8 @@ import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/invoice.dart';
 import '../models/studio_profile.dart';
+import '../models/vendor.dart';
+import '../models/expense_item.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._internal();
@@ -31,7 +33,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -47,6 +49,39 @@ class DatabaseService {
         if (oldVersion < 4) {
           try {
             await db.execute('ALTER TABLE members ADD COLUMN photoPath TEXT');
+          } catch (_) {}
+        }
+        if (oldVersion < 5) {
+          try {
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS vendors (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                bankName TEXT,
+                accountNumber TEXT,
+                accountHolder TEXT,
+                phone TEXT,
+                memo TEXT,
+                createdAt TEXT NOT NULL
+              )
+            ''');
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS expense_items (
+                id TEXT PRIMARY KEY,
+                vendorId TEXT,
+                vendorName TEXT NOT NULL,
+                title TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                category TEXT NOT NULL,
+                paymentMethod TEXT NOT NULL,
+                isPaid INTEGER NOT NULL DEFAULT 1,
+                memo TEXT,
+                createdAt TEXT NOT NULL
+              )
+            ''');
+            await _seedDefaultVendorsAndExpenses(db);
           } catch (_) {}
         }
       },
@@ -117,12 +152,45 @@ class DatabaseService {
       )
     ''');
 
+    // 5. Vendors Table (체크인 페이 거래처 장부)
+    await db.execute('''
+      CREATE TABLE vendors (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        bankName TEXT,
+        accountNumber TEXT,
+        accountHolder TEXT,
+        phone TEXT,
+        memo TEXT,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+
+    // 6. Expense Items Table (체크인 페이 지출/매입 장부)
+    await db.execute('''
+      CREATE TABLE expense_items (
+        id TEXT PRIMARY KEY,
+        vendorId TEXT,
+        vendorName TEXT NOT NULL,
+        title TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        category TEXT NOT NULL,
+        paymentMethod TEXT NOT NULL,
+        isPaid INTEGER NOT NULL DEFAULT 1,
+        memo TEXT,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+
     // Insert Default Studio Profile
     final defaultProfile = StudioProfile.defaultProfile();
     await db.insert('studio_profile', defaultProfile.toMap());
 
     // Insert Rich Realistic Mock Data (5 Multi-industry members)
     await _seedMockData(db);
+    await _seedDefaultVendorsAndExpenses(db);
   }
 
   Future<void> _seedMockData(Database db) async {
@@ -352,12 +420,58 @@ class DatabaseService {
     await db.update('studio_profile', profile.toMap(), where: 'id = 1');
   }
 
+  // Vendors CRUD (체크인 페이 거래처)
+  Future<List<Vendor>> getVendors() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('vendors', orderBy: 'name ASC');
+    return maps.map((m) => Vendor.fromMap(m)).toList();
+  }
+
+  Future<void> insertVendor(Vendor vendor) async {
+    final db = await database;
+    await db.insert('vendors', vendor.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> updateVendor(Vendor vendor) async {
+    final db = await database;
+    await db.update('vendors', vendor.toMap(), where: 'id = ?', whereArgs: [vendor.id]);
+  }
+
+  Future<void> deleteVendor(String id) async {
+    final db = await database;
+    await db.delete('vendors', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Expense Items CRUD (체크인 페이 지출/매입)
+  Future<List<ExpenseItem>> getExpenses() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('expense_items', orderBy: 'date DESC');
+    return maps.map((m) => ExpenseItem.fromMap(m)).toList();
+  }
+
+  Future<void> insertExpense(ExpenseItem expense) async {
+    final db = await database;
+    await db.insert('expense_items', expense.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> updateExpense(ExpenseItem expense) async {
+    final db = await database;
+    await db.update('expense_items', expense.toMap(), where: 'id = ?', whereArgs: [expense.id]);
+  }
+
+  Future<void> deleteExpense(String id) async {
+    final db = await database;
+    await db.delete('expense_items', where: 'id = ?', whereArgs: [id]);
+  }
+
   /// Reset all data and clear out mock data for clean real usage
   Future<void> clearAllData() async {
     final db = await database;
     await db.delete('pass_records');
     await db.delete('invoices');
     await db.delete('members');
+    await db.delete('expense_items');
+    await db.delete('vendors');
   }
 
   /// Re-seed sample practice data
@@ -365,6 +479,121 @@ class DatabaseService {
     final db = await database;
     await clearAllData();
     await _seedMockData(db);
+    await _seedDefaultVendorsAndExpenses(db);
+  }
+
+  Future<void> _seedDefaultVendorsAndExpenses(Database db) async {
+    final now = DateTime.now();
+
+    final vendors = [
+      Vendor(
+        id: 'vnd_1',
+        name: '(주)에듀프라임 교재총판',
+        category: '교재/교구',
+        bankName: '국민은행',
+        accountNumber: '482102-04-192831',
+        accountHolder: '김영수(에듀프라임)',
+        phone: '010-8821-3912',
+        memo: '매월 25일 교재 및 워크북 정기 발주',
+        createdAt: now.subtract(const Duration(days: 90)),
+      ),
+      Vendor(
+        id: 'vnd_2',
+        name: '피트니스&매트 프로몰',
+        category: '시설/기구',
+        bankName: '신한은행',
+        accountNumber: '110-382-991204',
+        accountHolder: '박진우(프로몰)',
+        phone: '010-3920-1192',
+        memo: '수건 렌탈/세탁 및 기구 소모품 납품처',
+        createdAt: now.subtract(const Duration(days: 75)),
+      ),
+      Vendor(
+        id: 'vnd_3',
+        name: '센트럴타워 관리사무소',
+        category: '임대/관리비',
+        bankName: '우리은행',
+        accountNumber: '1002-381-002911',
+        accountHolder: '센트럴타워운영회',
+        phone: '02-581-0192',
+        memo: '매월 말일 임대료 및 공용 관리비 납부',
+        createdAt: now.subtract(const Duration(days: 120)),
+      ),
+      Vendor(
+        id: 'vnd_4',
+        name: '이지원 강사 (파트너)',
+        category: '강사/코치료',
+        bankName: '카카오뱅크',
+        accountNumber: '3333-01-2918231',
+        accountHolder: '이지원',
+        phone: '010-9281-0012',
+        memo: '주말 특강 및 1:1 레슨 파트타임 (인센티브 정산)',
+        createdAt: now.subtract(const Duration(days: 40)),
+      ),
+    ];
+
+    for (final v in vendors) {
+      await db.insert('vendors', v.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    final expenses = [
+      ExpenseItem(
+        id: 'exp_1',
+        vendorId: 'vnd_1',
+        vendorName: '(주)에듀프라임 교재총판',
+        title: '5월 학습 교재 및 워크북 30부 발주',
+        amount: 280000,
+        date: DateTime(now.year, now.month, 5),
+        category: '교재비',
+        paymentMethod: '계좌이체',
+        isPaid: true,
+        memo: '택배 수령 완료 및 정상 입금',
+        createdAt: now.subtract(const Duration(days: 20)),
+      ),
+      ExpenseItem(
+        id: 'exp_2',
+        vendorId: 'vnd_3',
+        vendorName: '센트럴타워 관리사무소',
+        title: '스튜디오 월세 및 기본 관리비',
+        amount: 1200000,
+        date: DateTime(now.year, now.month, 1),
+        category: '임대료',
+        paymentMethod: '계좌이체',
+        isPaid: true,
+        memo: '월초 정기 이체 완료',
+        createdAt: now.subtract(const Duration(days: 25)),
+      ),
+      ExpenseItem(
+        id: 'exp_3',
+        vendorId: 'vnd_2',
+        vendorName: '피트니스&매트 프로몰',
+        title: '친환경 소독제 & 회원용 타올 세탁비',
+        amount: 85000,
+        date: DateTime(now.year, now.month, 10),
+        category: '소모품비',
+        paymentMethod: '신용카드',
+        isPaid: true,
+        memo: '정기 소모품 비용 결제',
+        createdAt: now.subtract(const Duration(days: 15)),
+      ),
+      ExpenseItem(
+        id: 'exp_4',
+        vendorId: 'vnd_4',
+        vendorName: '이지원 강사 (파트너)',
+        title: '4월 주말 수업료 및 출결 인센티브 정산',
+        amount: 650000,
+        date: DateTime(now.year, now.month, 15),
+        category: '강사료',
+        paymentMethod: '계좌이체',
+        isPaid: false, // 미지급 대기
+        memo: '5월 10일 송금 예정 (3.3% 원천징수 공제)',
+        createdAt: now.subtract(const Duration(days: 8)),
+      ),
+    ];
+
+    for (final exp in expenses) {
+      await db.insert('expense_items', exp.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    }
   }
 }
 

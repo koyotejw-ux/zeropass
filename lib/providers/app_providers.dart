@@ -4,6 +4,8 @@ import '../models/pass_record.dart';
 import '../models/invoice.dart';
 import '../models/studio_profile.dart';
 import '../models/custom_category_template.dart';
+import '../models/vendor.dart';
+import '../models/expense_item.dart';
 import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
 
@@ -268,4 +270,93 @@ class CustomCategoryNotifier extends AsyncNotifier<CustomCategoryState> {
 final customCategoryProvider = AsyncNotifierProvider<CustomCategoryNotifier, CustomCategoryState>(() {
   return CustomCategoryNotifier();
 });
+
+// Vendors AsyncNotifier (체크인 페이 거래처)
+class VendorsNotifier extends AsyncNotifier<List<Vendor>> {
+  @override
+  Future<List<Vendor>> build() async {
+    final db = ref.read(databaseServiceProvider);
+    return await db.getVendors();
+  }
+
+  Future<void> reload() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final db = ref.read(databaseServiceProvider);
+      return await db.getVendors();
+    });
+  }
+
+  Future<void> addVendor(Vendor vendor) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.insertVendor(vendor);
+    await reload();
+  }
+
+  Future<void> updateVendor(Vendor vendor) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.updateVendor(vendor);
+    await reload();
+  }
+
+  Future<void> deleteVendor(String id) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.deleteVendor(id);
+    await reload();
+  }
+}
+
+final vendorsProvider = AsyncNotifierProvider<VendorsNotifier, List<Vendor>>(() {
+  return VendorsNotifier();
+});
+
+// Expenses AsyncNotifier (체크인 페이 지출/매입)
+class ExpensesNotifier extends AsyncNotifier<List<ExpenseItem>> {
+  @override
+  Future<List<ExpenseItem>> build() async {
+    final db = ref.read(databaseServiceProvider);
+    return await db.getExpenses();
+  }
+
+  Future<void> reload() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final db = ref.read(databaseServiceProvider);
+      return await db.getExpenses();
+    });
+  }
+
+  Future<void> addExpense(ExpenseItem expense) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.insertExpense(expense);
+    await reload();
+  }
+
+  Future<void> updateExpense(ExpenseItem expense) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.updateExpense(expense);
+    await reload();
+  }
+
+  Future<void> deleteExpense(String id) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.deleteExpense(id);
+    await reload();
+  }
+
+  Future<void> togglePaymentStatus(String id) async {
+    final currentList = state.value ?? [];
+    final idx = currentList.indexWhere((e) => e.id == id);
+    if (idx != -1) {
+      final target = currentList[idx];
+      final updated = target.copyWith(isPaid: !target.isPaid);
+      await updateExpense(updated);
+    }
+  }
+}
+
+final expensesProvider = AsyncNotifierProvider<ExpensesNotifier, List<ExpenseItem>>(() {
+  return ExpensesNotifier();
+});
+
 
