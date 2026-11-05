@@ -9,7 +9,7 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/chosung_search_service.dart';
 import '../services/database_service.dart';
-import '../services/sms_template_service.dart';
+
 import '../services/coach_mark_service.dart';
 import '../services/monetization_service.dart';
 import '../theme/app_theme.dart';
@@ -19,6 +19,8 @@ import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
 import '../widgets/member_name_badge.dart';
 import '../widgets/signature_key_visual_hero.dart';
+import '../widgets/smart_notification_center_modal.dart';
+import '../widgets/attendance_notify_dialog.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
 import 'tablet_kiosk_screen.dart';
@@ -556,6 +558,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
+          // 스마트 안심 알림 센터 (허브 & 발송 이력 & 미발송 브리핑)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: IconButton(
+                icon: const Icon(Icons.notifications_active_outlined, color: AppTheme.primaryBlue, size: 24),
+                tooltip: '스마트 안심 알림 센터',
+                onPressed: () => SmartNotificationCenterModal.show(context),
+              ),
+            ),
+          ),
           // Tab 0 필수 전용 기능: 매장 입구 무인 자율출결 키오스크 모드 (중복 제거 & 단일 필수 메뉴 집중)
           Center(
             child: Padding(
@@ -1143,16 +1156,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final msg = SmsTemplateService.generateAttendanceMessage(
-                        studio: studio,
+                    onPressed: () {
+                      AttendanceNotifyDialog.show(
+                        context: context,
                         member: member,
+                        studio: studio,
+                        type: AttendanceNotifyType.checkIn,
                         time: todayPass?.timestamp ?? DateTime.now(),
                       );
-                      await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
                     },
                     icon: const Icon(Icons.send_rounded, size: 13, color: AppTheme.primaryBlue),
-                    label: const Text('출석 알림', style: TextStyle(fontSize: 11.5)),
+                    label: const Text('등원 안심 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       side: const BorderSide(color: AppTheme.borderSubtle),
@@ -1162,16 +1176,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final msg = SmsTemplateService.generateDepartureMessage(
-                        studio: studio,
+                    onPressed: () {
+                      AttendanceNotifyDialog.show(
+                        context: context,
                         member: member,
+                        studio: studio,
+                        type: AttendanceNotifyType.checkOut,
                         time: DateTime.now(),
                       );
-                      await SmsTemplateService.launchNativeSms(recipientPhone: member.phone, body: msg);
                     },
                     icon: const Icon(Icons.exit_to_app_rounded, size: 13, color: AppTheme.textSecondary),
-                    label: const Text('하원 알림', style: TextStyle(fontSize: 11.5)),
+                    label: const Text('하원 귀가 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       side: const BorderSide(color: AppTheme.borderSubtle),
@@ -1194,11 +1209,25 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           status: AttendanceStatus.attended,
         );
 
+    final studio = ref.read(studioProfileProvider).value ?? StudioProfile.defaultProfile();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${member.name} 출석 체크 완료 (잔여 회차가 안전하게 차감되었습니다)'),
-        duration: const Duration(seconds: 2),
+        content: Text('${member.name} 출석 체크 완료'),
+        duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: '안심 알림 전송',
+          textColor: const Color(0xFFFEE500),
+          onPressed: () {
+            AttendanceNotifyDialog.show(
+              context: context,
+              member: member,
+              studio: studio,
+              type: AttendanceNotifyType.checkIn,
+            );
+          },
+        ),
       ),
     );
 

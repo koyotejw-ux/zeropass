@@ -6,6 +6,7 @@ import '../models/studio_profile.dart';
 import '../models/custom_category_template.dart';
 import '../models/vendor.dart';
 import '../models/expense_item.dart';
+import '../models/notification_log.dart';
 import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
 
@@ -357,6 +358,65 @@ class ExpensesNotifier extends AsyncNotifier<List<ExpenseItem>> {
 
 final expensesProvider = AsyncNotifierProvider<ExpensesNotifier, List<ExpenseItem>>(() {
   return ExpensesNotifier();
+});
+
+// Notification Logs AsyncNotifier
+class NotificationLogsNotifier extends AsyncNotifier<List<NotificationLog>> {
+  @override
+  Future<List<NotificationLog>> build() async {
+    final db = ref.read(databaseServiceProvider);
+    return await db.getNotificationLogs();
+  }
+
+  Future<void> reload() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final db = ref.read(databaseServiceProvider);
+      return await db.getNotificationLogs();
+    });
+  }
+
+  Future<void> logNotification({
+    required NotificationType type,
+    String? memberId,
+    required String memberName,
+    required String recipientPhone,
+    required String channel,
+    required String message,
+    bool isSuccess = true,
+  }) async {
+    final db = ref.read(databaseServiceProvider);
+    final log = NotificationLog(
+      id: 'notif_${DateTime.now().millisecondsSinceEpoch}_${memberId ?? "bulk"}',
+      type: type,
+      memberId: memberId,
+      memberName: memberName,
+      recipientPhone: recipientPhone,
+      channel: channel,
+      message: message,
+      sentAt: DateTime.now(),
+      isSuccess: isSuccess,
+    );
+    await db.insertNotificationLog(log);
+    await reload();
+  }
+
+  Future<void> deleteLog(String id) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.deleteNotificationLog(id);
+    await reload();
+  }
+
+  Future<void> clearAll() async {
+    final db = ref.read(databaseServiceProvider);
+    await db.clearAllNotificationLogs();
+    await reload();
+  }
+}
+
+final notificationLogsProvider =
+    AsyncNotifierProvider<NotificationLogsNotifier, List<NotificationLog>>(() {
+  return NotificationLogsNotifier();
 });
 
 

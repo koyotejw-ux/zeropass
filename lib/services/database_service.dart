@@ -8,6 +8,7 @@ import '../models/invoice.dart';
 import '../models/studio_profile.dart';
 import '../models/vendor.dart';
 import '../models/expense_item.dart';
+import '../models/notification_log.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._internal();
@@ -33,7 +34,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -82,6 +83,23 @@ class DatabaseService {
               )
             ''');
             await _seedDefaultVendorsAndExpenses(db);
+          } catch (_) {}
+        }
+        if (oldVersion < 6) {
+          try {
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS notification_logs (
+                id TEXT PRIMARY KEY,
+                type TEXT NOT NULL,
+                memberId TEXT,
+                memberName TEXT NOT NULL,
+                recipientPhone TEXT NOT NULL,
+                channel TEXT NOT NULL,
+                message TEXT NOT NULL,
+                sentAt TEXT NOT NULL,
+                isSuccess INTEGER NOT NULL DEFAULT 1
+              )
+            ''');
           } catch (_) {}
         }
       },
@@ -181,6 +199,21 @@ class DatabaseService {
         isPaid INTEGER NOT NULL DEFAULT 1,
         memo TEXT,
         createdAt TEXT NOT NULL
+      )
+    ''');
+
+    // 7. Notification Logs Table
+    await db.execute('''
+      CREATE TABLE notification_logs (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        memberId TEXT,
+        memberName TEXT NOT NULL,
+        recipientPhone TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        message TEXT NOT NULL,
+        sentAt TEXT NOT NULL,
+        isSuccess INTEGER NOT NULL DEFAULT 1
       )
     ''');
 
@@ -464,6 +497,58 @@ class DatabaseService {
     await db.delete('expense_items', where: 'id = ?', whereArgs: [id]);
   }
 
+  // ==========================================
+  // NOTIFICATION LOGS CRUD
+  // ==========================================
+  Future<List<NotificationLog>> getNotificationLogs({
+    String? memberId,
+    NotificationType? type,
+    int limit = 100,
+  }) async {
+    final db = await database;
+    String? where;
+    List<dynamic>? whereArgs;
+
+    if (memberId != null && type != null) {
+      where = 'memberId = ? AND type = ?';
+      whereArgs = [memberId, type.name];
+    } else if (memberId != null) {
+      where = 'memberId = ?';
+      whereArgs = [memberId];
+    } else if (type != null) {
+      where = 'type = ?';
+      whereArgs = [type.name];
+    }
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      'notification_logs',
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: 'sentAt DESC',
+      limit: limit,
+    );
+    return maps.map((m) => NotificationLog.fromMap(m)).toList();
+  }
+
+  Future<void> insertNotificationLog(NotificationLog log) async {
+    final db = await database;
+    await db.insert(
+      'notification_logs',
+      log.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteNotificationLog(String id) async {
+    final db = await database;
+    await db.delete('notification_logs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> clearAllNotificationLogs() async {
+    final db = await database;
+    await db.delete('notification_logs');
+  }
+
   /// Reset all data and clear out mock data for clean real usage
   Future<void> clearAllData() async {
     final db = await database;
@@ -472,6 +557,7 @@ class DatabaseService {
     await db.delete('members');
     await db.delete('expense_items');
     await db.delete('vendors');
+    await db.delete('notification_logs');
   }
 
   /// Re-seed sample practice data

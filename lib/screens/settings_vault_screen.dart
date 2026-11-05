@@ -18,6 +18,7 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
+import '../widgets/smart_notification_center_modal.dart';
 import 'home_navigation_screen.dart';
 import 'studio_setup_wizard_screen.dart';
 import 'tablet_kiosk_screen.dart';
@@ -929,7 +930,36 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. Unattended Entrance Kiosk Device Settings (입구 거치용 무인 출결 태블릿 설정)
+              // 4. Smart Notification Center & Audit Log Management (스마트 안심 알림 센터 & 발송 감사 로그)
+              _buildSectionTitle('스마트 안심 알림 센터 & 발송 감사 로그', icon: Icons.notifications_active_rounded),
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFEFF6FF),
+                          child: Icon(Icons.mark_chat_read_rounded, color: AppTheme.primaryBlue),
+                        ),
+                        title: const Text('스마트 알림 센터 열기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('등·하원 미발송 알림 일괄 전송, 미납 독촉 릴레이, 전체 발송 감사 로그 조회', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () => SmartNotificationCenterModal.show(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               _buildSectionTitle('무인 출결 키오스크 기기 설정 (입구 거치용)', icon: Icons.tablet_mac_rounded),
               Material(
                 color: Colors.white,

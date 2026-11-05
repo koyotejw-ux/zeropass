@@ -18,6 +18,8 @@ import '../services/sms_template_service.dart';
 import '../services/kakao_share_service.dart';
 import '../services/sequential_dispatch_service.dart';
 import '../widgets/sequential_dispatch_modal.dart';
+import '../widgets/receipt_notify_dialog.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
@@ -877,7 +879,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         subject: '[${studio.studioName}] 수강료 청구 안내',
                       );
                     },
-                    icon: const Icon(Icons.chat_bubble_rounded, size: 14, color: Color(0xFF381E1F)),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 14, color: Color(0xFF381E1F)),
                     label: const FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
@@ -950,21 +952,18 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () async {
                       if (invoiceMembers.isEmpty) return;
-                      final kakaoMsg = KakaoShareService.generateReceiptKakaoMessage(
-                        studio: studio,
+                      ReceiptNotifyDialog.show(
+                        context: context,
                         member: invoiceMembers.first,
                         invoice: invoice,
-                      );
-                      await KakaoShareService.shareMessage(
-                        text: kakaoMsg,
-                        subject: '[${studio.studioName}] 수납 확인 영수증',
+                        studio: studio,
                       );
                     },
-                    icon: const Icon(Icons.chat_bubble_rounded, size: 14, color: Color(0xFF381E1F)),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 14, color: Color(0xFF381E1F)),
                     label: const FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '카톡 영수증 (0원)',
+                        '영수증 알림 (0원)',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF381E1F)),
                       ),
                     ),
@@ -1283,16 +1282,16 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         SnackBar(
           content: Text('${invoice.title} 수납 처리가 완료되었습니다.'),
           action: SnackBarAction(
-            label: '카톡 영수증',
+            label: '영수증 알림',
             textColor: const Color(0xFFFEE500),
             onPressed: () {
               if (invoiceMembers.isNotEmpty) {
-                final kakaoMsg = KakaoShareService.generateReceiptKakaoMessage(
-                  studio: studio,
+                ReceiptNotifyDialog.show(
+                  context: context,
                   member: invoiceMembers.first,
                   invoice: invoice.copyWith(status: PaymentStatus.paid, paymentMethod: method, paidAt: DateTime.now()),
+                  studio: studio,
                 );
-                KakaoShareService.shareMessage(text: kakaoMsg, subject: '[${studio.studioName}] 수납 확인 영수증');
               }
             },
           ),

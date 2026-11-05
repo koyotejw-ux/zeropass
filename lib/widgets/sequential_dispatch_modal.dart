@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/invoice.dart';
 import '../models/member.dart';
+import '../models/notification_log.dart';
 import '../models/studio_profile.dart';
+import '../services/database_service.dart';
 import '../services/kakao_share_service.dart';
 import '../services/sequential_dispatch_service.dart';
 import '../services/sms_template_service.dart';
@@ -201,7 +203,32 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
     item.isSent = true;
     item.sentChannel = 'KAKAO';
 
+    DatabaseService.instance.insertNotificationLog(
+      NotificationLog(
+        id: 'notif_${DateTime.now().millisecondsSinceEpoch}_${item.member.id}',
+        type: _resolveNotifType(_selectedTemplateType),
+        memberId: item.member.id,
+        memberName: item.member.name,
+        recipientPhone: item.recipientPhone,
+        channel: 'KAKAO',
+        message: updatedMsg,
+        sentAt: DateTime.now(),
+      ),
+    ).catchError((_) {});
+
     _moveToNext();
+  }
+
+  NotificationType _resolveNotifType(DispatchTemplateType type) {
+    switch (type) {
+      case DispatchTemplateType.billing:
+        return NotificationType.billing;
+      case DispatchTemplateType.sessionExpiry:
+        return NotificationType.sessionExpiry;
+      case DispatchTemplateType.notice:
+      case DispatchTemplateType.custom:
+        return NotificationType.notice;
+    }
   }
 
   Future<void> _sendCurrentViaSms() async {
@@ -221,6 +248,19 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
 
     item.isSent = true;
     item.sentChannel = 'SMS';
+
+    DatabaseService.instance.insertNotificationLog(
+      NotificationLog(
+        id: 'notif_${DateTime.now().millisecondsSinceEpoch}_${item.member.id}',
+        type: _resolveNotifType(_selectedTemplateType),
+        memberId: item.member.id,
+        memberName: item.member.name,
+        recipientPhone: item.recipientPhone,
+        channel: 'SMS',
+        message: updatedMsg,
+        sentAt: DateTime.now(),
+      ),
+    ).catchError((_) {});
 
     _moveToNext();
   }

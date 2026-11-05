@@ -200,18 +200,12 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       await ref.read(passRecordsProvider.notifier).checkInMember(member: member);
       await ref.read(membersProvider.notifier).reload();
 
-      // 보호자 안심 문자 연동
-      if (member.phone.isNotEmpty && member.phone != '010-0000-0000') {
-        final smsMsg = SmsTemplateService.generateAttendanceMessage(
-          studio: studio,
-          member: member,
-          time: DateTime.now(),
-        );
-        SmsTemplateService.launchNativeSms(
-          recipientPhone: member.phone,
-          body: smsMsg,
-        );
-      }
+      // 키오스크 안전 연동: 무인 키오스크 화면 이탈 방지 및 원장님 알림 센터 등원 큐 자동 적립
+      final smsMsg = SmsTemplateService.generateAttendanceMessage(
+        studio: studio,
+        member: member,
+        time: DateTime.now(),
+      );
 
       final remaining = member.billingType == BillingType.sessionBased
           ? '${member.remainingSessions - 1}회 남음'
@@ -225,7 +219,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: false,
         isSuccess: true,
-        smsMessage: '${member.primaryName}님이 학원에 정상 출석하였습니다.',
+        smsMessage: smsMsg,
         photoPath: member.photoPath,
       );
 
@@ -1431,7 +1425,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                         child: Text(
                                           celebration.isDemo
                                               ? '스마트 체험 시뮬레이션: 가상 1회 차감 및 알림 발송 완료'
-                                              : '학부모님 안심 알림(문자) 전송 완료',
+                                              : '출결 기록 및 보호자 안심 알림 큐 적립 완료',
                                           style: TextStyle(
                                             color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
                                             fontSize: 12,
