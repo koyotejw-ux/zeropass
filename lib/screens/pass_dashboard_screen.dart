@@ -1166,9 +1166,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       );
                     },
                     icon: const Icon(Icons.send_rounded, size: 13, color: AppTheme.primaryBlue),
-                    label: const Text('등원 안심 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('등원 안심 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    ),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                       side: const BorderSide(color: AppTheme.borderSubtle),
                     ),
                   ),
@@ -1186,9 +1189,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       );
                     },
                     icon: const Icon(Icons.exit_to_app_rounded, size: 13, color: AppTheme.textSecondary),
-                    label: const Text('하원 귀가 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('하원 귀가 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    ),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                       side: const BorderSide(color: AppTheme.borderSubtle),
                     ),
                   ),

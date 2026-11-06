@@ -108,31 +108,39 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.notifications_active_rounded, color: AppTheme.primaryBlue, size: 22),
                     ),
-                    child: const Icon(Icons.notifications_active_rounded, color: AppTheme.primaryBlue, size: 22),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '스마트 안심 알림 센터',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '스마트 안심 알림 센터',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '등·하원 안심 알림 & 수납 독촉 릴레이 허브',
+                            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      Text(
-                        '등·하원 안심 알림 & 수납 독촉 릴레이 허브',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: AppTheme.textSecondary),
@@ -152,28 +160,41 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           indicatorWeight: 3,
           tabs: [
             Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('실시간 브리핑'),
-                  if (unsentAttendanceMembers.isNotEmpty || unpaidInvoices.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(left: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        borderRadius: BorderRadius.circular(10),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('실시간 브리핑'),
+                    if (unsentAttendanceMembers.isNotEmpty || unpaidInvoices.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${unsentAttendanceMembers.length + unpaidInvoices.length}',
+                          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      child: Text(
-                        '${unsentAttendanceMembers.length + unpaidInvoices.length}',
-                        style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Tab(text: '발송 이력 (${logs.length})'),
-            const Tab(text: '알림 템플릿'),
+            Tab(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('발송 이력 (${logs.length})'),
+              ),
+            ),
+            const Tab(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('알림 템플릿'),
+              ),
+            ),
           ],
         ),
 

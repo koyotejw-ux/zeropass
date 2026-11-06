@@ -722,23 +722,29 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              '가입비 0원 · 월관리비 0원',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.primaryBlue,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '가입비 0원 · 월관리비 0원',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryBlue,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           Transform.scale(
                             scale: 0.85,
                             child: Switch(
@@ -811,7 +817,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: () => _openCardPaymentUrlDialog(context, profile),
                                 icon: const Icon(Icons.edit_outlined, size: 15),
-                                label: const Text('결제 링크 설정'),
+                                label: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('결제 링크 설정'),
+                                ),
                               ),
                             ),
                             if (profile.cardPaymentUrl.trim().isNotEmpty) ...[
@@ -836,7 +845,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                     }
                                   },
                                   icon: const Icon(Icons.open_in_browser_rounded, size: 15),
-                                  label: const Text('링크 테스트'),
+                                  label: const FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text('링크 테스트'),
+                                  ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primaryBlue,
                                     foregroundColor: Colors.white,
@@ -1596,8 +1608,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 125,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 130),
             child: Text(
               label,
               style: const TextStyle(
@@ -1815,7 +1827,14 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('비대면 카드결제 링크 설정', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const Expanded(
+                    child: Text(
+                      '비대면 카드결제 링크 설정',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),

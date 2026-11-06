@@ -302,32 +302,36 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        heroIcon,
-                                        color: heroIconColor,
-                                        size: 22,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '$heroTitle: ',
-                                        style: const TextStyle(
-                                          color: Color(0xFF94A3B8),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          heroIcon,
+                                          color: heroIconColor,
+                                          size: 22,
                                         ),
-                                      ),
-                                      Text(
-                                        LocalizationService.formatAmount(heroAmount),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: -0.5,
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '$heroTitle: ',
+                                          style: const TextStyle(
+                                            color: Color(0xFF94A3B8),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        Text(
+                                          LocalizationService.formatAmount(heroAmount),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: -0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 Container(
@@ -587,16 +591,23 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.mark_chat_unread_outlined, size: 16, color: AppTheme.primaryBlue),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '미납 회원 ${unpaidInvoices.length}명 대기 중',
-                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
-                                ),
-                              ],
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.mark_chat_unread_outlined, size: 16, color: AppTheme.primaryBlue),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      '미납 회원 ${unpaidInvoices.length}명 대기 중',
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             InkWell(
                               onTap: () {
                                 final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
@@ -784,6 +795,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
@@ -793,51 +805,59 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textPrimary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isPaid
-                      ? AppTheme.softMint.withAlpha((255 * 0.15).round())
-                      : AppTheme.warning.withAlpha((255 * 0.15).round()),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isPaid ? '수납 완료' : '미납',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isPaid ? AppTheme.softMint : const Color(0xFFD97706),
-                  ),
-                ),
-              ),
-              if (!isPaid && studio.cardPaymentEnabled && studio.cardPaymentUrl.trim().isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.link_rounded, size: 11, color: AppTheme.primaryBlue),
-                      SizedBox(width: 3),
-                      Text(
-                        '카드링크 연동',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryBlue,
-                        ),
+              const SizedBox(width: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isPaid
+                          ? AppTheme.softMint.withAlpha((255 * 0.15).round())
+                          : AppTheme.warning.withAlpha((255 * 0.15).round()),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      isPaid ? '수납 완료' : '미납',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isPaid ? AppTheme.softMint : const Color(0xFFD97706),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  if (!isPaid && studio.cardPaymentEnabled && studio.cardPaymentUrl.trim().isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.link_rounded, size: 11, color: AppTheme.primaryBlue),
+                          SizedBox(width: 3),
+                          Text(
+                            '카드링크 연동',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -858,29 +878,36 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isPaid ? '수납 완료일' : '납부 기한',
-                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isPaid && invoice.paidAt != null
-                        ? DateFormat('yyyy.MM.dd').format(invoice.paidAt!)
-                        : DateFormat('yyyy.MM.dd').format(invoice.dueDate),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isPaid ? '수납 완료일' : '납부 기한',
+                      style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isPaid && invoice.paidAt != null
+                          ? DateFormat('yyyy.MM.dd').format(invoice.paidAt!)
+                          : DateFormat('yyyy.MM.dd').format(invoice.dueDate),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
-              Text(
-                '${_currencyFormat.format(invoice.amount)}원',
-                style: const TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
+              const SizedBox(width: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${_currencyFormat.format(invoice.amount)}원',
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -2046,15 +2073,21 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.business_center_outlined, color: Color(0xFF4F46E5), size: 22),
-                    SizedBox(width: 8),
-                    Text(
-                      '거래처 수첩 (B2B 납품처)',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                    ),
-                  ],
+                const Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.business_center_outlined, color: Color(0xFF4F46E5), size: 22),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '거래처 수첩 (B2B 납품처)',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(sheetCtx)),
               ],
@@ -2565,15 +2598,21 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.edit_note, color: AppTheme.primaryBlue, size: 24),
-                  SizedBox(width: 8),
-                  Text(
-                    '간편 청구서 작성',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                  ),
-                ],
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_note, color: AppTheme.primaryBlue, size: 24),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '간편 청구서 작성',
+                        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -2600,9 +2639,13 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                     children: [
                       Icon(Icons.info_outline, color: AppTheme.primaryBlue, size: 20),
                       SizedBox(width: 8),
-                      Text(
-                        '등록된 회원이 없어도 바로 작성 가능',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                      Expanded(
+                        child: Text(
+                          '등록된 회원이 없어도 바로 작성 가능',
+                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -2743,8 +2786,15 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('업종별 청구 템플릿 (제목·금액 원터치 자동 완성)',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+              const Expanded(
+                child: Text(
+                  '업종별 청구 템플릿 (원터치 자동 완성)',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () => _showQuickAddInvoiceTemplateDialog(context),
                 borderRadius: BorderRadius.circular(6),
