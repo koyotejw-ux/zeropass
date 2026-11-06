@@ -15,11 +15,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPageData> _pages = [
     const OnboardingPageData(
-      icon: Icons.waving_hand_rounded,
-      tag: '반가워요 사장님!',
-      title: '서버비 0원 출결·장부 비서\n패시 출결 관리 시스템',
-      subtitle: '학원, 공방, PT, 필라테스, 스터디룸 등\n모든 1인 사장님과 강사님을 위해 태어났어요.\n월 고정비 없이 스마트폰 하나로 가볍게 시작해요!',
-      highlightText: '월 0원 평생 무료 · 100% 로컬 암호화',
+      icon: Icons.domain_verification_rounded,
+      tag: '프리미엄 비즈니스 솔루션',
+      title: '서버비 0원 스마트 출결·장부\nZeroPass 비즈니스 솔루션',
+      subtitle: '학원, 공방, PT샵, 필라테스, 스터디룸 등\n소상공인 대표님을 위한 100% 독립형 모바일 비서입니다.\n월 고정비 없이 스마트폰 하나로 시작하세요.',
+      highlightText: '월 구독료 0원 평생 소장 · 100% 독립 로컬 보안',
     ),
     const OnboardingPageData(
       icon: Icons.touch_app_rounded,
@@ -238,11 +238,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   (index) => AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentPage == index ? 24 : 8,
-                    height: 8,
+                    width: _currentPage == index ? 22 : 6,
+                    height: 6,
                     decoration: BoxDecoration(
-                      color: _currentPage == index ? AppTheme.primaryBlue : AppTheme.borderSubtle,
-                      borderRadius: BorderRadius.circular(4),
+                      color: _currentPage == index ? AppTheme.primaryDark : AppTheme.borderSubtle,
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
                 ),
@@ -252,6 +252,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               // Action Button
               SizedBox(
                 width: double.infinity,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: () {
                     if (_currentPage < _pages.length - 1) {
@@ -261,15 +262,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
+                    backgroundColor: AppTheme.primaryDark,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(
-                    _currentPage == _pages.length - 1 ? '체크앤페이 100% 무료 시작하기' : '다음 알아보기',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    _currentPage == _pages.length - 1 ? 'ZeroPass 시작하기' : '다음으로',
+                    style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, letterSpacing: -0.2),
                   ),
                 ),
               ),

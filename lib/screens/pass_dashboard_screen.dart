@@ -75,7 +75,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               children: [
                 const ZeroPassMascotAvatar(
                   size: 44,
-                  isLightMode: true,
+                  icon: Icons.menu_book_rounded,
                 ),
                 const SizedBox(width: 14),
                 const Column(
@@ -570,15 +570,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5.5),
                     decoration: BoxDecoration(
-                      color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(20),
+                      color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFCBD5E1),
-                        width: isSeniorMode ? 1.6 : 1.0,
+                        color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
+                        width: isSeniorMode ? 1.4 : 0.9,
                       ),
                     ),
                     child: Row(
@@ -586,16 +586,16 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       children: [
                         Icon(
                           Icons.elderly_rounded,
-                          color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF475569),
-                          size: 16,
+                          color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF52525B),
+                          size: 15,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           isSeniorMode ? '큰글씨 ON' : '큰글씨',
                           style: TextStyle(
-                            color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF334155),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF18181B),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -610,7 +610,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             child: Padding(
               padding: const EdgeInsets.only(right: 4),
               child: IconButton(
-                icon: const Icon(Icons.notifications_active_outlined, color: AppTheme.primaryBlue, size: 24),
+                icon: const Icon(Icons.notifications_active_outlined, color: AppTheme.primaryDark, size: 22),
                 tooltip: '스마트 안심 알림 센터',
                 onPressed: () => SmartNotificationCenterModal.show(context),
               ),
@@ -624,25 +624,25 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => _openTabletKioskMode(context),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+                      color: AppTheme.primaryDark,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 16),
+                        Icon(Icons.tablet_mac_rounded, color: Colors.white, size: 14),
                         SizedBox(width: 4),
                         Text(
                           '무인 키오스크',
                           style: TextStyle(
-                            color: AppTheme.primaryBlue,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
                           ),
                         ),
                       ],
@@ -762,7 +762,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         decoration: InputDecoration(
                           hintText: '이름·초성(ㅇㄷㅎ)·뒷번호 4자리 검색',
                           hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
-                          prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 21),
+                          prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary, size: 20),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear, size: 18),

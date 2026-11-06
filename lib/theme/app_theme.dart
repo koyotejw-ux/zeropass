@@ -1,52 +1,52 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand & Fintech Color Palette
-  static const Color primaryDark = Color(0xFF1E293B); // Slate Blue / Deep Indigo
-  static const Color primaryBlue = Color(0xFF3182F6); // Toss-style Clean Blue
-  static const Color trustBlue = Color(0xFF2563EB); // Accent Action Blue
-  static const Color softMint = Color(0xFF10B981); // Success & Active Indicator
-  static const Color background = Color(0xFFF8FAFC); // Clean Off-White
+  // Brand & High-End Luxury Fintech Color Palette
+  static const Color primaryDark = Color(0xFF09090B); // Pure Onyx Black (Linear / Apple style)
+  static const Color primaryBlue = Color(0xFF1D4ED8); // Deep Royal Sapphire
+  static const Color trustBlue = Color(0xFF2563EB); // Refined Action Blue
+  static const Color softMint = Color(0xFF059669); // Deep Emerald
+  static const Color background = Color(0xFFF9FAFB); // Pure Minimalist Canvas
   static const Color cardSurface = Color(0xFFFFFFFF); // Pure White
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF0F172A); // High Contrast Dark
-  static const Color textSecondary = Color(0xFF64748B); // Slate Muted
-  static const Color textTertiary = Color(0xFF94A3B8); // Light Grey Muted
+  static const Color textPrimary = Color(0xFF09090B); // High-Contrast Deep Obsidian
+  static const Color textSecondary = Color(0xFF71717A); // Refined Slate Muted
+  static const Color textTertiary = Color(0xFFA1A1AA); // Titanium Muted
 
   // Status Indicators
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color danger = Color(0xFFEF4444);
-  static const Color info = Color(0xFF0EA5E9);
+  static const Color success = Color(0xFF059669);
+  static const Color warning = Color(0xFFD97706);
+  static const Color danger = Color(0xFFDC2626);
+  static const Color info = Color(0xFF0284C7);
 
   // Borders & Dividers
-  static const Color borderSubtle = Color(0xFFE2E8F0);
-  static const Color chipBackground = Color(0xFFF1F5F9);
+  static const Color borderSubtle = Color(0xFFE4E4E7); // Ultra-fine Precision Hairline
+  static const Color chipBackground = Color(0xFFF4F4F5);
 
   // Senior High-Contrast Palette (고령자/시니어 맞춤 팔레트)
   static const Color seniorTextPrimary = Color(0xFF000000); // 100% Black for maximum contrast
-  static const Color seniorTextSecondary = Color(0xFF1E293B); // Dark Slate
+  static const Color seniorTextSecondary = Color(0xFF18181B); // Dark Slate
   static const Color seniorPrimaryBlue = Color(0xFF1D4ED8); // Deep Blue (WCAG AAA contrast > 7:1 against white)
-  static const Color seniorBorder = Color(0xFF64748B); // Distinct visible border
+  static const Color seniorBorder = Color(0xFF71717A); // Distinct visible border
   static const Color seniorBackground = Color(0xFFFFFFFF); // Pure white background
   static const Color seniorCardSurface = Color(0xFFF8FAFC); // Clean crisp card surface
 
-  // Soft Fintech Shadow
+  // Micro Ambient Shadow (Clean, Crisp, Non-blurry)
   static List<BoxShadow> get cardShadow => [
         const BoxShadow(
-          color: Color.fromRGBO(0, 0, 0, 0.04),
-          offset: Offset(0, 4),
-          blurRadius: 16,
+          color: Color.fromRGBO(0, 0, 0, 0.03),
+          offset: Offset(0, 2),
+          blurRadius: 10,
           spreadRadius: 0,
         ),
       ];
 
   static List<BoxShadow> get buttonShadow => [
         BoxShadow(
-          color: primaryBlue.withAlpha((255 * 0.25).round()),
+          color: primaryBlue.withAlpha((255 * 0.16).round()),
           offset: const Offset(0, 4),
-          blurRadius: 12,
+          blurRadius: 10,
           spreadRadius: 0,
         ),
       ];

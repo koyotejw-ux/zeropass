@@ -86,22 +86,22 @@ class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
               indicatorColor: isSeniorMode
                   ? AppTheme.seniorPrimaryBlue.withAlpha((255 * 0.20).round())
                   : (_currentIndex == 3
-                      ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
-                      : AppTheme.primaryBlue.withAlpha((255 * 0.12).round())),
+                      ? const Color(0xFFFEF3C7)
+                      : const Color(0xFFF4F4F5)),
               destinations: [
                 NavigationDestination(
                   icon: const Icon(Icons.check_circle_outline),
-                  selectedIcon: const Icon(Icons.check_circle, color: AppTheme.primaryBlue),
+                  selectedIcon: const Icon(Icons.check_circle, color: AppTheme.primaryDark),
                   label: LocalizationService.tr('tab_pass'),
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.receipt_long_outlined),
-                  selectedIcon: const Icon(Icons.receipt_long, color: AppTheme.primaryBlue),
+                  selectedIcon: const Icon(Icons.receipt_long, color: AppTheme.primaryDark),
                   label: LocalizationService.tr('tab_billing'),
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.people_outline),
-                  selectedIcon: const Icon(Icons.people, color: AppTheme.primaryBlue),
+                  selectedIcon: const Icon(Icons.people, color: AppTheme.primaryDark),
                   label: LocalizationService.tr('tab_members'),
                 ),
                 NavigationDestination(
@@ -111,7 +111,7 @@ class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.shield_outlined),
-                  selectedIcon: const Icon(Icons.shield, color: AppTheme.primaryBlue),
+                  selectedIcon: const Icon(Icons.shield, color: AppTheme.primaryDark),
                   label: LocalizationService.tr('tab_settings'),
                 ),
               ],

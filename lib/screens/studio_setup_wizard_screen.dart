@@ -83,8 +83,8 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
     if (_currentStep < 2) {
       _pageController.animateToPage(
         _currentStep + 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeInOutCubic,
       );
       setState(() {
         _currentStep++;
@@ -98,8 +98,8 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
     if (_currentStep > 0) {
       _pageController.animateToPage(
         _currentStep - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeInOutCubic,
       );
       setState(() {
         _currentStep--;
@@ -185,7 +185,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         elevation: 0,
         leading: _currentStep > 0
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: AppTheme.textPrimary, size: 20),
+                icon: const Icon(Icons.arrow_back_ios_new, color: AppTheme.primaryDark, size: 18),
                 onPressed: _prevStep,
               )
             : null,
@@ -193,11 +193,12 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           children: [
             for (int i = 0; i < 3; i++)
               Expanded(
-                child: Container(
-                  height: 4,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  height: 3.5,
                   margin: const EdgeInsets.symmetric(horizontal: 2.5),
                   decoration: BoxDecoration(
-                    color: i <= _currentStep ? AppTheme.primaryBlue : const Color(0xFFE2E8F0),
+                    color: i <= _currentStep ? AppTheme.primaryDark : const Color(0xFFE4E4E7),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -207,7 +208,15 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         actions: [
           TextButton(
             onPressed: widget.onFinish,
-            child: const Text('체험 둘러보기', style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
+            child: const Text(
+              '건너뛰기',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+              ),
+            ),
           ),
         ],
       ),
@@ -225,7 +234,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                 ],
               ),
             ),
-            // Toss-style Dynamic CTA button that rises right above the keyboard without overlap
+            // High-End Executive Dynamic CTA Button
             AnimatedPadding(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOutQuad,
@@ -239,24 +248,39 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
               ),
               child: SizedBox(
                 width: double.infinity,
-                height: 54,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _nextStep,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
+                    backgroundColor: AppTheme.primaryDark,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
                   child: _isSubmitting
                       ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : Text(
-                          _currentStep == 2 ? '등록 완료하고 시작하기' : '다음으로 넘어가기',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _currentStep == 2 ? '설정 완료하고 시작하기' : '다음 단계로',
+                              style: const TextStyle(
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              _currentStep == 2 ? Icons.check_circle_outline_rounded : Icons.arrow_forward_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ],
                         ),
                 ),
               ),
@@ -274,52 +298,83 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
-          // Mascot passy avatar
+          const SizedBox(height: 8),
+          // Luxury Obsidian Badge Emblem
           const ZeroPassMascotAvatar(
-            size: 60,
-            isLightMode: true,
+            size: 46,
+            icon: Icons.storefront_rounded,
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'STEP 1 / 3',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 5.5,
+                  height: 5.5,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.trustBlue,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'STEP 01 · 기본 정보',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryDark,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           const Text(
-            '우리 매장(학원·스튜디오)의\n이름은 무엇인가요?',
+            '사업장 프로필 설정',
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.textPrimary,
-              height: 1.3,
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryDark,
+              height: 1.25,
               letterSpacing: -0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
-            '청구서 문자와 안심 출결 알림에 상호명으로 표기돼요.',
-            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+            '모바일 출결부와 수강료 청구서에 표기될 대표 상호입니다.',
+            style: TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary,
+              letterSpacing: -0.2,
+            ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 26),
 
           AppTextField(
             controller: _studioNameCtrl,
-            label: '상호명 / 학원명',
-            hint: '예: 패시 피아노 스튜디오',
+            label: '상호명 / 스튜디오명',
+            hint: '예: 아르떼 피아노 스튜디오',
             prefixIcon: Icons.storefront_outlined,
             autofocus: true,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
 
           const Text(
-            '사업장 업종 카테고리',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+            '업종 카테고리',
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           const Text(
-            '선택한 업종에 맞춰 회원 및 출결 관리 기본값이 최적화됩니다.',
-            style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+            '선택한 업종에 맞추어 맞춤 출결·수납 서식이 자동 적용됩니다.',
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -327,30 +382,42 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             runSpacing: 8,
             children: StudioProfile.businessCategories.map((cat) {
               final isSelected = _selectedCategory == cat;
-              return ChoiceChip(
-                label: Text(cat, style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppTheme.textPrimary,
-                )),
-                selected: isSelected,
-                selectedColor: AppTheme.primaryBlue,
-                backgroundColor: const Color(0xFFF1F5F9),
-                onSelected: (val) {
-                  if (val) {
-                    setState(() {
-                      _selectedCategory = cat;
-                      if (cat != '기타 / 맞춤업종' && _studioNameCtrl.text.isEmpty) {
-                        _studioNameCtrl.text = '나의 $cat';
-                      }
-                    });
-                  }
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = cat;
+                    if (cat != '기타 / 맞춤업종' && _studioNameCtrl.text.isEmpty) {
+                      _studioNameCtrl.text = '나의 $cat';
+                    }
+                  });
                 },
+                borderRadius: BorderRadius.circular(10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8.5),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppTheme.primaryDark : const Color(0xFFFAFAFA),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primaryDark : const Color(0xFFE4E4E7),
+                      width: 0.9,
+                    ),
+                  ),
+                  child: Text(
+                    cat,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
               );
             }).toList(),
           ),
           if (_selectedCategory == '기타 / 맞춤업종') ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             AppTextField(
               controller: _customCategoryCtrl,
               label: '직접 입력 카테고리',
@@ -358,25 +425,40 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
               prefixIcon: Icons.category_outlined,
             ),
           ],
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
 
           const Text(
-            '자주 사용하는 상호명 칩 (터치하면 자동 입력)',
-            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+            '추천 상호 프리셋 (터치 시 자동 입력)',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 7,
+            runSpacing: 7,
             children: _studioPresets.map((preset) {
-              return ActionChip(
-                backgroundColor: const Color(0xFFF1F5F9),
-                label: Text(preset, style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-                onPressed: () {
+              return InkWell(
+                onTap: () {
                   setState(() {
                     _studioNameCtrl.text = preset;
                   });
                 },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F4F5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
+                  ),
+                  child: Text(
+                    preset,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               );
             }).toList(),
           ),
@@ -392,60 +474,103 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           const ZeroPassMascotAvatar(
-            size: 60,
-            isLightMode: true,
+            size: 46,
+            icon: Icons.account_balance_wallet_rounded,
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'STEP 2 / 3',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 5.5,
+                  height: 5.5,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.trustBlue,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'STEP 02 · 정산 계좌',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryDark,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           const Text(
-            '수납/회비를 입금받으실\n계좌를 등록해 주세요',
+            '수납 정산 계좌 연동',
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.textPrimary,
-              height: 1.3,
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryDark,
+              height: 1.25,
               letterSpacing: -0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
-            '청구 문자를 보낼 때 토스 송금링크와 함께 0원 자동 첨부돼요.',
-            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+            '수강료 청구서 발행 시 송금 링크와 함께 1초 자동 첨부됩니다.',
+            style: TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary,
+              letterSpacing: -0.2,
+            ),
           ),
           const SizedBox(height: 24),
 
           const Text(
             '입금 은행 선택',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: _bankPresets.map((bank) {
               final isSelected = _selectedBank == bank;
-              return ChoiceChip(
-                label: Text(bank),
-                selected: isSelected,
-                selectedColor: AppTheme.primaryBlue.withAlpha((255 * 0.15).round()),
-                labelStyle: TextStyle(
-                  color: isSelected ? AppTheme.primaryBlue : AppTheme.textPrimary,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  fontSize: 13,
-                ),
-                onSelected: (val) {
-                  if (val) {
-                    setState(() {
-                      _selectedBank = bank;
-                    });
-                  }
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedBank = bank;
+                  });
                 },
+                borderRadius: BorderRadius.circular(10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8.5),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppTheme.primaryDark : const Color(0xFFFAFAFA),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primaryDark : const Color(0xFFE4E4E7),
+                      width: 0.9,
+                    ),
+                  ),
+                  child: Text(
+                    bank,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
               );
             }).toList(),
           ),
@@ -478,31 +603,62 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           const ZeroPassMascotAvatar(
-            size: 60,
-            isLightMode: true,
+            size: 46,
+            icon: Icons.person_add_alt_1_rounded,
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'STEP 3 / 3',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 5.5,
+                  height: 5.5,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.trustBlue,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'STEP 03 · 첫 수강생',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryDark,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           const Text(
-            '첫 번째 수강생(회원)을\n한 명만 등록해 볼까요?',
+            '첫 번째 회원 등록',
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.textPrimary,
-              height: 1.3,
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryDark,
+              height: 1.25,
               letterSpacing: -0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
-            '이름과 연락처만 넣어도 바로 출결 체크를 해볼 수 있어요!',
-            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+            '등록 즉시 원터치 출결 체크와 잔여 회차 관리를 바로 시작할 수 있습니다.',
+            style: TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary,
+              letterSpacing: -0.2,
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -517,7 +673,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _memberPhoneCtrl,
-            label: '연락처 (안심 알림·청구 문자용)',
+            label: '연락처 (안심 알림 및 청구 문자용)',
             hint: '예: 010-1234-5678',
             prefixIcon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
@@ -526,7 +682,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _memberGroupCtrl,
-            label: '수업/클래스 그룹',
+            label: '소속 클래스 / 그룹',
             hint: '예: 기초 입문반, 월수금 저녁반',
             prefixIcon: Icons.group_outlined,
           ),
@@ -534,41 +690,84 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           const Text(
             '패스 결제 방식',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: ChoiceChip(
-                  label: const Center(child: Text('회차 차감형 (10회 등)')),
-                  selected: _billingType == BillingType.sessionBased,
-                  selectedColor: AppTheme.primaryBlue.withAlpha((255 * 0.15).round()),
-                  labelStyle: TextStyle(
-                    color: _billingType == BillingType.sessionBased ? AppTheme.primaryBlue : AppTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _billingType = BillingType.sessionBased),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _billingType == BillingType.sessionBased ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _billingType == BillingType.sessionBased
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha((255 * 0.05).round()),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '회차 차감형 (10회 등)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: _billingType == BillingType.sessionBased ? FontWeight.w700 : FontWeight.w500,
+                            color: _billingType == BillingType.sessionBased ? AppTheme.primaryDark : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  onSelected: (val) {
-                    if (val) setState(() => _billingType = BillingType.sessionBased);
-                  },
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ChoiceChip(
-                  label: const Center(child: Text('월 정기권 (정액제)')),
-                  selected: _billingType == BillingType.monthlyRecurring,
-                  selectedColor: AppTheme.primaryBlue.withAlpha((255 * 0.15).round()),
-                  labelStyle: TextStyle(
-                    color: _billingType == BillingType.monthlyRecurring ? AppTheme.primaryBlue : AppTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _billingType = BillingType.monthlyRecurring),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _billingType == BillingType.monthlyRecurring ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _billingType == BillingType.monthlyRecurring
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha((255 * 0.05).round()),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '월 정기권 (정액제)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: _billingType == BillingType.monthlyRecurring ? FontWeight.w700 : FontWeight.w500,
+                            color: _billingType == BillingType.monthlyRecurring ? AppTheme.primaryDark : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  onSelected: (val) {
-                    if (val) setState(() => _billingType = BillingType.monthlyRecurring);
-                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 

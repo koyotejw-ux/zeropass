@@ -75,19 +75,19 @@ class AppTextField extends StatelessWidget {
             helperStyle: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             hintStyle: const TextStyle(fontSize: 14, color: AppTheme.textTertiary, fontWeight: FontWeight.normal),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: const Color(0xFFFAFAFA),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, color: AppTheme.textSecondary, size: 20)
                 : null,
             suffixIcon: suffix,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(color: AppTheme.borderSubtle, width: 0.9),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 1.8),
+              borderSide: const BorderSide(color: AppTheme.primaryDark, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
