@@ -118,6 +118,44 @@ class LocalizationService {
       'es': 'Ajustes',
     },
 
+    // Senior / Elderly Easy Mode
+    'senior_mode': {
+      'ko': '시니어 큰글씨 모드',
+      'en': 'Senior Easy Mode',
+      'ja': 'シニア簡単モード',
+      'es': 'Modo Senior',
+    },
+    'senior_mode_desc': {
+      'ko': '노안 및 스마트폰 조작이 어려운 원장님을 위한 1.4배 큰글씨 & 고대비 간편 화면',
+      'en': '1.4x larger text & high contrast easy view for elderly business owners',
+      'ja': '文字が大きく見やすいシニア向け高コントラスト簡単画面',
+      'es': 'Texto 1.4x más grande y alto contraste para adultos mayores',
+    },
+    'senior_attendance': {
+      'ko': '큰글씨 간편 출석',
+      'en': 'Senior Easy Attendance',
+      'ja': '大きな文字で出席チェック',
+      'es': 'Asistencia Fácil',
+    },
+    'senior_billing': {
+      'ko': '회비(수강료) 문자',
+      'en': 'Tuition Fee SMS',
+      'ja': '月謝案内メッセージ',
+      'es': 'SMS de Mensualidad',
+    },
+    'senior_call': {
+      'ko': '원생·학부모 전화',
+      'en': 'Call Student / Parent',
+      'ja': '保護者・生徒へ電話',
+      'es': 'Llamar Estudiante/Tutor',
+    },
+    'senior_guide': {
+      'ko': '쉬운 사용설명서',
+      'en': 'Easy User Guide',
+      'ja': 'わかりやすい説明書',
+      'es': 'Guía Fácil',
+    },
+
     // Pass Dashboard
     'onetouch_checkin': {
       'ko': '원터치 출결 체크',

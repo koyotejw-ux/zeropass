@@ -21,6 +21,7 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
+import '../widgets/senior_easy_guide_modal.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/tax_guide_modal.dart';
 import 'home_navigation_screen.dart';
@@ -615,12 +616,23 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   @override
   Widget build(BuildContext context) {
     final studioAsync = ref.watch(studioProfileProvider);
+    final isSeniorMode = ref.watch(seniorModeProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('설정 · 보안 금고'),
         actions: [
+          // Senior Mode Quick Toggle
+          IconButton(
+            tooltip: isSeniorMode ? '보통 글씨 모드로 전환' : '시니어 큰글씨 모드로 전환',
+            icon: Icon(
+              isSeniorMode ? Icons.zoom_out_rounded : Icons.elderly_rounded,
+              color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
+              size: 24,
+            ),
+            onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
+          ),
           IconButton(
             tooltip: '로컬 금고 암호화 백업',
             icon: const Icon(Icons.shield_outlined, color: AppTheme.primaryBlue),
@@ -650,6 +662,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 90),
             children: [
+              // 0. Senior High-Contrast Large Text Mode (고령자/시니어 맞춤 모드)
+              _buildSeniorModeSection(context, isSeniorMode),
+
               // 1. Studio Profile Card (상호명, 업종, 수납계좌 등) - 설정 1순위 최상단 배치
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1724,6 +1739,127 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           const SizedBox(width: 4),
           Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSeniorModeSection(BuildContext context, bool isSeniorMode) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: isSeniorMode ? const Color(0xFFEFF6FF) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSeniorMode ? AppTheme.trustBlue : AppTheme.borderSubtle,
+          width: isSeniorMode ? 2.0 : 1.0,
+        ),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.elderly_rounded,
+                    color: isSeniorMode ? Colors.white : AppTheme.trustBlue,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '시니어 큰글씨 모드',
+                              style: TextStyle(
+                                fontSize: isSeniorMode ? 18.5 : 16.5,
+                                fontWeight: FontWeight.w800,
+                                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isSeniorMode ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isSeniorMode ? '사용 중' : '고령자 맞춤',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        isSeniorMode
+                            ? '글씨 1.4배 확대 및 고대비 간편 화면이 적용 중입니다.'
+                            : '노안이나 스마트폰 조작이 어려운 어르신 원장님을 위한 1.4배 큰글씨 & 고대비 모드',
+                        style: TextStyle(
+                          fontSize: isSeniorMode ? 14 : 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: isSeniorMode ? const Color(0xFF1E3A8A) : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: isSeniorMode,
+                  activeThumbColor: AppTheme.trustBlue,
+                  onChanged: (val) => ref.read(seniorModeProvider.notifier).setSeniorMode(val),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: isSeniorMode ? AppTheme.trustBlue : AppTheme.borderSubtle,
+                        width: isSeniorMode ? 1.6 : 1.0,
+                      ),
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.help_outline_rounded, size: 18, color: AppTheme.trustBlue),
+                    label: const Text(
+                      '큰글씨 사용 가이드 보기',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.trustBlue,
+                      ),
+                    ),
+                    onPressed: () => SeniorEasyGuideModal.show(context),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

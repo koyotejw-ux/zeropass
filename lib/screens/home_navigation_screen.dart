@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/app_providers.dart';
 import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import 'pass_dashboard_screen.dart';
@@ -8,7 +10,7 @@ import 'pro_store_screen.dart';
 import 'settings_vault_screen.dart';
 import '../widgets/ad_banner_widget.dart';
 
-class HomeNavigationScreen extends StatefulWidget {
+class HomeNavigationScreen extends ConsumerStatefulWidget {
   const HomeNavigationScreen({super.key});
 
   static HomeNavigationScreenState? of(BuildContext context) {
@@ -16,10 +18,10 @@ class HomeNavigationScreen extends StatefulWidget {
   }
 
   @override
-  State<HomeNavigationScreen> createState() => HomeNavigationScreenState();
+  ConsumerState<HomeNavigationScreen> createState() => HomeNavigationScreenState();
 }
 
-class HomeNavigationScreenState extends State<HomeNavigationScreen> {
+class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
   int _currentIndex = 0;
 
   void switchToTab(int index) {
@@ -43,6 +45,7 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
         View.of(context).viewInsets.bottom > 0;
 
     final isCompact = MediaQuery.of(context).size.width < 360;
+    final isSeniorMode = ref.watch(seniorModeProvider);
 
     return Scaffold(
       body: IndexedStack(
@@ -67,20 +70,24 @@ class HomeNavigationScreenState extends State<HomeNavigationScreen> {
               ],
             ),
             child: NavigationBar(
-              height: isLandscape ? 54 : 68,
+              height: isLandscape ? 54 : (isSeniorMode ? 76 : 68),
               selectedIndex: _currentIndex,
-              labelBehavior: (isLandscape || isCompact)
-                  ? NavigationDestinationLabelBehavior.onlyShowSelected 
-                  : NavigationDestinationLabelBehavior.alwaysShow,
+              labelBehavior: isSeniorMode
+                  ? NavigationDestinationLabelBehavior.alwaysShow
+                  : ((isLandscape || isCompact)
+                      ? NavigationDestinationLabelBehavior.onlyShowSelected 
+                      : NavigationDestinationLabelBehavior.alwaysShow),
               onDestinationSelected: (index) {
                 setState(() {
                   _currentIndex = index;
                 });
               },
               backgroundColor: Colors.white,
-              indicatorColor: _currentIndex == 3
-                  ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
-                  : AppTheme.primaryBlue.withAlpha((255 * 0.12).round()),
+              indicatorColor: isSeniorMode
+                  ? AppTheme.seniorPrimaryBlue.withAlpha((255 * 0.20).round())
+                  : (_currentIndex == 3
+                      ? const Color(0xFFF59E0B).withAlpha((255 * 0.18).round())
+                      : AppTheme.primaryBlue.withAlpha((255 * 0.12).round())),
               destinations: [
                 NavigationDestination(
                   icon: const Icon(Icons.check_circle_outline),

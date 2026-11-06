@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/invoice.dart';
@@ -418,5 +419,39 @@ final notificationLogsProvider =
     AsyncNotifierProvider<NotificationLogsNotifier, List<NotificationLog>>(() {
   return NotificationLogsNotifier();
 });
+
+// Senior / Elderly Easy Mode Notifier
+class SeniorModeNotifier extends Notifier<bool> {
+  static const String keySeniorMode = 'senior_easy_mode_enabled';
+
+  @override
+  bool build() {
+    _loadFromPrefs();
+    return false;
+  }
+
+  Future<void> _loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(keySeniorMode) ?? false;
+  }
+
+  Future<void> toggle() async {
+    final prefs = await SharedPreferences.getInstance();
+    final next = !state;
+    await prefs.setBool(keySeniorMode, next);
+    state = next;
+  }
+
+  Future<void> setSeniorMode(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(keySeniorMode, enabled);
+    state = enabled;
+  }
+}
+
+final seniorModeProvider = NotifierProvider<SeniorModeNotifier, bool>(() {
+  return SeniorModeNotifier();
+});
+
 
 

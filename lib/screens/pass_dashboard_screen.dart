@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
@@ -22,6 +23,7 @@ import '../widgets/member_name_badge.dart';
 import '../widgets/signature_key_visual_hero.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/attendance_notify_dialog.dart';
+import '../widgets/senior_easy_guide_modal.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
 import 'tablet_kiosk_screen.dart';
@@ -520,6 +522,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     final membersAsync = ref.watch(membersProvider);
     final passRecordsAsync = ref.watch(passRecordsProvider);
     final studioAsync = ref.watch(studioProfileProvider);
+    final isSeniorMode = ref.watch(seniorModeProvider);
 
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
@@ -559,10 +562,53 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 스마트 안심 알림 센터 (허브 & 발송 이력 & 미발송 브리핑)
+          // 시니어 큰글씨 모드 원터치 토글
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFCBD5E1),
+                        width: isSeniorMode ? 1.6 : 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.elderly_rounded,
+                          color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF475569),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isSeniorMode ? '큰글씨 ON' : '큰글씨',
+                          style: TextStyle(
+                            color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF334155),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // 스마트 안심 알림 센터 (허브 & 발송 이력 & 미발송 브리핑)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
               child: IconButton(
                 icon: const Icon(Icons.notifications_active_outlined, color: AppTheme.primaryBlue, size: 24),
                 tooltip: '스마트 안심 알림 센터',
@@ -580,7 +626,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   onTap: () => _openTabletKioskMode(context),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6.5),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -589,13 +635,13 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 17),
-                        SizedBox(width: 5),
+                        Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 16),
+                        SizedBox(width: 4),
                         Text(
                           '무인 키오스크',
                           style: TextStyle(
                             color: AppTheme.primaryBlue,
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -679,15 +725,23 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
                   return Column(
                     children: [
-                      // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar)
+                      // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar) or Senior Easy Board
                       if (!hideHero)
-                        SignatureKeyVisualHero(
-                          members: members,
-                          todayRecords: todayRecords,
-                          studio: studio,
-                          onOpenKiosk: () => _openTabletKioskMode(context),
-                          onOpenGuide: () => _openInteractiveGuide(context),
-                        ),
+                        if (isSeniorMode)
+                          _buildSeniorEasyBoard(
+                            context: context,
+                            members: members,
+                            todayRecords: todayRecords,
+                            studio: studio,
+                          )
+                        else
+                          SignatureKeyVisualHero(
+                            members: members,
+                            todayRecords: todayRecords,
+                            studio: studio,
+                            onOpenKiosk: () => _openTabletKioskMode(context),
+                            onOpenGuide: () => _openInteractiveGuide(context),
+                          ),
 
                   // 0. Korean Chosung & Real-time Smart Search Bar
                   Padding(
@@ -1420,6 +1474,266 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       ),
     );
   }
+
+  Widget _buildSeniorEasyBoard({
+    required BuildContext context,
+    required List<Member> members,
+    required List<PassRecord> todayRecords,
+    required StudioProfile studio,
+  }) {
+    final now = DateTime.now();
+    final todayRecs = todayRecords.where((r) {
+      return r.timestamp.year == now.year &&
+          r.timestamp.month == now.month &&
+          r.timestamp.day == now.day;
+    }).toList();
+    final checkedMemberIds = todayRecs.map((r) => r.memberId).toSet();
+    final attendedToday = todayRecs.where((r) => r.status == AttendanceStatus.attended).length;
+    final totalMembers = members.length;
+    final remainingCount = members.where((m) => !checkedMemberIds.contains(m.id)).length;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.trustBlue, width: 2.0),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.trustBlue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.elderly_rounded, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '시니어 간편 3대 업무 보드',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '오늘 출석: $attendedToday명 / 미출석: $remainingCount명 (총 $totalMembers명)',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.trustBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: () => SeniorEasyGuideModal.show(context),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.trustBlue.withAlpha(120), width: 1.2),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.help_outline_rounded, size: 15, color: AppTheme.trustBlue),
+                      SizedBox(width: 4),
+                      Text(
+                        '설명서',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.trustBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 3 Big Touch Action Tiles
+          Row(
+            children: [
+              Expanded(
+                child: _buildSeniorActionTile(
+                  icon: Icons.check_circle_rounded,
+                  iconColor: const Color(0xFF059669),
+                  bgColor: const Color(0xFFECFDF5),
+                  borderColor: const Color(0xFF10B981),
+                  title: '간편 출석',
+                  subtitle: '오늘 출석 체크',
+                  badgeText: '$attendedToday명 완료',
+                  onTap: () => _showSeniorAttendanceSheet(context, members, todayRecords),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSeniorActionTile(
+                  icon: Icons.mark_email_read_rounded,
+                  iconColor: AppTheme.trustBlue,
+                  bgColor: const Color(0xFFEFF6FF),
+                  borderColor: AppTheme.trustBlue,
+                  title: '회비 문자',
+                  subtitle: '수강료 안내',
+                  badgeText: '계좌번호 전송',
+                  onTap: () => _showSeniorBillingSheet(context, members, studio),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSeniorActionTile(
+                  icon: Icons.phone_in_talk_rounded,
+                  iconColor: const Color(0xFFD97706),
+                  bgColor: const Color(0xFFFFFBEB),
+                  borderColor: const Color(0xFFF59E0B),
+                  title: '바로 통화',
+                  subtitle: '학부모 전화',
+                  badgeText: '원터치 연결',
+                  onTap: () => _showSeniorCallSheet(context, members),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeniorActionTile({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required Color borderColor,
+    required String title,
+    required String subtitle,
+    required String badgeText,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: 1.5),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: iconColor, size: 28),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: borderColor.withAlpha(150), width: 0.8),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSeniorAttendanceSheet(
+    BuildContext context,
+    List<Member> members,
+    List<PassRecord> todayRecords,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => _SeniorAttendanceModalSheet(
+        members: members,
+        todayRecords: todayRecords,
+      ),
+    );
+  }
+
+  void _showSeniorBillingSheet(
+    BuildContext context,
+    List<Member> members,
+    StudioProfile studio,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => _SeniorBillingModalSheet(
+        members: members,
+        studio: studio,
+      ),
+    );
+  }
+
+  void _showSeniorCallSheet(
+    BuildContext context,
+    List<Member> members,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => _SeniorCallModalSheet(
+        members: members,
+      ),
+    );
+  }
 }
 
 class _GoldenTimeCareSheet extends StatefulWidget {
@@ -1670,4 +1984,762 @@ class _GoldenTimeCareSheetState extends State<_GoldenTimeCareSheet> {
     );
   }
 }
+
+class _SeniorAttendanceModalSheet extends ConsumerStatefulWidget {
+  final List<Member> members;
+  final List<PassRecord> todayRecords;
+
+  const _SeniorAttendanceModalSheet({
+    required this.members,
+    required this.todayRecords,
+  });
+
+  @override
+  ConsumerState<_SeniorAttendanceModalSheet> createState() => _SeniorAttendanceModalSheetState();
+}
+
+class _SeniorAttendanceModalSheetState extends ConsumerState<_SeniorAttendanceModalSheet> {
+  String _filter = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isCompact = media.size.width < 360;
+    final now = DateTime.now();
+
+    final passRecords = ref.watch(passRecordsProvider).value ?? widget.todayRecords;
+    final todayRecs = passRecords.where((r) {
+      return r.timestamp.year == now.year &&
+          r.timestamp.month == now.month &&
+          r.timestamp.day == now.day;
+    }).toList();
+    final checkedMemberIds = todayRecs.map((r) => r.memberId).toSet();
+
+    final filtered = widget.members.where((m) {
+      if (_filter.isEmpty) return true;
+      return m.name.contains(_filter) || m.phone.contains(_filter);
+    }).toList();
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: media.size.height * 0.90),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 44,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF10B981).withAlpha(100), width: 1.5),
+                    ),
+                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '큰글씨 간편 출석 체크',
+                          style: TextStyle(
+                            fontSize: isCompact ? 18 : 21,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          '원생 이름 옆의 [출석 완료] 버튼을 누르세요',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF047857),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 28, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1.2, color: Color(0xFFE2E8F0)),
+
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                ),
+                child: TextField(
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  onChanged: (val) => setState(() => _filter = val.trim()),
+                  decoration: const InputDecoration(
+                    hintText: '이름 또는 전화번호 뒷자리 검색',
+                    hintStyle: TextStyle(fontSize: 14.5, color: Color(0xFF64748B)),
+                    prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 24),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+
+            // Members List
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '등록된 원생이 없습니다.',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(18, 8, 18, 20),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (ctx, i) {
+                        final m = filtered[i];
+                        final isChecked = checkedMemberIds.contains(m.id);
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isChecked ? const Color(0xFFF0FDF4) : Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: isChecked ? const Color(0xFF86EFAC) : const Color(0xFFCBD5E1),
+                              width: isChecked ? 1.8 : 1.2,
+                            ),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: isChecked ? const Color(0xFFDCFCE7) : const Color(0xFFEFF6FF),
+                                child: Text(
+                                  m.name.isNotEmpty ? m.name[0] : '?',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: isChecked ? const Color(0xFF16A34A) : AppTheme.trustBlue,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            m.name,
+                                            style: const TextStyle(
+                                              fontSize: 18.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            m.groupName,
+                                            style: const TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF475569),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      m.phone,
+                                      style: const TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (isChecked)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF16A34A),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '출석완료',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF059669),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    elevation: 1,
+                                  ),
+                                  onPressed: () async {
+                                    await ref.read(passRecordsProvider.notifier).checkInMember(member: m);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${m.name} 학생 출석 체크 완료!',
+                                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                          ),
+                                          backgroundColor: const Color(0xFF059669),
+                                          behavior: SnackBarBehavior.floating,
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: const Text(
+                                    '출석 확인',
+                                    style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeniorBillingModalSheet extends StatefulWidget {
+  final List<Member> members;
+  final StudioProfile studio;
+
+  const _SeniorBillingModalSheet({
+    required this.members,
+    required this.studio,
+  });
+
+  @override
+  State<_SeniorBillingModalSheet> createState() => _SeniorBillingModalSheetState();
+}
+
+class _SeniorBillingModalSheetState extends State<_SeniorBillingModalSheet> {
+  String _filter = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isCompact = media.size.width < 360;
+
+    final filtered = widget.members.where((m) {
+      if (_filter.isEmpty) return true;
+      return m.name.contains(_filter) || m.phone.contains(_filter);
+    }).toList();
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: media.size.height * 0.90),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 44,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.trustBlue.withAlpha(100), width: 1.5),
+                    ),
+                    child: const Icon(Icons.mark_email_read_rounded, color: AppTheme.trustBlue, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '회비(수강료) 문자 전송',
+                          style: TextStyle(
+                            fontSize: isCompact ? 18 : 21,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          '계좌번호가 적힌 문자를 원터치로 보냅니다',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.trustBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 28, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1.2, color: Color(0xFFE2E8F0)),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                ),
+                child: TextField(
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  onChanged: (val) => setState(() => _filter = val.trim()),
+                  decoration: const InputDecoration(
+                    hintText: '이름 또는 전화번호 뒷자리 검색',
+                    hintStyle: TextStyle(fontSize: 14.5, color: Color(0xFF64748B)),
+                    prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 24),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '등록된 원생이 없습니다.',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(18, 8, 18, 20),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (ctx, i) {
+                        final m = filtered[i];
+                        final formattedFee = NumberFormat('#,###').format(m.defaultFee);
+                        final targetPhone = m.phone;
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: const Color(0xFFEFF6FF),
+                                    child: Text(
+                                      m.name.isNotEmpty ? m.name[0] : '?',
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.trustBlue,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          m.name,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          m.payerName != null && m.payerName!.isNotEmpty
+                                              ? '입금자(보호자): ${m.payerName}'
+                                              : '연락처: ${m.phone}',
+                                          style: const TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF475569),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '$formattedFee원',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF1D4ED8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.trustBlue,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    elevation: 1,
+                                  ),
+                                  icon: const Icon(Icons.send_rounded, size: 17),
+                                  label: const Text(
+                                    '청구 문자 전송하기',
+                                    style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800),
+                                  ),
+                                  onPressed: () async {
+                                    final bankInfo = widget.studio.accountNumber.isNotEmpty
+                                        ? '\n수납 계좌: ${widget.studio.bankName} ${widget.studio.accountNumber} (예금주: ${widget.studio.accountHolder})'
+                                        : '';
+                                    final msg = '[${widget.studio.studioName}]\n안녕하세요, ${m.name} 회원님 이번 달 ${widget.studio.feeTitle}($formattedFee원) 입금 안내드립니다.$bankInfo\n감사합니다.';
+
+                                    await SmsTemplateService.launchNativeSms(
+                                      recipientPhone: targetPhone,
+                                      body: msg,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeniorCallModalSheet extends StatefulWidget {
+  final List<Member> members;
+
+  const _SeniorCallModalSheet({
+    required this.members,
+  });
+
+  @override
+  State<_SeniorCallModalSheet> createState() => _SeniorCallModalSheetState();
+}
+
+class _SeniorCallModalSheetState extends State<_SeniorCallModalSheet> {
+  String _filter = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isCompact = media.size.width < 360;
+
+    final filtered = widget.members.where((m) {
+      if (_filter.isEmpty) return true;
+      return m.name.contains(_filter) || m.phone.contains(_filter);
+    }).toList();
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: media.size.height * 0.90),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 44,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFF59E0B).withAlpha(120), width: 1.5),
+                    ),
+                    child: const Icon(Icons.phone_in_talk_rounded, color: Color(0xFFD97706), size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '원생·학부모 바로 통화',
+                          style: TextStyle(
+                            fontSize: isCompact ? 18 : 21,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          '번호를 누르실 필요 없이 버튼 하나로 통화 연결',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFB45309),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 28, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1.2, color: Color(0xFFE2E8F0)),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                ),
+                child: TextField(
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  onChanged: (val) => setState(() => _filter = val.trim()),
+                  decoration: const InputDecoration(
+                    hintText: '이름 또는 전화번호 뒷자리 검색',
+                    hintStyle: TextStyle(fontSize: 14.5, color: Color(0xFF64748B)),
+                    prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 24),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '등록된 원생이 없습니다.',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(18, 8, 18, 20),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (ctx, i) {
+                        final m = filtered[i];
+                        final callTarget = m.phone;
+                        final label = (m.payerName != null && m.payerName!.isNotEmpty)
+                            ? '보호자: ${m.payerName}'
+                            : '원생 본인';
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: const Color(0xFFFEF3C7),
+                                child: Text(
+                                  m.name.isNotEmpty ? m.name[0] : '?',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            m.name,
+                                            style: const TextStyle(
+                                              fontSize: 18.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFEF3C7),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            label,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFFB45309),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      callTarget,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF059669),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  elevation: 1,
+                                ),
+                                icon: const Icon(Icons.phone_rounded, size: 18),
+                                label: const Text(
+                                  '전화걸기',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                                ),
+                                onPressed: () async {
+                                  final uri = Uri.parse('tel:$callTarget');
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri);
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('$callTarget 연결 실패')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 

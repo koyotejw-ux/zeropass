@@ -7,6 +7,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/studio_setup_wizard_screen.dart';
 import 'screens/tablet_kiosk_screen.dart';
 import 'services/monetization_service.dart';
+import 'providers/app_providers.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -31,7 +32,7 @@ void main() async {
   );
 }
 
-class ZeroPassApp extends StatefulWidget {
+class ZeroPassApp extends ConsumerStatefulWidget {
   final bool showOnboarding;
   final bool showSetupWizard;
   final bool isKioskDedicated;
@@ -43,10 +44,10 @@ class ZeroPassApp extends StatefulWidget {
   });
 
   @override
-  State<ZeroPassApp> createState() => _ZeroPassAppState();
+  ConsumerState<ZeroPassApp> createState() => _ZeroPassAppState();
 }
 
-class _ZeroPassAppState extends State<ZeroPassApp> {
+class _ZeroPassAppState extends ConsumerState<ZeroPassApp> {
   late bool _showOnboarding;
   late bool _showSetupWizard;
 
@@ -75,6 +76,8 @@ class _ZeroPassAppState extends State<ZeroPassApp> {
 
   @override
   Widget build(BuildContext context) {
+    final isSeniorMode = ref.watch(seniorModeProvider);
+
     Widget homeScreen;
     if (_showOnboarding) {
       homeScreen = OnboardingScreen(onFinish: _finishOnboarding);
@@ -89,10 +92,10 @@ class _ZeroPassAppState extends State<ZeroPassApp> {
     return MaterialApp(
       title: '체크앤페이 - 무료 출결관리 & 학원·교습소·PT 회원 수납 출석체크 키오스크',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: isSeniorMode ? AppTheme.seniorTheme : AppTheme.lightTheme,
       builder: (context, child) => MediaQuery.withClampedTextScaling(
-        minScaleFactor: 0.85,
-        maxScaleFactor: 1.15,
+        minScaleFactor: isSeniorMode ? 1.25 : 0.85,
+        maxScaleFactor: isSeniorMode ? 1.55 : 1.15,
         child: child ?? const SizedBox.shrink(),
       ),
       home: homeScreen,
