@@ -34,7 +34,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -108,6 +108,14 @@ class DatabaseService {
             await db.execute('ALTER TABLE studio_profile ADD COLUMN cardPaymentEnabled INTEGER NOT NULL DEFAULT 0');
           } catch (_) {}
         }
+        if (oldVersion < 8) {
+          try {
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN logoPath TEXT');
+            await db.execute('ALTER TABLE expense_items ADD COLUMN taxEvidence TEXT DEFAULT "기타/통장증빙"');
+            await db.execute('ALTER TABLE expense_items ADD COLUMN isWithholdingApplied INTEGER NOT NULL DEFAULT 0');
+            await db.execute('ALTER TABLE expense_items ADD COLUMN withholdingTax INTEGER NOT NULL DEFAULT 0');
+          } catch (_) {}
+        }
       },
     );
   }
@@ -174,7 +182,8 @@ class DatabaseService {
         attendanceTemplate TEXT,
         departureTemplate TEXT,
         cardPaymentUrl TEXT DEFAULT "",
-        cardPaymentEnabled INTEGER NOT NULL DEFAULT 0
+        cardPaymentEnabled INTEGER NOT NULL DEFAULT 0,
+        logoPath TEXT
       )
     ''');
 
@@ -206,7 +215,10 @@ class DatabaseService {
         paymentMethod TEXT NOT NULL,
         isPaid INTEGER NOT NULL DEFAULT 1,
         memo TEXT,
-        createdAt TEXT NOT NULL
+        createdAt TEXT NOT NULL,
+        taxEvidence TEXT DEFAULT "기타/통장증빙",
+        isWithholdingApplied INTEGER NOT NULL DEFAULT 0,
+        withholdingTax INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -426,7 +438,7 @@ class DatabaseService {
 
   Future<void> insertPassRecord(PassRecord record) async {
     final db = await database;
-    await db.insert('pass_records', record.toMap());
+    await db.insert('pass_records', record.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // Invoices CRUD

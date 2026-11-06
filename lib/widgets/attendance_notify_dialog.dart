@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/member.dart';
@@ -185,20 +186,46 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
               // Header
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isCheckIn
-                          ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                          : const Color(0xFF3182F6).withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
-                      color: isCheckIn ? const Color(0xFF10B981) : AppTheme.primaryBlue,
-                      size: 24,
-                    ),
-                  ),
+                  (widget.studio.logoPath != null &&
+                          widget.studio.logoPath!.isNotEmpty &&
+                          File(widget.studio.logoPath!).existsSync())
+                      ? Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.borderSubtle, width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(widget.studio.logoPath!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isCheckIn
+                                ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                                : const Color(0xFF3182F6).withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
+                            color: isCheckIn ? const Color(0xFF10B981) : AppTheme.primaryBlue,
+                            size: 24,
+                          ),
+                        ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

@@ -108,10 +108,15 @@ void main() {
 
       // 1. Studio Profile Card is rendered
       expect(find.textContaining('프로필'), findsWidgets);
-      expect(find.text('마스터 아카데미'), findsOneWidget);
+      expect(find.text('마스터 아카데미'), findsWidgets);
       expect(find.text('김원장'), findsWidgets);
 
       // 2. Local Data Vault is rendered
+      await tester.scrollUntilVisible(
+        find.textContaining('로컬 데이터 보안 금고'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('로컬 데이터 보안 금고'), findsOneWidget);
       expect(find.textContaining('로컬 백업 파일 생성'), findsOneWidget);
 

@@ -9,7 +9,7 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/chosung_search_service.dart';
 import '../services/database_service.dart';
-
+import '../services/kakao_share_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/monetization_service.dart';
 import '../theme/app_theme.dart';
@@ -630,6 +630,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               final lateCount = todayRecords.where((r) => r.status == AttendanceStatus.late).length;
               final remainingMembersCount = members.where((m) => !checkedMemberIds.contains(m.id)).length;
 
+              // Long Absent Golden-Time Members (7 days or more)
+              final inactiveThreshold = now.subtract(const Duration(days: 7));
+              final absentMembers = members.where((m) {
+                final memberRecs = passRecords.where((r) => r.memberId == m.id).toList();
+                if (memberRecs.isEmpty) {
+                  return m.registeredAt.isBefore(inactiveThreshold);
+                }
+                memberRecs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+                return memberRecs.first.timestamp.isBefore(inactiveThreshold);
+              }).toList();
+
               // Extract all groups
               final groups = ['전체 그룹', ...members.map((m) => m.groupName).toSet()];
 
@@ -644,6 +655,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 if (_statusFilter == '만료 임박') {
                   final isSession = m.billingType == BillingType.sessionBased;
                   if (!isSession || m.remainingSessions > 2) return false;
+                }
+                if (_statusFilter == '골든타임 케어') {
+                  if (!absentMembers.any((ab) => ab.id == m.id)) return false;
                 }
                 if (_searchQuery.isNotEmpty) {
                   if (!ChosungSearchService.matchesAny([m.name, m.phone, m.groupName, m.payerName, m.memo], _searchQuery)) {
@@ -779,6 +793,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             const PopupMenuItem(value: '출결 대기', child: Text('출결 대기만')),
                             const PopupMenuItem(value: '체크 완료', child: Text('체크 완료만')),
                             const PopupMenuItem(value: '만료 임박', child: Text('만료 임박(2회 이하)')),
+                            const PopupMenuItem(value: '골든타임 케어', child: Text('골든타임 케어 (7일+ 결석)')),
                           ],
                           child: Chip(
                             label: Row(
@@ -794,6 +809,41 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ],
                     ),
                   ),
+
+                  // Golden Time Care Strip
+                  if (absentMembers.isNotEmpty && _statusFilter != '골든타임 케어')
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFED7AA)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.favorite_border_rounded, size: 16, color: Color(0xFFEA580C)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '장기 미출석 안심 케어: 최근 7일 이상 결석 ${absentMembers.length}명',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFC2410C)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () => setState(() => _statusFilter = '골든타임 케어'),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                child: Text('보기', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFFEA580C))),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                   // 3. Member Pass Cards List
                   Expanded(
@@ -822,7 +872,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                   ? todayRecords.firstWhere((r) => r.memberId == member.id)
                                   : null;
 
-                              return _buildMemberPassCard(context, member, isChecked, todayPass, studio);
+                              return _buildMemberPassCard(
+                                context,
+                                member,
+                                isChecked,
+                                todayPass,
+                                studio,
+                                absentMembers.any((m) => m.id == member.id),
+                              );
                             },
                           ),
                   ),
@@ -960,8 +1017,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     Member member,
     bool isChecked,
     PassRecord? todayPass,
-    StudioProfile studio,
-  ) {
+    StudioProfile studio, [
+    bool isLongAbsent = false,
+  ]) {
     final initials = member.initial;
     final isSessionBased = member.billingType == BillingType.sessionBased;
     final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
@@ -1200,6 +1258,38 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+
+          // 장기 미출석 (최근 7일+ 결석) 골든타임 안부 톡 케어 버튼
+          if (!isChecked && isLongAbsent) ...[
+            const SizedBox(height: 8),
+            const Divider(height: 1, color: AppTheme.borderSubtle),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final msg = '[${studio.studioName}] 안녕하세요, ${member.primaryName}님! 요즘 날씨가 많이 쌀쌀한데 건강히 잘 지내고 계신가요? 늘 회원님의 안전하고 활기찬 하루를 응원합니다. 수업 일정 관련해 언제든 편하게 말씀해주세요 :)';
+                  await KakaoShareService.shareMessage(
+                    text: msg,
+                    subject: '[${studio.studioName}] 회원님 안부 인사',
+                  );
+                },
+                icon: const Icon(Icons.favorite_rounded, size: 14, color: Color(0xFFEA580C)),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '최근 7일+ 미출석 • 따뜻한 안부 톡 보내기',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFEA580C)),
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFF7ED),
+                  side: const BorderSide(color: Color(0xFFFED7AA)),
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                ),
+              ),
             ),
           ],
         ],

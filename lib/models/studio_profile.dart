@@ -11,6 +11,7 @@ class StudioProfile {
   final String departureTemplate;
   final String cardPaymentUrl;
   final bool cardPaymentEnabled;
+  final String? logoPath;
 
   static const List<String> businessCategories = [
     '음악 / 피아노',
@@ -39,6 +40,7 @@ class StudioProfile {
     required this.departureTemplate,
     this.cardPaymentUrl = '',
     this.cardPaymentEnabled = false,
+    this.logoPath,
   });
 
   /// 비대면 카드결제 링크 생성 (금액/회원명 치환 지원)
@@ -122,6 +124,8 @@ class StudioProfile {
     String? departureTemplate,
     String? cardPaymentUrl,
     bool? cardPaymentEnabled,
+    String? logoPath,
+    bool clearLogo = false,
   }) {
     return StudioProfile(
       studioName: studioName ?? this.studioName,
@@ -136,6 +140,7 @@ class StudioProfile {
       departureTemplate: departureTemplate ?? this.departureTemplate,
       cardPaymentUrl: cardPaymentUrl ?? this.cardPaymentUrl,
       cardPaymentEnabled: cardPaymentEnabled ?? this.cardPaymentEnabled,
+      logoPath: clearLogo ? null : (logoPath ?? this.logoPath),
     );
   }
 
@@ -153,6 +158,7 @@ class StudioProfile {
       'departureTemplate': departureTemplate,
       'cardPaymentUrl': cardPaymentUrl,
       'cardPaymentEnabled': cardPaymentEnabled ? 1 : 0,
+      'logoPath': logoPath,
     };
   }
 
@@ -174,6 +180,7 @@ class StudioProfile {
       cardPaymentEnabled: (map['cardPaymentEnabled'] is int)
           ? (map['cardPaymentEnabled'] == 1)
           : (map['cardPaymentEnabled'] as bool? ?? false),
+      logoPath: map['logoPath'] as String?,
     );
   }
 

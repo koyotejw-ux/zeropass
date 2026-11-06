@@ -16,6 +16,7 @@ import '../services/coach_mark_service.dart';
 import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/kakao_share_service.dart';
+import '../services/data_vault_service.dart';
 import '../services/sequential_dispatch_service.dart';
 import '../widgets/sequential_dispatch_modal.dart';
 import '../widgets/receipt_notify_dialog.dart';
@@ -68,6 +69,22 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       appBar: AppBar(
         title: Text(LocalizationService.tr('billing_title')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.table_view_outlined, size: 21, color: AppTheme.primaryBlue),
+            tooltip: '국세청 표준 사업소득 간편장부 엑셀(CSV) 내보내기 & 공유',
+            onPressed: () async {
+              try {
+                final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
+                await DataVaultService.shareSimplifiedBookkeepingCsv(file);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('간편장부 내보내기 오류: $e')),
+                  );
+                }
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.share_outlined, size: 20),
             tooltip: '동료 원장님께 제로패스 추천 (카톡)',
@@ -1545,27 +1562,45 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           // Header: Category, Date, Status toggle pill
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(6),
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        expense.category,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                      ),
                     ),
-                    child: Text(
-                      expense.category,
-                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w500),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    dateStr,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w500),
-                  ),
-                ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFC7D2FE), width: 0.8),
+                      ),
+                      child: Text(
+                        expense.taxEvidence,
+                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () async {
                   await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
@@ -1644,16 +1679,25 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             children: [
               const Icon(Icons.storefront_outlined, size: 14, color: AppTheme.textSecondary),
               const SizedBox(width: 4),
-              Text(
-                expense.vendorName,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+              Flexible(
+                child: Text(
+                  expense.vendorName,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               if (vendor?.bankName != null && vendor?.accountNumber != null) ...[
                 const SizedBox(width: 6),
-                Text(
-                  '• ${vendor!.bankName} ${vendor.accountNumber}',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                Flexible(
+                  child: Text(
+                    '• ${vendor!.bankName} ${vendor.accountNumber}',
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.copy_rounded, size: 13, color: AppTheme.primaryBlue),
                   tooltip: '계좌번호 복사',
@@ -1669,6 +1713,32 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ],
             ],
           ),
+
+          if (expense.isWithholdingApplied) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.calculate_outlined, size: 13, color: Color(0xFF4F46E5)),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           if (expense.memo != null && expense.memo!.isNotEmpty) ...[
             const SizedBox(height: 4),
@@ -1812,6 +1882,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     String selectedMethod = editExpense?.paymentMethod ?? '계좌이체';
     bool isPaid = editExpense?.isPaid ?? true;
     final DateTime selectedDate = editExpense?.date ?? DateTime.now();
+    bool isWithholdingApplied = editExpense?.isWithholdingApplied ?? (selectedCategory == '강사료');
+    String selectedEvidence = editExpense?.taxEvidence ?? (isWithholdingApplied ? '원천징수(3.3%)' : '세금계산서');
     Vendor? selectedVendor = editExpense?.vendorId != null
         ? vendors.where((v) => v.id == editExpense!.vendorId).firstOrNull
         : (vendors.isNotEmpty ? vendors.first : null);
@@ -1972,6 +2044,111 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 ),
                 const SizedBox(height: 14),
 
+                // 3.3% 프리랜서 강사료 원천징수 계산기
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('3.3% 프리랜서 원천징수 적용', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  subtitle: const Text('사업소득세 3% + 지방소득세 0.3% 자동 공제 계산', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  value: isWithholdingApplied,
+                  activeThumbColor: const Color(0xFF6366F1),
+                  onChanged: (val) {
+                    setSheetState(() {
+                      isWithholdingApplied = val;
+                      if (val) selectedEvidence = '원천징수(3.3%)';
+                    });
+                  },
+                ),
+                Builder(
+                  builder: (_) {
+                    final curAmount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                    final calcTax = isWithholdingApplied ? ((curAmount * 0.033).round()) : 0;
+                    final actualPayout = curAmount - calcTax;
+
+                    if (isWithholdingApplied && curAmount > 0) {
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFC7D2FE)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('원천징수 세액 (3.3%)', style: TextStyle(fontSize: 12.5, color: Color(0xFF4338CA), fontWeight: FontWeight.w600)),
+                                Text('- ${_currencyFormat.format(calcTax)}원', style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626), fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('실제 이체할 실수령액', style: TextStyle(fontSize: 13.5, color: Color(0xFF1E1B4B), fontWeight: FontWeight.w800)),
+                                Text('${_currencyFormat.format(actualPayout)}원', style: const TextStyle(fontSize: 15, color: Color(0xFF4338CA), fontWeight: FontWeight.w900)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
+                // 세무 적격증빙 유형 (간편장부 연동)
+                const Text('세무 적격증빙 유형 (국세청 간편장부)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: ExpenseItem.taxEvidenceTypes.map((ev) {
+                    final isSel = selectedEvidence == ev;
+                    return ChoiceChip(
+                      label: Text(ev, style: TextStyle(fontSize: 11.5, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? Colors.white : AppTheme.textPrimary)),
+                      selected: isSel,
+                      selectedColor: const Color(0xFF6366F1),
+                      backgroundColor: Colors.white,
+                      onSelected: (val) {
+                        if (val) setSheetState(() => selectedEvidence = ev);
+                      },
+                    );
+                  }).toList(),
+                ),
+                Builder(
+                  builder: (_) {
+                    final curAmount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                    if (selectedEvidence == '간이영수증' && curAmount > 30000) {
+                      return Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFD97706)),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '3만원 초과 간이영수증은 세법상 증빙불비 가산세(2%) 대상이 될 수 있습니다.',
+                                style: TextStyle(fontSize: 11, color: Color(0xFFB45309), fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                const SizedBox(height: 14),
+
                 // 완납 여부 스위치
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -2010,6 +2187,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         return;
                       }
 
+                      final withTax = isWithholdingApplied ? ((amount * 0.033).round()) : 0;
                       final item = ExpenseItem(
                         id: editExpense?.id ?? 'exp_${DateTime.now().millisecondsSinceEpoch}',
                         vendorId: selectedVendor?.id,
@@ -2022,6 +2200,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         isPaid: isPaid,
                         memo: memoCtrl.text.trim().isEmpty ? null : memoCtrl.text.trim(),
                         createdAt: editExpense?.createdAt ?? DateTime.now(),
+                        taxEvidence: selectedEvidence,
+                        isWithholdingApplied: isWithholdingApplied,
+                        withholdingTax: withTax,
                       );
 
                       if (editExpense == null) {
@@ -2524,6 +2705,7 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   final NumberFormat _currencyFormat = NumberFormat('#,###');
   bool _sendSmsRightNow = true;
+  bool _applySiblingDiscount = false;
 
   @override
   void initState() {
@@ -2548,6 +2730,25 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
     super.dispose();
   }
 
+  void _recalculateSiblingTotal() {
+    final selectedMembers = widget.allMembers.where((m) => _selectedMemberIds.contains(m.id)).toList();
+    if (selectedMembers.isEmpty) return;
+
+    final totalDefault = selectedMembers.fold<int>(0, (sum, m) => sum + m.defaultFee);
+    final now = DateTime.now();
+    final feeWord = widget.studio.feeTitle;
+
+    int finalAmount = totalDefault > 0 ? totalDefault : 250000;
+    if (_applySiblingDiscount && selectedMembers.length > 1) {
+      finalAmount = (finalAmount * 0.9).round();
+    }
+
+    _amountController.text = finalAmount.toString();
+    _titleController.text = selectedMembers.length > 1
+        ? '${now.month}월 $feeWord (${selectedMembers.map((s) => s.primaryName).join('/')} 형제·가족 합산${_applySiblingDiscount ? ' [10%할인]' : ''})'
+        : '${selectedMembers.first.primaryName} ${now.month}월 $feeWord 안내';
+  }
+
   void _selectMember(Member m) {
     setState(() {
       _isDirectInputMode = false;
@@ -2558,20 +2759,22 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
       for (final sib in siblings) {
         _selectedMemberIds.add(sib.id);
       }
-
-      final totalDefaultFee = widget.allMembers
-          .where((item) => _selectedMemberIds.contains(item.id))
-          .fold<int>(0, (sum, item) => sum + item.defaultFee);
-
-      final now = DateTime.now();
-      final feeWord = widget.studio.feeTitle;
-      final title = siblings.length > 1
-          ? '${now.month}월 $feeWord (${siblings.map((s) => s.primaryName).join('/')} 형제·가족 합산)'
-          : '${m.primaryName} ${now.month}월 $feeWord 안내';
-
-      _titleController.text = title;
-      _amountController.text = (totalDefaultFee > 0 ? totalDefaultFee : 250000).toString();
       _phoneController.text = m.phone;
+      _recalculateSiblingTotal();
+    });
+  }
+
+  void _toggleMemberSelection(Member m) {
+    setState(() {
+      _isDirectInputMode = false;
+      if (_selectedMemberIds.contains(m.id)) {
+        if (_selectedMemberIds.length > 1) {
+          _selectedMemberIds.remove(m.id);
+        }
+      } else {
+        _selectedMemberIds.add(m.id);
+      }
+      _recalculateSiblingTotal();
     });
   }
 
@@ -2703,11 +2906,22 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        label: Text(m.primaryName),
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(m.primaryName),
+                            if (isSelected && _selectedMemberIds.length > 1) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.check, size: 12, color: Colors.white),
+                            ],
+                          ],
+                        ),
                         selected: isSelected,
                         onSelected: (val) {
-                          if (val) {
+                          if (_isDirectInputMode || _selectedMemberIds.isEmpty) {
                             _selectMember(m);
+                          } else {
+                            _toggleMemberSelection(m);
                           }
                         },
                         selectedColor: AppTheme.primaryDark,
@@ -2751,6 +2965,51 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                 ],
               ),
             ),
+
+          // Sibling Bundle & 10% Discount Card
+          if (!_isDirectInputMode && _selectedMemberIds.length > 1) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.family_restroom_rounded, color: Color(0xFF16A34A), size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '형제·가족 ${_selectedMemberIds.length}명 묶음 합산 청구 모드',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('형제/다자녀 10% 자동 할인 적용', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: const Text('수강료 10% 원터치 감면 계산', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary)),
+                    value: _applySiblingDiscount,
+                    activeThumbColor: const Color(0xFF16A34A),
+                    onChanged: (val) {
+                      setState(() {
+                        _applySiblingDiscount = val;
+                        _recalculateSiblingTotal();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           // Direct Name Input & Auto-register Option
           if (_isDirectInputMode) ...[

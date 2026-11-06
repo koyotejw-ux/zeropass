@@ -175,9 +175,12 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('비대면 신용카드 결제 링크 (0원 연동)'), findsOneWidget);
-        expect(find.text('가입비 0원 · 월관리비 0원'), findsOneWidget);
-        expect(find.text('결제 링크 설정'), findsOneWidget);
+        expect(find.text('설정 · 보안 금고'), findsOneWidget);
+        expect(find.text('상호 / 브랜드명'), findsOneWidget);
+        expect(find.text('김서연 대표원장'), findsOneWidget);
+
+        // Cleanly reset widget tree for next viewport size
+        await tester.pumpWidget(const SizedBox());
       }
       await tester.binding.setSurfaceSize(null);
     });

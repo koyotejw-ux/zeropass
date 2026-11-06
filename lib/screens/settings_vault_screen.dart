@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/member.dart';
@@ -683,6 +685,107 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 ),
                 child: Column(
                   children: [
+                    // Studio Logo & Branding Header Row
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _showLogoPickerSheet(context, profile),
+                          child: Stack(
+                            children: [
+                              _buildStudioLogoAvatar(profile, size: 68),
+                              Positioned(
+                                right: -2,
+                                bottom: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryBlue,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      profile.studioName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (profile.logoPath != null && profile.logoPath!.isNotEmpty) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        '로고 적용됨',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF059669),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              const Text(
+                                '무인 키오스크 및 알림장 브랜드 표기',
+                                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () => _showLogoPickerSheet(context, profile),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        profile.logoPath != null ? Icons.photo_camera_outlined : Icons.add_photo_alternate_outlined,
+                                        size: 14,
+                                        color: AppTheme.primaryBlue,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        profile.logoPath != null ? '로고 변경/삭제' : '상호 로고 등록하기',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.primaryBlue,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24, color: AppTheme.borderSubtle),
                     _buildProfileRow('상호 / 브랜드명', profile.studioName),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow('업종 카테고리', profile.category),
@@ -936,6 +1039,37 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
+                          }
+                        },
+                      ),
+                      const Divider(height: 16, color: AppTheme.borderSubtle),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFEEF2FF),
+                          child: Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5)),
+                        ),
+                        title: const Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        subtitle: const Text('수입과 지출을 통합 정렬하여 5월 종합소득세 및 2월 사업장현황신고 세무사용 표준 CSV를 생성합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () async {
+                          try {
+                            final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
+                            await DataVaultService.shareSimplifiedBookkeepingCsv(file);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('국세청 간편장부 CSV가 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? '\\' : '/').last}'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('간편장부 내보내기 오류: $e')),
+                              );
+                            }
                           }
                         },
                       ),
@@ -1637,6 +1771,162 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
+  Widget _buildStudioLogoAvatar(StudioProfile profile, {double size = 64}) {
+    final hasLogo = profile.logoPath != null && profile.logoPath!.isNotEmpty && File(profile.logoPath!).existsSync();
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(size * 0.28),
+        border: Border.all(
+          color: hasLogo ? AppTheme.primaryBlue.withValues(alpha: 0.3) : AppTheme.borderSubtle,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.28),
+        child: hasLogo
+            ? Image.file(
+                File(profile.logoPath!),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(Icons.storefront_rounded, color: AppTheme.primaryBlue, size: 28),
+                ),
+              )
+            : const Center(
+                child: Icon(Icons.storefront_rounded, color: Color(0xFF64748B), size: 28),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _showLogoPickerSheet(BuildContext context, StudioProfile profile) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text('상호 / 브랜드 로고 관리', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              const Text('무인 키오스크 상단 및 알림장에 우리 학원 전용 로고가 표기됩니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.photo_library_outlined, color: AppTheme.primaryBlue),
+                ),
+                title: const Text('갤러리에서 로고 선택', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('정사각형 또는 가로형 PNG/JPG 이미지 권장', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _pickAndSaveLogo(ImageSource.gallery, profile);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF10B981)),
+                ),
+                title: const Text('카메라로 직접 촬영', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('명함, 간판, 학원 서식 사진을 즉석에서 촬영', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _pickAndSaveLogo(ImageSource.camera, profile);
+                },
+              ),
+              if (profile.logoPath != null && profile.logoPath!.isNotEmpty)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
+                  ),
+                  title: const Text('등록된 로고 삭제', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFEF4444))),
+                  subtitle: const Text('기본 마스코트 아이콘으로 복원합니다.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await ref.read(studioProfileProvider.notifier).updateProfile(profile.copyWith(clearLogo: true));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('상호 로고가 삭제되어 기본 아이콘으로 복원되었습니다.')),
+                      );
+                    }
+                  },
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndSaveLogo(ImageSource source, StudioProfile profile) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 88, maxWidth: 1000);
+      if (picked == null) return;
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'studio_logo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+
+      await ref.read(studioProfileProvider.notifier).updateProfile(
+        profile.copyWith(logoPath: savedImage.path),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('상호 로고가 성공적으로 등록되었습니다! 키오스크에 즉시 적용됩니다.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로고 등록 중 오류가 발생했습니다: $e')),
+        );
+      }
+    }
+  }
+
   void _openEditProfileDialog(BuildContext context, StudioProfile current) {
     final studioCtrl = TextEditingController(text: current.studioName);
     final instructorCtrl = TextEditingController(text: current.instructorName);
@@ -1645,6 +1935,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     final holderCtrl = TextEditingController(text: current.accountHolder);
     final cardUrlCtrl = TextEditingController(text: current.cardPaymentUrl);
     bool cardEnabled = current.cardPaymentEnabled;
+    String? modalLogoPath = current.logoPath;
+    bool modalClearLogo = false;
 
     String selectedCategory = current.category;
     final customCategoryCtrl = TextEditingController();
@@ -1669,6 +1961,111 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   const SizedBox(height: 6),
                   const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
                   const SizedBox(height: 18),
+
+                  // Modal Logo Selector
+                  Center(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 88, maxWidth: 1000);
+                        if (picked != null) {
+                          final appDir = await getApplicationDocumentsDirectory();
+                          final fileName = 'studio_logo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                          final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+                          setModalState(() {
+                            modalLogoPath = savedImage.path;
+                            modalClearLogo = false;
+                          });
+                        }
+                      },
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.35), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: (modalLogoPath != null && !modalClearLogo && File(modalLogoPath!).existsSync())
+                                  ? Image.file(
+                                      File(modalLogoPath!),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Center(
+                                        child: Icon(Icons.storefront_rounded, color: AppTheme.primaryBlue, size: 36),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(Icons.add_photo_alternate_outlined, color: AppTheme.primaryBlue, size: 36),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryBlue,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 88, maxWidth: 1000);
+                            if (picked != null) {
+                              final appDir = await getApplicationDocumentsDirectory();
+                              final fileName = 'studio_logo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                              final savedImage = await File(picked.path).copy('${appDir.path}/$fileName');
+                              setModalState(() {
+                                modalLogoPath = savedImage.path;
+                                modalClearLogo = false;
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library_outlined, size: 15),
+                          label: Text(modalLogoPath != null && !modalClearLogo ? '로고 변경' : '상호 로고 등록'),
+                        ),
+                        if (modalLogoPath != null && !modalClearLogo) ...[
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                modalClearLogo = true;
+                                modalLogoPath = null;
+                              });
+                            },
+                            child: const Text('삭제', style: TextStyle(color: Color(0xFFEF4444))),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   AppTextField(
                     controller: studioCtrl,
                     label: '상호명 / 스튜디오명',
@@ -1786,6 +2183,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           category: finalCat,
                           cardPaymentEnabled: cardEnabled,
                           cardPaymentUrl: cardUrlCtrl.text.trim(),
+                          logoPath: modalLogoPath,
+                          clearLogo: modalClearLogo,
                         );
                         await ref.read(studioProfileProvider.notifier).updateProfile(updated);
                         if (ctx.mounted) Navigator.pop(ctx);

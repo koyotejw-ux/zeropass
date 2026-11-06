@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -712,6 +713,45 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     );
   }
 
+  Widget _buildKioskBrandLogo(StudioProfile studio, {double size = 44}) {
+    final hasLogo = studio.logoPath != null && studio.logoPath!.isNotEmpty && File(studio.logoPath!).existsSync();
+    if (hasLogo) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(size * 0.28),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(size * 0.28),
+          child: Image.file(
+            File(studio.logoPath!),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => ZeroPassMascotAvatar(
+              size: size,
+              isLightMode: true,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            ),
+          ),
+        ),
+      );
+    }
+    return ZeroPassMascotAvatar(
+      size: size,
+      isLightMode: true,
+      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+    );
+  }
+
   Widget _buildTopHeader(StudioProfile studio, String dateStr, String timeStr) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -719,11 +759,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         Expanded(
           child: Row(
             children: [
-              ZeroPassMascotAvatar(
-                size: 44,
-                isLightMode: true,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-              ),
+              _buildKioskBrandLogo(studio, size: 44),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1190,10 +1226,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const ZeroPassMascotAvatar(
-                                    size: 22,
-                                    isLightMode: true,
-                                  ),
+                                  _buildKioskBrandLogo(studio, size: 24),
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
