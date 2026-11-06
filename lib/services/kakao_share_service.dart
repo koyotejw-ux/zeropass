@@ -187,15 +187,36 @@ ${bankInfo != null && bankInfo.isNotEmpty ? '• 수신 계좌 : $bankInfo\n' : 
 '''.trim();
   }
 
-  /// 6. 프리랜서 강사/코치 월별 수당 정산서
+  /// 6. 프리랜서 강사/코치 월별 수당 정산서 (3.3% 원천징수 지원)
   static String generateStaffSettlementKakaoMessage({
     required StudioProfile studio,
     required String staffName,
     required int amount,
     required String period,
     String? details,
+    bool isWithholdingApplied = false,
+    int withholdingTax = 0,
+    int? grossAmount,
+    String? bankAccount,
   }) {
     final formattedAmount = _currencyFormat.format(amount);
+
+    String taxSection = '';
+    if (isWithholdingApplied && withholdingTax > 0) {
+      final gross = grossAmount ?? (amount + withholdingTax);
+      final incomeTax = (gross * 0.03).round();
+      final localTax = (gross * 0.003).round();
+      taxSection = '''
+• 총 지급액 (공제 전) : ${_currencyFormat.format(gross)}원
+• 사업소득세 (국세 3.0%) : -${_currencyFormat.format(incomeTax)}원
+• 지방소득세 (지방세 0.3%) : -${_currencyFormat.format(localTax)}원
+• 원천징수 합계 (3.3%) : -${_currencyFormat.format(withholdingTax)}원
+''';
+    }
+
+    final bankSection = bankAccount != null && bankAccount.isNotEmpty
+        ? '• 입금 계좌 : $bankAccount\n'
+        : '';
 
     return '''
 [💼 ${studio.studioName} $period 강사료/수당 정산 명세서]
@@ -206,8 +227,9 @@ $period 수업 활동에 대한 정산 내역서를 전달드립니다.
 ────────────────
 • 수령인 : $staffName 선생님
 • 정산 대상 기간 : $period
-• 실수령 지급액 : $formattedAmount원
-${details != null && details.isNotEmpty ? '• 정산 산출 근거 :\n$details\n' : ''}────────────────
+$taxSection────────────────
+• 실수령 입금액 : $formattedAmount원
+$bankSection${details != null && details.isNotEmpty ? '• 정산 산출 근거 :\n$details\n' : ''}────────────────
 
 늘 열정으로 지도해주셔서 감사드리며, 문의사항은 편하게 말씀해주세요!
 

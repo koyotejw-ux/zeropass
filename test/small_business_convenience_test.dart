@@ -18,6 +18,7 @@ import 'package:zeropass/screens/settings_vault_screen.dart';
 import 'package:zeropass/services/data_vault_service.dart';
 import 'package:zeropass/services/database_service.dart';
 import 'package:zeropass/widgets/receipt_notify_dialog.dart';
+import 'package:zeropass/widgets/tax_guide_modal.dart';
 
 class _MockStudioNotifier extends StudioProfileNotifier {
   final StudioProfile _studio;
@@ -389,6 +390,80 @@ void main() {
 
       expect(find.textContaining('장기 미출석 안심 케어'), findsOneWidget);
       expect(find.text('보기'), findsOneWidget);
+    });
+
+    testWidgets('TaxGuideModal renders and displays schedules and HomeTax quick action', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: TaxGuideModal(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('국세청 간편장부 & 세무 꿀팁'), findsOneWidget);
+      expect(find.text('소상공인 원장님을 위한 1분 세무 마스터 가이드'), findsOneWidget);
+      expect(find.text('국세청 표준 사업소득 간편장부란?'), findsOneWidget);
+      expect(find.text('간편장부 작성 시 원장님 3대 혜택'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('종합소득세 확정 신고 (모든 개인사업자 필수)'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('종합소득세 확정 신고 (모든 개인사업자 필수)'), findsOneWidget);
+      expect(find.text('국세청 홈택스 바로가기'), findsOneWidget);
+    });
+
+    testWidgets('PassDashboardScreen opens Golden-Time Care Sheet and displays situation presets', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final oldRecords = [
+        PassRecord(
+          id: 'rec-old-1',
+          memberId: 'm-biz-1',
+          timestamp: DateTime.now(),
+          status: AttendanceStatus.attended,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            studioProfileProvider.overrideWith(() => _MockStudioNotifier(testStudioWithLogo)),
+            membersProvider.overrideWith(() => _MockMembersNotifier(testMembers)),
+            passRecordsProvider.overrideWith(() => _MockPassRecordsNotifier(oldRecords)),
+            invoicesProvider.overrideWith(() => _MockInvoicesNotifier(testInvoices)),
+          ],
+          child: const MaterialApp(
+            home: PassDashboardScreen(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tap on Golden-Time Care Button
+      final careButton = find.text('최근 7일+ 미출석 • 따뜻한 안부 톡 보내기').first;
+      await tester.scrollUntilVisible(careButton, 150, scrollable: find.byType(Scrollable).first);
+      await tester.tap(careButton);
+      await tester.pumpAndSettle();
+
+      // Verify Golden-Time Care Sheet elements
+      expect(find.text('골든타임 안심 케어'), findsOneWidget);
+      expect(find.text('상황별 안부 메시지 템플릿 선택'), findsOneWidget);
+      expect(find.text('🌸 따뜻한 안부'), findsOneWidget);
+      expect(find.text('🧘 복귀 & 스케줄'), findsOneWidget);
+      expect(find.text('📚 학업/시험 격려'), findsOneWidget);
+      expect(find.text('🏃 운동/수업 재개'), findsOneWidget);
+      expect(find.text('문자(SMS) 전송'), findsOneWidget);
+      expect(find.text('카카오톡 안부 톡'), findsOneWidget);
     });
   });
 }

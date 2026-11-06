@@ -22,6 +22,7 @@ import '../widgets/coach_mark_dialog.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
 import '../widgets/smart_notification_center_modal.dart';
+import '../widgets/tax_guide_modal.dart';
 import 'home_navigation_screen.dart';
 import 'studio_setup_wizard_screen.dart';
 import 'tablet_kiosk_screen.dart';
@@ -1049,7 +1050,25 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           backgroundColor: Color(0xFFEEF2FF),
                           child: Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5)),
                         ),
-                        title: const Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        title: Row(
+                          children: [
+                            const Expanded(
+                              child: Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                            ),
+                            InkWell(
+                              onTap: () => TaxGuideModal.show(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFC7D2FE)),
+                                ),
+                                child: const Text('세무 가이드 💡', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
+                              ),
+                            ),
+                          ],
+                        ),
                         subtitle: const Text('수입과 지출을 통합 정렬하여 5월 종합소득세 및 2월 사업장현황신고 세무사용 표준 CSV를 생성합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () async {

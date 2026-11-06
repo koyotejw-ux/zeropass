@@ -20,6 +20,7 @@ import '../services/data_vault_service.dart';
 import '../services/sequential_dispatch_service.dart';
 import '../widgets/sequential_dispatch_modal.dart';
 import '../widgets/receipt_notify_dialog.dart';
+import '../widgets/tax_guide_modal.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
@@ -71,19 +72,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.table_view_outlined, size: 21, color: AppTheme.primaryBlue),
-            tooltip: '국세청 표준 사업소득 간편장부 엑셀(CSV) 내보내기 & 공유',
-            onPressed: () async {
-              try {
-                final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
-                await DataVaultService.shareSimplifiedBookkeepingCsv(file);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('간편장부 내보내기 오류: $e')),
-                  );
-                }
-              }
-            },
+            tooltip: '국세청 표준 사업소득 간편장부 엑셀(CSV) 내보내기 & 세무 가이드',
+            onPressed: () => _showBookkeepingExportSheet(context),
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined, size: 20),
@@ -1716,26 +1706,33 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
           if (expense.isWithholdingApplied) ...[
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.calculate_outlined, size: 13, color: Color(0xFF4F46E5)),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
-                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            InkWell(
+              onTap: () => _showStaffSettlementModal(context, expense, vendor, studio),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFC7D2FE), width: 0.8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calculate_outlined, size: 13, color: Color(0xFF4F46E5)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFF4F46E5)),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1791,23 +1788,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 ),
               ),
 
-              if (isInstructor) ...[
+              if (isInstructor || expense.isWithholdingApplied) ...[
                 const SizedBox(width: 6),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final kakaoMsg = KakaoShareService.generateStaffSettlementKakaoMessage(
-                        studio: studio,
-                        staffName: expense.vendorName,
-                        amount: expense.amount,
-                        period: '${expense.date.month}월',
-                        details: '${expense.title} (${expense.paymentMethod})',
-                      );
-                      await KakaoShareService.shareMessage(
-                        text: kakaoMsg,
-                        subject: '[${studio.studioName}] 강사료 정산서',
-                      );
-                    },
+                    onPressed: () => _showStaffSettlementModal(context, expense, vendor, studio),
                     icon: const Icon(Icons.badge_outlined, size: 14, color: Color(0xFF4F46E5)),
                     label: const FittedBox(
                       fit: BoxFit.scaleDown,
@@ -2677,6 +2662,94 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
       ),
     );
   }
+
+  void _showStaffSettlementModal(
+    BuildContext context,
+    ExpenseItem expense,
+    Vendor? vendor,
+    StudioProfile studio,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _StaffSettlementSheet(
+        expense: expense,
+        vendor: vendor,
+        studio: studio,
+      ),
+    );
+  }
+
+  void _showBookkeepingExportSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEEF2FF),
+                  child: Icon(Icons.table_view_rounded, color: Color(0xFF4F46E5)),
+                ),
+                title: const Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                subtitle: const Text('수입과 지출 통합 정렬 엑셀 호환 표준 CSV 생성 및 카톡 공유', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
+                    await DataVaultService.shareSimplifiedBookkeepingCsv(file);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('간편장부 내보내기 오류: $e')));
+                    }
+                  }
+                },
+              ),
+              const Divider(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFFBEB),
+                  child: Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFD97706)),
+                ),
+                title: const Text('소상공인 간편장부 세무 신고 꿀팁 가이드', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                subtitle: const Text('5월 종합소득세, 2월 사업장현황신고, 3.3% 원천세 1분 마스터', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  TaxGuideModal.show(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _QuickInvoiceModal extends ConsumerStatefulWidget {
@@ -2706,6 +2779,10 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
   final NumberFormat _currencyFormat = NumberFormat('#,###');
   bool _sendSmsRightNow = true;
   bool _applySiblingDiscount = false;
+  double _siblingDiscountRate = 0.10;
+  int _siblingFixedDiscount = 0;
+  int _originalSiblingTotal = 0;
+  int _calculatedSiblingDiscount = 0;
 
   @override
   void initState() {
@@ -2738,14 +2815,20 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
     final now = DateTime.now();
     final feeWord = widget.studio.feeTitle;
 
-    int finalAmount = totalDefault > 0 ? totalDefault : 250000;
+    _originalSiblingTotal = totalDefault > 0 ? totalDefault : 250000;
+    _calculatedSiblingDiscount = 0;
     if (_applySiblingDiscount && selectedMembers.length > 1) {
-      finalAmount = (finalAmount * 0.9).round();
+      if (_siblingFixedDiscount > 0) {
+        _calculatedSiblingDiscount = _siblingFixedDiscount;
+      } else {
+        _calculatedSiblingDiscount = (_originalSiblingTotal * _siblingDiscountRate).round();
+      }
     }
+    final finalAmount = (_originalSiblingTotal - _calculatedSiblingDiscount).clamp(0, 999999999);
 
     _amountController.text = finalAmount.toString();
     _titleController.text = selectedMembers.length > 1
-        ? '${now.month}월 $feeWord (${selectedMembers.map((s) => s.primaryName).join('/')} 형제·가족 합산${_applySiblingDiscount ? ' [10%할인]' : ''})'
+        ? '${now.month}월 $feeWord (${selectedMembers.map((s) => s.primaryName).join('/')} 형제·가족 합산${_applySiblingDiscount ? ' [할인적용]' : ''})'
         : '${selectedMembers.first.primaryName} ${now.month}월 $feeWord 안내';
   }
 
@@ -2754,11 +2837,6 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
       _isDirectInputMode = false;
       _selectedMemberIds.clear();
       _selectedMemberIds.add(m.id);
-
-      final siblings = widget.allMembers.where((other) => other.phone == m.phone).toList();
-      for (final sib in siblings) {
-        _selectedMemberIds.add(sib.id);
-      }
       _phoneController.text = m.phone;
       _recalculateSiblingTotal();
     });
@@ -2966,11 +3044,70 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
               ),
             ),
 
+          // Sibling Quick-Add Suggestion Banner
+          if (!_isDirectInputMode && widget.allMembers.any((other) => other.phone == _phoneController.text && !_selectedMemberIds.contains(other.id))) ...[
+            const SizedBox(height: 8),
+            Builder(
+              builder: (ctx) {
+                final unselectedSiblings = widget.allMembers.where((other) => other.phone == _phoneController.text && !_selectedMemberIds.contains(other.id)).toList();
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.people_alt_outlined, size: 16, color: AppTheme.primaryBlue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '동일 연락처 형제: ${unselectedSiblings.map((s) => s.primaryName).join(", ")}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            for (final s in unselectedSiblings) {
+                              _selectedMemberIds.add(s.id);
+                            }
+                            _recalculateSiblingTotal();
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF93C5FD)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add_rounded, size: 13, color: AppTheme.primaryBlue),
+                              SizedBox(width: 2),
+                              Text('함께 묶기', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+
           // Sibling Bundle & 10% Discount Card
           if (!_isDirectInputMode && _selectedMemberIds.length > 1) ...[
             const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF0FDF4),
                 borderRadius: BorderRadius.circular(12),
@@ -2980,23 +3117,50 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.family_restroom_rounded, color: Color(0xFF16A34A), size: 18),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          '형제·가족 ${_selectedMemberIds.length}명 묶음 합산 청구 모드',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.family_restroom_rounded, color: Color(0xFF16A34A), size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            '형제·가족 ${_selectedMemberIds.length}명 묶음 합산 청구 모드',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
+                          ),
+                        ],
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            if (_selectedMemberIds.length > 1) {
+                              final firstId = _selectedMemberIds.first;
+                              _selectedMemberIds.clear();
+                              _selectedMemberIds.add(firstId);
+                              _recalculateSiblingTotal();
+                            }
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
+                        child: const Text('단독 청구로 전환', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     title: const Text('형제/다자녀 10% 자동 할인 적용', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                    subtitle: const Text('수강료 10% 원터치 감면 계산', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary)),
+                    subtitle: Text(
+                      _siblingFixedDiscount > 0
+                          ? '${_currencyFormat.format(_siblingFixedDiscount)}원 고정 감면'
+                          : '수강료 ${(_siblingDiscountRate * 100).toInt()}% 원터치 감면 계산',
+                      style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+                    ),
                     value: _applySiblingDiscount,
                     activeThumbColor: const Color(0xFF16A34A),
                     onChanged: (val) {
@@ -3006,6 +3170,36 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                       });
                     },
                   ),
+                  if (_applySiblingDiscount) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _buildDiscountChip('10% 할인 (기본)', 0.10, 0),
+                        _buildDiscountChip('5% 할인', 0.05, 0),
+                        _buildDiscountChip('15% 할인', 0.15, 0),
+                        _buildDiscountChip('-2만원 할인', 0, 20000),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFDCFCE7)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('정상 합계: ${_currencyFormat.format(_originalSiblingTotal)}원', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                          Text('할인: -${_currencyFormat.format(_calculatedSiblingDiscount)}원', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE11D48))),
+                          Text('최종 청구: ${_currencyFormat.format(_originalSiblingTotal - _calculatedSiblingDiscount)}원', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -3423,6 +3617,289 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _buildDiscountChip(String label, double rate, int fixed) {
+    final isSelected = _siblingFixedDiscount == fixed && (_siblingFixedDiscount > 0 || _siblingDiscountRate == rate);
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _siblingDiscountRate = rate;
+          _siblingFixedDiscount = fixed;
+          _recalculateSiblingTotal();
+        });
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF16A34A) : Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : const Color(0xFF334155),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StaffSettlementSheet extends StatefulWidget {
+  final ExpenseItem expense;
+  final Vendor? vendor;
+  final StudioProfile studio;
+
+  const _StaffSettlementSheet({
+    required this.expense,
+    required this.vendor,
+    required this.studio,
+  });
+
+  @override
+  State<_StaffSettlementSheet> createState() => _StaffSettlementSheetState();
+}
+
+class _StaffSettlementSheetState extends State<_StaffSettlementSheet> {
+  late final TextEditingController _messageController;
+  final NumberFormat _currencyFormat = NumberFormat('#,###');
+
+  @override
+  void initState() {
+    super.initState();
+    final bankInfo = widget.vendor != null && widget.vendor?.accountNumber != null
+        ? '${widget.vendor!.bankName} ${widget.vendor!.accountNumber} (${widget.vendor!.accountHolder ?? widget.expense.vendorName})'
+        : null;
+
+    final initialText = KakaoShareService.generateStaffSettlementKakaoMessage(
+      studio: widget.studio,
+      staffName: widget.expense.vendorName,
+      amount: widget.expense.actualPayoutAmount,
+      period: '${widget.expense.date.month}월',
+      details: '${widget.expense.title} (${widget.expense.paymentMethod})',
+      isWithholdingApplied: widget.expense.isWithholdingApplied,
+      withholdingTax: widget.expense.withholdingTax,
+      grossAmount: widget.expense.amount,
+      bankAccount: bankInfo,
+    );
+
+    _messageController = TextEditingController(text: initialText);
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final incomeTax = (widget.expense.amount * 0.03).round();
+    final localTax = (widget.expense.amount * 0.003).round();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFC7D2FE)),
+                  ),
+                  child: const Icon(Icons.badge_outlined, color: Color(0xFF4F46E5), size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${widget.expense.vendorName} 강사료 정산서',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('3.3% 원천징수', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.expense.date.month}월 정산 • ${widget.expense.title}',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Visual breakdown card
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  _buildSummaryRow('총 지급액 (공제 전 총액)', '${_currencyFormat.format(widget.expense.amount)}원', isBold: true),
+                  const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                  _buildSummaryRow('사업소득세 (국세 3.0%)', '-${_currencyFormat.format(incomeTax)}원', textColor: const Color(0xFFE11D48)),
+                  const SizedBox(height: 4),
+                  _buildSummaryRow('지방소득세 (지방세 0.3%)', '-${_currencyFormat.format(localTax)}원', textColor: const Color(0xFFE11D48)),
+                  const SizedBox(height: 4),
+                  _buildSummaryRow('원천징수 합계 (3.3%)', '-${_currencyFormat.format(widget.expense.withholdingTax)}원', textColor: const Color(0xFFE11D48), isBold: true),
+                  const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                  _buildSummaryRow('차인 지급액 (실수령 입금액)', '${_currencyFormat.format(widget.expense.actualPayoutAmount)}원', textColor: const Color(0xFF4F46E5), isBold: true, fontSize: 15),
+                  if (widget.vendor?.bankName != null && widget.vendor?.accountNumber != null) ...[
+                    const SizedBox(height: 6),
+                    _buildSummaryRow('입금 계좌', '${widget.vendor!.bankName} ${widget.vendor!.accountNumber}', textColor: AppTheme.textSecondary, fontSize: 11.5),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Editable message field
+            const Text(
+              '정산 명세서 메시지 본문 미리보기 (수정 가능)',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: TextField(
+                controller: _messageController,
+                maxLines: 6,
+                style: const TextStyle(fontSize: 13, height: 1.45, color: Color(0xFF1E293B)),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.all(12),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Dispatch Buttons
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _messageController.text));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('정산서가 클립보드에 복사되었습니다.'), behavior: SnackBarBehavior.floating),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 14, color: AppTheme.textSecondary),
+                  label: const Text('내용 복사', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+                if (widget.vendor?.phone != null && widget.vendor!.phone!.isNotEmpty) ...[
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await SmsTemplateService.launchNativeSms(
+                        recipientPhone: widget.vendor!.phone!,
+                        body: _messageController.text,
+                      );
+                    },
+                    icon: const Icon(Icons.sms_rounded, size: 15, color: Colors.white),
+                    label: const Text('문자(SMS) 전송', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await KakaoShareService.shareMessage(
+                      text: _messageController.text,
+                      subject: '[${widget.studio.studioName}] 강사료 정산서',
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_rounded, size: 15, color: Color(0xFF1E1E1E)),
+                  label: const Text('카톡 정산서 전송', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1E1E1E))),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFEE500),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {Color? textColor, bool isBold = false, double fontSize = 12.5}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: fontSize, color: AppTheme.textSecondary, fontWeight: isBold ? FontWeight.w700 : FontWeight.w500)),
+        Text(value, style: TextStyle(fontSize: fontSize, color: textColor ?? AppTheme.textPrimary, fontWeight: isBold ? FontWeight.w800 : FontWeight.w600)),
+      ],
     );
   }
 }
