@@ -143,11 +143,17 @@ class SequentialDispatchService {
     final cleanAccountOnly = studio.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
     final tossLink = 'supertoss://send?bank=${Uri.encodeComponent(studio.bankName)}&account=$cleanAccountOnly&amount=$amountNum';
 
+    final cardPaymentLink = studio.getFormattedCardPaymentUrl(
+      amount: amountNum,
+      orderTitle: invoice?.title ?? '수강료',
+      customerName: memberName,
+    );
+
     final sessionText = member.billingType == BillingType.sessionBased
         ? '${member.remainingSessions}회'
         : '정기 패스';
 
-    return template
+    String rendered = template
         .replaceAll('#{상호명}', studio.studioName)
         .replaceAll('{상호명}', studio.studioName)
         .replaceAll('#{원명}', studio.studioName)
@@ -168,9 +174,18 @@ class SequentialDispatchService {
         .replaceAll('{계좌복사용}', copyAccount)
         .replaceAll('#{토스송금링크}', tossLink)
         .replaceAll('{토스송금링크}', tossLink)
+        .replaceAll('#{카드결제링크}', cardPaymentLink)
+        .replaceAll('{카드결제링크}', cardPaymentLink)
         .replaceAll('#{잔여회차}', sessionText)
-        .replaceAll('{잔여회차}', sessionText)
-        .trim();
+        .replaceAll('{잔여회차}', sessionText);
+
+    if (cardPaymentLink.isEmpty) {
+      rendered = rendered
+          .replaceAll(RegExp(r'•\s*(?:비대면\s*)?카드(?:결제)?\s*:\s*\n?', multiLine: true), '')
+          .replaceAll(RegExp(r'\[비대면\s*카드\s*결제\]\s*\n?', multiLine: true), '');
+    }
+
+    return rendered.trim();
   }
 
   /// 회원 목록과 청구 목록을 기반으로 순차 발송 큐 아이템을 생성합니다.

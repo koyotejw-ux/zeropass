@@ -9,6 +9,8 @@ class StudioProfile {
   final String invoiceTemplate;
   final String attendanceTemplate;
   final String departureTemplate;
+  final String cardPaymentUrl;
+  final bool cardPaymentEnabled;
 
   static const List<String> businessCategories = [
     '음악 / 피아노',
@@ -35,7 +37,25 @@ class StudioProfile {
     required this.invoiceTemplate,
     required this.attendanceTemplate,
     required this.departureTemplate,
+    this.cardPaymentUrl = '',
+    this.cardPaymentEnabled = false,
   });
+
+  /// 비대면 카드결제 링크 생성 (금액/회원명 치환 지원)
+  String getFormattedCardPaymentUrl({int? amount, String? orderTitle, String? customerName}) {
+    if (!cardPaymentEnabled || cardPaymentUrl.trim().isEmpty) return '';
+    String url = cardPaymentUrl.trim();
+    if (amount != null) {
+      url = url.replaceAll('{금액}', amount.toString()).replaceAll('{amount}', amount.toString());
+    }
+    if (orderTitle != null) {
+      url = url.replaceAll('{상품명}', Uri.encodeComponent(orderTitle)).replaceAll('{title}', Uri.encodeComponent(orderTitle));
+    }
+    if (customerName != null) {
+      url = url.replaceAll('{회원명}', Uri.encodeComponent(customerName)).replaceAll('{name}', Uri.encodeComponent(customerName));
+    }
+    return url;
+  }
 
   /// 업종별 대표자 직함 (원장 / 대표 / 코치 / 강사)
   String get roleTitle {
@@ -100,6 +120,8 @@ class StudioProfile {
     String? invoiceTemplate,
     String? attendanceTemplate,
     String? departureTemplate,
+    String? cardPaymentUrl,
+    bool? cardPaymentEnabled,
   }) {
     return StudioProfile(
       studioName: studioName ?? this.studioName,
@@ -112,6 +134,8 @@ class StudioProfile {
       invoiceTemplate: invoiceTemplate ?? this.invoiceTemplate,
       attendanceTemplate: attendanceTemplate ?? this.attendanceTemplate,
       departureTemplate: departureTemplate ?? this.departureTemplate,
+      cardPaymentUrl: cardPaymentUrl ?? this.cardPaymentUrl,
+      cardPaymentEnabled: cardPaymentEnabled ?? this.cardPaymentEnabled,
     );
   }
 
@@ -127,6 +151,8 @@ class StudioProfile {
       'invoiceTemplate': invoiceTemplate,
       'attendanceTemplate': attendanceTemplate,
       'departureTemplate': departureTemplate,
+      'cardPaymentUrl': cardPaymentUrl,
+      'cardPaymentEnabled': cardPaymentEnabled ? 1 : 0,
     };
   }
 
@@ -144,6 +170,10 @@ class StudioProfile {
       invoiceTemplate: map['invoiceTemplate'] as String? ?? defaultInvoiceTemplate,
       attendanceTemplate: map['attendanceTemplate'] as String? ?? defaultAttendanceTemplate,
       departureTemplate: map['departureTemplate'] as String? ?? defaultDepartureTemplate,
+      cardPaymentUrl: map['cardPaymentUrl'] as String? ?? '',
+      cardPaymentEnabled: (map['cardPaymentEnabled'] is int)
+          ? (map['cardPaymentEnabled'] == 1)
+          : (map['cardPaymentEnabled'] as bool? ?? false),
     );
   }
 

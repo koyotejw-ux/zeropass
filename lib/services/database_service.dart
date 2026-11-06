@@ -34,7 +34,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -102,6 +102,12 @@ class DatabaseService {
             ''');
           } catch (_) {}
         }
+        if (oldVersion < 7) {
+          try {
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN cardPaymentUrl TEXT DEFAULT ""');
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN cardPaymentEnabled INTEGER NOT NULL DEFAULT 0');
+          } catch (_) {}
+        }
       },
     );
   }
@@ -166,7 +172,9 @@ class DatabaseService {
         autoBankDetectEnabled INTEGER NOT NULL DEFAULT 1,
         invoiceTemplate TEXT,
         attendanceTemplate TEXT,
-        departureTemplate TEXT
+        departureTemplate TEXT,
+        cardPaymentUrl TEXT DEFAULT "",
+        cardPaymentEnabled INTEGER NOT NULL DEFAULT 0
       )
     ''');
 

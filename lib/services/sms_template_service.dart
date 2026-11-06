@@ -31,7 +31,14 @@ class SmsTemplateService {
     final cleanAccountOnly = studio.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
     final tossLink = 'supertoss://send?bank=${Uri.encodeComponent(studio.bankName)}&account=$cleanAccountOnly&amount=${invoice.amount}';
 
-    return studio.invoiceTemplate
+    // 0-cost Remote Card Payment Link (Toss Payments / PayApp / etc.)
+    final cardLink = studio.getFormattedCardPaymentUrl(
+      amount: invoice.amount,
+      orderTitle: invoice.title,
+      customerName: memberNames,
+    );
+
+    String rendered = studio.invoiceTemplate
         .replaceAll('#{상호명}', studio.studioName)
         .replaceAll('#{회원명}', memberNames)
         .replaceAll('#{청구제목}', invoice.title)
@@ -40,8 +47,18 @@ class SmsTemplateService {
         .replaceAll('#{계좌정보}', accountInfo)
         .replaceAll('#{계좌복사용}', copyAccountText)
         .replaceAll('#{토스송금링크}', tossLink)
-        .replaceAll('#{납부기한}', dueDateStr)
-        .trim();
+        .replaceAll('#{카드결제링크}', cardLink)
+        .replaceAll('{카드결제링크}', cardLink)
+        .replaceAll('#{납부기한}', dueDateStr);
+
+    if (cardLink.isEmpty) {
+      // If card payment is not enabled or empty, remove dangling card payment labels
+      rendered = rendered
+          .replaceAll(RegExp(r'•\s*(?:비대면\s*)?카드(?:결제)?\s*:\s*\n?', multiLine: true), '')
+          .replaceAll(RegExp(r'\[비대면\s*카드\s*결제\]\s*\n?', multiLine: true), '');
+    }
+
+    return rendered.trim();
   }
 
   /// 2. 출석 / 등원 확인 알림
@@ -86,7 +103,9 @@ class SmsTemplateService {
     if (paymentMethod == 'TRANSFER') {
       methodStr = '계좌이체';
     } else if (paymentMethod == 'OFFLINE_CARD') {
-      methodStr = '신용카드';
+      methodStr = '신용카드(현장)';
+    } else if (paymentMethod == 'ONLINE_CARD') {
+      methodStr = '비대면 신용카드(원격)';
     } else if (paymentMethod == 'EASY_PAY') {
       methodStr = '간편결제(카카오/토스/제로페이)';
     } else if (paymentMethod == 'VOUCHER') {
@@ -140,6 +159,13 @@ ${member.name.split(' ').first} 회원님의 잔여 패스가 [${member.remainin
     final formattedAmount = _currencyFormat.format(invoice.amount);
     final dueDateStr = DateFormat('yyyy.MM.dd').format(invoice.dueDate);
 
+    final cardLink = studio.getFormattedCardPaymentUrl(
+      amount: invoice.amount,
+      orderTitle: invoice.title,
+      customerName: memberNames,
+    );
+    final cardSection = cardLink.isNotEmpty ? '\n• 비대면 카드결제 : $cardLink' : '';
+
     return '''[${studio.studioName}] 입금 안내 리마인드
   
 안녕하세요, ${studio.studioName}입니다.
@@ -154,7 +180,7 @@ $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도�
 
 [간편 입금 안내]
 • 복사용 계좌 : $copyAccountText
-(계좌번호를 복사 후 토스나 은행 앱을 여시면 바로 송금됩니다)
+(계좌번호를 복사 후 토스나 은행 앱을 여시면 바로 송금됩니다)$cardSection
 
 기한 내 확인 부탁드리며, 이미 입금하신 경우 본 안내는 너그러이 양해 부탁드립니다.
 감사합니다.'''.trim();

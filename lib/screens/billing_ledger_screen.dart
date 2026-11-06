@@ -812,6 +812,32 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   ),
                 ),
               ),
+              if (!isPaid && studio.cardPaymentEnabled && studio.cardPaymentUrl.trim().isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.link_rounded, size: 11, color: AppTheme.primaryBlue),
+                      SizedBox(width: 3),
+                      Text(
+                        '카드링크 연동',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),
@@ -1196,68 +1222,80 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     AppBottomSheet.show(
       context: context,
       builder: (ctx) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '수납 완료 처리',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${invoice.title} (${_currencyFormat.format(invoice.amount)}원)의 결제 수단을 선택하세요.',
-                style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFEFF6FF),
-                  child: Icon(Icons.account_balance, color: AppTheme.primaryBlue),
+        return Material(
+          color: Colors.transparent,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '수납 완료 처리',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                 ),
-                title: const Text('계좌 입금 확인'),
-                subtitle: const Text('은행 통장으로 실시간 무통장 입금 완료'),
-                onTap: () => _confirmPayment(ctx, invoice, 'TRANSFER', invoiceMembers, studio),
-              ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFECFDF5),
-                  child: Icon(Icons.credit_card, color: AppTheme.softMint),
+                const SizedBox(height: 6),
+                Text(
+                  '${invoice.title} (${_currencyFormat.format(invoice.amount)}원)의 결제 수단을 선택하세요.',
+                  style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
                 ),
-                title: const Text('오프라인 카드 단말기'),
-                subtitle: const Text('매장/학원 현장 신용·체크카드 결제'),
-                onTap: () => _confirmPayment(ctx, invoice, 'OFFLINE_CARD', invoiceMembers, studio),
-              ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFEF3C7),
-                  child: Icon(Icons.qr_code_scanner, color: Color(0xFFD97706)),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEFF6FF),
+                    child: Icon(Icons.account_balance, color: AppTheme.primaryBlue),
+                  ),
+                  title: const Text('계좌 입금 확인'),
+                  subtitle: const Text('은행 통장으로 실시간 무통장 입금 완료'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'TRANSFER', invoiceMembers, studio),
                 ),
-                title: const Text('간편결제 (카카오페이 / 토스 / 제로페이 QR)'),
-                subtitle: const Text('매장 비치 QR 코드 또는 송금 링크 결제'),
-                onTap: () => _confirmPayment(ctx, invoice, 'EASY_PAY', invoiceMembers, studio),
-              ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFF3E8FF),
-                  child: Icon(Icons.card_giftcard, color: Color(0xFF9333EA)),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFECFDF5),
+                    child: Icon(Icons.credit_card, color: AppTheme.softMint),
+                  ),
+                  title: const Text('오프라인 카드 단말기 (현장 결제)'),
+                  subtitle: const Text('매장/학원 현장 신용·체크카드 결제'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'OFFLINE_CARD', invoiceMembers, studio),
                 ),
-                title: const Text('지역화폐 · 교육/스포츠 바우처'),
-                subtitle: const Text('지역사랑상품권, 평생교육바우처, 스포츠강좌이용권'),
-                onTap: () => _confirmPayment(ctx, invoice, 'VOUCHER', invoiceMembers, studio),
-              ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFFFBEB),
-                  child: Icon(Icons.payments_outlined, color: AppTheme.warning),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEFF6FF),
+                    child: Icon(Icons.link_rounded, color: AppTheme.primaryBlue),
+                  ),
+                  title: const Text('비대면 신용카드 결제 (원격 결제 링크)'),
+                  subtitle: const Text('토스페이먼츠/페이앱/결제선생 원격 링크 승인 확인'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'ONLINE_CARD', invoiceMembers, studio),
                 ),
-                title: const Text('현금 수납'),
-                subtitle: const Text('현장 현금 수령 및 간이 영수'),
-                onTap: () => _confirmPayment(ctx, invoice, 'CASH', invoiceMembers, studio),
-              ),
-            ],
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFEF3C7),
+                    child: Icon(Icons.qr_code_scanner, color: Color(0xFFD97706)),
+                  ),
+                  title: const Text('간편결제 (카카오페이 / 토스 / 제로페이 QR)'),
+                  subtitle: const Text('매장 비치 QR 코드 또는 송금 링크 결제'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'EASY_PAY', invoiceMembers, studio),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFF3E8FF),
+                    child: Icon(Icons.card_giftcard, color: Color(0xFF9333EA)),
+                  ),
+                  title: const Text('지역화폐 · 교육/스포츠 바우처'),
+                  subtitle: const Text('지역사랑상품권, 평생교육바우처, 스포츠강좌이용권'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'VOUCHER', invoiceMembers, studio),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFFFBEB),
+                    child: Icon(Icons.payments_outlined, color: AppTheme.warning),
+                  ),
+                  title: const Text('현금 수납'),
+                  subtitle: const Text('현장 현금 수령 및 간이 영수'),
+                  onTap: () => _confirmPayment(ctx, invoice, 'CASH', invoiceMembers, studio),
+                ),
+              ],
+            ),
           ),
         );
       },

@@ -559,7 +559,7 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
         ),
         const SizedBox(height: 4),
         const Text(
-          '사용 가능한 자동 치환 변수: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}, #{토스송금링크}',
+          '사용 가능한 자동 치환 변수: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}, #{토스송금링크}, #{카드결제링크}',
           style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
         ),
         const SizedBox(height: 16),

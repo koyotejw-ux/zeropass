@@ -27,6 +27,17 @@ class KakaoShareService {
     final cleanAccountOnly = studio.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
     final tossLink = 'supertoss://send?bank=${Uri.encodeComponent(studio.bankName)}&account=$cleanAccountOnly&amount=${invoice.amount}';
 
+    final cardLink = studio.getFormattedCardPaymentUrl(
+      amount: invoice.amount,
+      orderTitle: invoice.title,
+      customerName: memberNames,
+    );
+    final cardSection = cardLink.isNotEmpty ? '''
+
+💳 [비대면 카드 결제]
+$cardLink
+(카드 무이자 할부 및 카드사 결제를 원하실 경우 위 링크를 눌러주세요)''' : '';
+
     return '''
 [📢 ${studio.studioName} 수강료 청구 안내]
 
@@ -45,7 +56,7 @@ $memberNames 회원님의 수강료 안내장을 보내드립니다.
 
 ⚡ [토스 1초 간편 송금]
 $tossLink
-(링크를 누르시면 금액과 계좌가 토스에 자동 채워집니다)
+(링크를 누르시면 금액과 계좌가 토스에 자동 채워집니다)$cardSection
 
 감사합니다. 즐겁고 유익한 수업으로 보답하겠습니다!
 
@@ -110,6 +121,21 @@ ${member.name.split(' ').first} 학생이 수업을 마치고 안전하게 하�
     final formattedAmount = _currencyFormat.format(invoice.amount);
     final paidDate = DateFormat('yyyy년 M월 d일 HH:mm').format(invoice.paidAt ?? DateTime.now());
 
+    String methodLabel = invoice.paymentMethod ?? '계좌이체';
+    if (methodLabel == 'TRANSFER') {
+      methodLabel = '계좌이체';
+    } else if (methodLabel == 'OFFLINE_CARD') {
+      methodLabel = '신용카드(현장)';
+    } else if (methodLabel == 'ONLINE_CARD') {
+      methodLabel = '비대면 신용카드(원격)';
+    } else if (methodLabel == 'EASY_PAY') {
+      methodLabel = '간편결제';
+    } else if (methodLabel == 'VOUCHER') {
+      methodLabel = '바우처/지역화폐';
+    } else if (methodLabel == 'CASH') {
+      methodLabel = '현금';
+    }
+
     return '''
 [🧾 ${studio.studioName} 수납 확인 영수증]
 
@@ -119,7 +145,7 @@ ${member.name.split(' ').first} 회원님의 수강료 입금이 정상 확인�
 ────────────────
 • 수납 항목 : ${invoice.title}
 • 수납 금액 : $formattedAmount원
-• 결제 수단 : ${invoice.paymentMethod ?? '계좌이체'}
+• 결제 수단 : $methodLabel
 • 확인 일시 : $paidDate
 ────────────────
 

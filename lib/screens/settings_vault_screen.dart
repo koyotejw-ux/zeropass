@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../models/custom_category_template.dart';
@@ -705,6 +706,168 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 24),
 
+              // 1-2. 비대면 신용카드 결제 링크 (0원 연동)
+              _buildSectionTitle('비대면 신용카드 결제 링크 (0원 연동)', icon: Icons.credit_card_rounded),
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '가입비 0원 · 월관리비 0원',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Transform.scale(
+                            scale: 0.85,
+                            child: Switch(
+                              value: profile.cardPaymentEnabled,
+                              activeThumbColor: AppTheme.primaryBlue,
+                              onChanged: (val) async {
+                                final updated = profile.copyWith(cardPaymentEnabled: val);
+                                await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '원격 비대면 카드 결제 연동',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '토스페이먼츠, 페이앱, 결제선생 등 원장님이 사용하시는 PG사의 결제 링크를 연동하면, 수강료 청구 문자/카톡에 비대면 카드결제 링크가 자동 포함됩니다.',
+                        style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
+                      ),
+                      const SizedBox(height: 14),
+                      if (profile.cardPaymentEnabled) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.link_rounded, size: 16, color: AppTheme.primaryBlue),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      profile.cardPaymentUrl.trim().isEmpty
+                                          ? '등록된 카드결제 링크 없음 (링크를 설정해주세요)'
+                                          : profile.cardPaymentUrl,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: profile.cardPaymentUrl.trim().isEmpty
+                                            ? AppTheme.textSecondary
+                                            : AppTheme.textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                '💡 팁: URL에 {금액}을 입력하면 회원별 청구 금액이 링크에 자동으로 채워집니다.',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _openCardPaymentUrlDialog(context, profile),
+                                icon: const Icon(Icons.edit_outlined, size: 15),
+                                label: const Text('결제 링크 설정'),
+                              ),
+                            ),
+                            if (profile.cardPaymentUrl.trim().isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final testUrl = profile.getFormattedCardPaymentUrl(
+                                      amount: 100000,
+                                      orderTitle: '테스트수강료',
+                                      customerName: '홍길동',
+                                    );
+                                    final uri = Uri.tryParse(testUrl);
+                                    if (uri != null && await canLaunchUrl(uri)) {
+                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                    } else {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('유효한 웹 링크 형식이 아닙니다. (http:// 또는 https:// 포함)')),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Icons.open_in_browser_rounded, size: 15),
+                                  label: const Text('링크 테스트'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryBlue,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ] else ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final updated = profile.copyWith(cardPaymentEnabled: true);
+                              await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                              if (context.mounted) {
+                                _openCardPaymentUrlDialog(context, updated);
+                              }
+                            },
+                            icon: const Icon(Icons.add_link_rounded, size: 16),
+                            label: const Text('비대면 카드결제 기능 켜기'),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               // 2. Local Data Vault (Zero Server) - 온디바이스 로컬 암호화 보안 금고
               _buildSectionTitle('로컬 데이터 보안 금고 (100% 온디바이스 암호화)', icon: Icons.lock_outline_rounded),
               Material(
@@ -1110,7 +1273,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         title: '${profile.feeTitle} 청구서 문자 서식 편집',
                         initialText: profile.invoiceTemplate,
                         defaultText: StudioProfile.defaultInvoiceTemplate,
-                        placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{납부기한}',
+                        placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
                         profile: profile,
                         onSave: (newTemplate, updatedProfile) {
                           final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
@@ -1468,6 +1631,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     final bankCtrl = TextEditingController(text: current.bankName);
     final accountCtrl = TextEditingController(text: current.accountNumber);
     final holderCtrl = TextEditingController(text: current.accountHolder);
+    final cardUrlCtrl = TextEditingController(text: current.cardPaymentUrl);
+    bool cardEnabled = current.cardPaymentEnabled;
 
     String selectedCategory = current.category;
     final customCategoryCtrl = TextEditingController();
@@ -1569,6 +1734,29 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     hint: '예: 홍길동',
                     prefixIcon: Icons.person_outline,
                   ),
+                  const SizedBox(height: 14),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('비대면 카드결제 링크 사용 (0원 연동)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    subtitle: const Text('토스페이먼츠/페이앱 등 원격 결제 URL 연동', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    value: cardEnabled,
+                    activeThumbColor: AppTheme.primaryBlue,
+                    onChanged: (val) {
+                      setModalState(() {
+                        cardEnabled = val;
+                      });
+                    },
+                  ),
+                  if (cardEnabled) ...[
+                    const SizedBox(height: 8),
+                    AppTextField(
+                      controller: cardUrlCtrl,
+                      label: '비대면 카드결제 URL ({금액} 자동치환 지원)',
+                      hint: '예: https://pay.toss.im/_m/...',
+                      prefixIcon: Icons.link_rounded,
+                      keyboardType: TextInputType.url,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -1584,6 +1772,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           accountNumber: accountCtrl.text.trim(),
                           accountHolder: holderCtrl.text.trim(),
                           category: finalCat,
+                          cardPaymentEnabled: cardEnabled,
+                          cardPaymentUrl: cardUrlCtrl.text.trim(),
                         );
                         await ref.read(studioProfileProvider.notifier).updateProfile(updated);
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -1606,6 +1796,98 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _openCardPaymentUrlDialog(BuildContext context, StudioProfile current) {
+    final urlCtrl = TextEditingController(text: current.cardPaymentUrl);
+    AppBottomSheet.show(
+      context: context,
+      builder: (ctx) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('비대면 카드결제 링크 설정', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '토스페이먼츠(페이링크), 페이앱(결제선생), 카카오페이 등 원장님의 비대면 결제 URL을 등록하세요.',
+                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: urlCtrl,
+                label: '카드결제 링크 (URL)',
+                hint: 'https://pay.toss.im/_m/... 또는 https://payapp.kr/L/...',
+                prefixIcon: Icons.link_rounded,
+                keyboardType: TextInputType.url,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  ActionChip(
+                    label: const Text('{금액}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                    backgroundColor: const Color(0xFFEFF6FF),
+                    onPressed: () {
+                      urlCtrl.text = '${urlCtrl.text}{금액}';
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('{회원명}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                    backgroundColor: const Color(0xFFEFF6FF),
+                    onPressed: () {
+                      urlCtrl.text = '${urlCtrl.text}{회원명}';
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('{상품명}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                    backgroundColor: const Color(0xFFEFF6FF),
+                    onPressed: () {
+                      urlCtrl.text = '${urlCtrl.text}{상품명}';
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final updated = current.copyWith(
+                      cardPaymentUrl: urlCtrl.text.trim(),
+                      cardPaymentEnabled: true,
+                    );
+                    await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('카드결제 링크가 저장되었습니다.')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -1771,6 +2053,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             final cleanAccOnly = previewAccount.replaceAll(RegExp(r'[^0-9]'), '');
             final previewCopyAcc = '$previewBank $previewAccount $previewHolder';
             final previewToss = 'supertoss://send?bank=${Uri.encodeComponent(previewBank)}&account=$cleanAccOnly&amount=250000';
+            final previewCard = profile.cardPaymentEnabled && profile.cardPaymentUrl.isNotEmpty
+                ? profile.getFormattedCardPaymentUrl(amount: 250000, orderTitle: '9월 정기 수강료', customerName: '김민준')
+                : 'https://pay.toss.im/_m/sample123';
 
             String previewText = textController.text
                 .replaceAll('#{상호명}', previewStudio)
@@ -1779,6 +2064,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 .replaceAll('#{계좌정보}', '$previewBank $previewAccount ($previewHolder)')
                 .replaceAll('#{계좌복사용}', previewCopyAcc)
                 .replaceAll('#{토스송금링크}', previewToss)
+                .replaceAll('#{카드결제링크}', previewCard)
+                .replaceAll('{카드결제링크}', previewCard)
                 .replaceAll('#{금액}', '250,000')
                 .replaceAll('#{청구제목}', '9월 정기 수강료')
                 .replaceAll('#{안내내용}', '9월 정기 수강료')

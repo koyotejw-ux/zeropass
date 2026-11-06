@@ -486,6 +486,7 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
                       _buildVariableChip('#{금액}'),
                       _buildVariableChip('#{계좌정보}'),
                       _buildVariableChip('#{토스송금링크}'),
+                      _buildVariableChip('#{카드결제링크}'),
                       _buildVariableChip('#{잔여회차}'),
                       _buildVariableChip('#{납부기한}'),
                     ],
