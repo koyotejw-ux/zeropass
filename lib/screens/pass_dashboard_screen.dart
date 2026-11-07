@@ -1207,43 +1207,24 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1행: 이름 + 코스 태그 + 패스카드 퀵 앵커
+                    // 1행: 이름 (단일 행 절대 줄바꿈 방어) + 패스카드 퀵 앵커
                     Row(
                       children: [
                         Flexible(
                           child: Text(
                             member.primaryName,
-                            softWrap: true,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontFamily: 'Pretendard',
-                              fontSize: 15.5,
+                              fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.textPrimary,
                               letterSpacing: -0.3,
                             ),
                           ),
                         ),
-                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
-                            ),
-                            child: Text(
-                              member.secondaryTag!,
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF475569),
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
                         InkWell(
                           onTap: () {
                             DigitalPassCardDialog.show(
@@ -1255,11 +1236,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           },
                           borderRadius: BorderRadius.circular(4),
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.qr_code_2_rounded, size: 13.5, color: Color(0xFF94A3B8)),
+                                Icon(Icons.qr_code_2_rounded, size: 13, color: Color(0xFF94A3B8)),
                                 SizedBox(width: 2),
                                 Text(
                                   '패스',
@@ -1278,12 +1259,30 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     ),
                     const SizedBox(height: 3),
 
-                    // 2행: 소속 그룹 및 회차/패스 뱃지 (가변 폭 대응 Wrap)
+                    // 2행: 소속 코스 태그 · 그룹 · 회차/패스 뱃지 (가변 폭 대응 Wrap)
                     Wrap(
                       spacing: 5,
                       runSpacing: 2,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
+                            ),
+                            child: Text(
+                              member.secondaryTag!,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ),
                         if (member.groupName.isNotEmpty)
                           Text(
                             member.groupName,

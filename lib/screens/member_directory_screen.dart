@@ -430,7 +430,8 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         Flexible(
                           child: Text(
                             member.primaryName,
-                            softWrap: true,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontFamily: 'Pretendard',
                               fontSize: 15.5,
