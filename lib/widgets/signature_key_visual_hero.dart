@@ -67,7 +67,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Row 1: Mobile-First Identity Header (단정하고 일목정렬한 상호명 및 실시간 출석률 배지)
+              // Row 1: Mobile-First Identity Header (상호명 1줄 확보 및 실시간 출석률 배지)
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -82,27 +82,28 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Text(
+                            studio?.studioName ?? '나의 스튜디오',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Wrap(
+                            spacing: 5,
+                            runSpacing: 2,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  studio?.studioName ?? '나의 스튜디오',
-                                  softWrap: true,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   studio?.category ?? '전문교육',
@@ -113,16 +114,16 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                              Text(
+                                '실시간 출결 ($checkedCount/$totalCount명)',
+                                softWrap: true,
+                                style: const TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '오늘 실시간 출결 현황 ($checkedCount/$totalCount명)',
-                            style: const TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                            ),
                           ),
                         ],
                       ),

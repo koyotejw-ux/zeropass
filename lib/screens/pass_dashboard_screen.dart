@@ -1245,10 +1245,10 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     ),
                     const SizedBox(height: 3),
 
-                    // 2행: 소속 그룹 · 회차/패스 상태 · 패스카드 링크
+                    // 2행: 소속 그룹 · 회차/패스 상태 (만료임박 텍스트 인라인 일체화) · 패스카드 링크
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 5,
+                      spacing: 4,
                       runSpacing: 2,
                       children: [
                         if (member.groupName.isNotEmpty) ...[
@@ -1262,32 +1262,28 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           ),
                           const Text('·', style: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.bold, fontSize: 11)),
                         ],
-                        if (isSessionBased) ...[
-                          Text(
-                            '잔여 ${member.remainingSessions}/${member.totalSessions}회',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: isExpiringSoon ? FontWeight.w800 : FontWeight.w600,
-                              color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
-                            ),
-                          ),
-                          if (isExpiringSoon)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEE2E2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                '만료임박',
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFFDC2626),
-                                ),
+                        if (isSessionBased)
+                          Container(
+                            padding: isExpiringSoon
+                                ? const EdgeInsets.symmetric(horizontal: 5, vertical: 1)
+                                : EdgeInsets.zero,
+                            decoration: isExpiringSoon
+                                ? BoxDecoration(
+                                    color: const Color(0xFFFEF2F2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
+                                  )
+                                : null,
+                            child: Text(
+                              '잔여 ${member.remainingSessions}/${member.totalSessions}회${isExpiringSoon ? " (만료임박)" : ""}',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: isExpiringSoon ? FontWeight.w800 : FontWeight.w600,
+                                color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
                               ),
                             ),
-                        ] else
+                          )
+                        else
                           const Text(
                             '정기권',
                             style: TextStyle(
