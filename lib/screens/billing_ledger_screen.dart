@@ -27,6 +27,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/design_system.dart';
 import '../widgets/native_inline_ad_card.dart';
 import '../widgets/responsive_dialog_actions.dart';
 
@@ -945,50 +946,15 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                      decoration: BoxDecoration(
-                        color: isPaid ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isPaid ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Text(
-                        isPaid ? '수납 완료' : '미납',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                          color: isPaid ? AppTheme.softMint : AppTheme.danger,
-                        ),
-                      ),
-                    ),
+                    isPaid
+                        ? ZeroBadge.success('수납 완료', size: ZeroBadgeSize.medium)
+                        : ZeroBadge.danger('미납', size: ZeroBadgeSize.medium),
                     if (!isPaid && studio.cardPaymentEnabled && studio.cardPaymentUrl.trim().isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.link_rounded, size: 11, color: Color(0xFF64748B)),
-                              SizedBox(width: 3),
-                              Text(
-                                '카드링크 연동',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF475569),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      const ZeroBadge(
+                        label: '카드링크 연동',
+                        variant: ZeroBadgeVariant.neutral,
+                        size: ZeroBadgeSize.small,
+                        icon: Icons.link_rounded,
                       ),
                   ],
                 ),
@@ -1705,17 +1671,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        expense.category,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
-                      ),
-                    ),
+                    ZeroBadge.neutral(expense.category, size: ZeroBadgeSize.small),
                     Text(
                       '$dateStr · ${expense.taxEvidence}',
                       style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
@@ -1724,51 +1680,41 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              InkWell(
-                onTap: () async {
-                  await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(expense.isPaid ? '미지급 상태로 변경되었습니다.' : '지급 완료(완납) 처리되었습니다.'),
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                  decoration: BoxDecoration(
-                    color: expense.isPaid ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: expense.isPaid ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA),
-                      width: 0.9,
+              expense.isPaid
+                  ? ZeroBadge.success(
+                      '완납',
+                      icon: Icons.check_circle_outline,
+                      size: ZeroBadgeSize.medium,
+                      onTap: () async {
+                        await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('미지급 상태로 변경되었습니다.'),
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    )
+                  : ZeroBadge.danger(
+                      '미지급 대기',
+                      icon: Icons.pending_actions_outlined,
+                      size: ZeroBadgeSize.medium,
+                      onTap: () async {
+                        await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('지급 완료(완납) 처리되었습니다.'),
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        expense.isPaid ? Icons.check_circle_outline : Icons.pending_actions_outlined,
-                        size: 13,
-                        color: expense.isPaid ? AppTheme.softMint : AppTheme.danger,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        expense.isPaid ? '완납' : '미지급 대기',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                          color: expense.isPaid ? AppTheme.softMint : AppTheme.danger,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 10),

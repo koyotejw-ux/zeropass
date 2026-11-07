@@ -20,6 +20,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/design_system.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
 import '../widgets/senior_easy_guide_modal.dart';
@@ -639,41 +640,16 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 9),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.45), width: 0.9),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 14),
-                        SizedBox(width: 3),
-                        Text(
-                          'PRO 샵',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFFB45309),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              child: ZeroBadge.vip(
+                'PRO 샵',
+                icon: Icons.workspace_premium_rounded,
+                size: ZeroBadgeSize.medium,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                  );
+                },
               ),
             ),
           ),
@@ -681,29 +657,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
-                        width: 0.9,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.format_size_rounded,
-                      color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
-                      size: 16,
-                    ),
-                  ),
-                ),
+              child: ZeroIconBox(
+                icon: Icons.format_size_rounded,
+                size: 32,
+                iconSize: 16,
+                backgroundColor: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
+                iconColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+                borderColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
+                borderRadius: 10,
+                onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
               ),
             ),
           ),
@@ -711,33 +673,26 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    try {
-                      final backupFile = await DataVaultService.exportEncryptedBackup();
-                      await DataVaultService.shareBackupFile(backupFile);
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('백업 파일 생성 오류: $e')),
-                        );
-                      }
+              child: ZeroIconBox(
+                icon: Icons.shield_outlined,
+                size: 32,
+                iconSize: 16,
+                backgroundColor: const Color(0xFFF4F4F5),
+                iconColor: AppTheme.primaryBlue,
+                borderColor: const Color(0xFFE4E4E7),
+                borderRadius: 10,
+                onTap: () async {
+                  try {
+                    final backupFile = await DataVaultService.exportEncryptedBackup();
+                    await DataVaultService.shareBackupFile(backupFile);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('백업 파일 생성 오류: $e')),
+                      );
                     }
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.9),
-                    ),
-                    child: const Icon(Icons.shield_outlined, color: AppTheme.primaryBlue, size: 16),
-                  ),
-                ),
+                  }
+                },
               ),
             ),
           ),

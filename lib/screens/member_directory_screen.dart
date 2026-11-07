@@ -18,6 +18,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/design_system.dart';
 import '../widgets/member_name_badge.dart';
 import '../widgets/native_inline_ad_card.dart';
 import '../widgets/sequential_dispatch_modal.dart';
@@ -443,23 +444,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         ),
                         if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) ...[
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
-                            ),
-                            child: Text(
-                              member.secondaryTag!,
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF475569),
-                              ),
-                            ),
-                          ),
+                          ZeroBadge.neutral(member.secondaryTag!, size: ZeroBadgeSize.small),
                         ],
                       ],
                     ),

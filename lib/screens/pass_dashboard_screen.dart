@@ -22,6 +22,7 @@ import '../widgets/mascot_avatar.dart';
 import '../widgets/signature_key_visual_hero.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/attendance_notify_dialog.dart';
+import '../widgets/design_system.dart';
 import '../widgets/native_inline_ad_card.dart';
 import '../widgets/senior_easy_guide_modal.dart';
 import 'home_navigation_screen.dart';
@@ -608,29 +609,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
-                        width: 0.9,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.format_size_rounded,
-                      color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
-                      size: 16,
-                    ),
-                  ),
-                ),
+              child: ZeroIconBox(
+                icon: Icons.format_size_rounded,
+                size: 32,
+                iconSize: 16,
+                backgroundColor: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
+                iconColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+                borderColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
+                borderRadius: 10,
+                onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
               ),
             ),
           ),
@@ -638,22 +625,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => SmartNotificationCenterModal.show(context),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.9),
-                    ),
-                    child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF3F3F46), size: 16),
-                  ),
-                ),
+              child: ZeroIconBox(
+                icon: Icons.notifications_none_rounded,
+                size: 32,
+                iconSize: 16,
+                backgroundColor: const Color(0xFFF4F4F5),
+                iconColor: const Color(0xFF3F3F46),
+                borderColor: const Color(0xFFE4E4E7),
+                borderRadius: 10,
+                onTap: () => SmartNotificationCenterModal.show(context),
               ),
             ),
           ),
@@ -661,36 +641,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _openTabletKioskMode(context),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.tablet_mac_rounded, color: Colors.white, size: 14),
-                        SizedBox(width: 4),
-                        Text(
-                          '무인 키오스크',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              child: ZeroButton.compactCapsule(
+                label: '무인 키오스크',
+                icon: Icons.tablet_mac_rounded,
+                variant: ZeroButtonVariant.dark,
+                onPressed: () => _openTabletKioskMode(context),
               ),
             ),
           ),
@@ -1225,7 +1180,10 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        InkWell(
+                        ZeroBadge.neutral(
+                          '패스',
+                          size: ZeroBadgeSize.small,
+                          icon: Icons.qr_code_2_rounded,
                           onTap: () {
                             DigitalPassCardDialog.show(
                               context: context,
@@ -1234,26 +1192,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                               latestRecord: todayPass,
                             );
                           },
-                          borderRadius: BorderRadius.circular(4),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.qr_code_2_rounded, size: 13, color: Color(0xFF94A3B8)),
-                                SizedBox(width: 2),
-                                Text(
-                                  '패스',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontSize: 10.5,
-                                    color: Color(0xFF71717A),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -1266,23 +1204,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
-                            ),
-                            child: Text(
-                              member.secondaryTag!,
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF475569),
-                              ),
-                            ),
-                          ),
+                          ZeroBadge.neutral(member.secondaryTag!, size: ZeroBadgeSize.small),
                         if (member.groupName.isNotEmpty)
                           Text(
                             member.groupName,
@@ -1296,44 +1218,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             ),
                           ),
                         if (isSessionBased)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: isExpiringSoon ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(
-                                color: isExpiringSoon ? const Color(0xFFFECACA) : const Color(0xFFBFDBFE),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Text(
-                              '잔여 ${member.remainingSessions}/${member.totalSessions}회${isExpiringSoon ? " (만료임박)" : ""}',
-                              style: TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 11,
-                                fontWeight: isExpiringSoon ? FontWeight.w800 : FontWeight.w600,
-                                color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
-                              ),
-                            ),
-                          )
+                          isExpiringSoon
+                              ? ZeroBadge.danger('잔여 ${member.remainingSessions}/${member.totalSessions}회 (만료임박)', size: ZeroBadgeSize.small)
+                              : ZeroBadge.primary('잔여 ${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small)
                         else
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
-                            ),
-                            child: const Text(
-                              '정기권',
-                              style: TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF475569),
-                              ),
-                            ),
-                          ),
+                          ZeroBadge.neutral('정기권', size: ZeroBadgeSize.small),
                       ],
                     ),
                   ],
@@ -1343,48 +1232,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
               // 3. Right Action Anchor (38px 터치 앵커)
               if (isChecked)
-                Container(
-                  height: 38,
-                  padding: const EdgeInsets.symmetric(horizontal: 11),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFA7F3D0), width: 0.9),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle_rounded, size: 15, color: AppTheme.softMint),
-                      const SizedBox(width: 4),
-                      Text(
-                        todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.softMint,
-                        ),
-                      ),
-                    ],
-                  ),
+                ZeroBadge.success(
+                  todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
+                  size: ZeroBadgeSize.medium,
+                  icon: Icons.check_circle_rounded,
                 )
               else
-                SizedBox(
-                  height: 38,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _handleOneTouchCheckIn(member),
-                    icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
-                    label: const Text(
-                      '체크인',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: -0.2),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
-                    ),
-                  ),
+                ZeroButton.primary(
+                  label: '체크인',
+                  icon: Icons.check_rounded,
+                  size: ZeroButtonSize.medium,
+                  onPressed: () => _handleOneTouchCheckIn(member),
                 ),
             ],
           ),
