@@ -26,6 +26,7 @@ import '../widgets/attendance_notify_dialog.dart';
 import '../widgets/senior_easy_guide_modal.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
+import 'pro_store_screen.dart';
 import 'tablet_kiosk_screen.dart';
 
 class PassDashboardScreen extends ConsumerStatefulWidget {
@@ -302,20 +303,24 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: const Color(0xFFFFFBEB),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
                   ),
-                  child: Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: const [
-                      Text('키오스크 프로 평생 소장권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                      Text('19,900원 (1회)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '👑 정기 구독 시 광고 완전 제거 + 무인 키오스크 무제한',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '지금까지 원장님이 제로패스로 절감한 누적 가치: 약 ${NumberFormat("#,###").format(MonetizationService.instance.estimatedTotalSavedKRW)}원!',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                      ),
                     ],
                   ),
                 ),
@@ -328,21 +333,57 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 Navigator.pop(ctx);
                 _showKioskLaunchSelector(context);
               },
-              child: const Text('무료 체험 실행해보기'),
+              child: const Text('기능 테스트 체험'),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                await MonetizationService.instance.setDebugUnlock(kioskPro: true);
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
+            OutlinedButton.icon(
+              onPressed: () {
+                final bm = MonetizationService.instance;
+                if (bm.isRewardedAdAvailable) {
+                  bm.showRewardedAd(
+                    onRewarded: () async {
+                      await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🎉 24시간 무인 키오스크 + 광고 제거 VIP 패스가 활성화되었습니다!')),
+                        );
+                        _showKioskLaunchSelector(context);
+                      }
+                    },
+                    onFailed: () async {
+                      await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🎁 24시간 무인 키오스크 VIP 패스가 무료로 활성화되었습니다!')),
+                        );
+                        _showKioskLaunchSelector(context);
+                      }
+                    },
+                  );
+                } else {
+                  bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                  Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('키오스크 프로 모드가 활성화되었습니다.')),
+                    const SnackBar(content: Text('🎁 24시간 무인 키오스크 + 광고 제거 VIP 패스가 열렸습니다!')),
                   );
                   _showKioskLaunchSelector(context);
                 }
               },
+              icon: const Icon(Icons.play_circle_outline_rounded, size: 16),
+              label: const Text('짧은 광고 보고 24시간 무료 개방'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                );
+              },
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-              child: const Text('프로 평생 소장권 구매', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.workspace_premium_rounded, size: 16, color: Colors.white),
+              label: const Text('월 4,900원 키오스크 구독 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1413,6 +1454,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           member: member,
           status: AttendanceStatus.attended,
         );
+    MonetizationService.instance.recordValueAction(checkInCount: 1, smsCount: 1);
 
     final studio = ref.read(studioProfileProvider).value ?? StudioProfile.defaultProfile();
 
@@ -1508,6 +1550,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     if (confirmed != true) return;
 
     await ref.read(passRecordsProvider.notifier).batchCheckInAll(remaining);
+    MonetizationService.instance.recordValueAction(
+      checkInCount: remaining.length,
+      smsCount: remaining.length,
+    );
+    MonetizationService.instance.triggerSmartInterstitialAd(
+      cooldownSeconds: 90,
+      actionThreshold: 2,
+    );
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -47,6 +47,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   bool _isAdsRemoved = false;
   bool _isKioskProUnlocked = false;
   DateTime? _rewardedAdFreeUntil;
+  DateTime? _rewardedKioskPassUntil;
+
+  // 선순환 리텐션 & 누적 ROI 가치 측정 지표 (Retention Flywheel Metrics)
+  int _activeStreakDays = 1;
+  String? _lastActiveDateStr;
+  int _cumulativeSavedSmsCount = 128; // 안심 문자/청구서 발송 누적 건수 (기본 시드 + 실사용 누적)
+  int _cumulativeCheckInCount = 342; // 누적 출결 처리 건수
+  int _cumulativeTaxLedgerCount = 18; // 누적 세무/정산 자동화 건수
 
   bool get isAdsRemoved {
     if (_isAdsRemoved) return true;
@@ -56,7 +64,52 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     return false;
   }
 
-  bool get isKioskProUnlocked => _isKioskProUnlocked;
+  bool get isKioskProUnlocked {
+    if (_isKioskProUnlocked) return true;
+    if (_rewardedKioskPassUntil != null && DateTime.now().isBefore(_rewardedKioskPassUntil!)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get isPermanentVip => _isAdsRemoved && _isKioskProUnlocked;
+
+  bool get isTemporaryPassActive =>
+      (!_isAdsRemoved && _rewardedAdFreeUntil != null && DateTime.now().isBefore(_rewardedAdFreeUntil!)) ||
+      (!_isKioskProUnlocked && _rewardedKioskPassUntil != null && DateTime.now().isBefore(_rewardedKioskPassUntil!));
+
+  Duration get remainingTemporaryPassDuration {
+    final now = DateTime.now();
+    DateTime? latest;
+    if (_rewardedAdFreeUntil != null && now.isBefore(_rewardedAdFreeUntil!)) {
+      latest = _rewardedAdFreeUntil;
+    }
+    if (_rewardedKioskPassUntil != null && now.isBefore(_rewardedKioskPassUntil!)) {
+      if (latest == null || _rewardedKioskPassUntil!.isAfter(latest)) {
+        latest = _rewardedKioskPassUntil;
+      }
+    }
+    if (latest == null) return Duration.zero;
+    return latest.difference(now);
+  }
+
+  int get activeStreakDays => _activeStreakDays;
+  int get cumulativeSavedSmsCount => _cumulativeSavedSmsCount;
+  int get cumulativeCheckInCount => _cumulativeCheckInCount;
+  int get cumulativeTaxLedgerCount => _cumulativeTaxLedgerCount;
+
+  /// 원장님이 제로패스를 통해 절감한 누적 경제적 가치(원)
+  /// - 건당 알림톡/장문 문자 비용 25원 절감 + 타사 키오스크/ERP 기본료 월 35,000원 절감 효과 환산
+  int get estimatedTotalSavedKRW =>
+      (_cumulativeSavedSmsCount * 25) + (_cumulativeCheckInCount * 15) + 35000;
+
+  /// 원장님 매장 운영 등급 (습관화 리텐션 배지)
+  String get retentionTierTitle {
+    if (isPermanentVip) return '로열 VIP 스마트 원장님';
+    if (_activeStreakDays >= 14) return '골든 마스터 원장님';
+    if (_activeStreakDays >= 3) return '스마트 케어 원장님';
+    return '스타트업 원장님';
+  }
 
   // 광고 객체 및 로드 상태
   InterstitialAd? _interstitialAd;
@@ -123,14 +176,67 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  /// 보상형 광고 시청 후 24시간 동안 광고 제거 혜택 부여
-  Future<void> grantTemporaryAdFreeHours(int hours) async {
+  /// 보상형 광고 시청 후 N시간 동안 광고 제거 + 태블릿 키오스크 VIP 혜택 부여 (Reverse-Trial Funnel)
+  Future<void> grantTemporaryAdFreeHours(int hours, {bool includeKiosk = true}) async {
     final expiry = DateTime.now().add(Duration(hours: hours));
     _rewardedAdFreeUntil = expiry;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('rewarded_ad_free_until', expiry.toIso8601String());
+    if (includeKiosk) {
+      _rewardedKioskPassUntil = expiry;
+      await prefs.setString('rewarded_kiosk_pass_until', expiry.toIso8601String());
+    }
     premiumStatusNotifier.value = true;
     notifyListeners();
+  }
+
+  /// 출결/안심문자/청구서/세무정산 실행 시 원장님 누적 ROI 절감액 기록 (Retention Flywheel)
+  Future<void> recordValueAction({
+    int smsCount = 0,
+    int checkInCount = 0,
+    int taxCount = 0,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (smsCount > 0) {
+      _cumulativeSavedSmsCount += smsCount;
+      await prefs.setInt('bm_saved_sms_count', _cumulativeSavedSmsCount);
+    }
+    if (checkInCount > 0) {
+      _cumulativeCheckInCount += checkInCount;
+      await prefs.setInt('bm_checkin_count', _cumulativeCheckInCount);
+    }
+    if (taxCount > 0) {
+      _cumulativeTaxLedgerCount += taxCount;
+      await prefs.setInt('bm_tax_count', _cumulativeTaxLedgerCount);
+    }
+    await _updateDailyStreak(prefs);
+    notifyListeners();
+  }
+
+  Future<void> _updateDailyStreak(SharedPreferences prefs) async {
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    if (_lastActiveDateStr == todayStr) return;
+
+    if (_lastActiveDateStr != null) {
+      final lastDate = DateTime.tryParse(_lastActiveDateStr!);
+      if (lastDate != null) {
+        final diffDays = DateTime(now.year, now.month, now.day)
+            .difference(DateTime(lastDate.year, lastDate.month, lastDate.day))
+            .inDays;
+        if (diffDays == 1) {
+          _activeStreakDays++;
+        } else if (diffDays > 1) {
+          _activeStreakDays = 1;
+        }
+      }
+    } else {
+      _activeStreakDays = prefs.getInt('bm_active_streak_days') ?? 7; // 초기 경험 강화를 위한 기본 7일 연속 배지 시드
+    }
+
+    _lastActiveDateStr = todayStr;
+    await prefs.setString('bm_last_active_date', todayStr);
+    await prefs.setInt('bm_active_streak_days', _activeStreakDays);
   }
 
   Future<void> initialize() async {
@@ -139,12 +245,26 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     _isAdsRemoved = prefs.getBool('is_ads_removed') ?? false;
     _isKioskProUnlocked = prefs.getBool('is_kiosk_pro_unlocked') ?? false;
+    _cumulativeSavedSmsCount = prefs.getInt('bm_saved_sms_count') ?? 128;
+    _cumulativeCheckInCount = prefs.getInt('bm_checkin_count') ?? 342;
+    _cumulativeTaxLedgerCount = prefs.getInt('bm_tax_count') ?? 18;
+    _activeStreakDays = prefs.getInt('bm_active_streak_days') ?? 7;
+    _lastActiveDateStr = prefs.getString('bm_last_active_date');
+    await _updateDailyStreak(prefs);
 
     final adFreeStr = prefs.getString('rewarded_ad_free_until');
     if (adFreeStr != null) {
       final expiry = DateTime.tryParse(adFreeStr);
       if (expiry != null && DateTime.now().isBefore(expiry)) {
         _rewardedAdFreeUntil = expiry;
+      }
+    }
+
+    final kioskPassStr = prefs.getString('rewarded_kiosk_pass_until');
+    if (kioskPassStr != null) {
+      final expiry = DateTime.tryParse(kioskPassStr);
+      if (expiry != null && DateTime.now().isBefore(expiry)) {
+        _rewardedKioskPassUntil = expiry;
       }
     }
 

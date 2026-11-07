@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../services/monetization_service.dart';
+import '../screens/pro_store_screen.dart';
+import '../theme/app_theme.dart';
 
 class AdBannerWidget extends StatefulWidget {
   const AdBannerWidget({super.key});
@@ -20,6 +22,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   void initState() {
     super.initState();
     MonetizationService.instance.premiumStatusNotifier.addListener(_onPremiumChanged);
+    MonetizationService.instance.addListener(_onPremiumChanged);
   }
 
   @override
@@ -35,17 +38,21 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   void dispose() {
     MonetizationService.instance.premiumStatusNotifier.removeListener(_onPremiumChanged);
+    MonetizationService.instance.removeListener(_onPremiumChanged);
     _bannerAd?.dispose();
     super.dispose();
   }
 
   void _onPremiumChanged() {
-    if (MonetizationService.instance.isAdsRemoved && mounted) {
+    if (!mounted) return;
+    if (MonetizationService.instance.isAdsRemoved) {
       setState(() {
         _bannerAd?.dispose();
         _bannerAd = null;
         _isBannerLoaded = false;
       });
+    } else {
+      setState(() {});
     }
   }
 
@@ -101,25 +108,196 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (MonetizationService.instance.isAdsRemoved || !_isBannerLoaded || _bannerAd == null) {
+    final bm = MonetizationService.instance;
+
+    // 1. 만약 24시간 VIP 체험권(보상형 광고 패스)이 활성화된 상태라면 -> 구독 전환 브릿지 바 노출
+    if (bm.isTemporaryPassActive && !bm.isPermanentVip) {
+      final remHours = bm.remainingTemporaryPassDuration.inHours.clamp(1, 24);
+      return Material(
+        color: const Color(0xFF0F172A),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+            );
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFF334155), width: 0.8)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.bolt_rounded, size: 15, color: Color(0xFFFBBF24)),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          '광고 없는 VIP 쾌적 모드 체험 중 ($remHours시간 남음)',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    '월 1,900원 평생 유지 >',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (bm.isAdsRemoved) {
       return const SizedBox.shrink();
     }
 
-    final adSize = _bannerAd!.size;
-
-    return Container(
-      width: double.infinity,
-      height: adSize.height.toDouble(),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200, width: 0.8)),
-      ),
-      child: SizedBox(
-        width: adSize.width.toDouble(),
-        height: adSize.height.toDouble(),
-        child: AdWidget(ad: _bannerAd!),
-      ),
+    // 2. 일반 무료 모드: 상단 1줄 [광고 → 결제 전환 마이크로 캡슐 바] + 하단 AdMob 배너
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            border: Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              InkWell(
+                onTap: () {
+                  if (bm.isRewardedAdAvailable) {
+                    bm.showRewardedAd(
+                      onRewarded: () async {
+                        await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🎉 24시간 동안 광고 제거 + 무인 키오스크 VIP 패스가 지급되었습니다!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      onFailed: () async {
+                        await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🎁 원장님 응원 혜택으로 24시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  } else {
+                    bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('🎁 24시간 동안 광고 없는 VIP 패스 + 무인 키오스크가 무료로 열렸습니다!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.play_circle_fill_rounded, size: 13.5, color: AppTheme.primaryBlue),
+                      SizedBox(width: 4),
+                      Text(
+                        '오늘 하루 광고 끄기 (무료 VIP 체험)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.workspace_premium_rounded, size: 13, color: Color(0xFFD97706)),
+                      SizedBox(width: 3),
+                      Text(
+                        '커피 반 잔(월 1,900원) 광고 완전 제거 >',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_isBannerLoaded && _bannerAd != null)
+          Container(
+            width: double.infinity,
+            height: _bannerAd!.size.height.toDouble(),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.shade200, width: 0.6)),
+            ),
+            child: SizedBox(
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            ),
+          ),
+      ],
     );
   }
 }

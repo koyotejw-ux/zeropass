@@ -14,6 +14,7 @@ import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
 import '../services/database_service.dart';
 import '../services/localization_service.dart';
+import '../services/monetization_service.dart';
 import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
@@ -869,7 +870,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // 1-1. VIP ROI Membership & Retention Flywheel Card (선순환 결제 전환 & 누적 절감액 보드)
+              _buildVipMembershipRoiCard(context),
+              const SizedBox(height: 6),
 
               // 1-2. 비대면 신용카드 결제 링크 (0원 연동)
               _buildSectionTitle('비대면 신용카드 결제 링크 (0원 연동)', icon: Icons.credit_card_rounded),
@@ -1785,6 +1790,176 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
         ],
       ),
+    );
+  }
+
+  Widget _buildVipMembershipRoiCard(BuildContext context) {
+    return AnimatedBuilder(
+      animation: MonetizationService.instance,
+      builder: (context, _) {
+        final bm = MonetizationService.instance;
+        final isVip = bm.isPermanentVip;
+        final isTemp = bm.isTemporaryPassActive;
+        final fmt = NumberFormat('#,###');
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 18),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+              width: 1.2,
+            ),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.4)),
+                    ),
+                    child: Text(
+                      '👑 ${bm.retentionTierTitle}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFFBBF24),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '🔥 연속 ${bm.activeStreakDays}일 스마트 운영 중',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                isVip
+                    ? '올인원 VIP 멤버십 활성화 완료'
+                    : '원장님 누적 절감 가치: 약 ${fmt.format(bm.estimatedTotalSavedKRW)}원',
+                style: const TextStyle(
+                  fontSize: 17.5,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.3,
+                ),
+                softWrap: true,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isVip
+                    ? '모든 광고가 차단되었으며 입구 거치형 무인 출결 키오스크를 무제한으로 이용하실 수 있습니다.'
+                    : isTemp
+                        ? '현재 24시간 무료 VIP 체험권이 작동 중입니다. 월 커피 한 잔 값으로 평생 쾌적한 매장을 유지하세요.'
+                        : '0원 문자(${bm.cumulativeSavedSmsCount}건)와 자동 출결(${bm.cumulativeCheckInCount}건)로 아낀 비용으로 광고 없는 VIP 매장과 무인 키오스크를 시작하세요.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.white.withValues(alpha: 0.82),
+                  height: 1.4,
+                ),
+                softWrap: true,
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF59E0B),
+                      foregroundColor: const Color(0xFF0F172A),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.workspace_premium_rounded, size: 16, color: Color(0xFF0F172A)),
+                    label: Text(
+                      isVip ? 'VIP 구독 관리 열기' : '월 1,900원~ VIP 멤버십 보기',
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  if (!isVip)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        if (bm.isRewardedAdAvailable) {
+                          bm.showRewardedAd(
+                            onRewarded: () async {
+                              await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('🎉 24시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                            onFailed: () async {
+                              await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('🎁 24시간 올인원 VIP 패스가 무료로 활성화되었습니다!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        } else {
+                          bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🎁 24시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.play_circle_outline_rounded, size: 15, color: Color(0xFFFBBF24)),
+                      label: const Text(
+                        '24시간 VIP 무료 체험',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

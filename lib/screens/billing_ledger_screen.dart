@@ -17,6 +17,7 @@ import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/kakao_share_service.dart';
 import '../services/data_vault_service.dart';
+import '../services/monetization_service.dart';
 import '../services/sequential_dispatch_service.dart';
 import '../widgets/sequential_dispatch_modal.dart';
 import '../widgets/receipt_notify_dialog.dart';
@@ -2849,6 +2850,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   try {
                     final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
                     await DataVaultService.shareSimplifiedBookkeepingCsv(file);
+                    await MonetizationService.instance.recordValueAction(taxCount: 1);
+                    MonetizationService.instance.triggerSmartInterstitialAd(
+                      cooldownSeconds: 90,
+                      actionThreshold: 1,
+                    );
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('간편장부 내보내기 오류: $e')));

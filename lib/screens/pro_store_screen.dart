@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/monetization_service.dart';
 import '../theme/app_theme.dart';
 import 'tablet_kiosk_screen.dart';
@@ -59,9 +60,11 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
       body: AnimatedBuilder(
         animation: MonetizationService.instance,
         builder: (context, _) {
-          final isNoAds = MonetizationService.instance.isAdsRemoved;
-          final isKiosk = MonetizationService.instance.isKioskProUnlocked;
+          final bm = MonetizationService.instance;
+          final isNoAds = bm.isAdsRemoved;
+          final isKiosk = bm.isKioskProUnlocked;
           final isAllInOne = isNoAds && isKiosk;
+          final currencyFmt = NumberFormat('#,###');
 
           return ListView(
             padding: EdgeInsets.fromLTRB(
@@ -71,7 +74,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               isLandscape ? 36 : 90,
             ),
             children: [
-              // 1. Pro Value Proposition Hero Card (VIP Prestige Banner)
+              // 1. Pro Value Proposition Hero Card (VIP Prestige Banner + Cumulative ROI Flywheel)
               Container(
                 padding: EdgeInsets.all(isLandscape ? 16 : 20),
                 decoration: BoxDecoration(
@@ -82,7 +85,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -96,6 +99,46 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Retention Tier & Streak Pill
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.45)),
+                          ),
+                          child: Text(
+                            '👑 ${bm.retentionTierTitle}',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFFBBF24),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '🔥 연속 ${bm.activeStreakDays}일 스마트 운영 중',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -115,24 +158,26 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               Text(
                                 isAllInOne
                                     ? '대표님은 올인원 VIP 구독 이용 중'
-                                    : '부담 없는 월정액 구독 멤버십',
+                                    : '지금까지 약 ${currencyFmt.format(bm.estimatedTotalSavedKRW)}원 절감!',
                                 style: TextStyle(
-                                  fontSize: isLandscape ? 16 : 17.5,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: isLandscape ? 16 : 18,
+                                  fontWeight: FontWeight.w900,
                                   color: Colors.white,
                                   letterSpacing: -0.3,
                                 ),
+                                softWrap: true,
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 isAllInOne
                                     ? '태블릿 키오스크와 광고 없는 최적의 매장 환경이 활성화되어 있습니다.'
-                                    : '월 커피 한두 잔 비용으로 학원·매장의 출결과 장부를 스마트하게 혁신하세요.',
+                                    : '무료 문자(${bm.cumulativeSavedSmsCount}건)와 자동 출결(${bm.cumulativeCheckInCount}건)로 아낀 통신·서버비의 10%만 투자해 광고 없는 VIP 매장을 완성하세요.',
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 12.5,
+                                  color: Colors.white.withValues(alpha: 0.85),
                                   height: 1.45,
                                 ),
+                                softWrap: true,
                               ),
                             ],
                           ),
@@ -140,6 +185,41 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    // ROI Comparison Strip (타사 키오스크 월 49,000원 vs 체크앤페이 월 1,900~5,900원)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      ),
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: const [
+                          Text(
+                            '타사 출결 키오스크·ERP (월 49,000원)',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF94A3B8),
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                          Text(
+                            '체크앤페이 VIP 월 5,900원 (88% 절감)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF34D399),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -153,7 +233,116 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 16),
+
+              // 1-B. Reverse-Trial Bridge Card (광고 시청으로 24시간 VIP 먼저 써보고 결제 전환)
+              if (!bm.isPermanentVip) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              '결제 전 무료 VIP 체험',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                          ),
+                          Text(
+                            bm.isTemporaryPassActive
+                                ? '현재 24시간 VIP 패스 활성화 중 (${bm.remainingTemporaryPassDuration.inHours.clamp(1, 24)}시간 남음)'
+                                : '광고 없는 쾌적함과 태블릿 키오스크를 먼저 경험해보세요',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E40AF),
+                            ),
+                            softWrap: true,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '짧은 응원 광고 1회 시청으로 24시간 동안 [모든 광고 완전 제거 + 무인 출결 키오스크]를 즉시 개방합니다. 써보시고 마음에 드실 때 월 커피 한 잔 값으로 정기 구독하세요!',
+                        style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.4),
+                        softWrap: true,
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            if (bm.isRewardedAdAvailable) {
+                              bm.showRewardedAd(
+                                onRewarded: () async {
+                                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('🎉 24시간 올인원 VIP 패스(광고 제거 + 키오스크)가 활성화되었습니다!'),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                },
+                                onFailed: () async {
+                                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('🎁 원장님 응원 혜택으로 24시간 올인원 VIP 패스가 즉시 지급되었습니다!'),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            } else {
+                              bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('🎁 24시간 올인원 VIP 패스(광고 제거 + 키오스크)가 즉시 활성화되었습니다!'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.play_circle_fill_rounded, size: 18, color: AppTheme.primaryBlue),
+                          label: Text(
+                            bm.isTemporaryPassActive
+                                ? '24시간 VIP 체험 시간 연장하기 (무료)'
+                                : '24시간 올인원 VIP 무료 패스 켜기',
+                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
+                            softWrap: true,
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+              ],
 
               // 2. Section Title
               Padding(
@@ -549,8 +738,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                     child: Text(
                       actionButtonText,
                       textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                       style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
                     ),
                   ),
@@ -570,14 +758,13 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   side: const BorderSide(color: Color(0xFFD97706), width: 1.2),
                   backgroundColor: const Color(0xFFFFFBEB),
                   foregroundColor: const Color(0xFFB45309),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
                   secondaryButtonText,
                   textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ),
