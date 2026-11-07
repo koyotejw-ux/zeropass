@@ -23,7 +23,12 @@ import '../widgets/member_name_badge.dart';
 import '../widgets/sequential_dispatch_modal.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
-  const MemberDirectoryScreen({super.key});
+  final bool enableAutoCoachMark;
+
+  const MemberDirectoryScreen({
+    super.key,
+    this.enableAutoCoachMark = true,
+  });
 
   @override
   ConsumerState<MemberDirectoryScreen> createState() => _MemberDirectoryScreenState();
@@ -32,20 +37,23 @@ class MemberDirectoryScreen extends ConsumerStatefulWidget {
 class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedGroupFilter = '전체';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      CoachMarkDialog.showIfFirstTime(
-        context: context,
-        coachKey: CoachMarkService.keyMemberTab,
-        title: '수강생(회원) 명부 관리',
-        message: '등록된 회원들의 남은 회차와 수업 그룹, 출결 이력을 한눈에 볼 수 있는 공간이에요.\n\n새로운 학생이나 회원이 등록하면 언제든 우측 하단 [+ 회원 등록]으로 10초 만에 추가하세요!',
-        tip: '회원 카드를 터치하면 출결 타임라인 확인, 회차 충전(+10회), 청구서 즉시 발송이 가능해요.',
-        buttonText: '회원 명부 둘러보기',
-      );
-    });
+    if (widget.enableAutoCoachMark) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        CoachMarkDialog.showIfFirstTime(
+          context: context,
+          coachKey: CoachMarkService.keyMemberTab,
+          title: '수강생(회원) 명부 관리',
+          message: '등록된 회원들의 남은 회차와 수업 그룹, 출결 이력을 한눈에 볼 수 있는 공간이에요.\n\n새로운 학생이나 회원이 등록하면 언제든 우측 하단 [+ 회원 등록]으로 10초 만에 추가하세요!',
+          tip: '회원 카드를 터치하면 출결 타임라인 확인, 회차 충전(+10회), 청구서 즉시 발송이 가능해요.',
+          buttonText: '회원 명부 둘러보기',
+        );
+      });
+    }
   }
 
   @override
@@ -169,7 +177,11 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('회원 로딩 오류: $err')),
         data: (members) {
+          final allGroups = ['전체', ...members.map((m) => m.groupName).where((g) => g.trim().isNotEmpty).toSet()];
           final filtered = members.where((m) {
+            if (_selectedGroupFilter != '전체' && m.groupName != _selectedGroupFilter) {
+              return false;
+            }
             if (_searchQuery.isEmpty) return true;
             return ChosungSearchService.matchesAny(
               [m.name, m.phone, m.groupName, m.payerName, m.memo],
@@ -181,12 +193,12 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             children: [
               // Search Input Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
                     boxShadow: AppTheme.cardShadow,
                   ),
                   child: TextField(
@@ -194,8 +206,8 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                     onChanged: (val) => setState(() => _searchQuery = val.trim()),
                     decoration: InputDecoration(
                       hintText: '이름, 초성(ㄱㄷㅎ), 연락처, 그룹명 검색',
-                      hintStyle: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 21),
+                      hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
+                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 20),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear, size: 18),
@@ -206,15 +218,57 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                             )
                           : null,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
                   ),
                 ),
               ),
 
+              // Group Filter Chips
+              if (allGroups.length > 1)
+                SizedBox(
+                  height: 38,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+                    itemCount: allGroups.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (context, idx) {
+                      final grp = allGroups[idx];
+                      final isSelected = _selectedGroupFilter == grp;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedGroupFilter = grp),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.primaryDark : Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: isSelected ? AppTheme.primaryDark : AppTheme.borderSubtle,
+                              width: 0.9,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              grp,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                color: isSelected ? Colors.white : AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
               // Total count badge & Quick batch action
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -240,7 +294,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3182F6).withValues(alpha: 0.08),
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(

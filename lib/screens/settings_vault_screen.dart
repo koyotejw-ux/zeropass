@@ -25,11 +25,17 @@ import '../widgets/senior_easy_guide_modal.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/tax_guide_modal.dart';
 import 'home_navigation_screen.dart';
+import 'pro_store_screen.dart';
 import 'studio_setup_wizard_screen.dart';
 import 'tablet_kiosk_screen.dart';
 
 class SettingsVaultScreen extends ConsumerStatefulWidget {
-  const SettingsVaultScreen({super.key});
+  final bool enableAutoCoachMark;
+
+  const SettingsVaultScreen({
+    super.key,
+    this.enableAutoCoachMark = true,
+  });
 
   @override
   ConsumerState<SettingsVaultScreen> createState() => _SettingsVaultScreenState();
@@ -42,16 +48,18 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   void initState() {
     super.initState();
     _loadKioskDedicatedMode();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      CoachMarkDialog.showIfFirstTime(
-        context: context,
-        coachKey: CoachMarkService.keySettingsTab,
-        title: '로컬 100% 보안 금고',
-        message: '제로패스는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
-        tip: '스튜디오 상호명, 수납 계좌번호, 자동 문자 양식 편집도 모두 여기서 관리하실 수 있습니다.',
-        buttonText: '안심하고 사용할게요',
-      );
-    });
+    if (widget.enableAutoCoachMark) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        CoachMarkDialog.showIfFirstTime(
+          context: context,
+          coachKey: CoachMarkService.keySettingsTab,
+          title: '로컬 100% 보안 금고',
+          message: '제로패스는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
+          tip: '스튜디오 상호명, 수납 계좌번호, 자동 문자 양식 편집도 모두 여기서 관리하실 수 있습니다.',
+          buttonText: '안심하고 사용할게요',
+        );
+      });
+    }
   }
 
   Future<void> _loadKioskDedicatedMode() async {
@@ -243,10 +251,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     StepByStepPracticeGuideDialog.show(
       context,
       onOpenAddMember: () {
-        HomeNavigationScreen.of(context)?.switchToTab(2); // 회원 관리 탭
+        HomeNavigationScreen.of(context)?.switchToTab(3); // 회원 명부 탭
       },
       onOpenSettings: () {
-        HomeNavigationScreen.of(context)?.switchToTab(3); // 설정 탭
+        HomeNavigationScreen.of(context)?.switchToTab(4); // 운영·설정 탭
       },
     );
   }
@@ -624,8 +632,45 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('설정 · 보안 금고'),
+        title: const Text('운영 · 보안 설정'),
         actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.45)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 15),
+                      SizedBox(width: 4),
+                      Text(
+                        'PRO 샵',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           // Senior Mode Quick Toggle
           IconButton(
             tooltip: isSeniorMode ? '보통 글씨 모드로 전환' : '시니어 큰글씨 모드로 전환',

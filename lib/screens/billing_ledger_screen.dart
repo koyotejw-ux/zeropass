@@ -28,8 +28,23 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/responsive_dialog_actions.dart';
 
+enum LedgerScreenMode {
+  all, // Default: 3-tab view (for backward compatibility & widget tests)
+  billingOnly, // Tab 1 (청구·수납): Focused exclusively on tuition invoicing & collection
+  expenseTaxOnly, // Tab 2 (지출·세무): Focused exclusively on expenses, 3.3% payroll, vendors & tax ledger
+}
+
 class BillingLedgerScreen extends ConsumerStatefulWidget {
-  const BillingLedgerScreen({super.key});
+  final LedgerScreenMode mode;
+  final int initialTab;
+  final bool enableAutoCoachMark;
+
+  const BillingLedgerScreen({
+    super.key,
+    this.mode = LedgerScreenMode.all,
+    this.initialTab = 0,
+    this.enableAutoCoachMark = true,
+  });
 
   @override
   ConsumerState<BillingLedgerScreen> createState() => _BillingLedgerScreenState();
@@ -44,16 +59,23 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      CoachMarkDialog.showIfFirstTime(
-        context: context,
-        coachKey: CoachMarkService.keyBillingTab,
-        title: '수강료 청구 및 수납 장부',
-        message: '매월 나가는 수강료 청구 문자를 0원으로 보내고 입금 내역을 관리할 수 있는 장부예요.\n\n우측 하단 [+]를 누르면 동일 연락처의 형제자매까지 자동 합산하여 청구서를 작성할 수 있어요!',
-        tip: '수납이 확인되면 [수납 완료] 버튼을 눌러 계좌이체/카드/현금 결제 수단별로 깔끔하게 장부에 기록하세요.',
-        buttonText: '장부 둘러보기',
-      );
-    });
+    _selectedTab = widget.mode == LedgerScreenMode.expenseTaxOnly
+        ? 2
+        : (widget.mode == LedgerScreenMode.billingOnly && widget.initialTab == 2
+            ? 0
+            : widget.initialTab);
+    if (widget.enableAutoCoachMark) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        CoachMarkDialog.showIfFirstTime(
+          context: context,
+          coachKey: CoachMarkService.keyBillingTab,
+          title: '수강료 청구 및 수납 장부',
+          message: '매월 나가는 수강료 청구 문자를 0원으로 보내고 입금 내역을 관리할 수 있는 장부예요.\n\n우측 하단 [+]를 누르면 동일 연락처의 형제자매까지 자동 합산하여 청구서를 작성할 수 있어요!',
+          tip: '수납이 확인되면 [수납 완료] 버튼을 눌러 계좌이체/카드/현금 결제 수단별로 깔끔하게 장부에 기록하세요.',
+          buttonText: '장부 둘러보기',
+        );
+      });
+    }
   }
 
   @override
@@ -65,26 +87,39 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     final vendorsAsync = ref.watch(vendorsProvider);
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
+    final String appBarTitle = widget.mode == LedgerScreenMode.expenseTaxOnly
+        ? '지출 · 정산 · 세무 장부'
+        : widget.mode == LedgerScreenMode.billingOnly
+            ? '수강료 청구 · 수납'
+            : LocalizationService.tr('billing_title');
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text(LocalizationService.tr('billing_title')),
+        title: Text(appBarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.table_view_outlined, size: 21, color: AppTheme.primaryBlue),
             tooltip: '국세청 표준 사업소득 간편장부 엑셀(CSV) 내보내기 & 세무 가이드',
             onPressed: () => _showBookkeepingExportSheet(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.share_outlined, size: 20),
-            tooltip: '동료 원장님께 제로패스 추천 (카톡)',
-            onPressed: () {
-              final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-              final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
-              KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 ZeroPass 추천');
-            },
-          ),
-          if (_selectedTab == 2)
+          if (widget.mode == LedgerScreenMode.expenseTaxOnly)
+            IconButton(
+              icon: const Icon(Icons.menu_book_outlined, size: 20, color: AppTheme.textPrimary),
+              tooltip: '소상공인 1분 세무 일정 가이드',
+              onPressed: () => TaxGuideModal.show(context),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.share_outlined, size: 20),
+              tooltip: '동료 원장님께 제로패스 추천 (카톡)',
+              onPressed: () {
+                final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+                final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
+                KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 ZeroPass 추천');
+              },
+            ),
+          if (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(right: 14),
@@ -507,30 +542,66 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     ),
                   ),
 
-                  // 2. Segmented Control
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.chipBackground,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.all(3),
-                            child: Row(
-                              children: [
-                                _buildTabButton('미납 / 청구 (${unpaidInvoices.length})', 0),
-                                _buildTabButton('수납 완료 (${paidInvoices.length})', 1),
-                                _buildTabButton('지출 / 매입 (${expenses.length})', 2),
-                              ],
+                  // 2. Segmented Control or Expense/Tax Quick Hub
+                  if (widget.mode == LedgerScreenMode.expenseTaxOnly)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildQuickTaxActionTile(
+                              icon: Icons.business_center_outlined,
+                              label: '거래처·강사 (${vendors.length})',
+                              color: const Color(0xFF4F46E5),
+                              onTap: () => _openVendorManagementSheet(context, vendors),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildQuickTaxActionTile(
+                              icon: Icons.table_view_outlined,
+                              label: '간편장부 엑셀',
+                              color: const Color(0xFF059669),
+                              onTap: () => _showBookkeepingExportSheet(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildQuickTaxActionTile(
+                              icon: Icons.menu_book_outlined,
+                              label: '1분 세무 가이드',
+                              color: AppTheme.primaryBlue,
+                              onTap: () => TaxGuideModal.show(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.chipBackground,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.all(3),
+                              child: Row(
+                                children: [
+                                  _buildTabButton('미납 / 청구 (${unpaidInvoices.length})', 0),
+                                  _buildTabButton('수납 완료 (${paidInvoices.length})', 1),
+                                  if (widget.mode == LedgerScreenMode.all)
+                                    _buildTabButton('지출 / 매입 (${expenses.length})', 2),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
                   // Expiring Sessions Warning Strip (with one-tap warning SMS)
                   if (_selectedTab == 0 && expiringMembers.isNotEmpty)
@@ -716,9 +787,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           );
         },
       ),
-      floatingActionButton: _selectedTab == 2
+      floatingActionButton: (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)
           ? FloatingActionButton.extended(
-              heroTag: 'fab_expense',
+              heroTag: 'fab_expense_${widget.mode.name}',
               onPressed: () {
                 final curVendors = vendorsAsync.value ?? [];
                 _openAddExpenseSheet(context, curVendors);
@@ -731,7 +802,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
             )
           : FloatingActionButton.extended(
-              heroTag: 'fab_billing',
+              heroTag: 'fab_billing_${widget.mode.name}',
               onPressed: () {
                 final members = membersAsync.value ?? [];
                 final studio = studioAsync.value ?? StudioProfile.defaultProfile();
@@ -744,6 +815,51 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ),
+    );
+  }
+
+  Widget _buildQuickTaxActionTile({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 5),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

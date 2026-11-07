@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
-import 'mascot_avatar.dart';
+import 'brand_emblem.dart';
 
-/// ZeroPass 포트폴리오급 대표 시그니처 키비주얼 (Signature Key Visual Hero)
+/// ZeroPass 하이엔드 이그제큐티브 출결 브리핑 콕핏 (Signature Key Visual Hero)
 ///
-/// 독창적이고 심미성 높은 3D 글래스모피즘 오로라 레이더 & 펭귄 마스코트 인터랙티브 비주얼 컴포넌트.
-/// 베스트 UX/UI 포트폴리오(Behance / Dribbble) 규격의 미려한 디테일과 부드러운 애니메이션을 제공합니다.
-class SignatureKeyVisualHero extends StatefulWidget {
+/// Z-패턴 시선 처리(좌상단 브랜드 -> 우상단 출석률 -> 중앙 프로그레스 -> 하단 3열 실시간 KPI 그리드)를
+/// 적용하여 불필요한 시각적 산만함을 제거하고 핵심 운영 지표를 0.5초 만에 파악할 수 있도록 설계된 컴포넌트입니다.
+class SignatureKeyVisualHero extends StatelessWidget {
   final List<Member> members;
   final List<PassRecord> todayRecords;
   final StudioProfile? studio;
@@ -26,350 +26,194 @@ class SignatureKeyVisualHero extends StatefulWidget {
   });
 
   @override
-  State<SignatureKeyVisualHero> createState() => _SignatureKeyVisualHeroState();
-}
-
-class _SignatureKeyVisualHeroState extends State<SignatureKeyVisualHero> {
-  bool _isTapped = false;
-
-  @override
   Widget build(BuildContext context) {
-    final totalCount = widget.members.length;
-    final checkedInIds = widget.todayRecords.map((r) => r.memberId).toSet();
-    final checkedCount = widget.members.where((m) => checkedInIds.contains(m.id)).length;
+    final totalCount = members.length;
+    final checkedInIds = todayRecords.map((r) => r.memberId).toSet();
+    final checkedCount = members.where((m) => checkedInIds.contains(m.id)).length;
+    final waitingCount = (totalCount - checkedCount).clamp(0, 9999);
+    final expiringCount = members
+        .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 2)
+        .length;
     final attendanceRate = totalCount == 0 ? 0 : ((checkedCount / totalCount) * 100).toInt();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Color(0xFF0F172A), // Deep Slate Navy
-              Color(0xFF1E293B), // Obsidian Blue
-              Color(0xFF090D16), // Pure Void Navy
+              Color(0xFF18181B), // Obsidian Zinc
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withValues(alpha: 0.18),
-              blurRadius: 20,
-              spreadRadius: 1,
-              offset: const Offset(0, 6),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
+              color: Colors.black.withValues(alpha: 0.14),
               blurRadius: 16,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 6),
             ),
           ],
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.14),
-            width: 1.2,
+            color: Colors.white.withValues(alpha: 0.10),
+            width: 1.0,
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Stack(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // 1. Static Cyber Aurora Light Gradients in Background (No movement/pulsing)
-              Positioned(
-                top: -40,
-                right: -30,
-                child: Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFF38BDF8).withValues(alpha: 0.22),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -50,
-                left: -30,
-                child: Container(
-                  width: 190,
-                  height: 190,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFF10B981).withValues(alpha: 0.18),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // 2. Main Content
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Top Bar: Live Status Pill & Interactive Guide Trigger
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Responsive Live Status Pill
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.16),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFF34D399),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF34D399).withValues(alpha: 0.8),
-                                          blurRadius: 5,
-                                          spreadRadius: 1,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    '100% 로컬 출결 레이더 가동 중',
-                                    style: TextStyle(
-                                      color: Color(0xFFE2E8F0),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // Studio Brand & Category Badge (Non-redundant identifier)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.12),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF60A5FA)),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.studio?.studioName ?? '로컬 보안 볼트',
-                                style: const TextStyle(
-                                  color: Color(0xFFE2E8F0),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Centerpiece: 3D Mascot + High-end Typography (Rock-solid static aesthetic)
-                    Row(
-                      children: [
-                        // Static Penguin Mascot with Clean Accent Border Ring (No continuous pulse)
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.mediumImpact();
-                            setState(() => _isTapped = !_isTapped);
-                            widget.onOpenGuide?.call();
-                          },
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Subtle Static Accent Halo Ring
-                              Container(
-                                width: 58,
-                                height: 58,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                              // Mascot Circle (Naturally masked 3D Penguin Mascot)
-                              ZeroPassMascotAvatar(
-                                size: 52,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                  width: 1.5,
-                                ),
-                                isLightMode: true,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-
-                        // Headline and Dynamic Metrics (Scaled down on narrow screens)
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Row(
-                                  children: [
-                                    const Text(
-                                      '오늘 출결 실시간',
-                                      style: TextStyle(
-                                        color: Color(0xFF94A3B8),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: -0.3,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        '$attendanceRate%',
-                                        style: const TextStyle(
-                                          color: Color(0xFF38BDF8),
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  checkedCount == 0 && totalCount == 0
-                                      ? '첫 회원을 등록해 보세요'
-                                      : '$checkedCount명 출석완료 / 총 $totalCount명',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.6,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              // Slim Precision Gauge Bar
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      height: 5,
-                                      width: double.infinity,
-                                      color: Colors.white.withValues(alpha: 0.12),
-                                    ),
-                                    FractionallySizedBox(
-                                      widthFactor: totalCount == 0
-                                          ? 0.05
-                                          : (checkedCount / totalCount).clamp(0.02, 1.0),
-                                      child: Container(
-                                        height: 5,
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Color(0xFF38BDF8),
-                                              Color(0xFF34D399),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 3. Artistic Glass Capsule Metrics (3 Pillars) - Overflow-proof with FittedBox
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.08),
-                          width: 1,
-                        ),
-                      ),
+              // Row 1: Studio Identity (Left) & Live Attendance Rate + Guide (Right)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onOpenGuide?.call();
+                      },
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildPillarCapsule(
-                            icon: Icons.bolt_rounded,
-                            iconColor: const Color(0xFF38BDF8),
-                            label: '1초 출결',
-                            value: '원터치 차감',
+                          const ZeroPassBrandEmblem(size: 26, withGlow: false),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              studio?.studioName ?? '나의 스튜디오',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          _buildVerticalDivider(),
-                          _buildPillarCapsule(
-                            icon: Icons.chat_bubble_rounded,
-                            iconColor: const Color(0xFF34D399),
-                            label: '0원 통신비',
-                            value: '기본문자 발송',
-                          ),
-                          _buildVerticalDivider(),
-                          _buildPillarCapsule(
-                            icon: Icons.lock_outline_rounded,
-                            iconColor: const Color(0xFFFBBF24),
-                            label: '100% 로컬',
-                            value: '외부유출 제로',
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              studio?.category ?? '전문교육',
+                              style: const TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                        width: 0.9,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF34D399),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '출석률 $attendanceRate%',
+                          style: const TextStyle(
+                            color: Color(0xFFA7F3D0),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Row 2: Slim Precision Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  height: 5,
+                  width: double.infinity,
+                  child: Stack(
+                    children: [
+                      Container(
+                        color: Colors.white.withValues(alpha: 0.10),
+                      ),
+                      FractionallySizedBox(
+                        widthFactor: totalCount == 0
+                            ? 0.04
+                            : (checkedCount / totalCount).clamp(0.04, 1.0),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFF38BDF8),
+                                Color(0xFF34D399),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Row 3: Strict 3-Column Real-Time Operational KPI Grid
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildKpiCell(
+                      label: '출석 완료',
+                      value: '$checkedCount명',
+                      accentColor: const Color(0xFF34D399),
+                    ),
+                    _buildVerticalDivider(),
+                    _buildKpiCell(
+                      label: '출결 대기',
+                      value: '$waitingCount명',
+                      accentColor: const Color(0xFF38BDF8),
+                    ),
+                    _buildVerticalDivider(),
+                    _buildKpiCell(
+                      label: '만료 임박',
+                      value: '$expiringCount명',
+                      accentColor: const Color(0xFFFBBF24),
                     ),
                   ],
                 ),
@@ -384,65 +228,61 @@ class _SignatureKeyVisualHeroState extends State<SignatureKeyVisualHero> {
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
-      height: 28,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      color: Colors.white.withValues(alpha: 0.08),
+      height: 24,
+      color: Colors.white.withValues(alpha: 0.10),
     );
   }
 
-  Widget _buildPillarCapsule({
-    required IconData icon,
-    required Color iconColor,
+  Widget _buildKpiCell({
     required String label,
     required String value,
+    required Color accentColor,
   }) {
     return Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accentColor,
+              ),
             ),
-            child: Icon(icon, size: 14, color: iconColor),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                    ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontFamily: 'Pretendard'),
+                    children: [
+                      TextSpan(
+                        text: '$label ',
+                        style: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextSpan(
+                        text: value,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

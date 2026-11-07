@@ -88,7 +88,7 @@ class LocalizationService {
       'es': 'Check & Pay',
     },
     'tab_pass': {
-      'ko': '패스 체크',
+      'ko': '출결 체크',
       'en': 'Check-In',
       'ja': '出席チェック',
       'es': 'Asistencia',
@@ -99,10 +99,16 @@ class LocalizationService {
       'ja': '請求・収納',
       'es': 'Facturación',
     },
+    'tab_tax_expense': {
+      'ko': '지출·세무',
+      'en': 'Tax & Cost',
+      'ja': '支出・税務',
+      'es': 'Gastos·Imp.',
+    },
     'tab_members': {
-      'ko': '회원 관리',
+      'ko': '회원 명부',
       'en': 'Members',
-      'ja': '会員管理',
+      'ja': '会員名簿',
       'es': 'Miembros',
     },
     'tab_pro': {
@@ -112,9 +118,9 @@ class LocalizationService {
       'es': 'Tienda PRO',
     },
     'tab_settings': {
-      'ko': '설정·보안',
+      'ko': '운영·설정',
       'en': 'Settings',
-      'ja': '設定・セキュリティ',
+      'ja': '運営・設定',
       'es': 'Ajustes',
     },
 
