@@ -82,15 +82,19 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            studio?.studioName ?? '나의 스튜디오',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              studio?.studioName ?? '나의 스튜디오',
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                color: Colors.white,
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.4,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),

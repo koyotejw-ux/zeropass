@@ -432,6 +432,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                             member.primaryName,
                             softWrap: true,
                             style: const TextStyle(
+                              fontFamily: 'Pretendard',
                               fontSize: 15.5,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.textPrimary,
@@ -451,6 +452,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                             child: Text(
                               member.secondaryTag!,
                               style: const TextStyle(
+                                fontFamily: 'Pretendard',
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF475569),
@@ -463,25 +465,30 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                     const SizedBox(height: 3),
 
                     // 2행: 그룹명 · 연락처
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 5,
-                      runSpacing: 2,
+                    Row(
                       children: [
                         if (member.groupName.isNotEmpty) ...[
-                          Text(
-                            member.groupName,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textSecondary,
+                          Flexible(
+                            child: Text(
+                              member.groupName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textSecondary,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 4),
                           const Text('·', style: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.bold, fontSize: 11)),
+                          const SizedBox(width: 4),
                         ],
                         Text(
                           member.phone,
                           style: const TextStyle(
+                            fontFamily: 'Pretendard',
                             fontSize: 11.5,
                             color: AppTheme.textSecondary,
                             fontWeight: FontWeight.w500,

@@ -1207,7 +1207,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1행: 이름 + 코스 태그
+                    // 1행: 이름 + 코스 태그 + 패스카드 퀵 앵커
                     Row(
                       children: [
                         Flexible(
@@ -1215,6 +1215,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             member.primaryName,
                             softWrap: true,
                             style: const TextStyle(
+                              fontFamily: 'Pretendard',
                               fontSize: 15.5,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.textPrimary,
@@ -1234,6 +1235,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             child: Text(
                               member.secondaryTag!,
                               style: const TextStyle(
+                                fontFamily: 'Pretendard',
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF475569),
@@ -1241,58 +1243,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-
-                    // 2행: 소속 그룹 · 회차/패스 상태 (만료임박 텍스트 인라인 일체화) · 패스카드 링크
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      runSpacing: 2,
-                      children: [
-                        if (member.groupName.isNotEmpty) ...[
-                          Text(
-                            member.groupName,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                          const Text('·', style: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.bold, fontSize: 11)),
-                        ],
-                        if (isSessionBased)
-                          Container(
-                            padding: isExpiringSoon
-                                ? const EdgeInsets.symmetric(horizontal: 5, vertical: 1)
-                                : EdgeInsets.zero,
-                            decoration: isExpiringSoon
-                                ? BoxDecoration(
-                                    color: const Color(0xFFFEF2F2),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
-                                  )
-                                : null,
-                            child: Text(
-                              '잔여 ${member.remainingSessions}/${member.totalSessions}회${isExpiringSoon ? " (만료임박)" : ""}',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: isExpiringSoon ? FontWeight.w800 : FontWeight.w600,
-                                color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
-                              ),
-                            ),
-                          )
-                        else
-                          const Text(
-                            '정기권',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF475569),
-                            ),
-                          ),
-                        const Text('·', style: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.bold, fontSize: 11)),
+                        const SizedBox(width: 5),
                         InkWell(
                           onTap: () {
                             DigitalPassCardDialog.show(
@@ -1304,20 +1255,86 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           },
                           borderRadius: BorderRadius.circular(4),
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                            padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.qr_code_2_rounded, size: 12.5, color: AppTheme.textTertiary),
+                                Icon(Icons.qr_code_2_rounded, size: 13.5, color: Color(0xFF94A3B8)),
                                 SizedBox(width: 2),
                                 Text(
                                   '패스',
-                                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontSize: 10.5,
+                                    color: Color(0xFF71717A),
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+
+                    // 2행: 소속 그룹 및 회차/패스 뱃지 (가변 폭 대응 Wrap)
+                    Wrap(
+                      spacing: 5,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (member.groupName.isNotEmpty)
+                          Text(
+                            member.groupName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        if (isSessionBased)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: isExpiringSoon ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(
+                                color: isExpiringSoon ? const Color(0xFFFECACA) : const Color(0xFFBFDBFE),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              '잔여 ${member.remainingSessions}/${member.totalSessions}회${isExpiringSoon ? " (만료임박)" : ""}',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 11,
+                                fontWeight: isExpiringSoon ? FontWeight.w800 : FontWeight.w600,
+                                color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
+                            ),
+                            child: const Text(
+                              '정기권',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ],
