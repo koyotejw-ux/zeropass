@@ -770,8 +770,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                         Flexible(
                           child: Text(
                             studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 무인 출결 키오스크',
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                            softWrap: true,
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
@@ -1231,8 +1230,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                   Flexible(
                                     child: Text(
                                       studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 스마트 출결 키오스크',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: true,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12.5,

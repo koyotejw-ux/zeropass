@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
+import 'monetization_service.dart';
 
 /// 카카오톡 0원 직접 공유 & 시스템 공유 서비스
 /// 유료 알림톡 충전 비용 없이, 대표님 스마트폰의 카카오톡 앱을 통해
@@ -262,6 +263,8 @@ $bankSection${details != null && details.isNotEmpty ? '• 정산 산출 근거 
     required String text,
     String? subject,
   }) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
+    MonetizationService.instance.recordValueAction(smsCount: 1);
     // 1. 편리한 붙여넣기를 위해 클립보드에 우선 복사
     try {
       await Clipboard.setData(ClipboardData(text: text));

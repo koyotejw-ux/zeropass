@@ -540,8 +540,7 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
             ),
             child: Text(
               log.message,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: const TextStyle(fontSize: 12, height: 1.4, color: Color(0xFF334155)),
             ),
           ),

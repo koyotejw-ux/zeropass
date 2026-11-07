@@ -27,6 +27,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
+import '../widgets/native_inline_ad_card.dart';
 import '../widgets/responsive_dialog_actions.dart';
 
 enum LedgerScreenMode {
@@ -313,13 +314,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   // 1. Amount Metric Overview Card with Strong Visual Hierarchy & Status Contrast
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 18,
+                      horizontal: 16,
                       vertical: isLandscape ? 4 : 8,
                     ),
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: isLandscape ? 12 : 20,
+                        horizontal: 18,
+                        vertical: isLandscape ? 12 : 18,
                       ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
@@ -495,20 +496,25 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 14),
 
-                                // Secondary Info Bar (Comparative Balance & Progress)
+                                // Secondary Info Bar (Comparative Balance & Progress - Wrap prevents narrow collision)
                                 Container(
+                                  width: double.infinity,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withAlpha((255 * 0.05).round()),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: Colors.white.withAlpha((255 * 0.08).round())),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  child: Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 10,
+                                    runSpacing: 4,
                                     children: [
                                       Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
                                             Icons.pie_chart_outline_rounded,
@@ -516,12 +522,15 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                             color: Colors.white.withAlpha((255 * 0.6).round()),
                                           ),
                                           const SizedBox(width: 6),
-                                          Text(
-                                            infoBarLeftText,
-                                            style: TextStyle(
-                                              color: Colors.white.withAlpha((255 * 0.75).round()),
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
+                                          Flexible(
+                                            child: Text(
+                                              infoBarLeftText,
+                                              softWrap: true,
+                                              style: TextStyle(
+                                                color: Colors.white.withAlpha((255 * 0.75).round()),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -545,7 +554,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   // 2. Segmented Control or Expense/Tax Quick Hub
                   if (widget.mode == LedgerScreenMode.expenseTaxOnly)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: Row(
                         children: [
                           Expanded(
@@ -579,7 +588,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     )
                   else
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: Row(
                         children: [
                           Expanded(
@@ -606,7 +615,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   // Expiring Sessions Warning Strip (with one-tap warning SMS)
                   if (_selectedTab == 0 && expiringMembers.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
@@ -658,7 +667,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   // 미납자 전체 순차 릴레이 독촉 발송 배너
                   if (_selectedTab == 0 && unpaidInvoices.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
@@ -767,9 +776,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                 ),
                               )
                             : ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(18, 8, 18, 90),
-                                itemCount: currentList.length,
+                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+                                itemCount: currentList.length + 1,
                                 itemBuilder: (context, index) {
+                                  if (index == currentList.length) {
+                                    return const NativeInlineAdCard(placementTag: 'billing_list');
+                                  }
                                   final invoice = currentList[index];
                                   final invoiceMembers = invoice.memberIds
                                       .map((id) => memberMap[id])
@@ -1642,9 +1654,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 90),
-                  itemCount: filtered.length,
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                  itemCount: filtered.length + 1,
                   itemBuilder: (ctx, idx) {
+                    if (idx == filtered.length) {
+                      return const NativeInlineAdCard(placementTag: 'expense_list');
+                    }
                     final exp = filtered[idx];
                     return _buildExpenseCard(context, exp, vendors, studio);
                   },

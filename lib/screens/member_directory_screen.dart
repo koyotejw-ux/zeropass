@@ -20,6 +20,7 @@ import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
 import '../widgets/member_name_badge.dart';
+import '../widgets/native_inline_ad_card.dart';
 import '../widgets/sequential_dispatch_modal.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
@@ -195,7 +196,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             children: [
               // Search Input Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -234,7 +235,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                   height: 36,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                     itemCount: allGroups.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 6),
                     itemBuilder: (context, idx) {
@@ -266,7 +267,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
 
               // Total count badge & Quick batch action
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -333,9 +334,12 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(18, 6, 18, 90),
-                        itemCount: filtered.length,
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 90),
+                        itemCount: filtered.length + 1,
                         itemBuilder: (context, index) {
+                          if (index == filtered.length) {
+                            return const NativeInlineAdCard(placementTag: 'member_list');
+                          }
                           final member = filtered[index];
                           return _buildMemberTile(context, member, studio);
                         },

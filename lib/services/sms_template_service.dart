@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
+import 'monetization_service.dart';
 
 class SmsTemplateService {
   static final NumberFormat _currencyFormat = NumberFormat('#,###');
@@ -195,6 +196,8 @@ $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도�
     required String recipientPhone,
     required String body,
   }) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
+    MonetizationService.instance.recordValueAction(smsCount: 1);
     final cleanPhone = recipientPhone.replaceAll(RegExp(r'[^0-9]'), '');
 
     // 1. Try native MethodChannel first (Android: supports 100% full text via Intent Extras, no 80-char/URL limit)

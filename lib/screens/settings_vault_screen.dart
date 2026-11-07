@@ -709,7 +709,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           final categoryState = customCatAsync.value ??
               CustomCategoryState.getDefaultsForIndustry(profile.category);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 90),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
             children: [
               // 0. Senior High-Contrast Large Text Mode (고령자/시니어 맞춤 모드)
               _buildSeniorModeSection(context, isSeniorMode),
@@ -2020,7 +2020,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           '시니어 큰글씨 모드',
-                          maxLines: 1,
                           style: TextStyle(
                             fontSize: isSeniorMode ? 18.5 : 16.5,
                             fontWeight: FontWeight.w800,

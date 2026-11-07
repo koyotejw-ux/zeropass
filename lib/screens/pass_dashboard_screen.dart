@@ -23,6 +23,7 @@ import '../widgets/member_name_badge.dart';
 import '../widgets/signature_key_visual_hero.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/attendance_notify_dialog.dart';
+import '../widgets/native_inline_ad_card.dart';
 import '../widgets/senior_easy_guide_modal.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
@@ -1003,8 +1004,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         : ListView.builder(
                             padding: EdgeInsets.fromLTRB(16, 4, 16, isKeyboardOpen ? 12 : 90),
                             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                            itemCount: filteredMembers.length,
+                            itemCount: filteredMembers.length + 1,
                             itemBuilder: (context, index) {
+                              if (index == filteredMembers.length) {
+                                return const NativeInlineAdCard(placementTag: 'pass_list');
+                              }
                               final member = filteredMembers[index];
                               final isChecked = checkedMemberIds.contains(member.id);
                               final todayPass = isChecked
@@ -1229,7 +1233,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         // Tier 2 Semantic Pass Status Badge (No truncation!)
-                        if (isSessionBased)
+                        if (isSessionBased) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                             decoration: BoxDecoration(
@@ -1242,7 +1246,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                   : null,
                             ),
                             child: Text(
-                              '${member.remainingSessions}/${member.totalSessions}회 남음 ${isExpiringSoon ? "(만료임박)" : ""}',
+                              '잔여 ${member.remainingSessions}/${member.totalSessions}회',
                               softWrap: true,
                               style: TextStyle(
                                 fontSize: 11.5,
@@ -1250,8 +1254,24 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                 color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
                               ),
                             ),
-                          )
-                        else
+                          ),
+                          if (isExpiringSoon)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.danger,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                '만료임박',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                        ] else
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                             decoration: BoxDecoration(

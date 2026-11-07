@@ -12,6 +12,7 @@ import '../models/invoice.dart';
 import '../models/studio_profile.dart';
 import '../models/vendor.dart';
 import 'database_service.dart';
+import 'monetization_service.dart';
 
 class DataVaultService {
   /// Exports all local database records as an encrypted/formatted JSON string file.
@@ -48,6 +49,7 @@ class DataVaultService {
 
   /// 1-Touch Native Share: Sends backup file to KakaoTalk "My Chat", Google Drive, or Email for 100% Free Zero-Cost Cloud Backup
   static Future<ShareResult> shareBackupFile(File file) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
     return await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/json')],
@@ -147,6 +149,7 @@ class DataVaultService {
 
   /// 1-Touch Native Share for Ledger CSV (KakaoTalk / Email / Excel / Drive)
   static Future<ShareResult> shareLedgerCsv(File file) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
     return await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'text/csv')],
@@ -258,6 +261,7 @@ class DataVaultService {
 
   /// 1-Touch Native Share for Simplified Bookkeeping CSV
   static Future<ShareResult> shareSimplifiedBookkeepingCsv(File file) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
     return await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'text/csv')],
@@ -302,6 +306,7 @@ class DataVaultService {
 
   /// 1-Touch Native Share for Member Directory CSV (KakaoTalk / Email / Excel / Drive)
   static Future<ShareResult> shareMembersCsv(File file) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
     return await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'text/csv')],

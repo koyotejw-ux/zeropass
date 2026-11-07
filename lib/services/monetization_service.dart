@@ -121,6 +121,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   bool _isAppOpenAdLoaded = false;
   bool _isShowingAppOpenAd = false;
   DateTime? _appOpenAdLoadTime;
+  DateTime? _lastAppOpenShownTime;
+  DateTime? _externalIntentSuppressedUntil; // 문자/카톡/공유 외부 인텐트 복귀 시 전면/오프닝 광고 차단 보호막
+
+  /// 외부 앱(문자 SMS, 카카오톡 공유, 토스/은행 링크, 엑셀 파일 공유 등)을 열기 직전 호출하여
+  /// 원장님이 다시 앱으로 돌아왔을 때 전체화면 오프닝 광고가 업무 맥락을 끊지 않도록 보호합니다.
+  void suppressAppOpenAdTemporarily({int seconds = 45}) {
+    _externalIntentSuppressedUntil = DateTime.now().add(Duration(seconds: seconds));
+  }
 
   RewardedAd? _rewardedAd;
   bool _isRewardedAdLoaded = false;
@@ -339,6 +347,20 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   void showAppOpenAdIfAvailable() {
     if (isAdsRemoved || _isShowingAppOpenAd) return;
 
+    final now = DateTime.now();
+    // 외부 인텐트(문자/카톡/공유) 복귀 보호 시간 내에는 앱 오프닝 광고를 띄우지 않음
+    if (_externalIntentSuppressedUntil != null && now.isBefore(_externalIntentSuppressedUntil!)) {
+      return;
+    }
+    // 앱 오프닝 광고 최소 15분 쿨다운 (업무 방해 원천 차단 및 리텐션 보호)
+    if (_lastAppOpenShownTime != null && now.difference(_lastAppOpenShownTime!).inMinutes < 15) {
+      return;
+    }
+    // 최근 60초 이내에 전면 광고가 노출되었다면 오프닝 광고 중복 노출 차단
+    if (_lastInterstitialShownTime != null && now.difference(_lastInterstitialShownTime!).inSeconds < 60) {
+      return;
+    }
+
     if (!_isAppOpenAdValid()) {
       _loadAppOpenAd();
       return;
@@ -347,9 +369,11 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
         _isShowingAppOpenAd = true;
+        _lastAppOpenShownTime = DateTime.now();
       },
       onAdDismissedFullScreenContent: (ad) {
         _isShowingAppOpenAd = false;
+        _lastAppOpenShownTime = DateTime.now();
         ad.dispose();
         _appOpenAd = null;
         _isAppOpenAdLoaded = false;
