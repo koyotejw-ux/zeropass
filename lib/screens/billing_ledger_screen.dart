@@ -99,21 +99,31 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text(appBarTitle),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(appBarTitle),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.table_view_outlined, size: 21, color: AppTheme.primaryBlue),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+            icon: const Icon(Icons.table_view_outlined, size: 20, color: AppTheme.primaryBlue),
             tooltip: '국세청 표준 사업소득 간편장부 엑셀(CSV) 내보내기 & 세무 가이드',
             onPressed: () => _showBookkeepingExportSheet(context),
           ),
           if (widget.mode == LedgerScreenMode.expenseTaxOnly)
             IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
               icon: const Icon(Icons.menu_book_outlined, size: 20, color: AppTheme.textPrimary),
               tooltip: '소상공인 1분 세무 일정 가이드',
               onPressed: () => TaxGuideModal.show(context),
             )
           else
             IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
               icon: const Icon(Icons.share_outlined, size: 20),
               tooltip: '동료 원장님께 제로패스 추천 (카톡)',
               onPressed: () {

@@ -65,7 +65,11 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('회원 명부 관리'),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text('회원 명부 관리'),
+        ),
         actions: [
           // Tab 3 보조 유틸리티: 순차 릴레이 단체발송 마법사 (Tier 3 Neutral Pill)
           Center(

@@ -627,7 +627,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('설정 · 보안 금고'),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text('설정 · 보안 금고'),
+        ),
         actions: [
           // 1. PRO VIP 샵 퀵 버튼 (32px 캡슐 규격화)
           Center(
