@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../services/monetization_service.dart';
 import '../screens/pro_store_screen.dart';
-import '../theme/app_theme.dart';
+import 'design_system.dart';
 
 class AdBannerWidget extends StatefulWidget {
   const AdBannerWidget({super.key});
@@ -182,109 +182,49 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8FAFC),
-            border: Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: InkWell(
-                  onTap: () {
-                    if (bm.isRewardedAdAvailable) {
-                      bm.showRewardedAd(
-                        onRewarded: () async {
-                          await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('🎉 24시간 동안 광고 제거 + 무인 키오스크 VIP 패스가 지급되었습니다!'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                        onFailed: () async {
-                          await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('🎁 원장님 응원 혜택으로 24시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    } else {
-                      bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🎁 24시간 동안 광고 없는 VIP 패스 + 무인 키오스크가 무료로 열렸습니다!'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.play_circle_fill_rounded, size: 13.5, color: AppTheme.primaryBlue),
-                          SizedBox(width: 4),
-                          Text(
-                            '오늘 하루 광고 끄기 (무료)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryBlue,
-                            ),
-                          ),
-                        ],
+        ZeroAdUtilityBar(
+          onFreeAdDismiss: () {
+            if (bm.isRewardedAdAvailable) {
+              bm.showRewardedAd(
+                onRewarded: () async {
+                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('🎉 24시간 동안 광고 제거 + 무인 키오스크 VIP 패스가 지급되었습니다!'),
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                  );
+                    );
+                  }
                 },
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.workspace_premium_rounded, size: 13, color: Color(0xFFD97706)),
-                      SizedBox(width: 3),
-                      Text(
-                        '광고 제거 월 1,900원 >',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFB45309),
-                        ),
+                onFailed: () async {
+                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('🎁 원장님 응원 혜택으로 24시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    ],
-                  ),
+                    );
+                  }
+                },
+              );
+            } else {
+              bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🎁 24시간 동안 광고 없는 VIP 패스 + 무인 키오스크가 무료로 열렸습니다!'),
+                  behavior: SnackBarBehavior.floating,
                 ),
-              ),
-            ],
-          ),
+              );
+            }
+          },
+          onRemoveAds: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+            );
+          },
         ),
         if (_isBannerLoaded && _bannerAd != null)
           Container(

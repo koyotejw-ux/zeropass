@@ -510,42 +510,45 @@ class ZeroButton extends StatelessWidget {
     final style = _resolveColors();
     final isInteractive = onPressed != null && !isLoading;
 
-    Widget innerContent = Row(
-      mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (isLoading) ...[
-          SizedBox(
-            width: _resolveIconSize(),
-            height: _resolveIconSize(),
-            child: CircularProgressIndicator(
-              strokeWidth: 2.0,
-              valueColor: AlwaysStoppedAnimation<Color>(style.fg),
+    Widget innerContent = FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (isLoading) ...[
+            SizedBox(
+              width: _resolveIconSize(),
+              height: _resolveIconSize(),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+                valueColor: AlwaysStoppedAnimation<Color>(style.fg),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ] else if (icon != null) ...[
+            Icon(icon, size: _resolveIconSize(), color: style.fg),
+            const SizedBox(width: 5),
+          ],
+          Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              fontFamily: 'Pretendard',
+              fontSize: _resolveFontSize(),
+              fontWeight: _resolveFontWeight(),
+              color: style.fg,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(width: 8),
-        ] else if (icon != null) ...[
-          Icon(icon, size: _resolveIconSize(), color: style.fg),
-          const SizedBox(width: 5),
+          if (trailingIcon != null && !isLoading) ...[
+            const SizedBox(width: 5),
+            Icon(trailingIcon, size: _resolveIconSize(), color: style.fg),
+          ],
         ],
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontSize: _resolveFontSize(),
-            fontWeight: _resolveFontWeight(),
-            color: style.fg,
-            letterSpacing: -0.3,
-          ),
-        ),
-        if (trailingIcon != null && !isLoading) ...[
-          const SizedBox(width: 5),
-          Icon(trailingIcon, size: _resolveIconSize(), color: style.fg),
-        ],
-      ],
+      ),
     );
 
     Widget button = Container(
@@ -874,3 +877,422 @@ class ZeroStatItem extends StatelessWidget {
     );
   }
 }
+
+/// ============================================================================
+/// [ZeroFilterChip] 일관된 터치 영역과 선택 피드백을 제공하는 캡슐 필터 칩
+/// ============================================================================
+class ZeroFilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final int? count;
+  final IconData? icon;
+
+  const ZeroFilterChip({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.count,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(ZeroTokens.radiusPill),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF09090B) : Colors.white,
+            borderRadius: BorderRadius.circular(ZeroTokens.radiusPill),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF09090B) : const Color(0xFFE4E4E7),
+              width: ZeroTokens.hairline,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 13,
+                  color: isSelected ? Colors.white : const Color(0xFF71717A),
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : const Color(0xFF52525B),
+                  letterSpacing: -0.2,
+                ),
+              ),
+              if (count != null) ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.22)
+                        : const Color(0xFFF4F4F5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? Colors.white : const Color(0xFF71717A),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ============================================================================
+/// [ZeroNoticeBanner] 케어 및 시스템 알림 표준 배너 컴포넌트
+/// ============================================================================
+enum ZeroBannerVariant {
+  care,    // 오렌지 안심 케어
+  info,    // 블루 시스템 안내
+  success, // 그린 완료 안내
+  danger,  // 레드 경고 안내
+}
+
+class ZeroNoticeBanner extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final IconData? icon;
+  final ZeroBannerVariant variant;
+  final EdgeInsetsGeometry? margin;
+  final Widget? trailing;
+
+  const ZeroNoticeBanner({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.actionLabel,
+    this.onAction,
+    this.icon,
+    this.variant = ZeroBannerVariant.care,
+    this.margin,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = _resolveStyle();
+
+    Widget banner = Container(
+      margin: margin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: style.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: style.border, width: ZeroTokens.hairline),
+      ),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: style.text),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: style.text,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: style.text.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing!,
+          ] else if (actionLabel != null && onAction != null) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onAction,
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      actionLabel!,
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: style.text,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(Icons.chevron_right_rounded, size: 14, color: style.text),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (onAction != null && actionLabel == null) {
+      return InkWell(
+        onTap: onAction,
+        borderRadius: BorderRadius.circular(12),
+        child: banner,
+      );
+    }
+    return banner;
+  }
+
+  _BannerStyle _resolveStyle() {
+    switch (variant) {
+      case ZeroBannerVariant.care:
+        return const _BannerStyle(
+          bg: Color(0xFFFFF7ED),
+          border: Color(0xFFFED7AA),
+          text: Color(0xFFC2410C),
+        );
+      case ZeroBannerVariant.info:
+        return const _BannerStyle(
+          bg: Color(0xFFEFF6FF),
+          border: Color(0xFFBFDBFE),
+          text: Color(0xFF1D4ED8),
+        );
+      case ZeroBannerVariant.success:
+        return const _BannerStyle(
+          bg: Color(0xFFECFDF5),
+          border: Color(0xFFA7F3D0),
+          text: Color(0xFF047857),
+        );
+      case ZeroBannerVariant.danger:
+        return const _BannerStyle(
+          bg: Color(0xFFFEF2F2),
+          border: Color(0xFFFECACA),
+          text: Color(0xFFDC2626),
+        );
+    }
+  }
+}
+
+class _BannerStyle {
+  final Color bg;
+  final Color border;
+  final Color text;
+  const _BannerStyle({required this.bg, required this.border, required this.text});
+}
+
+/// ============================================================================
+/// [ZeroAvatar] 통일된 이니셜 및 색상 위계를 갖춘 표준 아바타 컴포넌트
+/// ============================================================================
+enum ZeroAvatarSize { small, medium, large }
+
+class ZeroAvatar extends StatelessWidget {
+  final String name;
+  final ZeroAvatarSize size;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final VoidCallback? onTap;
+
+  const ZeroAvatar({
+    super.key,
+    required this.name,
+    this.size = ZeroAvatarSize.medium,
+    this.backgroundColor,
+    this.textColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double dimension = _resolveDimension();
+    final double fontSize = _resolveFontSize();
+    final initial = name.isNotEmpty ? name.substring(0, 1) : '?';
+
+    Widget avatar = Container(
+      width: dimension,
+      height: dimension,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? const Color(0xFFF1F5F9),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFE2E8F0), width: ZeroTokens.hairline),
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: fontSize,
+            fontWeight: FontWeight.w800,
+            color: textColor ?? const Color(0xFF334155),
+          ),
+        ),
+      ),
+    );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: avatar,
+      );
+    }
+    return avatar;
+  }
+
+  double _resolveDimension() {
+    switch (size) {
+      case ZeroAvatarSize.small:
+        return 34.0;
+      case ZeroAvatarSize.medium:
+        return 42.0;
+      case ZeroAvatarSize.large:
+        return 52.0;
+    }
+  }
+
+  double _resolveFontSize() {
+    switch (size) {
+      case ZeroAvatarSize.small:
+        return 13.0;
+      case ZeroAvatarSize.medium:
+        return 16.0;
+      case ZeroAvatarSize.large:
+        return 20.0;
+    }
+  }
+}
+
+/// ============================================================================
+/// [ZeroAdUtilityBar] 광고 제거 및 오늘 하루 끄기 표준 유틸리티 바
+/// ============================================================================
+class ZeroAdUtilityBar extends StatelessWidget {
+  final VoidCallback onFreeAdDismiss;
+  final VoidCallback onRemoveAds;
+
+  const ZeroAdUtilityBar({
+    super.key,
+    required this.onFreeAdDismiss,
+    required this.onRemoveAds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFF1F5F9), width: ZeroTokens.hairline),
+          bottom: BorderSide(color: Color(0xFFF1F5F9), width: ZeroTokens.hairline),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          InkWell(
+            onTap: onFreeAdDismiss,
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.play_circle_fill_rounded, size: 14, color: Color(0xFF2563EB)),
+                  SizedBox(width: 4),
+                  Text(
+                    '오늘 하루 광고 끄기 (무료)',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: onRemoveAds,
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFFD97706)),
+                  SizedBox(width: 4),
+                  Text(
+                    '광고 제거 월 1,900원 >',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

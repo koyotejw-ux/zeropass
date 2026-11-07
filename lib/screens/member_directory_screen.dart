@@ -241,25 +241,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                     itemBuilder: (context, idx) {
                       final grp = allGroups[idx];
                       final isSelected = _selectedGroupFilter == grp;
-                      return GestureDetector(
+                      return ZeroFilterChip(
+                        label: grp,
+                        isSelected: isSelected,
                         onTap: () => setState(() => _selectedGroupFilter = grp),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primaryDark : const Color(0xFFF4F4F5),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Center(
-                            child: Text(
-                              grp,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? Colors.white : AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
                       );
                     },
                   ),
@@ -363,7 +348,6 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   }
 
   Widget _buildMemberTile(BuildContext context, Member member, StudioProfile studio) {
-    final initials = member.initial;
     final isSession = member.billingType == BillingType.sessionBased;
     final isExpiring = isSession && member.remainingSessions <= 1;
 
@@ -387,35 +371,9 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // 1. Left Avatar (42x42 규격화)
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFF1F5F9),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
-                ),
-                child: ClipOval(
-                  child: member.photoPath != null &&
-                          member.photoPath!.isNotEmpty &&
-                          File(member.photoPath!).existsSync()
-                      ? Image.file(
-                          File(member.photoPath!),
-                          width: 42,
-                          height: 42,
-                          fit: BoxFit.cover,
-                        )
-                      : Center(
-                          child: Text(
-                            initials,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryDark,
-                            ),
-                          ),
-                        ),
-                ),
+              ZeroAvatar(
+                name: member.name,
+                size: ZeroAvatarSize.medium,
               ),
               const SizedBox(width: 12),
 
@@ -488,28 +446,11 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               const SizedBox(width: 8),
 
               // 3. Right Status Pill (단정한 상태 뱃지)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isSession
-                      ? (isExpiring ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF))
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
-                  border: isExpiring
-                      ? Border.all(color: const Color(0xFFFECACA), width: 0.9)
-                      : null,
-                ),
-                child: Text(
-                  isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: isExpiring ? FontWeight.w800 : FontWeight.w700,
-                    color: isSession
-                        ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue)
-                        : const Color(0xFF475569),
-                  ),
-                ),
-              ),
+              isSession
+                  ? (isExpiring
+                      ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium)
+                      : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium))
+                  : ZeroBadge.neutral('정기권', size: ZeroBadgeSize.medium),
               const SizedBox(width: 4),
               const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFCBD5E1)),
             ],
@@ -679,12 +620,16 @@ class _MemberDetailModal extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Shortcut Action Buttons
+          // Shortcut Action Buttons (Standardized ZeroButtons)
           Row(
             children: [
               if (member.billingType == BillingType.sessionBased)
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ZeroButton.primary(
+                    label: '+10회 충전',
+                    icon: Icons.add,
+                    fullWidth: true,
+                    size: ZeroButtonSize.large,
                     onPressed: () {
                       ref.read(membersProvider.notifier).addSessions(member.id, 10);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -694,20 +639,15 @@ class _MemberDetailModal extends ConsumerWidget {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                    label: const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text('+10회 충전'),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                    ),
                   ),
                 ),
               if (member.billingType == BillingType.sessionBased) const SizedBox(width: 8),
               Expanded(
-                child: OutlinedButton.icon(
+                child: ZeroButton.secondary(
+                  label: '청구서 즉시 발송',
+                  icon: Icons.send_outlined,
+                  fullWidth: true,
+                  size: ZeroButtonSize.large,
                   onPressed: () async {
                     // Create invoice on the fly
                     final invoice = Invoice(
@@ -730,14 +670,6 @@ class _MemberDetailModal extends ConsumerWidget {
                       body: message,
                     );
                   },
-                  icon: const Icon(Icons.send_outlined, size: 16),
-                  label: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text('청구서 즉시 발송'),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                  ),
                 ),
               ),
             ],

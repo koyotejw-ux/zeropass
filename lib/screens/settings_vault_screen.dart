@@ -423,22 +423,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     style: TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.45),
                   ),
                   const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _openInteractiveGuide(context);
-                      },
-                      icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                      label: const Text('실전 튜토리얼 시작하기'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
+                  ZeroButton.primary(
+                    label: '실전 튜토리얼 시작하기',
+                    icon: Icons.play_arrow_rounded,
+                    fullWidth: true,
+                    size: ZeroButtonSize.large,
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openInteractiveGuide(context);
+                    },
                   ),
                 ],
               ),

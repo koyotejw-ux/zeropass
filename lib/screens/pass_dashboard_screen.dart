@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -814,31 +813,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           final isSelected = _selectedGroup == g;
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
-                            child: GestureDetector(
+                            child: ZeroFilterChip(
+                              label: g,
+                              isSelected: isSelected,
                               onTap: () {
                                 setState(() {
                                   _selectedGroup = g;
                                 });
                               },
-                              child: Container(
-                                height: 32,
-                                padding: const EdgeInsets.symmetric(horizontal: 13),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.primaryDark : const Color(0xFFF4F4F5),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    g,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                      color: isSelected ? Colors.white : AppTheme.textSecondary,
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
                           );
                         }),
@@ -893,34 +875,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   if (absentMembers.isNotEmpty && _statusFilter != '골든타임 케어')
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFFED7AA), width: 0.9),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.favorite_border_rounded, size: 15, color: Color(0xFFEA580C)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '장기 미출석 안심 케어: 최근 7일 이상 결석 ${absentMembers.length}명',
-                                softWrap: true,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFC2410C)),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () => setState(() => _statusFilter = '골든타임 케어'),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                child: Text('보기', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFFEA580C))),
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: ZeroNoticeBanner(
+                        title: '장기 미출석 안심 케어: 최근 7일 이상 결석 ${absentMembers.length}명',
+                        actionLabel: '보기',
+                        icon: Icons.favorite_border_rounded,
+                        variant: ZeroBannerVariant.care,
+                        onAction: () => setState(() => _statusFilter = '골든타임 케어'),
                       ),
                     ),
 
@@ -988,52 +948,22 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: OutlinedButton.icon(
+                                child: ZeroButton(
+                                  label: isSearchActive
+                                      ? (targetCount > 0 ? '검색 결과 일괄 출석 ($targetCount명)' : '검색 회원 출석 완료됨')
+                                      : (targetCount > 0
+                                          ? (isLandscape ? '남은 회원 일괄 출석 ($targetCount명)' : '남은 회원 일괄 출석 완료 ($targetCount명)')
+                                          : (members.isEmpty ? '등록된 출석 대상 회원 없음' : '오늘 모든 회원 출석 완료')),
+                                  icon: Icons.done_all_rounded,
+                                  variant: targetCount > 0 ? ZeroButtonVariant.tint : ZeroButtonVariant.neutral,
+                                  size: isLandscape ? ZeroButtonSize.medium : ZeroButtonSize.large,
+                                  fullWidth: true,
                                   onPressed: targetCount > 0
                                       ? () => _handleBatchCheckIn(
                                             context,
                                             targetMembers: isSearchActive ? filteredMembers : null,
                                           )
                                       : null,
-                                  icon: Icon(
-                                    Icons.done_all_rounded,
-                                    color: targetCount > 0 ? AppTheme.primaryBlue : AppTheme.textTertiary,
-                                    size: 17,
-                                  ),
-                                  label: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      isSearchActive
-                                          ? (targetCount > 0
-                                              ? '검색 결과 일괄 출석 ($targetCount명)'
-                                              : '검색 회원 출석 완료됨')
-                                          : (targetCount > 0
-                                              ? (isLandscape ? '남은 회원 일괄 출석 ($targetCount명)' : '남은 회원 일괄 출석 완료 ($targetCount명)')
-                                              : (members.isEmpty ? '등록된 출석 대상 회원 없음' : '오늘 모든 회원 출석 완료')),
-                                      style: TextStyle(
-                                        fontWeight: targetCount > 0 ? FontWeight.w700 : FontWeight.w500,
-                                        fontSize: 13.5,
-                                        color: targetCount > 0 ? AppTheme.textPrimary : AppTheme.textTertiary,
-                                      ),
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    backgroundColor: targetCount > 0 ? const Color(0xFFF8FAFC) : AppTheme.chipBackground,
-                                    foregroundColor: AppTheme.textPrimary,
-                                    disabledBackgroundColor: AppTheme.chipBackground,
-                                    disabledForegroundColor: AppTheme.textTertiary,
-                                    elevation: 0,
-                                    side: BorderSide(
-                                      color: targetCount > 0 ? const Color(0xFFCBD5E1) : AppTheme.borderSubtle,
-                                      width: 1,
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isLandscape ? 8 : (isKeyboardOpen ? 9 : 11),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
                                 ),
                               ),
                             ],
@@ -1095,7 +1025,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     StudioProfile studio, [
     bool isLongAbsent = false,
   ]) {
-    final initials = member.initial;
     final isSessionBased = member.billingType == BillingType.sessionBased;
     final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
 
@@ -1121,38 +1050,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // 1. Avatar (42x42 규격화)
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isChecked ? AppTheme.softMint.withAlpha((255 * 0.12).round()) : const Color(0xFFF1F5F9),
-                  border: Border.all(
-                    color: isChecked ? AppTheme.softMint.withAlpha(120) : const Color(0xFFE2E8F0),
-                    width: 0.9,
-                  ),
-                ),
-                child: ClipOval(
-                  child: member.photoPath != null &&
-                          member.photoPath!.isNotEmpty &&
-                          File(member.photoPath!).existsSync()
-                      ? Image.file(
-                          File(member.photoPath!),
-                          width: 42,
-                          height: 42,
-                          fit: BoxFit.cover,
-                        )
-                      : Center(
-                          child: Text(
-                            initials,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
-                            ),
-                          ),
-                        ),
-                ),
+              ZeroAvatar(
+                name: member.name,
+                size: ZeroAvatarSize.medium,
+                backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+                textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
               ),
               const SizedBox(width: 12),
 
@@ -1255,56 +1157,39 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 32,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        AttendanceNotifyDialog.show(
-                          context: context,
-                          member: member,
-                          studio: studio,
-                          type: AttendanceNotifyType.checkIn,
-                          time: todayPass?.timestamp ?? DateTime.now(),
-                        );
-                      },
-                      icon: const Icon(Icons.send_rounded, size: 12.5, color: AppTheme.primaryBlue),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text('등원 안심 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        side: const BorderSide(color: AppTheme.borderSubtle),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
+                  child: ZeroButton.tint(
+                    label: '등원 안심 알림',
+                    icon: Icons.send_rounded,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () {
+                      AttendanceNotifyDialog.show(
+                        context: context,
+                        member: member,
+                        studio: studio,
+                        type: AttendanceNotifyType.checkIn,
+                        time: todayPass?.timestamp ?? DateTime.now(),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: SizedBox(
-                    height: 32,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        AttendanceNotifyDialog.show(
-                          context: context,
-                          member: member,
-                          studio: studio,
-                          type: AttendanceNotifyType.checkOut,
-                          time: DateTime.now(),
-                        );
-                      },
-                      icon: const Icon(Icons.exit_to_app_rounded, size: 12.5, color: AppTheme.textSecondary),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text('하원 귀가 알림', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        side: const BorderSide(color: AppTheme.borderSubtle),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
+                  child: ZeroButton(
+                    label: '하원 귀가 알림',
+                    icon: Icons.exit_to_app_rounded,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () {
+                      AttendanceNotifyDialog.show(
+                        context: context,
+                        member: member,
+                        studio: studio,
+                        type: AttendanceNotifyType.checkOut,
+                        time: DateTime.now(),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1314,26 +1199,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           // 장기 미출석 (최근 7일+ 결석) 골든타임 안부 톡 케어 슬림 바
           if (!isChecked && isLongAbsent) ...[
             const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: 32,
-              child: OutlinedButton.icon(
-                onPressed: () => _showGoldenTimeCareModal(context, member, studio),
-                icon: const Icon(Icons.favorite_rounded, size: 13, color: Color(0xFFEA580C)),
-                label: const FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '최근 7일+ 미출석 • 따뜻한 안부 톡 보내기',
-                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFEA580C)),
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFF7ED),
-                  side: const BorderSide(color: Color(0xFFFED7AA), width: 0.9),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
+            ZeroNoticeBanner(
+              title: '최근 7일+ 미출석 • 따뜻한 안부 톡 보내기',
+              icon: Icons.favorite_rounded,
+              variant: ZeroBannerVariant.care,
+              onAction: () => _showGoldenTimeCareModal(context, member, studio),
             ),
           ],
         ],

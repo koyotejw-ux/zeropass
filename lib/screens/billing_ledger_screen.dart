@@ -617,51 +617,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   if (_selectedTab == 0 && expiringMembers.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.warning.withAlpha((255 * 0.12).round()),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.warning.withAlpha((255 * 0.3).round())),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning_amber_rounded, size: 20, color: AppTheme.warning),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '회차 만료 임박 (${expiringMembers.length}명): ${expiringMembers.map((m) => m.name.split(' ').first).join(', ')}',
-                                softWrap: true,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFB45309),
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                _sendExpiryAlert(context, studio, expiringMembers.first);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppTheme.warning),
-                                ),
-                                child: const Text(
-                                  '만료 안내문자',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFFB45309),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: ZeroNoticeBanner(
+                        variant: ZeroBannerVariant.care,
+                        icon: Icons.warning_amber_rounded,
+                        title: '회차 만료 임박 (${expiringMembers.length}명)',
+                        subtitle: expiringMembers.map((m) => m.name.split(' ').first).join(', '),
+                        actionLabel: '만료 안내문자',
+                        onAction: () => _sendExpiryAlert(context, studio, expiringMembers.first),
                       ),
                     ),
 
@@ -669,65 +631,46 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   if (_selectedTab == 0 && unpaidInvoices.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.mark_chat_unread_outlined, size: 16, color: AppTheme.primaryBlue),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      '미납 회원 ${unpaidInvoices.length}명 대기 중',
-                                      softWrap: true,
-                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
-                                final unpaidMembersList = members.where((m) => unpaidMemberIds.contains(m.id)).toList();
-                                SequentialDispatchModal.show(
-                                  context: context,
-                                  allMembers: unpaidMembersList,
-                                  studio: studio,
-                                  invoices: unpaidInvoices,
-                                  initialTemplateType: DispatchTemplateType.billing,
-                                );
-                              },
+                      child: ZeroNoticeBanner(
+                        variant: ZeroBannerVariant.info,
+                        icon: Icons.mark_chat_unread_outlined,
+                        title: '미납 회원 ${unpaidInvoices.length}명 대기 중',
+                        trailing: InkWell(
+                          onTap: () {
+                            final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
+                            final unpaidMembersList = members.where((m) => unpaidMemberIds.contains(m.id)).toList();
+                            SequentialDispatchModal.show(
+                              context: context,
+                              allMembers: unpaidMembersList,
+                              studio: studio,
+                              invoices: unpaidInvoices,
+                              initialTemplateType: DispatchTemplateType.billing,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue,
                               borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlue,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '미납 순차 발송',
-                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
-                          ],
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
+                                SizedBox(width: 4),
+                                Text(
+                                  '미납 순차 발송',
+                                  style: TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -880,11 +823,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedTab = tabIndex),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(9),
             boxShadow: isSelected ? AppTheme.cardShadow : null,
           ),
           child: Padding(
@@ -895,9 +839,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontFamily: 'Pretendard',
+                  fontSize: 12.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                  letterSpacing: -0.2,
                 ),
               ),
             ),
@@ -1008,189 +954,101 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 3. Action Hierarchy: 1 Solid Primary CTA + Unified Neutral Secondary Buttons
+          // 3. Action Hierarchy: 1 Solid Primary CTA + Standardized ZeroButtons
           if (!isPaid) ...[
             // Tier 1 Primary Action: 수납확인 완료 처리 (Full-width solid Royal Blue CTA)
-            SizedBox(
-              width: double.infinity,
-              height: 40,
-              child: ElevatedButton.icon(
-                onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
-                icon: const Icon(Icons.check_circle_outline_rounded, size: 17, color: Colors.white),
-                label: const Text(
-                  '수납확인 완료 처리',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13.5,
-                    color: Colors.white,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.zero,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
+            ZeroButton.primary(
+              label: '수납확인 완료 처리',
+              icon: Icons.check_circle_outline_rounded,
+              fullWidth: true,
+              size: ZeroButtonSize.medium,
+              onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
             ),
             const SizedBox(height: 8),
           ],
 
-          // Tier 3 Secondary Notification Utilities (Unified Calm Slate Surface)
+          // Tier 3 Secondary Notification Utilities (Standardized ZeroButtons)
           Row(
             children: [
               if (!isPaid) ...[
                 Expanded(
-                  child: SizedBox(
-                    height: 34,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
-                          studio: studio,
-                          members: invoiceMembers,
-                          invoice: invoice,
-                        );
-                        await KakaoShareService.shareMessage(
-                          text: kakaoMsg,
-                          subject: '[${studio.studioName}] 수강료 청구 안내',
-                        );
-                      },
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 13.5, color: Color(0xFF475569)),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '카톡 청구',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF334155)),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF8FAFC),
-                        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-                      ),
-                    ),
+                  child: ZeroButton(
+                    label: '카톡 청구',
+                    icon: Icons.chat_bubble_outline_rounded,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () async {
+                      final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
+                        studio: studio,
+                        members: invoiceMembers,
+                        invoice: invoice,
+                      );
+                      await KakaoShareService.shareMessage(
+                        text: kakaoMsg,
+                        subject: '[${studio.studioName}] 수강료 청구 안내',
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: SizedBox(
-                    height: 34,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
-                      icon: const Icon(Icons.sms_outlined, size: 13.5, color: Color(0xFF475569)),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '문자 청구',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF334155)),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF8FAFC),
-                        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-                      ),
-                    ),
+                  child: ZeroButton(
+                    label: '문자 청구',
+                    icon: Icons.sms_outlined,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
                   ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: SizedBox(
-                    height: 34,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        final reminderMsg = SmsTemplateService.generateUnpaidReminderMessage(
-                          studio: studio,
-                          members: invoiceMembers,
-                          invoice: invoice,
-                        );
-                        SmsTemplateService.launchNativeSms(
-                          recipientPhone: invoice.recipientPhone,
-                          body: reminderMsg,
-                        );
-                      },
-                      icon: const Icon(Icons.notifications_none_rounded, size: 14, color: Color(0xFF475569)),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '1초 리마인드',
-                          style: TextStyle(
-                            color: Color(0xFF334155),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-                        backgroundColor: const Color(0xFFF8FAFC),
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-                      ),
-                    ),
+                  child: ZeroButton(
+                    label: '1초 리마인드',
+                    icon: Icons.notifications_none_rounded,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () {
+                      final reminderMsg = SmsTemplateService.generateUnpaidReminderMessage(
+                        studio: studio,
+                        members: invoiceMembers,
+                        invoice: invoice,
+                      );
+                      SmsTemplateService.launchNativeSms(
+                        recipientPhone: invoice.recipientPhone,
+                        body: reminderMsg,
+                      );
+                    },
                   ),
                 ),
               ] else ...[
                 Expanded(
-                  child: SizedBox(
-                    height: 36,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        if (invoiceMembers.isEmpty) return;
-                        ReceiptNotifyDialog.show(
-                          context: context,
-                          member: invoiceMembers.first,
-                          invoice: invoice,
-                          studio: studio,
-                        );
-                      },
-                      icon: const Icon(Icons.receipt_long_rounded, size: 14, color: Color(0xFF475569)),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '영수증 알림 (0원)',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5, color: Color(0xFF334155)),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-                      ),
-                    ),
+                  child: ZeroButton.secondary(
+                    label: '영수증 알림 (0원)',
+                    icon: Icons.receipt_long_rounded,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () async {
+                      if (invoiceMembers.isEmpty) return;
+                      ReceiptNotifyDialog.show(
+                        context: context,
+                        member: invoiceMembers.first,
+                        invoice: invoice,
+                        studio: studio,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: SizedBox(
-                    height: 36,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
-                      icon: const Icon(Icons.sms_outlined, size: 14, color: Color(0xFF475569)),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '영수증 문자 전송',
-                          style: TextStyle(
-                            color: Color(0xFF334155),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF334155),
-                        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-                      ),
-                    ),
+                  child: ZeroButton.secondary(
+                    label: '영수증 문자 전송',
+                    icon: Icons.sms_outlined,
+                    size: ZeroButtonSize.compact,
+                    fullWidth: true,
+                    onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
                   ),
                 ),
               ],
