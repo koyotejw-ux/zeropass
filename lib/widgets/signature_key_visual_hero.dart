@@ -67,7 +67,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Row 1: Mobile-First Identity Header (No truncation on Studio Name!)
+              // Row 1: Mobile-First Identity Header (단정하고 일목정렬한 상호명 및 실시간 출석률 배지)
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -76,31 +76,52 @@ class SignatureKeyVisualHero extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const ZeroPassBrandEmblem(size: 30, withGlow: false),
+                    const ZeroPassBrandEmblem(size: 32, withGlow: false),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  studio?.studioName ?? '나의 스튜디오',
+                                  softWrap: true,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.4,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  studio?.category ?? '전문교육',
+                                  style: const TextStyle(
+                                    color: Color(0xFFCBD5E1),
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
                           Text(
-                            studio?.category ?? '전문교육',
+                            '오늘 실시간 출결 현황 ($checkedCount/$totalCount명)',
                             style: const TextStyle(
                               color: Color(0xFF94A3B8),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.1,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            studio?.studioName ?? '나의 스튜디오',
-                            softWrap: true,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
-                              height: 1.2,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -111,7 +132,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981).withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: const Color(0xFF10B981).withValues(alpha: 0.35),
                           width: 0.9,

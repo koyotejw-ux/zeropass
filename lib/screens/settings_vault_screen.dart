@@ -635,70 +635,112 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       appBar: AppBar(
         title: const Text('설정 · 보안 금고'),
         actions: [
+          // 1. PRO VIP 샵 퀵 버튼 (32px 캡슐 규격화)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.45)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 15),
-                      SizedBox(width: 4),
-                      Text(
-                        'PRO 샵',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFB45309),
+              padding: const EdgeInsets.only(right: 6),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    height: 32,
+                    padding: const EdgeInsets.symmetric(horizontal: 9),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.45), width: 0.9),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 14),
+                        SizedBox(width: 3),
+                        Text(
+                          'PRO 샵',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFB45309),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          // Senior Mode Quick Toggle
-          IconButton(
-            tooltip: isSeniorMode ? '보통 글씨 모드로 전환' : '시니어 큰글씨 모드로 전환',
-            icon: Icon(
-              isSeniorMode ? Icons.zoom_out_rounded : Icons.elderly_rounded,
-              color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
-              size: 24,
+          // 2. 시니어 모드 퀵 토글 (32x32 규격화)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
+                        width: 0.9,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.format_size_rounded,
+                      color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
             ),
-            onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
           ),
-          IconButton(
-            tooltip: '로컬 금고 암호화 백업',
-            icon: const Icon(Icons.shield_outlined, color: AppTheme.primaryBlue),
-            onPressed: () async {
-              try {
-                final backupFile = await DataVaultService.exportEncryptedBackup();
-                await DataVaultService.shareBackupFile(backupFile);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('백업 파일 생성 오류: $e')),
-                  );
-                }
-              }
-            },
+          // 3. 로컬 금고 암호화 백업 (32x32 규격화)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    try {
+                      final backupFile = await DataVaultService.exportEncryptedBackup();
+                      await DataVaultService.shareBackupFile(backupFile);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('백업 파일 생성 오류: $e')),
+                        );
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.9),
+                    ),
+                    child: const Icon(Icons.shield_outlined, color: AppTheme.primaryBlue, size: 16),
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 6),
         ],
       ),
       body: studioAsync.when(
@@ -711,9 +753,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
             children: [
-              // 0. Senior High-Contrast Large Text Mode (고령자/시니어 맞춤 모드)
-              _buildSeniorModeSection(context, isSeniorMode),
-
               // 1. Studio Profile Card (상호명, 업종, 수납계좌 등) - 설정 1순위 최상단 배치
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -875,6 +914,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               // 1-1. VIP ROI Membership & Retention Flywheel Card (선순환 결제 전환 & 누적 절감액 보드)
               _buildVipMembershipRoiCard(context),
               const SizedBox(height: 6),
+
+              // 1-2. 시니어 큰글씨 & 고대비 접근성 모드 설정 (단정한 설정 타일로 통합)
+              _buildSeniorModeSection(context, isSeniorMode),
 
               // 1-2. 비대면 신용카드 결제 링크 (0원 연동)
               _buildSectionTitle('비대면 신용카드 결제 링크 (0원 연동)', icon: Icons.credit_card_rounded),
