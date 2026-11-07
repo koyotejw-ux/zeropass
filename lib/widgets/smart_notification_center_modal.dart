@@ -127,14 +127,12 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                           Text(
                             '스마트 안심 알림 센터',
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
                           ),
                           Text(
                             '등·하원 안심 알림 & 수납 독촉 릴레이 허브',
                             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
                           ),
                         ],
                       ),

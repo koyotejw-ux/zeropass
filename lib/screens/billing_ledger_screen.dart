@@ -434,13 +434,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                           Expanded(
                                             child: Text(
                                               heroTitle,
+                                              softWrap: true,
                                               style: const TextStyle(
                                                 color: Color(0xFF94A3B8),
                                                 fontSize: 13.5,
                                                 fontWeight: FontWeight.w700,
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
@@ -677,9 +676,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                   Expanded(
                                     child: Text(
                                       '미납 회원 ${unpaidInvoices.length}명 대기 중',
+                                      softWrap: true,
                                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -995,54 +993,39 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           ),
           const SizedBox(height: 10),
 
-          // 2. Center Focal Area: Tier-1 Title & Member (Left) <-> Tier-1 Amount (Right)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      invoice.title,
-                      style: const TextStyle(
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '$memberNames (${invoice.recipientPhone})',
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  '${_currencyFormat.format(invoice.amount)}원',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: isPaid ? AppTheme.softMint : AppTheme.textPrimary,
-                    letterSpacing: -0.6,
-                  ),
-                ),
-              ),
-            ],
+          // 2. Mobile-First Vertical Focal Stack: Tier-1 Amount -> Tier-2 Title -> Tier-3 Member & Phone (Zero Truncation!)
+          Text(
+            '${_currencyFormat.format(invoice.amount)}원',
+            style: TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.w900,
+              color: isPaid ? AppTheme.softMint : AppTheme.textPrimary,
+              letterSpacing: -0.7,
+              height: 1.15,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            invoice.title,
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.3,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '$memberNames (${invoice.recipientPhone})',
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textSecondary,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -1774,72 +1757,77 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           ),
           const SizedBox(height: 10),
 
-          // 2. Center Focal Area: Tier-1 Expense Title (Left) <-> Tier-1 Amount (Right)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  expense.title,
-                  style: const TextStyle(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '- ${_currencyFormat.format(expense.amount)}원',
-                style: TextStyle(
-                  fontSize: 19.5,
-                  fontWeight: FontWeight.w900,
-                  color: expense.isPaid ? AppTheme.textPrimary : AppTheme.danger,
-                  letterSpacing: -0.6,
-                ),
-              ),
-            ],
+          // 2. Mobile-First Vertical Focal Stack: Tier-1 Amount -> Tier-2 Expense Title -> Tier-3 Vendor & Bank Account (Zero Truncation!)
+          Text(
+            '- ${_currencyFormat.format(expense.amount)}원',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: expense.isPaid ? AppTheme.textPrimary : AppTheme.danger,
+              letterSpacing: -0.7,
+              height: 1.15,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
+          Text(
+            expense.title,
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.3,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 5),
 
-          // 3. Tier-3 Vendor & Account Info
-          Row(
+          // 3. Tier-3 Vendor & Account Info (Wrap-safe, Zero Truncation)
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(Icons.storefront_outlined, size: 13.5, color: AppTheme.textSecondary),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  expense.vendorName,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (vendor?.bankName != null && vendor?.accountNumber != null) ...[
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    '• ${vendor!.bankName} ${vendor.accountNumber}',
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.storefront_outlined, size: 13.5, color: AppTheme.textSecondary),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      expense.vendorName,
+                      softWrap: true,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                    ),
                   ),
+                ],
+              ),
+              if (vendor?.bankName != null && vendor?.accountNumber != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '${vendor!.bankName} ${vendor.accountNumber}',
+                        softWrap: true,
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, size: 13, color: AppTheme.textSecondary),
+                      tooltip: '계좌번호 복사',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: '${vendor.bankName} ${vendor.accountNumber} ${vendor.accountHolder ?? ''}'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${vendor.bankName} 계좌번호가 복사되었습니다.'), behavior: SnackBarBehavior.floating),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 13, color: AppTheme.textSecondary),
-                  tooltip: '계좌번호 복사',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: '${vendor.bankName} ${vendor.accountNumber} ${vendor.accountHolder ?? ''}'));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${vendor.bankName} 계좌번호가 복사되었습니다.'), behavior: SnackBarBehavior.floating),
-                    );
-                  },
-                ),
-              ],
             ],
           ),
 
@@ -1849,22 +1837,21 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               onTap: () => _showStaffSettlementModal(context, expense, vendor, studio),
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.calculate_outlined, size: 13, color: AppTheme.primaryBlue),
-                    const SizedBox(width: 5),
-                    Flexible(
+                    const Icon(Icons.calculate_outlined, size: 14, color: AppTheme.primaryBlue),
+                    const SizedBox(width: 6),
+                    Expanded(
                       child: Text(
                         '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue, height: 1.3),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -2388,9 +2375,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                       Expanded(
                         child: Text(
                           '거래처 수첩 (B2B 납품처)',
+                          softWrap: true,
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -3028,9 +3014,8 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                     Expanded(
                       child: Text(
                         '간편 청구서 작성',
+                        softWrap: true,
                         style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -3064,9 +3049,8 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                       Expanded(
                         child: Text(
                           '등록된 회원이 없어도 바로 작성 가능',
+                          softWrap: true,
                           style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -3205,9 +3189,8 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                       Expanded(
                         child: Text(
                           '동일 연락처 형제: ${unselectedSiblings.map((s) => s.primaryName).join(", ")}',
+                          softWrap: true,
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -3383,9 +3366,8 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
               const Expanded(
                 child: Text(
                   '업종별 청구 템플릿 (원터치 자동 완성)',
+                  softWrap: true,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
@@ -3883,17 +3865,16 @@ class _StaffSettlementSheetState extends State<_StaffSettlementSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Flexible(
-                            child: Text(
-                              '${widget.expense.vendorName} 강사료 정산서',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          Text(
+                            '${widget.expense.vendorName} 강사료 정산서',
+                            softWrap: true,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                           ),
-                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(

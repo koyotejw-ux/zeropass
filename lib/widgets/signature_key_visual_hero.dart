@@ -67,97 +67,97 @@ class SignatureKeyVisualHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Row 1: Studio Identity (Left) & Live Attendance Rate + Guide (Right)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        onOpenGuide?.call();
-                      },
-                      child: Row(
+              // Row 1: Mobile-First Identity Header (No truncation on Studio Name!)
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onOpenGuide?.call();
+                },
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const ZeroPassBrandEmblem(size: 30, withGlow: false),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const ZeroPassBrandEmblem(size: 26, withGlow: false),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              studio?.studioName ?? '나의 스튜디오',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.4,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
                           Text(
-                            '· ${studio?.category ?? '전문교육'}',
+                            studio?.category ?? '전문교육',
                             style: const TextStyle(
                               color: Color(0xFF94A3B8),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            studio?.studioName ?? '나의 스튜디오',
+                            softWrap: true,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                              height: 1.2,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.35),
-                        width: 0.9,
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                          width: 0.9,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF34D399),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(fontFamily: 'Pretendard'),
+                              children: [
+                                const TextSpan(
+                                  text: '출석률 ',
+                                  style: TextStyle(
+                                    color: Color(0xFFA7F3D0),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: '$attendanceRate%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFF34D399),
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        RichText(
-                          text: TextSpan(
-                            style: const TextStyle(fontFamily: 'Pretendard'),
-                            children: [
-                              const TextSpan(
-                                text: '출석률 ',
-                                style: TextStyle(
-                                  color: Color(0xFFA7F3D0),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '$attendanceRate%',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
 

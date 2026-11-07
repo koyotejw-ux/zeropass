@@ -379,85 +379,53 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 1. Top Section: Avatar + Tier-1 Name & Tier-3 Group Subtitle (Left) <-> Tier-2 Pass Status Badge (Right)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFF1F5F9),
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
-                    ),
-                    child: ClipOval(
-                      child: member.photoPath != null &&
-                              member.photoPath!.isNotEmpty &&
-                              File(member.photoPath!).existsSync()
-                          ? Image.file(
-                              File(member.photoPath!),
-                              width: 42,
-                              height: 42,
-                              fit: BoxFit.cover,
-                            )
-                          : Center(
-                              child: Text(
-                                initials,
-                                style: const TextStyle(
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryDark,
-                                ),
-                              ),
+              // Left Avatar
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFF1F5F9),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
+                ),
+                child: ClipOval(
+                  child: member.photoPath != null &&
+                          member.photoPath!.isNotEmpty &&
+                          File(member.photoPath!).existsSync()
+                      ? Image.file(
+                          File(member.photoPath!),
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                        )
+                      : Center(
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryDark,
                             ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: MemberNameBadge(
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Center Information Vertical Stack (Tier 1 Name -> Tier 3 Group -> Tier 3 Phone & Reg Date)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MemberNameBadge(
                       member: member,
                       showGroupName: true,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Tier 2 Primary Status Badge on Right
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                    decoration: BoxDecoration(
-                      color: isSession
-                          ? (isExpiring ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF))
-                          : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(8),
-                      border: isExpiring
-                          ? Border.all(color: const Color(0xFFFECACA), width: 0.9)
-                          : null,
-                    ),
-                    child: Text(
-                      isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isExpiring ? FontWeight.w800 : FontWeight.w700,
-                        color: isSession
-                            ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue)
-                            : const Color(0xFF475569),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 11),
-
-              // 2. Bottom Section: Tier-3 Phone & Reg Date (Left) <-> Tier-4 Ghost Pass Link (Right)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Wrap(
+                    const SizedBox(height: 6),
+                    Wrap(
                       spacing: 10,
                       runSpacing: 4,
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -490,8 +458,39 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Right Column: Tier-2 Status Badge + Tier-4 Pass Action
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    decoration: BoxDecoration(
+                      color: isSession
+                          ? (isExpiring ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF))
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: isExpiring
+                          ? Border.all(color: const Color(0xFFFECACA), width: 0.9)
+                          : null,
+                    ),
+                    child: Text(
+                      isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isExpiring ? FontWeight.w800 : FontWeight.w700,
+                        color: isSession
+                            ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue)
+                            : const Color(0xFF475569),
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 6),
                   InkWell(
                     onTap: () {
                       DigitalPassCardDialog.show(

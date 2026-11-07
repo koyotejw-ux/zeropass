@@ -778,22 +778,21 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Flexible(
-                                    child: Text(
-                                      profile.studioName,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  Text(
+                                    profile.studioName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.textPrimary,
                                     ),
+                                    softWrap: true,
                                   ),
-                                  if (profile.logoPath != null && profile.logoPath!.isNotEmpty) ...[
-                                    const SizedBox(width: 6),
+                                  if (profile.logoPath != null && profile.logoPath!.isNotEmpty)
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
@@ -809,7 +808,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                         ),
                                       ),
                                     ),
-                                  ],
                                 ],
                               ),
                               const SizedBox(height: 3),
@@ -963,8 +961,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                             ? AppTheme.textSecondary
                                             : AppTheme.textPrimary,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: true,
                                     ),
                                   ),
                                 ],
@@ -1929,8 +1926,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textSecondary,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
             ),
           ),
         ],
@@ -2433,8 +2429,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     child: Text(
                       '비대면 카드결제 링크 설정',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                   ),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),

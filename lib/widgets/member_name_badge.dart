@@ -29,7 +29,7 @@ class MemberNameBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveNameStyle = nameStyle ??
         TextStyle(
-          fontSize: 17,
+          fontSize: 18,
           fontWeight: FontWeight.w800,
           color: isDark ? Colors.white : AppTheme.textPrimary,
           letterSpacing: -0.4,
@@ -40,63 +40,58 @@ class MemberNameBadge extends StatelessWidget {
         member.secondaryTag != null &&
         member.secondaryTag!.isNotEmpty;
 
-    final nameRow = Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    final nameWrap = Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
+      runSpacing: 4,
       children: [
-        Flexible(
-          child: Text(
-            member.primaryName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: effectiveNameStyle,
-          ),
+        Text(
+          member.primaryName,
+          softWrap: true,
+          style: effectiveNameStyle,
         ),
-        if (hasTag) ...[
-          const SizedBox(width: 6),
+        if (hasTag)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : const Color(0xFFF4F4F5),
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(5),
             ),
             child: Text(
               member.secondaryTag!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFF94A3B8) : AppTheme.textSecondary,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                 letterSpacing: -0.2,
               ),
             ),
           ),
-        ],
       ],
     );
 
     if (!showGroupName || member.groupName.isEmpty) {
-      return nameRow;
+      return nameWrap;
     }
 
     return Column(
       mainAxisSize: mainAxisSize,
       crossAxisAlignment: crossAxisAlignment,
       children: [
-        nameRow,
+        nameWrap,
         const SizedBox(height: 3),
         Text(
           member.groupName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          softWrap: true,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
             color: isDark ? const Color(0xFF94A3B8) : AppTheme.textSecondary,
             letterSpacing: -0.2,
+            height: 1.25,
           ),
         ),
       ],
