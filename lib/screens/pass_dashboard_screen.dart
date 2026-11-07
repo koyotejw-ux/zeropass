@@ -318,7 +318,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '지금까지 원장님이 제로패스로 절감한 누적 가치: 약 ${NumberFormat("#,###").format(MonetizationService.instance.estimatedTotalSavedKRW)}원!',
+                        '지금까지 원장님이 체크앤페이로 절감한 누적 가치: 약 ${NumberFormat("#,###").format(MonetizationService.instance.estimatedTotalSavedKRW)}원!',
                         style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
                       ),
                     ],
@@ -594,7 +594,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               child: Text(
                 '원터치 출결 체크',
                 style: TextStyle(
-                  fontSize: isLandscape ? 16.5 : 19,
+                  fontSize: isLandscape ? 17 : 20,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.textPrimary,
                   letterSpacing: -0.6,
@@ -1029,15 +1029,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(15, 14, 15, 14),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isChecked ? const Color(0xFFF8FAFC) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isChecked
               ? AppTheme.softMint.withAlpha((255 * 0.35).round())
-              : (isExpiringSoon ? const Color(0xFFFECACA) : AppTheme.borderSubtle),
+              : (isExpiringSoon ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0)),
           width: (isChecked || isExpiringSoon) ? 1.2 : 0.9,
         ),
         boxShadow: isChecked ? null : AppTheme.cardShadow,
@@ -1045,115 +1045,159 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 단정하고 일목정렬한 모바일 퍼스트 2행 레이아웃: 좌측 아바타 ↔ 중앙 정보 2행 ↔ 우측 38px 액션 버튼
+          // 1. Top Row (최대 2개 컬럼): 좌측 [아바타 + 회원명] ↔ 우측 [출결 상태 배지]
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 1. Avatar (42x42 규격화)
               ZeroAvatar(
                 name: member.name,
                 size: ZeroAvatarSize.medium,
                 backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
                 textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
               ),
-              const SizedBox(width: 12),
-
-              // 2. Central Information (단정한 2행 정돈)
+              const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 1행: 이름 (단일 행 절대 줄바꿈 방어) + 패스카드 퀵 앵커
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            member.primaryName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textPrimary,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        ZeroBadge.neutral(
-                          '패스',
-                          size: ZeroBadgeSize.small,
-                          icon: Icons.qr_code_2_rounded,
-                          onTap: () {
-                            DigitalPassCardDialog.show(
-                              context: context,
-                              member: member,
-                              studio: studio,
-                              latestRecord: todayPass,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-
-                    // 2행: 소속 코스 태그 · 그룹 · 회차/패스 뱃지 (가변 폭 대응 Wrap)
-                    Wrap(
-                      spacing: 5,
-                      runSpacing: 2,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty)
-                          ZeroBadge.neutral(member.secondaryTag!, size: ZeroBadgeSize.small),
-                        if (member.groupName.isNotEmpty)
-                          Text(
-                            member.groupName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        if (isSessionBased)
-                          isExpiringSoon
-                              ? ZeroBadge.danger('잔여 ${member.remainingSessions}/${member.totalSessions}회 (만료임박)', size: ZeroBadgeSize.small)
-                              : ZeroBadge.primary('잔여 ${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small)
-                        else
-                          ZeroBadge.neutral('정기권', size: ZeroBadgeSize.small),
-                      ],
-                    ),
-                  ],
+                child: Text(
+                  member.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-
-              // 3. Right Action Anchor (38px 터치 앵커)
+              const SizedBox(width: 8),
               if (isChecked)
                 ZeroBadge.success(
                   todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
                   size: ZeroBadgeSize.medium,
                   icon: Icons.check_circle_rounded,
                 )
+              else if (isSessionBased && isExpiringSoon)
+                ZeroBadge.danger('만료 임박', size: ZeroBadgeSize.medium)
               else
-                ZeroButton.primary(
-                  label: '체크인',
-                  icon: Icons.check_rounded,
-                  size: ZeroButtonSize.medium,
-                  onPressed: () => _handleOneTouchCheckIn(member),
+                ZeroBadge.neutral(
+                  isSessionBased ? '수강 중' : '정기권',
+                  size: ZeroBadgeSize.medium,
                 ),
             ],
           ),
 
-          // 체크 완료 시 [등원 안심 알림], [하원 귀가 알림] 퀵 서식 발송 버튼
-          if (isChecked) ...[
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: AppTheme.borderSubtle),
-            const SizedBox(height: 8),
+          const SizedBox(height: 8),
+
+          // 2. Middle Row (가변 데이터 전용 100% 단일 컬럼 박스 - 좌우 충돌 원천 차단)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: isChecked ? Colors.white : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1행: 코스 태그 · 소속 그룹 (단일 행 전체 가로폭 사용)
+                Text(
+                  [
+                    if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                    if (member.groupName.isNotEmpty) member.groupName,
+                    if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                  ].join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // 2행: 회차 잔여 정보 & 모바일 패스 퀵 액션
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isSessionBased
+                            ? '잔여 회차: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
+                            : '정기권 회원 (무제한 출석)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: isExpiringSoon ? const Color(0xFFEF4444) : AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        DigitalPassCardDialog.show(
+                          context: context,
+                          member: member,
+                          studio: studio,
+                          latestRecord: todayPass,
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.qr_code_2_rounded, size: 13, color: Color(0xFF64748B)),
+                          const SizedBox(width: 3),
+                          const Text(
+                            '모바일 패스',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // 3. Bottom Row: 액션 버튼 (전폭 단일 컬럼 배치로 밀림 없는 터치 환경)
+          if (!isChecked)
+            SizedBox(
+              width: double.infinity,
+              height: 38,
+              child: ElevatedButton.icon(
+                onPressed: () => _handleOneTouchCheckIn(member),
+                icon: const Icon(Icons.check_rounded, size: 17),
+                label: const Text(
+                  '체크인',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryDark,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            )
+          else
             Row(
               children: [
                 Expanded(
@@ -1194,9 +1238,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 ),
               ],
             ),
-          ],
 
-          // 장기 미출석 (최근 7일+ 결석) 골든타임 안부 톡 케어 슬림 바
+          // 4. 장기 미출석 (최근 7일+ 결석) 골든타임 안부 톡 케어 슬림 바
           if (!isChecked && isLongAbsent) ...[
             const SizedBox(height: 8),
             ZeroNoticeBanner(

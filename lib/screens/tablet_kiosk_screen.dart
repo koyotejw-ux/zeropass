@@ -769,7 +769,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 무인 출결 키오스크',
+                            studio.studioName.isNotEmpty ? studio.studioName : '체크앤페이 무인 출결 키오스크',
                             softWrap: true,
                             style: const TextStyle(
                               fontSize: 17,
@@ -1229,7 +1229,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      studio.studioName.isNotEmpty ? studio.studioName : 'ZeroPass 스마트 출결 키오스크',
+                                      studio.studioName.isNotEmpty ? studio.studioName : '체크앤페이 스마트 출결 키오스크',
                                       softWrap: true,
                                       style: const TextStyle(
                                         color: Colors.white,

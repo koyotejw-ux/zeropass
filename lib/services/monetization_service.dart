@@ -98,7 +98,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   int get cumulativeCheckInCount => _cumulativeCheckInCount;
   int get cumulativeTaxLedgerCount => _cumulativeTaxLedgerCount;
 
-  /// 원장님이 제로패스를 통해 절감한 누적 경제적 가치(원)
+  /// 원장님이 체크앤페이를 통해 절감한 누적 경제적 가치(원)
   /// - 건당 알림톡/장문 문자 비용 25원 절감 + 타사 키오스크/ERP 기본료 월 35,000원 절감 효과 환산
   int get estimatedTotalSavedKRW =>
       (_cumulativeSavedSmsCount * 25) + (_cumulativeCheckInCount * 15) + 35000;

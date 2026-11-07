@@ -56,7 +56,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           context: context,
           coachKey: CoachMarkService.keySettingsTab,
           title: '로컬 100% 보안 금고',
-          message: '제로패스는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
+          message: '체크앤페이는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
           tip: '스튜디오 상호명, 수납 계좌번호, 자동 문자 양식 편집도 모두 여기서 관리하실 수 있습니다.',
           buttonText: '안심하고 사용할게요',
         );
@@ -183,7 +183,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               const SizedBox(height: 10),
               _buildPinStep('2단계: 앱 고정 켜기', '[기타 보안 설정] > [앱 고정] (또는 화면 고정) 항목을 찾아 켭니다.'),
               const SizedBox(height: 10),
-              _buildPinStep('3단계: 제로패스 고정', '제로패스 키오스크 화면을 켠 뒤, 최근 사용 앱 버튼(III)을 누르고 제로패스 아이콘을 터치하여 [이 앱 고정]을 선택합니다.'),
+              _buildPinStep('3단계: 체크앤페이 고정', '체크앤페이 키오스크 화면을 켠 뒤, 최근 사용 앱 버튼(III)을 누르고 체크앤페이 아이콘을 터치하여 [이 앱 고정]을 선택합니다.'),
               const SizedBox(height: 10),
               _buildPinStep('해제 방법 (원장님만 가능)', '뒤로가기 버튼과 최근 앱 버튼을 동시에 길게 누르면 기기 화면 잠금(패턴/PIN)이 풀리며 해제됩니다.'),
               const SizedBox(height: 12),
@@ -2921,7 +2921,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         AppTextField(
                           controller: studioNameController,
                           label: '사업장 상호/브랜드명 (#{상호명})',
-                          hint: '예: 제로패스 스튜디오 / 학원 / 공방',
+                          hint: '예: 체크앤페이 스튜디오 / 학원 / 공방',
                           prefixIcon: Icons.storefront_outlined,
                           onChanged: (_) => setModalState(() {}),
                         ),

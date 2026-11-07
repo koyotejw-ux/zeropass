@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
-import 'brand_emblem.dart';
 
 /// ZeroPass 하이엔드 이그제큐티브 출결 브리핑 콕핏 (Signature Key Visual Hero)
 ///
@@ -67,7 +66,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Row 1: Mobile-First Identity Header (상호명 1줄 확보 및 실시간 출석률 배지)
+              // Row 1: Mobile-First Identity Header (3D 펭귄 마스코트 패시 복원 + 상호명 + 실시간 출석률 배지)
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -76,8 +75,34 @@ class SignatureKeyVisualHero extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const ZeroPassBrandEmblem(size: 32, withGlow: false),
-                    const SizedBox(width: 10),
+                    // 3D 펭귄 마스코트(Passy) 프로필 복원
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF38BDF8).withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/icons/mascot_profile.png',
+                          width: 42,
+                          height: 42,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +111,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              studio?.studioName ?? '나의 스튜디오',
+                              studio?.studioName ?? '체크앤페이 스튜디오',
                               maxLines: 1,
                               style: const TextStyle(
                                 fontFamily: 'Pretendard',
@@ -98,36 +123,16 @@ class SignatureKeyVisualHero extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Wrap(
-                            spacing: 5,
-                            runSpacing: 2,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  studio?.category ?? '전문교육',
-                                  style: const TextStyle(
-                                    color: Color(0xFFCBD5E1),
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '실시간 출결 ($checkedCount/$totalCount명)',
-                                softWrap: true,
-                                style: const TextStyle(
-                                  color: Color(0xFF94A3B8),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            '${studio?.category ?? "체크앤페이"} · 실시간 출결 ($checkedCount/$totalCount명)',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              color: Color(0xFF94A3B8),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),

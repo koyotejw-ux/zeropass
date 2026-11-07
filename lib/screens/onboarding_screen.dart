@@ -17,7 +17,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     const OnboardingPageData(
       icon: Icons.domain_verification_rounded,
       tag: '프리미엄 비즈니스 솔루션',
-      title: '서버비 0원 스마트 출결·장부\nZeroPass 비즈니스 솔루션',
+      title: '서버비 0원 스마트 출결·장부\n체크앤페이 비즈니스 솔루션',
       subtitle: '학원, 공방, PT샵, 필라테스, 스터디룸 등\n소상공인 대표님을 위한 100% 독립형 모바일 비서입니다.\n월 고정비 없이 스마트폰 하나로 시작하세요.',
       highlightText: '월 구독료 0원 평생 소장 · 100% 독립 로컬 보안',
     ),
@@ -268,7 +268,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(
-                    _currentPage == _pages.length - 1 ? 'ZeroPass 시작하기' : '다음으로',
+                    _currentPage == _pages.length - 1 ? '체크앤페이 시작하기' : '다음으로',
                     style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, letterSpacing: -0.2),
                   ),
                 ),

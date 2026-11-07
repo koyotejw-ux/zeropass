@@ -116,7 +116,7 @@ class TaxGuideModal extends StatelessWidget {
                   badge: '5월',
                   badgeColor: const Color(0xFF4F46E5),
                   title: '종합소득세 확정 신고 (모든 개인사업자 필수)',
-                  desc: '전년도 1년치 수납 매출과 운영 지출을 정산하여 신고합니다. 제로패스에서 [간편장부 CSV]를 내보내어 세무사에게 전달하거나 홈택스에 기재하세요.',
+                  desc: '전년도 1년치 수납 매출과 운영 지출을 정산하여 신고합니다. 체크앤페이에서 [간편장부 CSV]를 내보내어 세무사에게 전달하거나 홈택스에 기재하세요.',
                 ),
                 const SizedBox(height: 8),
                 _buildScheduleTile(
@@ -143,7 +143,7 @@ class TaxGuideModal extends StatelessWidget {
                   title: '세무 적격증빙 보관 꿀팁',
                   body: '• 건당 3만 원 초과 지출 시: 반드시 세금계산서, 신용카드, 현금영수증(지출증빙)을 수취해야 가산세(2%)가 없습니다.\n'
                       '• 간이영수증은 3만 원 이하 소액 경비에만 인정됩니다.\n'
-                      '• 제로패스 간편장부 CSV는 윈도우 엑셀 한글 깨짐 방지(UTF-8 BOM)가 적용되어 세무사에게 그대로 전송하셔도 완벽 호환됩니다.',
+                      '• 체크앤페이 간편장부 CSV는 윈도우 엑셀 한글 깨짐 방지(UTF-8 BOM)가 적용되어 세무사에게 그대로 전송하셔도 완벽 호환됩니다.',
                 ),
                 const SizedBox(height: 20),
               ],

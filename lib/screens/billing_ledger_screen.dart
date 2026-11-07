@@ -125,11 +125,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
               icon: const Icon(Icons.share_outlined, size: 20),
-              tooltip: '동료 원장님께 제로패스 추천 (카톡)',
+              tooltip: '동료 원장님께 체크앤페이 추천 (카톡)',
               onPressed: () {
                 final studio = studioAsync.value ?? StudioProfile.defaultProfile();
                 final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
-                KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 ZeroPass 추천');
+                KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 체크앤페이 추천');
               },
             ),
           if (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)

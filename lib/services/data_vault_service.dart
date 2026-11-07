@@ -310,8 +310,8 @@ class DataVaultService {
     return await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'text/csv')],
-        subject: '[제로패스] 회원 명부 엑셀(CSV) 내보내기',
-        text: '제로패스 등록 회원 전체 명부 엑셀(CSV) 파일입니다. (100% 로컬 생성)',
+        subject: '[체크앤페이] 회원 명부 엑셀(CSV) 내보내기',
+        text: '체크앤페이 등록 회원 전체 명부 엑셀(CSV) 파일입니다. (100% 로컬 생성)',
       ),
     );
   }

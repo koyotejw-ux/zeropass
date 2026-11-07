@@ -381,68 +381,42 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               ),
               const SizedBox(width: 12),
 
-              // 2. Central 2-Row Information Stack
+              // 2. Central 2-Row Information Stack (100% 단일 컬럼 가변 텍스트 흐름)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1행: 이름 + 서브태그
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            member.primaryName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textPrimary,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                        ),
-                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          ZeroBadge.neutral(member.secondaryTag!, size: ZeroBadgeSize.small),
-                        ],
-                      ],
+                    // 1행: 회원명 (온전한 단일 라인 확보)
+                    Text(
+                      member.primaryName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                     const SizedBox(height: 3),
 
-                    // 2행: 그룹명 · 연락처
-                    Row(
-                      children: [
-                        if (member.groupName.isNotEmpty) ...[
-                          Flexible(
-                            child: Text(
-                              member.groupName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text('·', style: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.bold, fontSize: 11)),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          member.phone,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontSize: 11.5,
-                            color: AppTheme.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                    // 2행: 코스 태그 · 그룹명 · 연락처 (가변 텍스트 일목정렬)
+                    Text(
+                      [
+                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                        if (member.groupName.isNotEmpty) member.groupName,
+                        member.phone,
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),
