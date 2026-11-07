@@ -563,24 +563,24 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 시니어 큰글씨 모드 원터치 토글
+          // 시니어 큰글씨 모드 원터치 토글 (Tier 3 Utility)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.only(right: 6),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    height: 32,
+                    height: 30,
                     padding: const EdgeInsets.symmetric(horizontal: 9),
                     decoration: BoxDecoration(
                       color: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
-                        width: isSeniorMode ? 1.4 : 0.9,
+                        width: isSeniorMode ? 1.2 : 0.8,
                       ),
                     ),
                     child: Row(
@@ -588,16 +588,16 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       children: [
                         Icon(
                           Icons.elderly_rounded,
-                          color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF52525B),
-                          size: 14,
+                          color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textSecondary,
+                          size: 13.5,
                         ),
                         const SizedBox(width: 3),
                         Text(
                           isSeniorMode ? '큰글씨 ON' : '큰글씨',
                           style: TextStyle(
-                            color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF18181B),
+                            color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
                             fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -607,30 +607,30 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               ),
             ),
           ),
-          // 스마트 안심 알림 센터 (허브 & 발송 이력 & 미발송 브리핑)
+          // 스마트 안심 알림 센터 (Tier 3 Utility)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.only(right: 6),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => SmartNotificationCenterModal.show(context),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF4F4F5),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.9),
+                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
                     ),
-                    child: const Icon(Icons.notifications_active_outlined, color: AppTheme.primaryDark, size: 17),
+                    child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF3F3F46), size: 16),
                   ),
                 ),
               ),
             ),
           ),
-          // Tab 0 필수 전용 기능: 매장 입구 무인 자율출결 키오스크 모드
+          // Tab 0 전용 유틸리티: 매장 입구 무인 자율출결 키오스크 모드 (Tier 3 Outlined Utility)
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -638,23 +638,24 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => _openTabletKioskMode(context),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    height: 32,
+                    height: 30,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryDark,
-                      borderRadius: BorderRadius.circular(18),
+                      color: const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFD4D4D8), width: 0.9),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.tablet_mac_rounded, color: Colors.white, size: 13.5),
+                        Icon(Icons.tablet_mac_rounded, color: Color(0xFF27272A), size: 13),
                         SizedBox(width: 4),
                         Text(
                           '무인 키오스크',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF27272A),
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.2,
@@ -822,7 +823,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ),
                     ),
 
-                  // 2. Filter Chips (Strict 16px alignment & uniform height)
+                  // 2. Filter Chips (Strict 16px alignment & Active/Inactive contrast)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -839,23 +840,19 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                 });
                               },
                               child: Container(
-                                height: 34,
+                                height: 32,
                                 padding: const EdgeInsets.symmetric(horizontal: 13),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.primaryDark : Colors.white,
-                                  borderRadius: BorderRadius.circular(17),
-                                  border: Border.all(
-                                    color: isSelected ? AppTheme.primaryDark : AppTheme.borderSubtle,
-                                    width: 0.9,
-                                  ),
+                                  color: isSelected ? AppTheme.primaryDark : const Color(0xFFF4F4F5),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Center(
                                   child: Text(
                                     g,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                      color: isSelected ? Colors.white : AppTheme.textSecondary,
                                       letterSpacing: -0.2,
                                     ),
                                   ),
@@ -875,15 +872,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                             const PopupMenuItem(value: '골든타임 케어', child: Text('골든타임 케어 (7일+ 결석)')),
                           ],
                           child: Container(
-                            height: 34,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 11),
                             decoration: BoxDecoration(
-                              color: _statusFilter != '전체' ? const Color(0xFFEFF6FF) : Colors.white,
-                              borderRadius: BorderRadius.circular(17),
-                              border: Border.all(
-                                color: _statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.borderSubtle,
-                                width: 0.9,
-                              ),
+                              color: _statusFilter != '전체' ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
+                              borderRadius: BorderRadius.circular(16),
+                              border: _statusFilter != '전체'
+                                  ? Border.all(color: AppTheme.trustBlue, width: 1.0)
+                                  : null,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -898,8 +894,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                   '상태: $_statusFilter',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: _statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.textPrimary,
+                                    fontWeight: _statusFilter != '전체' ? FontWeight.w700 : FontWeight.w500,
+                                    color: _statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(width: 2),
@@ -995,19 +991,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
                       return Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: isLandscape ? 6 : (isKeyboardOpen ? 8 : 10),
+                          horizontal: 16,
+                          vertical: isLandscape ? 6 : (isKeyboardOpen ? 8 : 9),
                         ),
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.white,
-                          border: const Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha((255 * 0.05).round()),
-                              offset: const Offset(0, -3),
-                              blurRadius: 10,
-                            ),
-                          ],
+                          border: Border(top: BorderSide(color: AppTheme.borderSubtle, width: 0.8)),
                         ),
                         child: SafeArea(
                           top: false,
@@ -1015,7 +1004,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: ElevatedButton.icon(
+                                child: OutlinedButton.icon(
                                   onPressed: targetCount > 0
                                       ? () => _handleBatchCheckIn(
                                             context,
@@ -1024,8 +1013,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                       : null,
                                   icon: Icon(
                                     Icons.done_all_rounded,
-                                    color: targetCount > 0 ? Colors.white : AppTheme.textTertiary,
-                                    size: 18,
+                                    color: targetCount > 0 ? AppTheme.primaryBlue : AppTheme.textTertiary,
+                                    size: 17,
                                   ),
                                   label: FittedBox(
                                     fit: BoxFit.scaleDown,
@@ -1038,27 +1027,27 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                               ? (isLandscape ? '남은 회원 일괄 출석 ($targetCount명)' : '남은 회원 일괄 출석 완료 ($targetCount명)')
                                               : (members.isEmpty ? '등록된 출석 대상 회원 없음' : '오늘 모든 회원 출석 완료')),
                                       style: TextStyle(
-                                        fontWeight: targetCount > 0 ? FontWeight.w700 : FontWeight.w600,
-                                        fontSize: 14.5,
-                                        color: targetCount > 0 ? Colors.white : AppTheme.textTertiary,
+                                        fontWeight: targetCount > 0 ? FontWeight.w700 : FontWeight.w500,
+                                        fontSize: 13.5,
+                                        color: targetCount > 0 ? AppTheme.textPrimary : AppTheme.textTertiary,
                                       ),
                                     ),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryDark,
-                                    foregroundColor: Colors.white,
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: targetCount > 0 ? const Color(0xFFF8FAFC) : AppTheme.chipBackground,
+                                    foregroundColor: AppTheme.textPrimary,
                                     disabledBackgroundColor: AppTheme.chipBackground,
                                     disabledForegroundColor: AppTheme.textTertiary,
-                                    elevation: targetCount > 0 ? 1 : 0,
+                                    elevation: 0,
                                     side: BorderSide(
-                                      color: targetCount > 0 ? Colors.transparent : AppTheme.borderSubtle,
+                                      color: targetCount > 0 ? const Color(0xFFCBD5E1) : AppTheme.borderSubtle,
                                       width: 1,
                                     ),
                                     padding: EdgeInsets.symmetric(
-                                      vertical: isLandscape ? 8 : (isKeyboardOpen ? 10 : 12),
+                                      vertical: isLandscape ? 8 : (isKeyboardOpen ? 9 : 11),
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
                                 ),
@@ -1128,31 +1117,33 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+      padding: const EdgeInsets.fromLTRB(15, 13, 15, 13),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isChecked ? const Color(0xFFF8FAFC) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isChecked ? AppTheme.softMint.withAlpha((255 * 0.45).round()) : AppTheme.borderSubtle,
-          width: isChecked ? 1.3 : 0.9,
+          color: isChecked
+              ? AppTheme.softMint.withAlpha((255 * 0.35).round())
+              : (isExpiringSoon ? const Color(0xFFFECACA) : AppTheme.borderSubtle),
+          width: (isChecked || isExpiringSoon) ? 1.2 : 0.9,
         ),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: isChecked ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Section: Avatar (Left) + Name & Group (Center) + Pass Card Button (Right)
+          // 1. Top Section: Avatar (Left) + Tier-1 Name & Tier-3 Group Subtitle (Center) + Tier-4 Ghost Pass Link (Right)
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isChecked ? AppTheme.softMint.withAlpha((255 * 0.14).round()) : AppTheme.chipBackground,
+                  color: isChecked ? AppTheme.softMint.withAlpha((255 * 0.12).round()) : const Color(0xFFF1F5F9),
                   border: Border.all(
-                    color: isChecked ? AppTheme.softMint : AppTheme.borderSubtle,
+                    color: isChecked ? AppTheme.softMint.withAlpha(120) : const Color(0xFFE2E8F0),
                     width: 0.9,
                   ),
                 ),
@@ -1162,15 +1153,15 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           File(member.photoPath!).existsSync()
                       ? Image.file(
                           File(member.photoPath!),
-                          width: 40,
-                          height: 40,
+                          width: 42,
+                          height: 42,
                           fit: BoxFit.cover,
                         )
                       : Center(
                           child: Text(
                             initials,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 15.5,
                               fontWeight: FontWeight.w800,
                               color: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
                             ),
@@ -1178,7 +1169,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         ),
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: MemberNameBadge(
                   member: member,
@@ -1186,6 +1177,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 8),
+              // Tier 4 Utility Trigger: Quiet Ghost Link (No competing border box)
               InkWell(
                 onTap: () {
                   DigitalPassCardDialog.show(
@@ -1195,26 +1187,20 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     latestRecord: todayPass,
                   );
                 },
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  height: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
-                  ),
-                  child: const Row(
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.badge_outlined, size: 13, color: AppTheme.textPrimary),
-                      SizedBox(width: 4),
+                    children: const [
+                      Icon(Icons.qr_code_2_rounded, size: 14, color: AppTheme.textTertiary),
+                      SizedBox(width: 3),
                       Text(
                         '패스 카드',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                     ],
@@ -1223,9 +1209,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 11),
 
-          // 2. Middle Row: Strict Full-Width Left-to-Right Grid (Status Badge Left <-> Primary Action Right)
+          // 2. Bottom Row: Tier-2 Semantic Status Badge (Left) <-> Tier-1 Primary Action CTA (Right)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -1233,18 +1219,21 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               Flexible(
                 child: isSessionBased
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
                         decoration: BoxDecoration(
                           color: isExpiringSoon
-                              ? AppTheme.danger.withAlpha((255 * 0.10).round())
+                              ? const Color(0xFFFEF2F2)
                               : const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(8),
+                          border: isExpiringSoon
+                              ? Border.all(color: const Color(0xFFFECACA), width: 0.9)
+                              : null,
                         ),
                         child: Text(
                           '${member.remainingSessions}/${member.totalSessions}회 남음 ${isExpiringSoon ? "(만료임박)" : ""}',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: isExpiringSoon ? FontWeight.w800 : FontWeight.w700,
                             color: isExpiringSoon ? AppTheme.danger : AppTheme.primaryBlue,
                           ),
                           maxLines: 1,
@@ -1252,36 +1241,37 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         ),
                       )
                     : Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
                         decoration: BoxDecoration(
-                          color: AppTheme.softMint.withAlpha((255 * 0.12).round()),
+                          color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
                           '정기 결제 패스',
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.softMint,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
                           ),
                         ),
                       ),
               ),
               const SizedBox(width: 10),
 
-              // Check-in Action Button / Status Badge (Strictly Right-Aligned)
+              // Tier 1 Primary CTA Button (Only solid colored button on the card!)
               if (isChecked)
                 Container(
                   height: 34,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.softMint.withAlpha((255 * 0.14).round()),
+                    color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFA7F3D0), width: 0.9),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.check_circle, size: 15, color: AppTheme.softMint),
+                      const Icon(Icons.check_circle_rounded, size: 15, color: AppTheme.softMint),
                       const SizedBox(width: 5),
                       Text(
                         todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
@@ -1296,17 +1286,18 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 )
               else
                 SizedBox(
-                  height: 34,
+                  height: 36,
                   child: ElevatedButton.icon(
                     onPressed: () => _handleOneTouchCheckIn(member),
-                    icon: const Icon(Icons.check_rounded, size: 15, color: Colors.white),
+                    icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
                     label: const Text(
                       '체크인',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: -0.2),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       elevation: 0,
                     ),

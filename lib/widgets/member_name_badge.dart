@@ -29,10 +29,11 @@ class MemberNameBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveNameStyle = nameStyle ??
         TextStyle(
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w800,
           color: isDark ? Colors.white : AppTheme.textPrimary,
-          letterSpacing: -0.3,
+          letterSpacing: -0.4,
+          height: 1.2,
         );
 
     final hasTag = showSecondaryTag &&
@@ -54,18 +55,12 @@ class MemberNameBadge extends StatelessWidget {
         if (hasTag) ...[
           const SizedBox(width: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF1E293B)
-                  : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : const Color(0xFFE2E8F0),
-                width: 0.8,
-              ),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(5),
             ),
             child: Text(
               member.secondaryTag!,
@@ -73,8 +68,8 @@ class MemberNameBadge extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF475569),
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF94A3B8) : AppTheme.textSecondary,
                 letterSpacing: -0.2,
               ),
             ),
@@ -93,23 +88,15 @@ class MemberNameBadge extends StatelessWidget {
       children: [
         nameRow,
         const SizedBox(height: 3),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : AppTheme.chipBackground,
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Text(
-            member.groupName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFF94A3B8) : AppTheme.textSecondary,
-            ),
+        Text(
+          member.groupName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF94A3B8) : AppTheme.textSecondary,
+            letterSpacing: -0.2,
           ),
         ),
       ],

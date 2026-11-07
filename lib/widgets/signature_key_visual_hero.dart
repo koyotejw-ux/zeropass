@@ -86,28 +86,21 @@ class SignatureKeyVisualHero extends StatelessWidget {
                               studio?.studioName ?? '나의 스튜디오',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 13.5,
+                                fontSize: 14.5,
                                 fontWeight: FontWeight.w800,
-                                letterSpacing: -0.3,
+                                letterSpacing: -0.4,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              studio?.category ?? '전문교육',
-                              style: const TextStyle(
-                                color: Color(0xFF94A3B8),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          Text(
+                            '· ${studio?.category ?? '전문교육'}',
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -116,7 +109,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(20),
@@ -137,13 +130,28 @@ class SignatureKeyVisualHero extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 5),
-                        Text(
-                          '출석률 $attendanceRate%',
-                          style: const TextStyle(
-                            color: Color(0xFFA7F3D0),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(fontFamily: 'Pretendard'),
+                            children: [
+                              const TextSpan(
+                                text: '출석률 ',
+                                style: TextStyle(
+                                  color: Color(0xFFA7F3D0),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '$attendanceRate%',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -151,7 +159,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // Row 2: Slim Precision Progress Bar
               ClipRRect(
@@ -185,9 +193,9 @@ class SignatureKeyVisualHero extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Row 3: Strict 3-Column Real-Time Operational KPI Grid
+              // Row 3: Strict 3-Column Real-Time Operational KPI Grid (Tier 3 Label Top -> Tier 1 Number Bottom)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(14),
@@ -202,18 +210,21 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       label: '출석 완료',
                       value: '$checkedCount명',
                       accentColor: const Color(0xFF34D399),
+                      valueColor: Colors.white,
                     ),
                     _buildVerticalDivider(),
                     _buildKpiCell(
                       label: '출결 대기',
                       value: '$waitingCount명',
                       accentColor: const Color(0xFF38BDF8),
+                      valueColor: Colors.white,
                     ),
                     _buildVerticalDivider(),
                     _buildKpiCell(
                       label: '만료 임박',
                       value: '$expiringCount명',
                       accentColor: const Color(0xFFFBBF24),
+                      valueColor: expiringCount > 0 ? const Color(0xFFFDE68A) : Colors.white,
                     ),
                   ],
                 ),
@@ -228,7 +239,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
-      height: 24,
+      height: 32,
       color: Colors.white.withValues(alpha: 0.10),
     );
   }
@@ -237,47 +248,54 @@ class SignatureKeyVisualHero extends StatelessWidget {
     required String label,
     required String value,
     required Color accentColor,
+    required Color valueColor,
   }) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: accentColor,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontFamily: 'Pretendard'),
-                    children: [
-                      TextSpan(
-                        text: '$label ',
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      TextSpan(
-                        text: value,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accentColor,
                   ),
+                ),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: valueColor,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  height: 1.15,
                 ),
               ),
             ),

@@ -632,7 +632,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('운영 · 보안 설정'),
+        title: const Text('설정 · 보안 금고'),
         actions: [
           Center(
             child: Padding(
@@ -1827,35 +1827,35 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              '시니어 큰글씨 모드',
-                              style: TextStyle(
-                                fontSize: isSeniorMode ? 18.5 : 16.5,
-                                fontWeight: FontWeight.w800,
-                                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
-                              ),
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: isSeniorMode ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isSeniorMode ? '사용 중' : '고령자 맞춤',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textSecondary,
                           ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isSeniorMode ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              isSeniorMode ? '사용 중' : '고령자 맞춤',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textSecondary,
-                              ),
-                            ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '시니어 큰글씨 모드',
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: isSeniorMode ? 18.5 : 16.5,
+                            fontWeight: FontWeight.w800,
+                            color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
+                            letterSpacing: -0.3,
                           ),
-                        ],
+                        ),
                       ),
                       const SizedBox(height: 3),
                       Text(

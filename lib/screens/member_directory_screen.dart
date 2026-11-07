@@ -66,10 +66,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       appBar: AppBar(
         title: const Text('회원 명부 관리'),
         actions: [
-          // Tab 2 보조 기능: 순차 릴레이 단체발송 마법사
+          // Tab 3 보조 유틸리티: 순차 릴레이 단체발송 마법사 (Tier 3 Neutral Pill)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 6),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -89,25 +89,26 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       invoices: invoices,
                     );
                   },
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    height: 30,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3182F6).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF3182F6).withValues(alpha: 0.3)),
+                      color: const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.mark_chat_unread_outlined, color: AppTheme.primaryBlue, size: 16),
+                        Icon(Icons.mark_chat_unread_outlined, color: Color(0xFF3F3F46), size: 14),
                         SizedBox(width: 4),
                         Text(
                           '순차 발송',
                           style: TextStyle(
-                            color: AppTheme.primaryBlue,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF27272A),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -117,10 +118,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               ),
             ),
           ),
-          // Tab 2 필수 전용 기능: 회원 명부 엑셀(CSV) 원터치 내보내기 & 공유
+          // Tab 3 보조 유틸리티: 회원 명부 엑셀(CSV) 내보내기 (Tier 3 Neutral Pill)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(right: 14),
+              padding: const EdgeInsets.only(right: 16),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -143,25 +144,26 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       }
                     }
                   },
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    height: 30,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryDark.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.primaryDark.withValues(alpha: 0.25)),
+                      color: const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.file_download_outlined, color: AppTheme.primaryDark, size: 16),
-                        SizedBox(width: 5),
+                        Icon(Icons.file_download_outlined, color: Color(0xFF3F3F46), size: 14),
+                        SizedBox(width: 4),
                         Text(
                           '명부 엑셀',
                           style: TextStyle(
-                            color: AppTheme.primaryDark,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF27272A),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -226,10 +228,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 ),
               ),
 
-              // Group Filter Chips
+              // Group Filter Chips (Strict Active/Inactive Hierarchy)
               if (allGroups.length > 1)
                 SizedBox(
-                  height: 38,
+                  height: 36,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
@@ -241,21 +243,17 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       return GestureDetector(
                         onTap: () => setState(() => _selectedGroupFilter = grp),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primaryDark : Colors.white,
+                            color: isSelected ? AppTheme.primaryDark : const Color(0xFFF4F4F5),
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: isSelected ? AppTheme.primaryDark : AppTheme.borderSubtle,
-                              width: 0.9,
-                            ),
                           ),
                           child: Center(
                             child: Text(
                               grp,
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                 color: isSelected ? Colors.white : AppTheme.textSecondary,
                               ),
                             ),
@@ -294,20 +292,20 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                          color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.send_rounded, size: 13, color: AppTheme.primaryBlue),
+                            Icon(Icons.send_rounded, size: 12.5, color: Color(0xFF475569)),
                             SizedBox(width: 4),
                             Text(
                               '순차 릴레이 발송',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryBlue,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF334155),
                               ),
                             ),
                           ],
@@ -350,7 +348,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_member',
         onPressed: () => _openAddMemberDialog(context),
-        backgroundColor: AppTheme.primaryDark,
+        backgroundColor: AppTheme.primaryBlue,
         icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
         label: const Text(
           '신규 회원 등록',
@@ -366,32 +364,35 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
     final isExpiring = isSession && member.remainingSessions <= 1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isExpiring ? const Color(0xFFFECACA) : AppTheme.borderSubtle,
+          width: isExpiring ? 1.2 : 0.9,
+        ),
         boxShadow: AppTheme.cardShadow,
       ),
       child: InkWell(
         onTap: () => _openMemberDetailSheet(context, member),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(15),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Top Section: Avatar + Single-line Name with Course Badge & Subtitle Group
+              // 1. Top Section: Avatar + Tier-1 Name & Tier-3 Group Subtitle (Left) <-> Tier-2 Pass Status Badge (Right)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppTheme.chipBackground,
-                      border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                      color: const Color(0xFFF1F5F9),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
                     ),
                     child: ClipOval(
                       child: member.photoPath != null &&
@@ -399,16 +400,16 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                               File(member.photoPath!).existsSync()
                           ? Image.file(
                               File(member.photoPath!),
-                              width: 40,
-                              height: 40,
+                              width: 42,
+                              height: 42,
                               fit: BoxFit.cover,
                             )
                           : Center(
                               child: Text(
                                 initials,
                                 style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w800,
                                   color: AppTheme.primaryDark,
                                 ),
                               ),
@@ -422,6 +423,75 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       showGroupName: true,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Tier 2 Primary Status Badge on Right
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    decoration: BoxDecoration(
+                      color: isSession
+                          ? (isExpiring ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF))
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: isExpiring
+                          ? Border.all(color: const Color(0xFFFECACA), width: 0.9)
+                          : null,
+                    ),
+                    child: Text(
+                      isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isExpiring ? FontWeight.w800 : FontWeight.w700,
+                        color: isSession
+                            ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue)
+                            : const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 11),
+
+              // 2. Bottom Section: Tier-3 Phone & Reg Date (Left) <-> Tier-4 Ghost Pass Link (Right)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.phone_iphone_outlined, size: 13.5, color: AppTheme.textSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              member.phone,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.calendar_today_outlined, size: 11.5, color: AppTheme.textTertiary),
+                            const SizedBox(width: 4),
+                            Text(
+                              '등록 ${DateFormat("yy.MM.dd").format(member.registeredAt)}',
+                              style: const TextStyle(fontSize: 11.5, color: AppTheme.textTertiary),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () {
                       DigitalPassCardDialog.show(
@@ -430,87 +500,23 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                         studio: studio,
                       );
                     },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
-                      ),
-                      child: const Row(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.badge_outlined, size: 13, color: AppTheme.primaryBlue),
-                          SizedBox(width: 4),
+                        children: const [
+                          Icon(Icons.qr_code_2_rounded, size: 14, color: AppTheme.textTertiary),
+                          SizedBox(width: 3),
                           Text(
                             '패스',
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryBlue,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textSecondary,
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // 2. Bottom Section: Phone, Registration date, and Pass Type badge
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.phone_iphone_outlined, size: 14, color: AppTheme.textSecondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            member.phone,
-                            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 12, color: AppTheme.textTertiary),
-                          const SizedBox(width: 4),
-                          Text(
-                            '등록 ${DateFormat("yy.MM.dd").format(member.registeredAt)}',
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isSession
-                          ? (isExpiring
-                              ? AppTheme.danger.withAlpha((255 * 0.12).round())
-                              : AppTheme.primaryBlue.withAlpha((255 * 0.1).round()))
-                          : AppTheme.softMint.withAlpha((255 * 0.12).round()),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      isSession ? '${member.remainingSessions}/${member.totalSessions}회' : '정기권',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isSession ? (isExpiring ? AppTheme.danger : AppTheme.primaryBlue) : AppTheme.softMint,
                       ),
                     ),
                   ),
