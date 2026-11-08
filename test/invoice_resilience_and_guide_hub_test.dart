@@ -175,6 +175,13 @@ void main() {
 
       expect(find.text('체크앤페이 PRO 샵'), findsOneWidget);
       expect(find.text('구독 복원'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('올인원 VIP 패키지 구독 (추천)'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('올인원 VIP 패키지 구독 (추천)'), findsOneWidget);
 
       await tester.scrollUntilVisible(
