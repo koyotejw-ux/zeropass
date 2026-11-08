@@ -88,6 +88,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     final studioAsync = ref.watch(studioProfileProvider);
     final expensesAsync = ref.watch(expensesProvider);
     final vendorsAsync = ref.watch(vendorsProvider);
+    final isSeniorMode = ref.watch(seniorModeProvider);
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     final String appBarTitle = widget.mode == LedgerScreenMode.expenseTaxOnly
@@ -105,112 +106,68 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           child: Text(appBarTitle),
         ),
         actions: [
+          // 1. 간편장부 엑셀 내보내기 & 세무 가이드 (심플 라인 아이콘)
           IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-            icon: const Icon(Icons.table_view_outlined, size: 20, color: AppTheme.primaryBlue),
-            tooltip: '국세청 표준 사업소득 간편장부 엑셀(CSV) 내보내기 & 세무 가이드',
+            icon: const Icon(Icons.table_view_outlined, size: 22, color: Color(0xFF3F3F46)),
+            tooltip: '간편장부 엑셀 & 세무',
+            splashRadius: 20,
             onPressed: () => _showBookkeepingExportSheet(context),
           ),
+          // 2. 상황별 도구: 세무 일정 or 카톡 추천 (심플 라인 아이콘)
           if (widget.mode == LedgerScreenMode.expenseTaxOnly)
             IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-              icon: const Icon(Icons.menu_book_outlined, size: 20, color: AppTheme.textPrimary),
-              tooltip: '소상공인 1분 세무 일정 가이드',
+              icon: const Icon(Icons.menu_book_outlined, size: 22, color: Color(0xFF3F3F46)),
+              tooltip: '소상공인 세무 가이드',
+              splashRadius: 20,
               onPressed: () => TaxGuideModal.show(context),
             )
           else
             IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-              icon: const Icon(Icons.share_outlined, size: 20),
-              tooltip: '동료 원장님께 체크앤페이 추천 (카톡)',
+              icon: const Icon(Icons.share_outlined, size: 22, color: Color(0xFF3F3F46)),
+              tooltip: '체크앤페이 추천',
+              splashRadius: 20,
               onPressed: () {
                 final studio = studioAsync.value ?? StudioProfile.defaultProfile();
                 final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
                 KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 체크앤페이 추천');
               },
             ),
+          // 3. 거래처 수첩 or 실시간 입금 감지 (심플 라인 아이콘)
           if (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      final vendors = vendorsAsync.value ?? [];
-                      _openVendorManagementSheet(context, vendors);
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.business_center_outlined, color: Color(0xFF4F46E5), size: 16),
-                          SizedBox(width: 5),
-                          Text(
-                            '거래처 수첩',
-                            style: TextStyle(
-                              color: Color(0xFF4F46E5),
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            IconButton(
+              icon: const Icon(Icons.business_center_outlined, size: 22, color: Color(0xFF4F46E5)),
+              tooltip: '거래처 수첩',
+              splashRadius: 20,
+              onPressed: () {
+                final vendors = vendorsAsync.value ?? [];
+                _openVendorManagementSheet(context, vendors);
+              },
             )
           else
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      final members = membersAsync.value ?? [];
-                      final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
-                      _showBankNotificationSimulator(context, members, unpaid);
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.notifications_active_outlined, color: Color(0xFF059669), size: 16),
-                          SizedBox(width: 5),
-                          Text(
-                            '입금 감지',
-                            style: TextStyle(
-                              color: Color(0xFF059669),
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            IconButton(
+              icon: const Icon(Icons.notifications_active_outlined, size: 22, color: Color(0xFF059669)),
+              tooltip: '실시간 입금 감지',
+              splashRadius: 20,
+              onPressed: () {
+                final members = membersAsync.value ?? [];
+                final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
+                _showBankNotificationSimulator(context, members, unpaid);
+              },
             ),
+          // 4. 시니어 큰글씨 모드 퀵 토글 (공통 규격: 가장 우측 배치)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: IconButton(
+              icon: Icon(
+                Icons.format_size_rounded,
+                size: 22,
+                color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+              ),
+              tooltip: '큰글씨 모드',
+              splashRadius: 20,
+              onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
+            ),
+          ),
         ],
       ),
       body: invoicesAsync.when(
@@ -320,432 +277,449 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                       ? const Color(0xFFFB7185)
                       : const Color(0xFF34D399);
 
-              return Column(
-                children: [
-                  // 1. Amount Metric Overview Card with Strong Visual Hierarchy & Status Contrast
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: isLandscape ? 4 : 8,
-                    ),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: isLandscape ? 12 : 18,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha((255 * 0.25).round()),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+              return CustomScrollView(
+                slivers: [
+                  // 1. Amount Metric Overview Card & Notice Banners (Scrollable with body)
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: isLandscape ? 4 : 8,
                           ),
-                        ],
-                        border: Border.all(
-                          color: cardBorderColor,
-                          width: 1.2,
-                        ),
-                      ),
-                      child: isLandscape
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.centerLeft,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          heroIcon,
-                                          color: heroIconColor,
-                                          size: 22,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '$heroTitle: ',
-                                          style: const TextStyle(
-                                            color: Color(0xFF94A3B8),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        Text(
-                                          LocalizationService.formatAmount(heroAmount),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: -0.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: isLandscape ? 12 : 18,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha((255 * 0.25).round()),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: badgeBgColor,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: badgeBorderColor,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                              ],
+                              border: Border.all(
+                                color: cardBorderColor,
+                                width: 1.2,
+                              ),
+                            ),
+                            child: isLandscape
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Icon(
-                                        badgeIcon,
-                                        size: 13,
-                                        color: badgeTextColor,
+                                      Expanded(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                heroIcon,
+                                                color: heroIconColor,
+                                                size: 22,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '$heroTitle: ',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF94A3B8),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              Text(
+                                                LocalizationService.formatAmount(heroAmount),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: -0.5,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        badgeText,
-                                        style: TextStyle(
-                                          color: badgeTextColor,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: badgeBgColor,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: badgeBorderColor,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              badgeIcon,
+                                              size: 13,
+                                              color: badgeTextColor,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              badgeText,
+                                              style: TextStyle(
+                                                color: badgeTextColor,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Top Header Row: Category Icon & Title + Status Badge
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Row(
+                                  )
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Top Header Row: Category Icon & Title + Status Badge
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(6),
-                                            decoration: BoxDecoration(
-                                              color: heroIconColor.withAlpha((255 * 0.18).round()),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              heroIcon,
-                                              color: heroIconColor,
-                                              size: 16,
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: heroIconColor.withAlpha((255 * 0.18).round()),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    heroIcon,
+                                                    color: heroIconColor,
+                                                    size: 16,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    heroTitle,
+                                                    softWrap: true,
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF94A3B8),
+                                                      fontSize: 13.5,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              heroTitle,
-                                              softWrap: true,
-                                              style: const TextStyle(
-                                                color: Color(0xFF94A3B8),
-                                                fontSize: 13.5,
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                                            decoration: BoxDecoration(
+                                              color: badgeBgColor,
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: badgeBorderColor,
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  badgeIcon,
+                                                  size: 13,
+                                                  color: badgeTextColor,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  badgeText,
+                                                  style: TextStyle(
+                                                    color: badgeTextColor,
+                                                    fontSize: 11.5,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+
+                                      // Hero Amount Typography
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          LocalizationService.formatAmount(heroAmount),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: -1.0,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+
+                                      // Secondary Info Bar
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withAlpha((255 * 0.05).round()),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Colors.white.withAlpha((255 * 0.08).round())),
+                                        ),
+                                        child: Wrap(
+                                          alignment: WrapAlignment.spaceBetween,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          spacing: 10,
+                                          runSpacing: 4,
+                                          children: [
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.pie_chart_outline_rounded,
+                                                  size: 14,
+                                                  color: Colors.white.withAlpha((255 * 0.6).round()),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Flexible(
+                                                  child: Text(
+                                                    infoBarLeftText,
+                                                    softWrap: true,
+                                                    style: TextStyle(
+                                                      color: Colors.white.withAlpha((255 * 0.75).round()),
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Text(
+                                              infoBarRightText,
+                                              style: TextStyle(
+                                                color: infoBarRightColor,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                                      decoration: BoxDecoration(
-                                        color: badgeBgColor,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: badgeBorderColor,
-                                          width: 1,
+                                          ],
                                         ),
                                       ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            badgeIcon,
-                                            size: 13,
-                                            color: badgeTextColor,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            badgeText,
-                                            style: TextStyle(
-                                              color: badgeTextColor,
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Hero Amount Typography
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    LocalizationService.formatAmount(heroAmount),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: -1.0,
-                                    ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(height: 14),
+                          ),
+                        ),
 
-                                // Secondary Info Bar (Comparative Balance & Progress - Wrap prevents narrow collision)
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        // Expiring Sessions Warning Strip (with one-tap warning SMS)
+                        if (_selectedTab == 0 && expiringMembers.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: ZeroNoticeBanner(
+                              variant: ZeroBannerVariant.care,
+                              icon: Icons.warning_amber_rounded,
+                              title: '회차 만료 임박 (${expiringMembers.length}명)',
+                              subtitle: expiringMembers.map((m) => m.name.split(' ').first).join(', '),
+                              actionLabel: '만료 안내문자',
+                              onAction: () => _sendExpiryAlert(context, studio, expiringMembers.first),
+                            ),
+                          ),
+
+                        // 미납자 전체 순차 릴레이 독촉 발송 배너
+                        if (_selectedTab == 0 && unpaidInvoices.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: ZeroNoticeBanner(
+                              variant: ZeroBannerVariant.info,
+                              icon: Icons.mark_chat_unread_outlined,
+                              title: '미납 회원 ${unpaidInvoices.length}명 대기 중',
+                              trailing: InkWell(
+                                onTap: () {
+                                  final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
+                                  final unpaidMembersList = members.where((m) => unpaidMemberIds.contains(m.id)).toList();
+                                  SequentialDispatchModal.show(
+                                    context: context,
+                                    allMembers: unpaidMembersList,
+                                    studio: studio,
+                                    invoices: unpaidInvoices,
+                                    initialTemplateType: DispatchTemplateType.billing,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha((255 * 0.05).round()),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.white.withAlpha((255 * 0.08).round())),
+                                    color: AppTheme.primaryBlue,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Wrap(
-                                    alignment: WrapAlignment.spaceBetween,
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    spacing: 10,
-                                    runSpacing: 4,
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.pie_chart_outline_rounded,
-                                            size: 14,
-                                            color: Colors.white.withAlpha((255 * 0.6).round()),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Flexible(
-                                            child: Text(
-                                              infoBarLeftText,
-                                              softWrap: true,
-                                              style: TextStyle(
-                                                color: Colors.white.withAlpha((255 * 0.75).round()),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
+                                      SizedBox(width: 4),
                                       Text(
-                                        infoBarRightText,
+                                        '미납 순차 발송',
                                         style: TextStyle(
-                                          color: infoBarRightColor,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'Pretendard',
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // 2. Sticky Pinned Sub-tabs / Hub Header
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _BillingTabHeaderDelegate(
+                      height: (widget.mode == LedgerScreenMode.expenseTaxOnly) ? 56.0 : 52.0,
+                      child: (widget.mode == LedgerScreenMode.expenseTaxOnly)
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildQuickTaxActionTile(
+                                      icon: Icons.business_center_outlined,
+                                      label: '거래처·강사 (${vendors.length})',
+                                      color: const Color(0xFF4F46E5),
+                                      onTap: () => _openVendorManagementSheet(context, vendors),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildQuickTaxActionTile(
+                                      icon: Icons.table_view_outlined,
+                                      label: '간편장부 엑셀',
+                                      color: const Color(0xFF059669),
+                                      onTap: () => _showBookkeepingExportSheet(context),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildQuickTaxActionTile(
+                                      icon: Icons.menu_book_outlined,
+                                      label: '1분 세무 가이드',
+                                      color: AppTheme.primaryBlue,
+                                      onTap: () => TaxGuideModal.show(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppTheme.chipBackground,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.all(3),
+                                child: Row(
+                                  children: [
+                                    _buildTabButton('미납 / 청구 (${unpaidInvoices.length})', 0),
+                                    _buildTabButton('수납 완료 (${paidInvoices.length})', 1),
+                                    if (widget.mode == LedgerScreenMode.all)
+                                      _buildTabButton('지출 / 매입 (${expenses.length})', 2),
+                                  ],
+                                ),
+                              ),
                             ),
                     ),
                   ),
 
-                  // 2. Segmented Control or Expense/Tax Quick Hub
-                  if (widget.mode == LedgerScreenMode.expenseTaxOnly)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildQuickTaxActionTile(
-                              icon: Icons.business_center_outlined,
-                              label: '거래처·강사 (${vendors.length})',
-                              color: const Color(0xFF4F46E5),
-                              onTap: () => _openVendorManagementSheet(context, vendors),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildQuickTaxActionTile(
-                              icon: Icons.table_view_outlined,
-                              label: '간편장부 엑셀',
-                              color: const Color(0xFF059669),
-                              onTap: () => _showBookkeepingExportSheet(context),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildQuickTaxActionTile(
-                              icon: Icons.menu_book_outlined,
-                              label: '1분 세무 가이드',
-                              color: AppTheme.primaryBlue,
-                              onTap: () => TaxGuideModal.show(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppTheme.chipBackground,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.all(3),
-                              child: Row(
-                                children: [
-                                  _buildTabButton('미납 / 청구 (${unpaidInvoices.length})', 0),
-                                  _buildTabButton('수납 완료 (${paidInvoices.length})', 1),
-                                  if (widget.mode == LedgerScreenMode.all)
-                                    _buildTabButton('지출 / 매입 (${expenses.length})', 2),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Expiring Sessions Warning Strip (with one-tap warning SMS)
-                  if (_selectedTab == 0 && expiringMembers.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      child: ZeroNoticeBanner(
-                        variant: ZeroBannerVariant.care,
-                        icon: Icons.warning_amber_rounded,
-                        title: '회차 만료 임박 (${expiringMembers.length}명)',
-                        subtitle: expiringMembers.map((m) => m.name.split(' ').first).join(', '),
-                        actionLabel: '만료 안내문자',
-                        onAction: () => _sendExpiryAlert(context, studio, expiringMembers.first),
-                      ),
-                    ),
-
-                  // 미납자 전체 순차 릴레이 독촉 발송 배너
-                  if (_selectedTab == 0 && unpaidInvoices.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: ZeroNoticeBanner(
-                        variant: ZeroBannerVariant.info,
-                        icon: Icons.mark_chat_unread_outlined,
-                        title: '미납 회원 ${unpaidInvoices.length}명 대기 중',
-                        trailing: InkWell(
-                          onTap: () {
-                            final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
-                            final unpaidMembersList = members.where((m) => unpaidMemberIds.contains(m.id)).toList();
-                            SequentialDispatchModal.show(
-                              context: context,
-                              allMembers: unpaidMembersList,
-                              studio: studio,
-                              invoices: unpaidInvoices,
-                              initialTemplateType: DispatchTemplateType.billing,
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
-                                SizedBox(width: 4),
-                                Text(
-                                  '미납 순차 발송',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
+                  // 3. Invoice or Expense Slivers
+                  if (_selectedTab == 2)
+                    ..._buildExpenseSlivers(context, expenses, vendors, studio)
+                  else if (currentList.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.receipt_long_outlined, size: 52, color: AppTheme.textTertiary),
+                              const SizedBox(height: 14),
+                              Text(
+                                _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                '우측 하단 [+] 또는 아래 버튼을 눌러\n첫 청구서를 간편하게 발행해보세요.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                              ),
+                              const SizedBox(height: 18),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  final members = membersAsync.value ?? [];
+                                  final studio = studioAsync.value ?? StudioProfile.defaultProfile();
+                                  _openQuickInvoiceSheet(context, members, studio);
+                                },
+                                icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
+                                label: const Text('첫 청구서 작성하기', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryBlue,
+                                  side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
+                                  backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            if (index == currentList.length) {
+                              return const NativeInlineAdCard(placementTag: 'billing_list');
+                            }
+                            final invoice = currentList[index];
+                            final invoiceMembers = invoice.memberIds
+                                .map((id) => memberMap[id])
+                                .whereType<Member>()
+                                .toList();
+
+                            return _buildInvoiceCard(context, invoice, invoiceMembers, studio);
+                          },
+                          childCount: currentList.length + 1,
+                        ),
+                      ),
                     ),
-
-                  // 3. Invoice or Expense List
-                  Expanded(
-                    child: _selectedTab == 2
-                        ? _buildExpenseListView(context, expenses, vendors, studio)
-                        : (currentList.isEmpty
-                            ? Center(
-                                child: SingleChildScrollView(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.receipt_long_outlined, size: 52, color: AppTheme.textTertiary),
-                                      const SizedBox(height: 14),
-                                      Text(
-                                        _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      const Text(
-                                        '우측 하단 [+] 또는 아래 버튼을 눌러\n첫 청구서를 간편하게 발행해보세요.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
-                                      ),
-                                      const SizedBox(height: 18),
-                                      OutlinedButton.icon(
-                                        onPressed: () {
-                                          final members = membersAsync.value ?? [];
-                                          final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-                                          _openQuickInvoiceSheet(context, members, studio);
-                                        },
-                                        icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
-                                        label: const Text('첫 청구서 작성하기', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14)),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: AppTheme.primaryBlue,
-                                          side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
-                                          backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
-                                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
-                                itemCount: currentList.length + 1,
-                                itemBuilder: (context, index) {
-                                  if (index == currentList.length) {
-                                    return const NativeInlineAdCard(placementTag: 'billing_list');
-                                  }
-                                  final invoice = currentList[index];
-                                  final invoiceMembers = invoice.memberIds
-                                      .map((id) => memberMap[id])
-                                      .whereType<Member>()
-                                      .toList();
-
-                                  return _buildInvoiceCard(context, invoice, invoiceMembers, studio);
-                                },
-                              )),
-                  ),
                 ],
               );
             },
@@ -1357,7 +1331,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
   // 체크인 페이: 지출/매입 장부 및 거래처 관리 UI
   // ==========================================
 
-  Widget _buildExpenseListView(
+  List<Widget> _buildExpenseSlivers(
     BuildContext context,
     List<ExpenseItem> expenses,
     List<Vendor> vendors,
@@ -1377,10 +1351,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     }
     filtered.sort((a, b) => b.date.compareTo(a.date));
 
-    return Column(
-      children: [
-        // 1. Filter strip (결제상태 & 카테고리 - Unified Active/Inactive Hierarchy)
-        Padding(
+    return [
+      // 1. Filter strip (결제상태 & 카테고리)
+      SliverToBoxAdapter(
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 4, 18, 8),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -1448,62 +1422,68 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             ),
           ),
         ),
+      ),
 
-        // 2. List or Empty state
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.account_balance_wallet_outlined, size: 52, color: Color(0xFFCBD5E1)),
-                        const SizedBox(height: 14),
-                        const Text(
-                          '기록된 지출/매입 내역이 없습니다',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          '학원·스튜디오 운영에 지출된 교재비, 임대료, 강사료를 기록하고\n실시간 손익과 순이익을 한눈에 관리하세요.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
-                        ),
-                        const SizedBox(height: 18),
-                        OutlinedButton.icon(
-                          onPressed: () => _openAddExpenseSheet(context, vendors),
-                          icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
-                          label: const Text(
-                            '첫 지출 등록하기',
-                            style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.primaryBlue,
-                            side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ],
+      // 2. List or Empty state
+      if (filtered.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.account_balance_wallet_outlined, size: 52, color: Color(0xFFCBD5E1)),
+                  const SizedBox(height: 14),
+                  const Text(
+                    '기록된 지출/매입 내역이 없습니다',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '학원·스튜디오 운영에 지출된 교재비, 임대료, 강사료를 기록하고\n실시간 손익과 순이익을 한눈에 관리하세요.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                  ),
+                  const SizedBox(height: 18),
+                  OutlinedButton.icon(
+                    onPressed: () => _openAddExpenseSheet(context, vendors),
+                    icon: const Icon(Icons.add, size: 18, color: AppTheme.primaryBlue),
+                    label: const Text(
+                      '첫 지출 등록하기',
+                      style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700, fontSize: 14),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryBlue,
+                      side: const BorderSide(color: AppTheme.primaryBlue, width: 1.2),
+                      backgroundColor: const Color(0xFFEFF6FF),
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-                  itemCount: filtered.length + 1,
-                  itemBuilder: (ctx, idx) {
-                    if (idx == filtered.length) {
-                      return const NativeInlineAdCard(placementTag: 'expense_list');
-                    }
-                    final exp = filtered[idx];
-                    return _buildExpenseCard(context, exp, vendors, studio);
-                  },
-                ),
+                ],
+              ),
+            ),
+          ),
+        )
+      else
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (ctx, idx) {
+                if (idx == filtered.length) {
+                  return const NativeInlineAdCard(placementTag: 'expense_list');
+                }
+                final exp = filtered[idx];
+                return _buildExpenseCard(context, exp, vendors, studio);
+              },
+              childCount: filtered.length + 1,
+            ),
+          ),
         ),
-      ],
-    );
+    ];
   }
 
   Widget _buildExpenseCard(
@@ -3887,3 +3867,37 @@ class _StaffSettlementSheetState extends State<_StaffSettlementSheet> {
     );
   }
 }
+
+/// Sticky Pinned Sub-tab Header Delegate for Billing & Ledger
+class _BillingTabHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  const _BillingTabHeaderDelegate({
+    required this.child,
+    this.height = 52.0,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: height,
+      child: Container(
+        color: AppTheme.background,
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _BillingTabHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child || oldDelegate.height != height;
+  }
+}
+

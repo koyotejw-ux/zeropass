@@ -604,16 +604,16 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 1. 시니어 큰글씨 모드 퀵 토글 (심플 라인 아이콘)
+          // 1. 무인 자율출결 키오스크 (심플 라인 아이콘)
           IconButton(
-            icon: Icon(
-              Icons.format_size_rounded,
+            icon: const Icon(
+              Icons.tablet_mac_outlined,
               size: 22,
-              color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+              color: Color(0xFF3F3F46),
             ),
-            tooltip: '큰글씨 모드',
+            tooltip: '무인 키오스크 모드',
             splashRadius: 20,
-            onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
+            onPressed: () => _openTabletKioskMode(context),
           ),
           // 2. 스마트 안심 알림 센터 (심플 라인 아이콘)
           IconButton(
@@ -626,18 +626,18 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             splashRadius: 20,
             onPressed: () => SmartNotificationCenterModal.show(context),
           ),
-          // 3. 무인 자율출결 키오스크 (심플 라인 아이콘)
+          // 3. 시니어 큰글씨 모드 퀵 토글 (공통: 가장 우측 배치)
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 6),
             child: IconButton(
-              icon: const Icon(
-                Icons.tablet_mac_outlined,
+              icon: Icon(
+                Icons.format_size_rounded,
                 size: 22,
-                color: Color(0xFF3F3F46),
+                color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
               ),
-              tooltip: '무인 키오스크 모드',
+              tooltip: '큰글씨 모드',
               splashRadius: 20,
-              onPressed: () => _openTabletKioskMode(context),
+              onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
             ),
           ),
         ],

@@ -61,6 +61,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(membersProvider);
     final studio = ref.watch(studioProfileProvider).value ?? StudioProfile.defaultProfile();
+    final isSeniorMode = ref.watch(seniorModeProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -75,6 +76,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
           IconButton(
             icon: const Icon(Icons.mark_chat_unread_outlined, size: 22, color: AppTheme.textPrimary),
             tooltip: '순차 릴레이 발송',
+            splashRadius: 20,
             onPressed: () {
               final members = membersAsync.value ?? [];
               if (members.isEmpty) {
@@ -96,6 +98,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
           IconButton(
             icon: const Icon(Icons.file_download_outlined, size: 22, color: AppTheme.textPrimary),
             tooltip: '명부 엑셀 내보내기',
+            splashRadius: 20,
             onPressed: () async {
               final members = membersAsync.value ?? [];
               if (members.isEmpty) {
@@ -116,7 +119,20 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               }
             },
           ),
-          const SizedBox(width: 8),
+          // 3. 시니어 큰글씨 모드 퀵 토글 (공통 규격: 가장 우측 배치)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: IconButton(
+              icon: Icon(
+                Icons.format_size_rounded,
+                size: 22,
+                color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+              ),
+              tooltip: '큰글씨 모드',
+              splashRadius: 20,
+              onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
+            ),
+          ),
         ],
       ),
       body: membersAsync.when(
@@ -135,144 +151,73 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             );
           }).toList();
 
-          return Column(
-            children: [
-              // Search Input Bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                    decoration: InputDecoration(
-                      hintText: '이름, 초성(ㄱㄷㅎ), 연락처, 그룹명 검색',
-                      hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
+          return CustomScrollView(
+            slivers: [
+              // 1. Pinned Sticky Search and Group Filter Header
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyMemberSearchAndFilterDelegate(
+                  searchController: _searchController,
+                  searchQuery: _searchQuery,
+                  onSearchChanged: (val) => setState(() => _searchQuery = val.trim()),
+                  onSearchClear: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                  allGroups: allGroups,
+                  selectedGroupFilter: _selectedGroupFilter,
+                  onGroupSelected: (grp) => setState(() => _selectedGroupFilter = grp),
+                  totalCount: filtered.length,
+                  onSequentialDispatch: () {
+                    final invoices = ref.read(invoicesProvider).value ?? [];
+                    SequentialDispatchModal.show(
+                      context: context,
+                      allMembers: filtered,
+                      studio: studio,
+                      invoices: invoices,
+                    );
+                  },
                 ),
               ),
 
-              // Group Filter Chips (Strict Active/Inactive Hierarchy)
-              if (allGroups.length > 1)
-                SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                    itemCount: allGroups.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (context, idx) {
-                      final grp = allGroups[idx];
-                      final isSelected = _selectedGroupFilter == grp;
-                      return ZeroFilterChip(
-                        label: grp,
-                        isSelected: isSelected,
-                        onTap: () => setState(() => _selectedGroupFilter = grp),
-                      );
-                    },
-                  ),
-                ),
-
-              // Total count badge & Quick batch action
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '등록 회원 총 ${filtered.length}명',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textSecondary,
-                      ),
+              // 2. Member List or Empty State
+              if (filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_search_outlined, size: 48, color: AppTheme.textTertiary),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '검색 결과와 일치하는 회원이 없습니다',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 15,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    InkWell(
-                      onTap: () {
-                        final invoices = ref.read(invoicesProvider).value ?? [];
-                        SequentialDispatchModal.show(
-                          context: context,
-                          allMembers: filtered,
-                          studio: studio,
-                          invoices: invoices,
-                        );
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 90),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        if (index == filtered.length) {
+                          return const NativeInlineAdCard(placementTag: 'member_list');
+                        }
+                        final member = filtered[index];
+                        return _buildMemberTile(context, member, studio);
                       },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.send_rounded, size: 12.5, color: Color(0xFF475569)),
-                            SizedBox(width: 4),
-                            Text(
-                              '순차 릴레이 발송',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      childCount: filtered.length + 1,
                     ),
-                  ],
+                  ),
                 ),
-              ),
-
-              // Member List
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.person_search_outlined, size: 48, color: AppTheme.textTertiary),
-                            const SizedBox(height: 12),
-                            const Text(
-                              '검색 결과와 일치하는 회원이 없습니다',
-                              style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 90),
-                        itemCount: filtered.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == filtered.length) {
-                            return const NativeInlineAdCard(placementTag: 'member_list');
-                          }
-                          final member = filtered[index];
-                          return _buildMemberTile(context, member, studio);
-                        },
-                      ),
-              ),
             ],
           );
         },
@@ -1232,3 +1177,171 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
     );
   }
 }
+
+/// Sticky Pinned Header Delegate for Member Search and Group Filter Chips
+class _StickyMemberSearchAndFilterDelegate extends SliverPersistentHeaderDelegate {
+  final TextEditingController searchController;
+  final String searchQuery;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onSearchClear;
+  final List<String> allGroups;
+  final String selectedGroupFilter;
+  final ValueChanged<String> onGroupSelected;
+  final int totalCount;
+  final VoidCallback onSequentialDispatch;
+
+  const _StickyMemberSearchAndFilterDelegate({
+    required this.searchController,
+    required this.searchQuery,
+    required this.onSearchChanged,
+    required this.onSearchClear,
+    required this.allGroups,
+    required this.selectedGroupFilter,
+    required this.onGroupSelected,
+    required this.totalCount,
+    required this.onSequentialDispatch,
+  });
+
+  bool get hasGroups => allGroups.length > 1;
+  double get extent => hasGroups ? 122.0 : 86.0;
+
+  @override
+  double get minExtent => extent;
+
+  @override
+  double get maxExtent => extent;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: extent,
+      child: Container(
+        color: AppTheme.background,
+        child: Column(
+          children: [
+            // Search Input Bar (height 52)
+            SizedBox(
+              height: 52,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: onSearchChanged,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: '이름, 초성(ㄱㄷㅎ), 연락처, 그룹명 검색',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue, size: 19),
+                      suffixIcon: searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 16),
+                              onPressed: onSearchClear,
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Group Filter Chips (height 36 if present)
+            if (hasGroups)
+              SizedBox(
+                height: 36,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  itemCount: allGroups.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, idx) {
+                    final grp = allGroups[idx];
+                    final isSelected = selectedGroupFilter == grp;
+                    return ZeroFilterChip(
+                      label: grp,
+                      isSelected: isSelected,
+                      onTap: () => onGroupSelected(grp),
+                    );
+                  },
+                ),
+              ),
+
+            // Total count badge & Quick batch action (height 34)
+            SizedBox(
+              height: 34,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '등록 회원 총 $totalCount명',
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: onSequentialDispatch,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.send_rounded, size: 11.5, color: Color(0xFF475569)),
+                            SizedBox(width: 4),
+                            Text(
+                              '순차 릴레이 발송',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyMemberSearchAndFilterDelegate oldDelegate) {
+    return oldDelegate.searchQuery != searchQuery ||
+        oldDelegate.selectedGroupFilter != selectedGroupFilter ||
+        oldDelegate.allGroups.length != allGroups.length ||
+        oldDelegate.totalCount != totalCount;
+  }
+}
+

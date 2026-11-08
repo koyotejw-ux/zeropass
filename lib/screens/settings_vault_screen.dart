@@ -644,17 +644,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               );
             },
           ),
-          // 2. 시니어 모드 퀵 토글 (심플 라인 아이콘)
-          IconButton(
-            icon: Icon(
-              Icons.format_size_rounded,
-              size: 22,
-              color: isSeniorMode ? AppTheme.primaryBlue : AppTheme.textSecondary,
-            ),
-            tooltip: '큰글씨 모드',
-            onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
-          ),
-          // 3. 로컬 금고 암호화 백업 (심플 라인 아이콘)
+          // 2. 로컬 금고 암호화 백업 (심플 라인 아이콘)
           IconButton(
             icon: const Icon(Icons.shield_outlined, size: 22, color: AppTheme.textPrimary),
             tooltip: '로컬 금고 암호화 백업',
@@ -665,13 +655,25 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('백업 파일 생성 오류: $e')),
+                    SnackBar(content: Text('백업 실패: $e')),
                   );
                 }
               }
             },
           ),
-          const SizedBox(width: 8),
+          // 3. 시니어 모드 퀵 토글 (공통: 가장 우측 배치)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: IconButton(
+              icon: Icon(
+                Icons.format_size_rounded,
+                size: 22,
+                color: isSeniorMode ? AppTheme.primaryBlue : AppTheme.textSecondary,
+              ),
+              tooltip: '큰글씨 모드',
+              onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
+            ),
+          ),
         ],
       ),
       body: studioAsync.when(

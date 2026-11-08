@@ -173,10 +173,10 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         constraints: const BoxConstraints(maxWidth: 420),
         child: SingleChildScrollView(
           child: Column(
@@ -198,7 +198,7 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                             border: Border.all(color: AppTheme.borderSubtle, width: 1.2),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: Colors.black.withAlpha((255 * 0.04).round()),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -213,17 +213,27 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                           ),
                         )
                       : Container(
-                          padding: const EdgeInsets.all(10),
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: isCheckIn
-                                ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                                : const Color(0xFF3182F6).withValues(alpha: 0.12),
                             shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
                           ),
-                          child: Icon(
-                            isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
-                            color: isCheckIn ? const Color(0xFF10B981) : AppTheme.primaryBlue,
-                            size: 24,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/icons/mascot_profile.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Icon(
+                                isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
+                                color: isCheckIn ? const Color(0xFF10B981) : AppTheme.primaryBlue,
+                                size: 22,
+                              ),
+                            ),
                           ),
                         ),
                   const SizedBox(width: 12),
@@ -233,18 +243,27 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                       children: [
                         Text(
                           isCheckIn ? '안심 등원 알림장 발송' : '안심 하원 알림장 발송',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '${widget.member.name} (${widget.member.phone}) • $timeStr',
-                          style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20, color: AppTheme.textSecondary),
+                    icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textSecondary),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -255,22 +274,32 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.borderSubtle),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
                 ),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       '보호자 전송 문구 (발송 전 수정 가능)',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     TextField(
                       controller: _messageController,
                       maxLines: 4,
-                      style: const TextStyle(fontSize: 13, height: 1.45),
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 13,
+                        height: 1.45,
+                        color: AppTheme.textPrimary,
+                      ),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         isDense: true,
@@ -293,14 +322,19 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           '카톡 0원 전송',
-                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Color(0xFF191919)),
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF191919),
+                          ),
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFEE500),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                   ),
@@ -313,14 +347,19 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           '문자(SMS) 전송',
-                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white),
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                   ),
@@ -330,7 +369,14 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('나중에 전송 / 닫기', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  child: const Text(
+                    '나중에 전송 / 닫기',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
             ],

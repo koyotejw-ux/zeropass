@@ -346,8 +346,9 @@ void main() {
       // FAB changes dynamically to "새 지출 등록"
       expect(find.text('새 지출 등록'), findsOneWidget);
 
-      // AppBar shows "거래처 수첩" button
-      expect(find.text('거래처 수첩'), findsOneWidget);
+      // AppBar shows "거래처 수첩" action icon (pure line icon header)
+      expect(find.byTooltip('거래처 수첩'), findsOneWidget);
+      expect(find.byIcon(Icons.business_center_outlined), findsOneWidget);
 
       // Expenses are listed:
       expect(find.text('5월 워크북 20부'), findsOneWidget);
