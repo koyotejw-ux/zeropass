@@ -1089,11 +1089,14 @@ class ZeroNoticeBanner extends StatelessWidget {
       ),
     );
 
-    if (onAction != null && actionLabel == null) {
-      return InkWell(
-        onTap: onAction,
-        borderRadius: BorderRadius.circular(12),
-        child: banner,
+    if (onAction != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onAction,
+          borderRadius: BorderRadius.circular(12),
+          child: banner,
+        ),
       );
     }
     return banner;

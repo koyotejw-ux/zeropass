@@ -66,7 +66,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Row 1: Mobile-First Identity Header (3D 펭귄 마스코트 패시 복원 + 상호명 + 실시간 출석률 배지)
+              // Row 1: Mobile-First Identity Header (펭귄 마스코트 산뜻한 컬러 배경 + 상호명/시설 뱃지 분리 재레이아웃)
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -75,114 +75,161 @@ class SignatureKeyVisualHero extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 3D 펭귄 마스코트(Passy) 프로필 복원
+                    // 1. 3D 펭귄 마스코트(Passy) 프로필 - 산뜻한 파스텔 스카이블루 그라데이션 컬러 배경 + 빛나는 아우라 링
                     Container(
-                      width: 42,
-                      height: 42,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFE0F2FE), // Soft Sky Pastel
+                            Color(0xFFBAE6FD), // Vibrant Cyan Tint
+                          ],
+                        ),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.35),
-                          width: 1.5,
+                          color: const Color(0xFF38BDF8),
+                          width: 1.8,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF38BDF8).withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: ClipOval(
                         child: Image.asset(
                           'assets/icons/mascot_profile.png',
-                          width: 42,
-                          height: 42,
+                          width: 46,
+                          height: 46,
                           fit: BoxFit.cover,
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // 2. 상호명 및 시설/출석 뱃지 분리 줄바꿈 재레이아웃 (상호 길이에 무관하게 단정한 정렬감 유지)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              studio?.studioName ?? '체크앤페이 스튜디오',
-                              maxLines: 1,
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                color: Colors.white,
-                                fontSize: 16.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${studio?.category ?? "체크앤페이"} · 실시간 출결 ($checkedCount/$totalCount명)',
-                            softWrap: true,
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              color: Color(0xFF94A3B8),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              height: 1.25,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.35),
-                          width: 0.9,
-                        ),
-                      ),
-                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF34D399),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          RichText(
-                            text: TextSpan(
-                              style: const TextStyle(fontFamily: 'Pretendard'),
-                              children: [
-                                const TextSpan(
-                                  text: '출석률 ',
-                                  style: TextStyle(
-                                    color: Color(0xFFA7F3D0),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '$attendanceRate%',
+                          // 2-1. 상호명: 전폭 독립 단일/복합행 (뱃지와 충돌 없이 시원하게 표시)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  studio?.studioName ?? '체크앤페이 스튜디오',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
+                                    fontFamily: 'Pretendard',
                                     color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.3,
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.4,
+                                    height: 1.15,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 16,
+                                color: Colors.white.withValues(alpha: 0.35),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          // 2-2. 시설 뱃지 & 실시간 출석률: 줄바꿈 분리된 독립 메타 뱃지 행
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              // 시설 / 업종 카테고리 뱃지
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.storefront_rounded,
+                                      size: 11,
+                                      color: Color(0xFF7DD3FC),
+                                    ),
+                                    const SizedBox(width: 3.5),
+                                    Text(
+                                      studio?.category ?? '피트니스 / PT',
+                                      style: const TextStyle(
+                                        fontFamily: 'Pretendard',
+                                        color: Color(0xFFE0F2FE),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // 실시간 출석률 뱃지
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.45),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Color(0xFF10B981),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '출석률 $attendanceRate%',
+                                      style: const TextStyle(
+                                        fontFamily: 'Pretendard',
+                                        color: Color(0xFF6EE7B7),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // 실시간 인원 요약 (0/6명)
+                              Text(
+                                '실시간 ($checkedCount/$totalCount명)',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -190,7 +237,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
               // Row 2: Slim Precision Progress Bar
               ClipRRect(

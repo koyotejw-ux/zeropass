@@ -389,7 +389,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.textContaining('장기 미출석 안심 케어'), findsOneWidget);
-      expect(find.text('보기'), findsOneWidget);
+      expect(find.text('자세히 보기'), findsOneWidget);
     });
 
     testWidgets('TaxGuideModal renders and displays schedules and HomeTax quick action', (tester) async {
@@ -450,7 +450,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap on Golden-Time Care Button
-      final careButton = find.text('최근 7일+ 미출석 • 따뜻한 안부 톡 보내기').first;
+      final careButton = find.textContaining('7일+ 미출석 안심 케어').first;
       await tester.scrollUntilVisible(careButton, 150, scrollable: find.byType(Scrollable).first);
       await tester.tap(careButton);
       await tester.pumpAndSettle();

@@ -764,17 +764,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                 ),
                               ),
 
-                            // Golden Time Care Strip
+                            // Golden Time Care Strip (Concise Single-Line + Detail Explanation Modal)
                             if (absentMembers.isNotEmpty && _statusFilter != '골든타임 케어')
                               SliverToBoxAdapter(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
                                   child: ZeroNoticeBanner(
-                                    title: '장기 미출석 안심 케어: 최근 7일 이상 미출석 명',
-                                    actionLabel: '보기',
+                                    title: '장기 미출석 안심 케어 (${absentMembers.length}명)',
+                                    actionLabel: '자세히 보기',
                                     icon: Icons.favorite_border_rounded,
                                     variant: ZeroBannerVariant.care,
-                                    onAction: () => setState(() => _statusFilter = '골든타임 케어'),
+                                    onAction: () => _showGoldenTimeExplanationModal(context, absentMembers),
                                   ),
                                 ),
                               ),
@@ -1159,7 +1159,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           if (!isChecked && isLongAbsent) ...[
             const SizedBox(height: 8),
             ZeroNoticeBanner(
-              title: '최근 7일+ 미출석 • 따뜻한 안부 톡 보내기',
+              title: '7일+ 미출석 안심 케어',
+              actionLabel: '안부 톡',
               icon: Icons.favorite_rounded,
               variant: ZeroBannerVariant.care,
               onAction: () => _showGoldenTimeCareModal(context, member, studio),
@@ -1291,6 +1292,185 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         ),
       );
     }
+  }
+
+  void _showGoldenTimeExplanationModal(BuildContext context, List<Member> absentMembers) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (modalCtx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(modalCtx).viewInsets.bottom + 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag Handle
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Header Row
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFECDD3), width: 1),
+                      ),
+                      child: const Icon(Icons.favorite_rounded, color: Color(0xFFE11D48), size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '장기 미출석 안심 케어 안내',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            '최근 7일 이상 결석한 회원 골든타임 케어',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.pop(modalCtx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Detailed Guide Card
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '💡 왜 7일 이상 미출석 관리가 중요한가요?',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        '• 7일 이상 결석이 지속되면 출결 습관이 끊겨 중도 이탈로 이어질 확률이 80%에 달합니다.\n'
+                        '• 지금 원장님의 따뜻한 안부 톡이나 간단한 전화 한 통이 회원 복귀율을 78% 이상 높여줍니다.\n'
+                        '• 아래 버튼을 누르면 해당 회원들만 모아서 편리하게 안부 메시지를 보낼 수 있습니다.',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 12.5,
+                          color: Color(0xFF475569),
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Absent Members Chips
+                Text(
+                  '현재 케어 대상 회원 (${absentMembers.length}명)',
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: absentMembers.take(8).map((m) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFECDD3), width: 0.8),
+                      ),
+                      child: Text(
+                        ' ()',
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFBE123C),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+                // Primary Action Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(modalCtx);
+                      setState(() => _statusFilter = '골든타임 케어');
+                    },
+                    icon: const Icon(Icons.filter_list_rounded, size: 18),
+                    label: Text('대상 회원 ${absentMembers.length}명 목록 바로보기'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE11D48),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      textStyle: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showGoldenTimeCareModal(BuildContext context, Member member, StudioProfile studio) {
