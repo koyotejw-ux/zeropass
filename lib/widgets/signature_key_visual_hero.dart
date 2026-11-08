@@ -125,13 +125,13 @@ class SignatureKeyVisualHero extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             '${studio?.category ?? "체크앤페이"} · 실시간 출결 ($checkedCount/$totalCount명)',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
                             style: const TextStyle(
                               fontFamily: 'Pretendard',
                               color: Color(0xFF94A3B8),
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
+                              height: 1.25,
                             ),
                           ),
                         ],

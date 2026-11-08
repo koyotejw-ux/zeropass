@@ -190,7 +190,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check senior toggle in AppBar
-      expect(find.text('큰글씨 ON'), findsOneWidget);
+      expect(find.byTooltip('큰글씨 모드'), findsOneWidget);
 
       // Check Senior 3 Core Action Board
       expect(find.text('시니어 간편 3대 업무 보드'), findsOneWidget);
@@ -244,7 +244,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Check Senior Mode Section in Settings
+      // Check Senior Mode Section in Settings (Scroll down to find section)
+      await tester.scrollUntilVisible(find.text('시니어 큰글씨 모드'), 200, scrollable: find.byType(Scrollable).first);
       expect(find.text('시니어 큰글씨 모드'), findsOneWidget);
       expect(find.text('큰글씨 사용 가이드 보기'), findsOneWidget);
 

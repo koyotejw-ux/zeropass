@@ -604,48 +604,40 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 1. 시니어 큰글씨 모드 퀵 토글 (단정한 32x32 규격화)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ZeroIconBox(
-                icon: Icons.format_size_rounded,
-                size: 32,
-                iconSize: 16,
-                backgroundColor: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
-                iconColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
-                borderColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
-                borderRadius: 10,
-                onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
-              ),
+          // 1. 시니어 큰글씨 모드 퀵 토글 (심플 라인 아이콘)
+          IconButton(
+            icon: Icon(
+              Icons.format_size_rounded,
+              size: 22,
+              color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
             ),
+            tooltip: '큰글씨 모드',
+            splashRadius: 20,
+            onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
           ),
-          // 2. 스마트 안심 알림 센터 (단정한 32x32 규격화)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ZeroIconBox(
-                icon: Icons.notifications_none_rounded,
-                size: 32,
-                iconSize: 16,
-                backgroundColor: const Color(0xFFF4F4F5),
-                iconColor: const Color(0xFF3F3F46),
-                borderColor: const Color(0xFFE4E4E7),
-                borderRadius: 10,
-                onTap: () => SmartNotificationCenterModal.show(context),
-              ),
+          // 2. 스마트 안심 알림 센터 (심플 라인 아이콘)
+          IconButton(
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              size: 22,
+              color: Color(0xFF3F3F46),
             ),
+            tooltip: '안심 알림 센터',
+            splashRadius: 20,
+            onPressed: () => SmartNotificationCenterModal.show(context),
           ),
-          // 3. 무인 자율출결 키오스크 모드 (높이 32px 캡슐 일목정렬)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: ZeroButton.compactCapsule(
-                label: '무인 키오스크',
-                icon: Icons.tablet_mac_rounded,
-                variant: ZeroButtonVariant.dark,
-                onPressed: () => _openTabletKioskMode(context),
+          // 3. 무인 자율출결 키오스크 (심플 라인 아이콘)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              icon: const Icon(
+                Icons.tablet_mac_outlined,
+                size: 22,
+                color: Color(0xFF3F3F46),
               ),
+              tooltip: '무인 키오스크 모드',
+              splashRadius: 20,
+              onPressed: () => _openTabletKioskMode(context),
             ),
           ),
         ],
@@ -721,210 +713,142 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
                   return Column(
                     children: [
-                      // Signature Portfolio Key Visual Hero (Living Aurora Glass & Pulse Radar) or Senior Easy Board
-                      if (!hideHero)
-                        if (isSeniorMode)
-                          _buildSeniorEasyBoard(
-                            context: context,
-                            members: members,
-                            todayRecords: todayRecords,
-                            studio: studio,
-                          )
-                        else
-                          SignatureKeyVisualHero(
-                            members: members,
-                            todayRecords: todayRecords,
-                            studio: studio,
-                            onOpenKiosk: () => _openTabletKioskMode(context),
-                            onOpenGuide: () => _openInteractiveGuide(context),
-                          ),
+                      // Full Body Scroll with Sticky Search and Sub-tabs Header
+                      Expanded(
+                        child: CustomScrollView(
+                          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                          slivers: [
+                            // 1. Signature Key Visual Hero (Living Aurora Glass & Pulse Radar) or Senior Easy Board
+                            if (!hideHero)
+                              SliverToBoxAdapter(
+                                child: isSeniorMode
+                                    ? _buildSeniorEasyBoard(
+                                        context: context,
+                                        members: members,
+                                        todayRecords: todayRecords,
+                                        studio: studio,
+                                      )
+                                    : SignatureKeyVisualHero(
+                                        members: members,
+                                        todayRecords: todayRecords,
+                                        studio: studio,
+                                        onOpenKiosk: () => _openTabletKioskMode(context),
+                                        onOpenGuide: () => _openInteractiveGuide(context),
+                                      ),
+                              ),
 
-                  // 0. Korean Chosung & Real-time Smart Search Bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
-                        boxShadow: AppTheme.cardShadow,
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        textInputAction: TextInputAction.search,
-                        onSubmitted: (_) => _searchFocusNode.unfocus(),
-                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                        decoration: InputDecoration(
-                          hintText: '이름·초성(ㅇㄷㅎ)·뒷번호 4자리 검색',
-                          hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
-                          prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary, size: 20),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                    _searchFocusNode.unfocus();
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Landscape Compact Metric Card Fallback
-                  if (isLandscape)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: AppTheme.cardShadow,
-                          border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: true),
-                            _buildDivider(),
-                            _buildStatItem('지각/보강', lateCount, AppTheme.warning, isCompact: true),
-                            _buildDivider(),
-                            _buildStatItem('출결 대기', remainingMembersCount, AppTheme.primaryBlue, isCompact: true),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // 2. Filter Chips (Strict 16px alignment & Active/Inactive contrast)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        ...groups.take(5).map((g) {
-                          final isSelected = _selectedGroup == g;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: ZeroFilterChip(
-                              label: g,
-                              isSelected: isSelected,
-                              onTap: () {
-                                setState(() {
-                                  _selectedGroup = g;
-                                });
-                              },
-                            ),
-                          );
-                        }),
-                        PopupMenuButton<String>(
-                          initialValue: _statusFilter,
-                          onSelected: (val) => setState(() => _statusFilter = val),
-                          itemBuilder: (ctx) => [
-                            const PopupMenuItem(value: '전체', child: Text('전체 보기')),
-                            const PopupMenuItem(value: '출결 대기', child: Text('출결 대기만')),
-                            const PopupMenuItem(value: '체크 완료', child: Text('체크 완료만')),
-                            const PopupMenuItem(value: '만료 임박', child: Text('만료 임박(2회 이하)')),
-                            const PopupMenuItem(value: '골든타임 케어', child: Text('골든타임 케어 (7일+ 결석)')),
-                          ],
-                          child: Container(
-                            height: 32,
-                            padding: const EdgeInsets.symmetric(horizontal: 11),
-                            decoration: BoxDecoration(
-                              color: _statusFilter != '전체' ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
-                              borderRadius: BorderRadius.circular(16),
-                              border: _statusFilter != '전체'
-                                  ? Border.all(color: AppTheme.trustBlue, width: 1.0)
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.tune_rounded,
-                                  size: 13,
-                                  color: _statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '상태: $_statusFilter',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: _statusFilter != '전체' ? FontWeight.w700 : FontWeight.w500,
-                                    color: _statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.textSecondary,
+                            // Landscape Compact Metric Card Fallback
+                            if (isLandscape)
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: AppTheme.cardShadow,
+                                      border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                      children: [
+                                        _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: true),
+                                        _buildDivider(),
+                                        _buildStatItem('지각/조퇴', lateCount, AppTheme.warning, isCompact: true),
+                                        _buildDivider(),
+                                        _buildStatItem('남은 인원', remainingMembersCount, AppTheme.primaryBlue, isCompact: true),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 2),
-                                const Icon(Icons.keyboard_arrow_down, size: 15, color: AppTheme.textSecondary),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                              ),
 
-                  // Golden Time Care Strip (Zero Truncation Mobile-First Banner)
-                  if (absentMembers.isNotEmpty && _statusFilter != '골든타임 케어')
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-                      child: ZeroNoticeBanner(
-                        title: '장기 미출석 안심 케어: 최근 7일 이상 결석 ${absentMembers.length}명',
-                        actionLabel: '보기',
-                        icon: Icons.favorite_border_rounded,
-                        variant: ZeroBannerVariant.care,
-                        onAction: () => setState(() => _statusFilter = '골든타임 케어'),
-                      ),
-                    ),
-
-                  // 3. Member Pass Cards List
-                  Expanded(
-                    child: filteredMembers.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.event_available_outlined, size: 48, color: AppTheme.textTertiary),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  '해당 조건의 회원이 없습니다',
-                                  style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
+                            // Golden Time Care Strip
+                            if (absentMembers.isNotEmpty && _statusFilter != '골든타임 케어')
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+                                  child: ZeroNoticeBanner(
+                                    title: '장기 미출석 안심 케어: 최근 7일 이상 미출석 명',
+                                    actionLabel: '보기',
+                                    icon: Icons.favorite_border_rounded,
+                                    variant: ZeroBannerVariant.care,
+                                    onAction: () => setState(() => _statusFilter = '골든타임 케어'),
+                                  ),
                                 ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.fromLTRB(16, 4, 16, isKeyboardOpen ? 12 : 90),
-                            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                            itemCount: filteredMembers.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == filteredMembers.length) {
-                                return const NativeInlineAdCard(placementTag: 'pass_list');
-                              }
-                              final member = filteredMembers[index];
-                              final isChecked = checkedMemberIds.contains(member.id);
-                              final todayPass = isChecked
-                                  ? todayRecords.firstWhere((r) => r.memberId == member.id)
-                                  : null;
+                              ),
 
-                              return _buildMemberPassCard(
-                                context,
-                                member,
-                                isChecked,
-                                todayPass,
-                                studio,
-                                absentMembers.any((m) => m.id == member.id),
-                              );
-                            },
-                          ),
-                  ),
+                            // 2. Pinned Sticky Search and Sub-tabs Filter Chips Header
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: _StickySearchAndFilterHeaderDelegate(
+                                searchController: _searchController,
+                                searchFocusNode: _searchFocusNode,
+                                searchQuery: _searchQuery,
+                                onSearchChanged: (val) => setState(() => _searchQuery = val.trim()),
+                                onSearchClear: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                  _searchFocusNode.unfocus();
+                                },
+                                groups: groups,
+                                selectedGroup: _selectedGroup,
+                                onGroupSelected: (g) => setState(() => _selectedGroup = g),
+                                statusFilter: _statusFilter,
+                                onStatusFilterSelected: (val) => setState(() => _statusFilter = val),
+                              ),
+                            ),
+
+                            // 3. Member Pass Cards List (Scrolls smoothly beneath the pinned header)
+                            if (filteredMembers.isEmpty)
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.event_available_outlined, size: 48, color: AppTheme.textTertiary),
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        '해당 조건의 회원이 없습니다',
+                                        style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              SliverPadding(
+                                padding: EdgeInsets.fromLTRB(16, 6, 16, isKeyboardOpen ? 12 : 90),
+                                sliver: SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      if (index == filteredMembers.length) {
+                                        return const NativeInlineAdCard(placementTag: 'pass_list');
+                                      }
+                                      final member = filteredMembers[index];
+                                      final isChecked = checkedMemberIds.contains(member.id);
+                                      final todayPass = isChecked
+                                          ? todayRecords.firstWhere((r) => r.memberId == member.id)
+                                          : null;
+
+                                      return _buildMemberPassCard(
+                                        context,
+                                        member,
+                                        isChecked,
+                                        todayPass,
+                                        studio,
+                                        absentMembers.any((m) => m.id == member.id),
+                                      );
+                                    },
+                                    childCount: filteredMembers.length + 1,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
 
                   // Batch Action Bar placed directly inside body above bottom navigation bar / keyboard
                   Builder(
@@ -1063,13 +987,13 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       if (member.groupName.isNotEmpty) member.groupName,
                       if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
                     ].join(' · '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
                     style: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF475569),
+                      height: 1.25,
                     ),
                   ),
                 ),
@@ -2651,3 +2575,161 @@ class _SeniorCallModalSheetState extends State<_SeniorCallModalSheet> {
 }
 
 
+
+
+class _StickySearchAndFilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final TextEditingController searchController;
+  final FocusNode searchFocusNode;
+  final String searchQuery;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onSearchClear;
+  final List<String> groups;
+  final String selectedGroup;
+  final ValueChanged<String> onGroupSelected;
+  final String statusFilter;
+  final ValueChanged<String> onStatusFilterSelected;
+
+  const _StickySearchAndFilterHeaderDelegate({
+    required this.searchController,
+    required this.searchFocusNode,
+    required this.searchQuery,
+    required this.onSearchChanged,
+    required this.onSearchClear,
+    required this.groups,
+    required this.selectedGroup,
+    required this.onGroupSelected,
+    required this.statusFilter,
+    required this.onStatusFilterSelected,
+  });
+
+  @override
+  double get minExtent => 88.0;
+
+  @override
+  double get maxExtent => 88.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: 88.0,
+      child: Container(
+        color: AppTheme.background,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 1. Korean Chosung & Real-time Smart Search Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
+              child: Container(
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: TextField(
+                  controller: searchController,
+                  focusNode: searchFocusNode,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => searchFocusNode.unfocus(),
+                  onChanged: onSearchChanged,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: '이름·초성(ㅇㄷㅎ)·뒷번호 4자리 검색',
+                    hintStyle: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                    prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary, size: 19),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    suffixIcon: searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 17),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            onPressed: onSearchClear,
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                ),
+              ),
+            ),
+            // 2. Sub-tab Filter Chips (Sticky Bar)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+              child: Row(
+                children: [
+                  ...groups.take(5).map((g) {
+                    final isSelected = selectedGroup == g;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ZeroFilterChip(
+                        label: g,
+                        isSelected: isSelected,
+                        onTap: () => onGroupSelected(g),
+                      ),
+                    );
+                  }),
+                  PopupMenuButton<String>(
+                    initialValue: statusFilter,
+                    onSelected: onStatusFilterSelected,
+                    itemBuilder: (ctx) => [
+                      const PopupMenuItem(value: '전체', child: Text('전체 보기')),
+                      const PopupMenuItem(value: '출결 대기', child: Text('출결 대기만')),
+                      const PopupMenuItem(value: '체크 완료', child: Text('체크 완료만')),
+                      const PopupMenuItem(value: '만료 임박', child: Text('만료 임박(2회 이하)')),
+                      const PopupMenuItem(value: '골든타임 케어', child: Text('골든타임 케어 (7일+ 결석)')),
+                    ],
+                    child: Container(
+                      height: 34,
+                      padding: const EdgeInsets.symmetric(horizontal: 11),
+                      decoration: BoxDecoration(
+                        color: statusFilter != '전체' ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: statusFilter != '전체'
+                            ? Border.all(color: AppTheme.trustBlue, width: 1.0)
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 13,
+                            color: statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '상태: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: statusFilter != '전체' ? FontWeight.w700 : FontWeight.w500,
+                              color: statusFilter != '전체' ? AppTheme.trustBlue : AppTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(Icons.keyboard_arrow_down, size: 15, color: AppTheme.textSecondary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickySearchAndFilterHeaderDelegate oldDelegate) {
+    return oldDelegate.searchQuery != searchQuery ||
+        oldDelegate.selectedGroup != selectedGroup ||
+        oldDelegate.statusFilter != statusFilter ||
+        oldDelegate.groups != groups;
+  }
+}

@@ -71,113 +71,52 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
           child: Text('회원 명부 관리'),
         ),
         actions: [
-          // Tab 3 보조 유틸리티: 순차 릴레이 단체발송 마법사 (Tier 3 Neutral Pill)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    final members = membersAsync.value ?? [];
-                    if (members.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('등록된 회원이 없습니다.')),
-                      );
-                      return;
-                    }
-                    final invoices = ref.read(invoicesProvider).value ?? [];
-                    SequentialDispatchModal.show(
-                      context: context,
-                      allMembers: members,
-                      studio: studio,
-                      invoices: invoices,
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 30,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.mark_chat_unread_outlined, color: Color(0xFF3F3F46), size: 14),
-                        SizedBox(width: 4),
-                        Text(
-                          '순차 발송',
-                          style: TextStyle(
-                            color: Color(0xFF27272A),
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // 1. 순차 릴레이 단체발송 마법사 (심플 라인 아이콘)
+          IconButton(
+            icon: const Icon(Icons.mark_chat_unread_outlined, size: 22, color: AppTheme.textPrimary),
+            tooltip: '순차 릴레이 발송',
+            onPressed: () {
+              final members = membersAsync.value ?? [];
+              if (members.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('등록된 회원이 없습니다.')),
+                );
+                return;
+              }
+              final invoices = ref.read(invoicesProvider).value ?? [];
+              SequentialDispatchModal.show(
+                context: context,
+                allMembers: members,
+                studio: studio,
+                invoices: invoices,
+              );
+            },
           ),
-          // Tab 3 보조 유틸리티: 회원 명부 엑셀(CSV) 내보내기 (Tier 3 Neutral Pill)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    final members = membersAsync.value ?? [];
-                    if (members.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('내보낼 등록 회원이 없습니다.')),
-                      );
-                      return;
-                    }
-                    try {
-                      final file = await DataVaultService.exportMembersCsv();
-                      await DataVaultService.shareMembersCsv(file);
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('CSV 내보내기 오류: $e')),
-                        );
-                      }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 30,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE4E4E7), width: 0.8),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.file_download_outlined, color: Color(0xFF3F3F46), size: 14),
-                        SizedBox(width: 4),
-                        Text(
-                          '명부 엑셀',
-                          style: TextStyle(
-                            color: Color(0xFF27272A),
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // 2. 회원 명부 엑셀(CSV) 내보내기 (심플 라인 아이콘)
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined, size: 22, color: AppTheme.textPrimary),
+            tooltip: '명부 엑셀 내보내기',
+            onPressed: () async {
+              final members = membersAsync.value ?? [];
+              if (members.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('내보낼 등록 회원이 없습니다.')),
+                );
+                return;
+              }
+              try {
+                final file = await DataVaultService.exportMembersCsv();
+                await DataVaultService.shareMembersCsv(file);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('CSV 내보내기 오류: $e')),
+                  );
+                }
+              }
+            },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: membersAsync.when(
@@ -392,13 +331,13 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                           if (member.groupName.isNotEmpty) member.groupName,
                           if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
                         ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                         style: const TextStyle(
                           fontFamily: 'Pretendard',
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF475569),
+                          height: 1.25,
                         ),
                       ),
                     ),

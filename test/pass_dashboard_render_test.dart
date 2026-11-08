@@ -73,8 +73,8 @@ void main() {
     expect(find.text('원터치 출결 체크'), findsOneWidget);
     // Verify member name rendered
     expect(find.text('최준혁'), findsOneWidget);
-    // Verify essential kiosk button
-    expect(find.text('무인 키오스크'), findsOneWidget);
-    expect(find.byIcon(Icons.tablet_mac_rounded), findsWidgets);
+    // Verify essential kiosk icon button (Minimalist line icon in AppBar)
+    expect(find.byTooltip('무인 키오스크 모드'), findsOneWidget);
+    expect(find.byIcon(Icons.tablet_mac_outlined), findsWidgets);
   });
 }

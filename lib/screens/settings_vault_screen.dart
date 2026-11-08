@@ -633,66 +633,45 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           child: Text('설정 · 보안 금고'),
         ),
         actions: [
-          // 1. PRO VIP 샵 퀵 버튼 (32px 캡슐 규격화)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ZeroBadge.vip(
-                'PRO 샵',
-                icon: Icons.workspace_premium_rounded,
-                size: ZeroBadgeSize.medium,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+          // 1. PRO VIP 샵 퀵 버튼 (심플 라인 아이콘)
+          IconButton(
+            icon: const Icon(Icons.workspace_premium_outlined, size: 22, color: Color(0xFFD97706)),
+            tooltip: 'PRO 샵',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+              );
+            },
+          ),
+          // 2. 시니어 모드 퀵 토글 (심플 라인 아이콘)
+          IconButton(
+            icon: Icon(
+              Icons.format_size_rounded,
+              size: 22,
+              color: isSeniorMode ? AppTheme.primaryBlue : AppTheme.textSecondary,
+            ),
+            tooltip: '큰글씨 모드',
+            onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
+          ),
+          // 3. 로컬 금고 암호화 백업 (심플 라인 아이콘)
+          IconButton(
+            icon: const Icon(Icons.shield_outlined, size: 22, color: AppTheme.textPrimary),
+            tooltip: '로컬 금고 암호화 백업',
+            onPressed: () async {
+              try {
+                final backupFile = await DataVaultService.exportEncryptedBackup();
+                await DataVaultService.shareBackupFile(backupFile);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('백업 파일 생성 오류: $e')),
                   );
-                },
-              ),
-            ),
+                }
+              }
+            },
           ),
-          // 2. 시니어 모드 퀵 토글 (32x32 규격화)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ZeroIconBox(
-                icon: Icons.format_size_rounded,
-                size: 32,
-                iconSize: 16,
-                backgroundColor: isSeniorMode ? const Color(0xFFEFF6FF) : const Color(0xFFF4F4F5),
-                iconColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
-                borderColor: isSeniorMode ? AppTheme.trustBlue : const Color(0xFFE4E4E7),
-                borderRadius: 10,
-                onTap: () => ref.read(seniorModeProvider.notifier).toggle(),
-              ),
-            ),
-          ),
-          // 3. 로컬 금고 암호화 백업 (32x32 규격화)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: ZeroIconBox(
-                icon: Icons.shield_outlined,
-                size: 32,
-                iconSize: 16,
-                backgroundColor: const Color(0xFFF4F4F5),
-                iconColor: AppTheme.primaryBlue,
-                borderColor: const Color(0xFFE4E4E7),
-                borderRadius: 10,
-                onTap: () async {
-                  try {
-                    final backupFile = await DataVaultService.exportEncryptedBackup();
-                    await DataVaultService.shareBackupFile(backupFile);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('백업 파일 생성 오류: $e')),
-                      );
-                    }
-                  }
-                },
-              ),
-            ),
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: studioAsync.when(
