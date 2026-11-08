@@ -1089,19 +1089,19 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
           const SizedBox(height: 12),
 
-          // 3. Action Button (Full Width!)
+          // 3. Action Button (Full Width, Minimum 48dp Touch Target, Zero Text Clipping!)
           if (!isChecked)
             SizedBox(
               width: double.infinity,
-              height: 42,
+              height: 48,
               child: ElevatedButton.icon(
                 onPressed: () => _handleOneTouchCheckIn(member),
-                icon: const Icon(Icons.check_rounded, size: 18),
+                icon: const Icon(Icons.check_rounded, size: 20),
                 label: const Text(
                   '체크인',
                   style: TextStyle(
                     fontFamily: 'Pretendard',
-                    fontSize: 15,
+                    fontSize: 15.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
                   ),
@@ -1110,7 +1110,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   backgroundColor: AppTheme.primaryDark,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             )
@@ -1121,7 +1122,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   child: ZeroButton.tint(
                     label: '등원 안심 알림',
                     icon: Icons.send_rounded,
-                    size: ZeroButtonSize.compact,
+                    size: ZeroButtonSize.medium,
                     fullWidth: true,
                     onPressed: () {
                       AttendanceNotifyDialog.show(
@@ -1140,7 +1141,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     label: '하원 귀가 알림',
                     icon: Icons.exit_to_app_rounded,
                     variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.compact,
+                    size: ZeroButtonSize.medium,
                     fullWidth: true,
                     onPressed: () {
                       AttendanceNotifyDialog.show(

@@ -840,7 +840,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () => _openEditProfileDialog(context, profile),
-                            icon: const Icon(Icons.edit_outlined, size: 15),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            icon: const Icon(Icons.edit_outlined, size: 16),
                             label: const Text('기본 정보 변경'),
                           ),
                         ),
@@ -852,8 +856,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               backgroundColor: const Color(0xFF0F172A),
                               foregroundColor: Colors.white,
                               elevation: 0,
+                              minimumSize: const Size(0, 48),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                            icon: const Icon(Icons.badge_outlined, size: 15),
+                            icon: const Icon(Icons.badge_outlined, size: 16),
                             label: const Text('맞춤 호칭 설정'),
                           ),
                         ),

@@ -395,10 +395,10 @@ enum ZeroButtonVariant {
 }
 
 enum ZeroButtonSize {
-  compact, // height 32px (상단 앱바 액션, 필터 캡슐)
-  medium,  // height 38px (회원 카드 내 체크인, 출결 토글)
-  large,   // height 44px (바텀시트 보조 버튼, 폼 액션)
-  hero,    // height 48px (하단 전역 1순위 솔리드 CTA)
+  compact, // minHeight 38px (상단 앱바 보조 액션, 필터 캡슐)
+  medium,  // minHeight 46px (회원 카드 내 체크인, 출결 토글)
+  large,   // minHeight 52px (바텀시트 보조 버튼, 폼 액션)
+  hero,    // minHeight 56px (하단 전역 1순위 솔리드 CTA)
 }
 
 class ZeroButton extends StatelessWidget {
@@ -510,49 +510,51 @@ class ZeroButton extends StatelessWidget {
     final style = _resolveColors();
     final isInteractive = onPressed != null && !isLoading;
 
-    Widget innerContent = FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (isLoading) ...[
-            SizedBox(
-              width: _resolveIconSize(),
-              height: _resolveIconSize(),
-              child: CircularProgressIndicator(
-                strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(style.fg),
-              ),
+    Widget innerContent = Row(
+      mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (isLoading) ...[
+          SizedBox(
+            width: _resolveIconSize(),
+            height: _resolveIconSize(),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0,
+              valueColor: AlwaysStoppedAnimation<Color>(style.fg),
             ),
-            const SizedBox(width: 6),
-          ] else if (icon != null) ...[
-            Icon(icon, size: _resolveIconSize(), color: style.fg),
-            const SizedBox(width: 5),
-          ],
-          Text(
+          ),
+          const SizedBox(width: 6),
+        ] else if (icon != null) ...[
+          Icon(icon, size: _resolveIconSize(), color: style.fg),
+          const SizedBox(width: 6),
+        ],
+        Flexible(
+          child: Text(
             label,
             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: 'Pretendard',
               fontSize: _resolveFontSize(),
               fontWeight: _resolveFontWeight(),
               color: style.fg,
               letterSpacing: -0.3,
+              height: 1.25,
             ),
           ),
-          if (trailingIcon != null && !isLoading) ...[
-            const SizedBox(width: 5),
-            Icon(trailingIcon, size: _resolveIconSize(), color: style.fg),
-          ],
+        ),
+        if (trailingIcon != null && !isLoading) ...[
+          const SizedBox(width: 6),
+          Icon(trailingIcon, size: _resolveIconSize(), color: style.fg),
         ],
-      ),
+      ],
     );
 
     Widget button = Container(
-      height: effectiveHeight,
+      constraints: BoxConstraints(
+        minHeight: effectiveHeight,
+      ),
       padding: _resolvePadding(),
       decoration: BoxDecoration(
         color: isInteractive ? style.bg : style.bg.withValues(alpha: 0.5),
@@ -560,7 +562,8 @@ class ZeroButton extends StatelessWidget {
         border: style.border != null ? Border.all(color: style.border!, width: ZeroTokens.hairline) : null,
         boxShadow: (variant == ZeroButtonVariant.primary && isInteractive) ? AppTheme.buttonShadow : null,
       ),
-      child: Center(child: innerContent),
+      alignment: Alignment.center,
+      child: innerContent,
     );
 
     return InkWell(
@@ -573,39 +576,39 @@ class ZeroButton extends StatelessWidget {
   double _resolveHeight() {
     switch (size) {
       case ZeroButtonSize.compact:
-        return 32.0;
-      case ZeroButtonSize.medium:
         return 38.0;
+      case ZeroButtonSize.medium:
+        return 46.0;
       case ZeroButtonSize.large:
-        return 44.0;
+        return 52.0;
       case ZeroButtonSize.hero:
-        return 48.0;
+        return 56.0;
     }
   }
 
   double _resolveRadius() {
     switch (size) {
       case ZeroButtonSize.compact:
-        return ZeroTokens.radiusSmall;
+        return 10.0;
       case ZeroButtonSize.medium:
-        return ZeroTokens.radiusMedium;
+        return 12.0;
       case ZeroButtonSize.large:
-        return ZeroTokens.radiusMedium;
+        return 14.0;
       case ZeroButtonSize.hero:
-        return ZeroTokens.radiusLarge;
+        return 16.0;
     }
   }
 
   double _resolveFontSize() {
     switch (size) {
       case ZeroButtonSize.compact:
-        return 12.0;
+        return 12.5;
       case ZeroButtonSize.medium:
-        return 13.5;
+        return 14.0;
       case ZeroButtonSize.large:
-        return 14.5;
+        return 15.0;
       case ZeroButtonSize.hero:
-        return 15.5;
+        return 16.0;
     }
   }
 
@@ -625,26 +628,26 @@ class ZeroButton extends StatelessWidget {
   double _resolveIconSize() {
     switch (size) {
       case ZeroButtonSize.compact:
-        return 14.0;
+        return 15.0;
       case ZeroButtonSize.medium:
-        return 15.5;
-      case ZeroButtonSize.large:
         return 17.0;
+      case ZeroButtonSize.large:
+        return 18.5;
       case ZeroButtonSize.hero:
-        return 18.0;
+        return 20.0;
     }
   }
 
   EdgeInsets _resolvePadding() {
     switch (size) {
       case ZeroButtonSize.compact:
-        return const EdgeInsets.symmetric(horizontal: 10);
+        return const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
       case ZeroButtonSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 14);
+        return const EdgeInsets.symmetric(horizontal: 14, vertical: 11);
       case ZeroButtonSize.large:
-        return const EdgeInsets.symmetric(horizontal: 18);
+        return const EdgeInsets.symmetric(horizontal: 18, vertical: 13);
       case ZeroButtonSize.hero:
-        return const EdgeInsets.symmetric(horizontal: 22);
+        return const EdgeInsets.symmetric(horizontal: 22, vertical: 15);
     }
   }
 

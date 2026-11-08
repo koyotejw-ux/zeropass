@@ -14,6 +14,10 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF475569); // Refined Calm Slate
   static const Color textTertiary = Color(0xFF94A3B8); // Soft Slate Muted
 
+  // Floating Action Button (FAB / 팹 버튼) - 신규 데이터 생성/빠른 등록 전용 시그니처 웜 탠저린
+  // 일반 버튼(블루/다크)과 완벽하게 시각적·의미론적으로 분기되어 한눈에 구별되는 생동감 있는 액센트
+  static const Color fabCreation = Color(0xFFEA580C);
+
   // Status Indicators (Harmonious, Non-jarring Micro Tones)
   static const Color success = Color(0xFF059669);
   static const Color warning = Color(0xFFD97706);
@@ -109,7 +113,8 @@ class AppTheme {
           backgroundColor: primaryBlue,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          minimumSize: const Size(64, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -125,6 +130,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: textPrimary,
           side: const BorderSide(color: borderSubtle, width: 1.2),
+          minimumSize: const Size(64, 48),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -135,6 +141,21 @@ class AppTheme {
             fontWeight: FontWeight.w600,
             letterSpacing: -0.2,
           ),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: fabCreation,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        extendedPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        extendedTextStyle: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 14.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.2,
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(

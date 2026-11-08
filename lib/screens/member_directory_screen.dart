@@ -226,11 +226,12 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_member',
         onPressed: () => _openAddMemberDialog(context),
-        backgroundColor: AppTheme.primaryBlue,
-        icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+        backgroundColor: AppTheme.fabCreation,
+        elevation: 3,
+        icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 21),
         label: const Text(
           '신규 회원 등록',
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
         ),
       ),
     );

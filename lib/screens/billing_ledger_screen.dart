@@ -723,10 +723,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 _openAddExpenseSheet(context, curVendors);
               },
               backgroundColor: const Color(0xFFE11D48),
-              icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+              elevation: 3,
+              icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white, size: 20),
               label: const Text(
                 '새 지출 등록',
-                style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
               ),
             )
           : FloatingActionButton.extended(
@@ -736,11 +737,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 final studio = studioAsync.value ?? StudioProfile.defaultProfile();
                 _openQuickInvoiceSheet(context, members, studio);
               },
-              backgroundColor: AppTheme.primaryBlue,
-              icon: const Icon(Icons.edit_note, color: Colors.white),
+              backgroundColor: AppTheme.fabCreation,
+              elevation: 3,
+              icon: const Icon(Icons.edit_note, color: Colors.white, size: 21),
               label: const Text(
                 '새 청구서 작성',
-                style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
               ),
             ),
     );
@@ -929,12 +931,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
           // 3. Action Hierarchy: 1 Solid Primary CTA + Secondary 2-Column Row (Zero Cramming!)
           if (!isPaid) ...[
-            // Tier 1 Primary Action: 수납확인 완료 처리 (Full-width solid Royal Blue CTA)
+            // Tier 1 Primary Action: 수납확인 완료 처리 (Full-width solid Royal Blue CTA, minHeight 52)
             ZeroButton.primary(
               label: '수납확인 완료 처리',
               icon: Icons.check_circle_outline_rounded,
               fullWidth: true,
-              size: ZeroButtonSize.medium,
+              size: ZeroButtonSize.large,
               onPressed: () => _showPaymentConfirmDialog(context, invoice, invoiceMembers, studio),
             ),
             const SizedBox(height: 8),
