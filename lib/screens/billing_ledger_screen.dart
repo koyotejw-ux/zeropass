@@ -92,9 +92,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     final String appBarTitle = widget.mode == LedgerScreenMode.expenseTaxOnly
-        ? '지출 · 정산 · 세무 장부'
+        ? LocalizationService.tr('tab_tax_expense')
         : widget.mode == LedgerScreenMode.billingOnly
-            ? '수강료 청구 · 수납'
+            ? LocalizationService.tr('tab_billing')
             : LocalizationService.tr('billing_title');
 
     return Scaffold(
@@ -113,24 +113,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             splashRadius: 20,
             onPressed: () => _showBookkeepingExportSheet(context),
           ),
-          // 2. 상황별 도구: 세무 일정 or 카톡 추천 (심플 라인 아이콘)
+          // 2. 세무 장부 모드 시 세무 일정 가이드 퀵 아이콘
           if (widget.mode == LedgerScreenMode.expenseTaxOnly)
             IconButton(
               icon: const Icon(Icons.menu_book_outlined, size: 22, color: Color(0xFF3F3F46)),
               tooltip: '소상공인 세무 가이드',
               splashRadius: 20,
               onPressed: () => TaxGuideModal.show(context),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.share_outlined, size: 22, color: Color(0xFF3F3F46)),
-              tooltip: '체크앤페이 추천',
-              splashRadius: 20,
-              onPressed: () {
-                final studio = studioAsync.value ?? StudioProfile.defaultProfile();
-                final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
-                KakaoShareService.shareMessage(text: msg, subject: '100% 무료 출결·수납 체크앤페이 추천');
-              },
             ),
           // 3. 거래처 수첩 or 실시간 입금 감지 (심플 라인 아이콘)
           if (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)

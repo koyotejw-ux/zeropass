@@ -40,10 +40,10 @@ $cardLink
 (카드 무이자 할부 및 카드사 결제를 원하실 경우 위 링크를 눌러주세요)''' : '';
 
     return '''
-[📢 ${studio.studioName} 수강료 청구 안내]
+[📢 ${studio.studioName} ${studio.feeWord} 청구 안내]
 
 안녕하세요, ${studio.studioName}입니다.
-$memberNames 회원님의 수강료 안내장을 보내드립니다.
+$memberNames ${studio.memberWord}님의 ${studio.feeWord} 안내장을 보내드립니다.
 
 ────────────────
 📋 청구 항목 : ${invoice.title}
@@ -141,7 +141,7 @@ ${member.name.split(' ').first} 학생이 수업을 마치고 안전하게 하�
 [🧾 ${studio.studioName} 수납 확인 영수증]
 
 안녕하세요, ${studio.studioName}입니다.
-${member.name.split(' ').first} 회원님의 수강료 입금이 정상 확인되었습니다.
+${member.name.split(' ').first} ${studio.memberWord}님의 ${studio.feeWord} 입금이 정상 확인되었습니다.
 
 ────────────────
 • 수납 항목 : ${invoice.title}

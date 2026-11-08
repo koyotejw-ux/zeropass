@@ -13,6 +13,7 @@ import '../services/kakao_share_service.dart';
 import '../services/sms_template_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/monetization_service.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/digital_pass_card_dialog.dart';
@@ -592,7 +593,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                '원터치 출결 체크',
+                LocalizationService.tr('tab_pass'),
                 style: TextStyle(
                   fontSize: isLandscape ? 17 : 20,
                   fontWeight: FontWeight.w800,

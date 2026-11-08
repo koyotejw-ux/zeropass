@@ -34,7 +34,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -116,6 +116,12 @@ class DatabaseService {
             await db.execute('ALTER TABLE expense_items ADD COLUMN withholdingTax INTEGER NOT NULL DEFAULT 0');
           } catch (_) {}
         }
+        if (oldVersion < 9) {
+          try {
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN customMemberTerm TEXT');
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN customFeeTerm TEXT');
+          } catch (_) {}
+        }
       },
     );
   }
@@ -183,7 +189,9 @@ class DatabaseService {
         departureTemplate TEXT,
         cardPaymentUrl TEXT DEFAULT "",
         cardPaymentEnabled INTEGER NOT NULL DEFAULT 0,
-        logoPath TEXT
+        logoPath TEXT,
+        customMemberTerm TEXT,
+        customFeeTerm TEXT
       )
     ''');
 

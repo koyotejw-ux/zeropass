@@ -627,10 +627,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const FittedBox(
+        title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text('설정 · 보안 금고'),
+          child: Text(LocalizationService.tr('tab_settings')),
         ),
         actions: [
           // 1. PRO VIP 샵 퀵 버튼 (심플 라인 아이콘)
@@ -827,17 +827,37 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow(profile.roleTitle, profile.instructorName),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
+                    _buildProfileRow('고객 / 회원 호칭', '${profile.memberWord} (예: ${profile.memberWord} 등록/출결)'),
+                    const Divider(height: 20, color: AppTheme.borderSubtle),
+                    _buildProfileRow('비용 / 수납 호칭', '${profile.feeWord} (예: ${profile.feeWord} 청구/안내)'),
+                    const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow('${profile.feeTitle} 수납 계좌', '${profile.bankName} ${profile.accountNumber}'),
                     const Divider(height: 20, color: AppTheme.borderSubtle),
                     _buildProfileRow('예금주', profile.accountHolder),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _openEditProfileDialog(context, profile),
-                        icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: Text('${profile.placeTitle} 프로필 및 수납 계좌 변경'),
-                      ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openEditProfileDialog(context, profile),
+                            icon: const Icon(Icons.edit_outlined, size: 15),
+                            label: const Text('기본 정보 변경'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showEditTerminologyModal(context, profile),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F172A),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.badge_outlined, size: 15),
+                            label: const Text('맞춤 호칭 설정'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -2273,6 +2293,243 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         );
       }
     }
+  }
+
+  void _showEditTerminologyModal(BuildContext context, StudioProfile current) {
+    String selectedMember = current.customMemberTerm ?? current.memberWord;
+    String selectedFee = current.customFeeTerm ?? current.feeWord;
+
+    final customMemberCtrl = TextEditingController(
+      text: StudioProfile.memberTermOptions.contains(selectedMember) ? '' : selectedMember,
+    );
+    final customFeeCtrl = TextEditingController(
+      text: StudioProfile.feeTermOptions.contains(selectedFee) ? '' : selectedFee,
+    );
+    bool isCustomMember = !StudioProfile.memberTermOptions.contains(selectedMember);
+    bool isCustomFee = !StudioProfile.feeTermOptions.contains(selectedFee);
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final activeMemberTerm = isCustomMember
+                ? (customMemberCtrl.text.trim().isEmpty ? '회원' : customMemberCtrl.text.trim())
+                : selectedMember;
+            final activeFeeTerm = isCustomFee
+                ? (customFeeCtrl.text.trim().isEmpty ? '회비' : customFeeCtrl.text.trim())
+                : selectedFee;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.badge_rounded, color: AppTheme.primaryBlue, size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          '고객 & 비용 맞춤 호칭 설정',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '학원, 피트니스, 공방, 유치원 등 대표님의 업종에 맞추어 "수강생 / 수강료", "회원 / 회비", "원생 / 원비", "원아 / 교육비" 등 자유롭게 변경하세요.',
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // 1. Member Term
+                  const Text('1. 고객 / 회원 호칭 선택', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ...StudioProfile.memberTermOptions.map((term) {
+                        final isSel = !isCustomMember && selectedMember == term;
+                        return ChoiceChip(
+                          label: Text(term, style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            color: isSel ? Colors.white : AppTheme.textPrimary,
+                          )),
+                          selected: isSel,
+                          selectedColor: AppTheme.primaryBlue,
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() {
+                                isCustomMember = false;
+                                selectedMember = term;
+                              });
+                            }
+                          },
+                        );
+                      }),
+                      ChoiceChip(
+                        label: Text('직접 입력', style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: isCustomMember ? FontWeight.w800 : FontWeight.w600,
+                          color: isCustomMember ? Colors.white : AppTheme.textPrimary,
+                        )),
+                        selected: isCustomMember,
+                        selectedColor: AppTheme.primaryBlue,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          setModalState(() {
+                            isCustomMember = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (isCustomMember) ...[
+                    const SizedBox(height: 8),
+                    AppTextField(
+                      controller: customMemberCtrl,
+                      label: '직접 입력 호칭',
+                      hint: '예: 수련생, 아동, 멘티, 골퍼, 회원님',
+                      prefixIcon: Icons.edit_outlined,
+                      onChanged: (_) => setModalState(() {}),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  // 2. Fee Term
+                  const Text('2. 청구 / 수납 비용 호칭 선택', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ...StudioProfile.feeTermOptions.map((term) {
+                        final isSel = !isCustomFee && selectedFee == term;
+                        return ChoiceChip(
+                          label: Text(term, style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            color: isSel ? Colors.white : AppTheme.textPrimary,
+                          )),
+                          selected: isSel,
+                          selectedColor: const Color(0xFF4F46E5),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() {
+                                isCustomFee = false;
+                                selectedFee = term;
+                              });
+                            }
+                          },
+                        );
+                      }),
+                      ChoiceChip(
+                        label: Text('직접 입력', style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: isCustomFee ? FontWeight.w800 : FontWeight.w600,
+                          color: isCustomFee ? Colors.white : AppTheme.textPrimary,
+                        )),
+                        selected: isCustomFee,
+                        selectedColor: const Color(0xFF4F46E5),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          setModalState(() {
+                            isCustomFee = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (isCustomFee) ...[
+                    const SizedBox(height: 8),
+                    AppTextField(
+                      controller: customFeeCtrl,
+                      label: '직접 입력 비용명',
+                      hint: '예: 레슨비, 강습료, 교재비, 회비',
+                      prefixIcon: Icons.payments_outlined,
+                      onChanged: (_) => setModalState(() {}),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  // 3. Live Preview Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.visibility_outlined, size: 14, color: Color(0xFF38BDF8)),
+                            SizedBox(width: 6),
+                            Text('실시간 앱 표기 미리보기', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF38BDF8))),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text('• 안내장: [${current.studioName}] 홍길동 $activeMemberTerm님의 $activeFeeTerm 청구서', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        Text('• 출결: [${current.studioName}] $activeMemberTerm 출석 체크 완료', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        Text('• 명부: 등록 $activeMemberTerm 총 6명 / 신규 $activeMemberTerm 등록', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final updated = current.copyWith(
+                          customMemberTerm: activeMemberTerm,
+                          customFeeTerm: activeFeeTerm,
+                        );
+                        await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('맞춤 호칭이 "$activeMemberTerm / $activeFeeTerm"(으)로 저장되었습니다.')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('맞춤 호칭 저장하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _openEditProfileDialog(BuildContext context, StudioProfile current) {

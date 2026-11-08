@@ -14,6 +14,7 @@ import '../services/chosung_search_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
 import '../services/sms_template_service.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
@@ -66,10 +67,10 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const FittedBox(
+        title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text('회원 명부 관리'),
+          child: Text(LocalizationService.tr('tab_members')),
         ),
         actions: [
           // 1. 순차 릴레이 단체발송 마법사 (심플 라인 아이콘)

@@ -12,6 +12,8 @@ class StudioProfile {
   final String cardPaymentUrl;
   final bool cardPaymentEnabled;
   final String? logoPath;
+  final String? customMemberTerm;
+  final String? customFeeTerm;
 
   static const List<String> businessCategories = [
     '음악 / 피아노',
@@ -25,6 +27,25 @@ class StudioProfile {
     '어학 / 코딩',
     '스터디룸 / 공간대여',
     '기타 / 맞춤업종',
+  ];
+
+  static const List<String> memberTermOptions = [
+    '회원',
+    '수강생',
+    '원생',
+    '학생',
+    '원아',
+    '고객',
+    '이용자',
+  ];
+
+  static const List<String> feeTermOptions = [
+    '수강료',
+    '회비',
+    '이용료',
+    '레슨비',
+    '원비',
+    '교육비',
   ];
 
   const StudioProfile({
@@ -41,6 +62,8 @@ class StudioProfile {
     this.cardPaymentUrl = '',
     this.cardPaymentEnabled = false,
     this.logoPath,
+    this.customMemberTerm,
+    this.customFeeTerm,
   });
 
   /// 비대면 카드결제 링크 생성 (금액/회원명 치환 지원)
@@ -73,8 +96,11 @@ class StudioProfile {
     return '대표 / 원장';
   }
 
-  /// 고객/회원 호칭 (학생 / 회원 / 수강생)
+  /// 고객/회원 호칭 (커스텀 설정 우선, 미설정 시 업종별 스마트 기본값)
   String get memberTitle {
+    if (customMemberTerm != null && customMemberTerm!.trim().isNotEmpty) {
+      return customMemberTerm!.trim();
+    }
     if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('태권도')) {
       return '학생 / 수강생';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스') || category.contains('요가')) {
@@ -85,8 +111,26 @@ class StudioProfile {
     return '회원 / 수강생';
   }
 
-  /// 수강료/이용료/회비 호칭
+  /// 단일 단어 고객 호칭 (예: '회원', '수강생', '원생', '학생', '원아', '고객', '이용자')
+  String get memberWord {
+    if (customMemberTerm != null && customMemberTerm!.trim().isNotEmpty) {
+      return customMemberTerm!.trim();
+    }
+    if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('태권도')) {
+      return '수강생';
+    } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스') || category.contains('요가')) {
+      return '회원';
+    } else if (category.contains('공방') || category.contains('공간대여')) {
+      return '고객';
+    }
+    return '회원';
+  }
+
+  /// 수강료/이용료/회비 호칭 (커스텀 설정 우선, 미설정 시 업종별 스마트 기본값)
   String get feeTitle {
+    if (customFeeTerm != null && customFeeTerm!.trim().isNotEmpty) {
+      return customFeeTerm!.trim();
+    }
     if (category.contains('학원') || category.contains('음악') || category.contains('어학')) {
       return '수강료';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스')) {
@@ -95,6 +139,21 @@ class StudioProfile {
       return '이용료 / 재료비';
     }
     return '수납 / 회비';
+  }
+
+  /// 단일 단어 비용 호칭 (예: '수강료', '회비', '이용료', '레슨비', '원비', '교육비')
+  String get feeWord {
+    if (customFeeTerm != null && customFeeTerm!.trim().isNotEmpty) {
+      return customFeeTerm!.trim();
+    }
+    if (category.contains('학원') || category.contains('음악') || category.contains('어학')) {
+      return '수강료';
+    } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스')) {
+      return '회비';
+    } else if (category.contains('공방') || category.contains('공간대여')) {
+      return '이용료';
+    }
+    return '회비';
   }
 
   /// 사업장 성격 (스튜디오 / 센터 / 학원 / 공방 / 매장)
@@ -126,6 +185,9 @@ class StudioProfile {
     bool? cardPaymentEnabled,
     String? logoPath,
     bool clearLogo = false,
+    String? customMemberTerm,
+    String? customFeeTerm,
+    bool clearCustomTerms = false,
   }) {
     return StudioProfile(
       studioName: studioName ?? this.studioName,
@@ -141,6 +203,8 @@ class StudioProfile {
       cardPaymentUrl: cardPaymentUrl ?? this.cardPaymentUrl,
       cardPaymentEnabled: cardPaymentEnabled ?? this.cardPaymentEnabled,
       logoPath: clearLogo ? null : (logoPath ?? this.logoPath),
+      customMemberTerm: clearCustomTerms ? null : (customMemberTerm ?? this.customMemberTerm),
+      customFeeTerm: clearCustomTerms ? null : (customFeeTerm ?? this.customFeeTerm),
     );
   }
 
@@ -159,6 +223,8 @@ class StudioProfile {
       'cardPaymentUrl': cardPaymentUrl,
       'cardPaymentEnabled': cardPaymentEnabled ? 1 : 0,
       'logoPath': logoPath,
+      'customMemberTerm': customMemberTerm,
+      'customFeeTerm': customFeeTerm,
     };
   }
 
@@ -181,6 +247,8 @@ class StudioProfile {
           ? (map['cardPaymentEnabled'] == 1)
           : (map['cardPaymentEnabled'] as bool? ?? false),
       logoPath: map['logoPath'] as String?,
+      customMemberTerm: map['customMemberTerm'] as String?,
+      customFeeTerm: map['customFeeTerm'] as String?,
     );
   }
 

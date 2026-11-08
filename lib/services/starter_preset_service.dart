@@ -24,6 +24,36 @@ enum IndustryPreset {
     this.sampleInstructorName,
     this.defaultFee,
   );
+
+  String get memberTerm {
+    switch (this) {
+      case IndustryPreset.academy:
+        return '원생';
+      case IndustryPreset.fitness:
+        return '회원';
+      case IndustryPreset.pilates:
+        return '회원';
+      case IndustryPreset.taekwondo:
+        return '수련생';
+      case IndustryPreset.artMusic:
+        return '수강생';
+    }
+  }
+
+  String get feeTerm {
+    switch (this) {
+      case IndustryPreset.academy:
+        return '수강료';
+      case IndustryPreset.fitness:
+        return '회비';
+      case IndustryPreset.pilates:
+        return '레슨비';
+      case IndustryPreset.taekwondo:
+        return '교육비';
+      case IndustryPreset.artMusic:
+        return '수강료';
+    }
+  }
 }
 
 class StarterPresetService {
@@ -42,6 +72,8 @@ class StarterPresetService {
         'studioName': preset.sampleStudioName,
         'instructorName': preset.sampleInstructorName,
         'category': preset.category,
+        'customMemberTerm': preset.memberTerm,
+        'customFeeTerm': preset.feeTerm,
       },
       where: 'id = ?',
       whereArgs: [1],

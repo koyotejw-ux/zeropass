@@ -50,7 +50,9 @@ class SmsTemplateService {
         .replaceAll('#{토스송금링크}', tossLink)
         .replaceAll('#{카드결제링크}', cardLink)
         .replaceAll('{카드결제링크}', cardLink)
-        .replaceAll('#{납부기한}', dueDateStr);
+        .replaceAll('#{납부기한}', dueDateStr)
+        .replaceAll('#{고객호칭}', studio.memberWord)
+        .replaceAll('#{비용호칭}', studio.feeWord);
 
     if (cardLink.isEmpty) {
       // If card payment is not enabled or empty, remove dangling card payment labels
@@ -118,7 +120,7 @@ class SmsTemplateService {
     return '''
 [${studio.studioName}] 수납 확인 완료
 안녕하세요, ${studio.studioName}입니다.
-${member.name.split(' ').first} 회원님의 수강료가 정상 확인되었습니다.
+${member.name.split(' ').first} ${studio.memberWord}님의 ${studio.feeWord}가 정상 확인되었습니다.
 
 • 수납 금액: $formattedAmount원
 • 결제 수단: $methodStr$sessionStr
@@ -138,10 +140,10 @@ ${member.name.split(' ').first} 회원님의 수강료가 정상 확인되었습
     return '''
 [${studio.studioName}] 패스 만료 임박 안내
 안녕하세요, ${studio.studioName}입니다.
-${member.name.split(' ').first} 회원님의 잔여 패스가 [${member.remainingSessions}회] 남았습니다.
+${member.name.split(' ').first} ${studio.memberWord}님의 잔여 패스가 [${member.remainingSessions}회] 남았습니다.
 
 원활한 수업 예약 및 연속적인 지도를 위해 재등록 안내를 드립니다.
-• 재등록 수강료: $fee원
+• 재등록 ${studio.feeWord}: $fee원
 • 입금 계좌: $accountInfo
 
 문의사항이 있으시면 언제든 편하게 연락 부탁드립니다. 감사합니다!
