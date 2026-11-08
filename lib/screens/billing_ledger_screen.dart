@@ -737,7 +737,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 final studio = studioAsync.value ?? StudioProfile.defaultProfile();
                 _openQuickInvoiceSheet(context, members, studio);
               },
-              backgroundColor: AppTheme.fabCreation,
+              backgroundColor: AppTheme.fabPrimary,
               elevation: 3,
               icon: const Icon(Icons.edit_note, color: Colors.white, size: 21),
               label: const Text(

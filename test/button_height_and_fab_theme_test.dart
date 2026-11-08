@@ -83,13 +83,17 @@ void main() {
   });
 
   group('FAB vs Basic Button Semantic Bifurcation & Color Contrast', () {
-    test('AppTheme defines distinct fabCreation color differentiated from primaryBlue', () {
-      expect(AppTheme.fabCreation, equals(const Color(0xFFEA580C)));
+    test('AppTheme defines distinct fabPrimary color (Midnight Obsidian) differentiated from primaryBlue', () {
+      expect(AppTheme.fabPrimary, equals(AppTheme.primaryDark));
+      expect(AppTheme.fabPrimary, equals(const Color(0xFF0F172A)));
       expect(AppTheme.primaryBlue, equals(const Color(0xFF2563EB)));
-      expect(AppTheme.fabCreation, isNot(equals(AppTheme.primaryBlue)));
+      expect(AppTheme.fabPrimary, isNot(equals(AppTheme.primaryBlue)));
+      // Orange is strictly reserved for warning / problem states
+      expect(AppTheme.warning, equals(const Color(0xFFD97706)));
+      expect(AppTheme.fabPrimary, isNot(equals(AppTheme.warning)));
     });
 
-    testWidgets('BillingLedgerScreen FAB has distinct fabCreation color', (tester) async {
+    testWidgets('BillingLedgerScreen FAB has distinct fabPrimary color', (tester) async {
       await tester.binding.setSurfaceSize(const Size(450, 900));
 
       await tester.pumpWidget(
@@ -109,11 +113,11 @@ void main() {
       final fabFinder = find.byType(FloatingActionButton);
       expect(fabFinder, findsOneWidget);
       final fab = tester.widget<FloatingActionButton>(fabFinder);
-      expect(fab.backgroundColor, equals(AppTheme.fabCreation));
+      expect(fab.backgroundColor, equals(AppTheme.fabPrimary));
       expect(find.text('새 청구서 작성'), findsOneWidget);
     });
 
-    testWidgets('MemberDirectoryScreen FAB has distinct fabCreation color', (tester) async {
+    testWidgets('MemberDirectoryScreen FAB has distinct fabPrimary color', (tester) async {
       await tester.binding.setSurfaceSize(const Size(450, 900));
 
       await tester.pumpWidget(
@@ -132,8 +136,9 @@ void main() {
       final fabFinder = find.byType(FloatingActionButton);
       expect(fabFinder, findsOneWidget);
       final fab = tester.widget<FloatingActionButton>(fabFinder);
-      expect(fab.backgroundColor, equals(AppTheme.fabCreation));
+      expect(fab.backgroundColor, equals(AppTheme.fabPrimary));
       expect(find.text('신규 회원 등록'), findsOneWidget);
     });
   });
 }
+

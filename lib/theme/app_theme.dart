@@ -14,9 +14,10 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF475569); // Refined Calm Slate
   static const Color textTertiary = Color(0xFF94A3B8); // Soft Slate Muted
 
-  // Floating Action Button (FAB / 팹 버튼) - 신규 데이터 생성/빠른 등록 전용 시그니처 웜 탠저린
-  // 일반 버튼(블루/다크)과 완벽하게 시각적·의미론적으로 분기되어 한눈에 구별되는 생동감 있는 액센트
-  static const Color fabCreation = Color(0xFFEA580C);
+  // Floating Action Button (FAB / 팹 버튼) - 신규 데이터 생성/빠른 등록 전용 시그니처 미드나잇 오닉스
+  // 주황색 등 불필요한 색상 추가를 배제하고 브랜드 원색(primaryDark)을 활용하여
+  // 카드 내 일반 버튼(블루)과 완벽하게 시각적·의미론적으로 분기 (주황색/앰버는 문제·경고 이슈 전용)
+  static const Color fabPrimary = primaryDark; // Color(0xFF0F172A)
 
   // Status Indicators (Harmonious, Non-jarring Micro Tones)
   static const Color success = Color(0xFF059669);
@@ -144,7 +145,7 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: fabCreation,
+        backgroundColor: fabPrimary,
         foregroundColor: Colors.white,
         elevation: 3,
         extendedPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
