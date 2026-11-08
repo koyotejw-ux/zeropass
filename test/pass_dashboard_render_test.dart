@@ -7,6 +7,7 @@ import 'package:zeropass/models/pass_record.dart';
 import 'package:zeropass/models/studio_profile.dart';
 import 'package:zeropass/providers/app_providers.dart';
 import 'package:zeropass/screens/pass_dashboard_screen.dart';
+import 'package:zeropass/services/localization_service.dart';
 
 class MockMembersNotifier extends MembersNotifier {
   @override
@@ -70,7 +71,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Verify Title
-    expect(find.text('원터치 출결 체크'), findsOneWidget);
+    expect(find.text(LocalizationService.tr('tab_pass')), findsOneWidget);
     // Verify member name rendered
     expect(find.text('최준혁'), findsOneWidget);
     // Verify essential kiosk icon button (Minimalist line icon in AppBar)

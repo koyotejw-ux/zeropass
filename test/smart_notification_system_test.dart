@@ -183,6 +183,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(kakaoSent, isTrue);
       expect(smsSent, isFalse);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Renders CheckOut Dialog and sends via SMS', (tester) async {
@@ -221,6 +222,7 @@ void main() {
       await tester.tap(find.text('문자(SMS) 전송'));
       await tester.pumpAndSettle();
       expect(smsSent, isTrue);
+      await tester.pump(const Duration(seconds: 5));
     });
   });
 
@@ -262,6 +264,7 @@ void main() {
       await tester.tap(find.text('카톡 영수증 0원 전송'));
       await tester.pumpAndSettle();
       expect(kakaoSent, isTrue);
+      await tester.pump(const Duration(seconds: 5));
     });
   });
 

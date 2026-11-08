@@ -686,32 +686,499 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
             children: [
-              // 1. Studio Profile Card (상호명, 업종, 수납계좌 등) - 설정 1순위 최상단 배치
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: _buildSectionTitle('${profile.placeTitle} & ${profile.roleTitle} 프로필', icon: Icons.storefront_rounded),
+              // 1. Studio Compact Hero Card (시설 상호명, 로고, 대표자, 업종)
+              _buildStudioCompactHeroCard(context, profile),
+              const SizedBox(height: 14),
+
+              // 2. VIP Retention ROI Card
+              _buildVipMembershipRoiCard(context),
+              const SizedBox(height: 10),
+
+              // 3. Senior Mode Quick Toggle
+              _buildSeniorModeSection(context, isSeniorMode),
+              const SizedBox(height: 16),
+
+              // [그룹 1: 시설 & 브랜드 환경]
+              _buildGroupHeader('시설 & 브랜드 환경'),
+              _buildRepresentativeTile(
+                icon: Icons.storefront_rounded,
+                iconColor: AppTheme.primaryBlue,
+                iconBgColor: const Color(0xFFEFF6FF),
+                title: '${profile.placeTitle} 프로필 및 기본 정보',
+                subtitle: '${profile.studioName} · ${profile.category} · 대표 ${profile.instructorName}',
+                onTap: () => _openEditProfileDialog(context, profile),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.badge_outlined,
+                iconColor: const Color(0xFF0F172A),
+                iconBgColor: const Color(0xFFF1F5F9),
+                title: '고객 & 비용 맞춤 호칭 설정',
+                subtitle: '현재 호칭: ${profile.memberWord} · ${profile.feeWord}',
+                trailingBadge: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppTheme.chipBackground,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      profile.category,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryBlue,
+                  child: Text(
+                    '${profile.memberWord}/${profile.feeWord}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                  ),
+                ),
+                onTap: () => _showEditTerminologyModal(context, profile),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.category_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                iconBgColor: const Color(0xFFF5F3FF),
+                title: '업종별 카테고리 & 청구 템플릿',
+                subtitle: '${profile.category} 맞춤 수납 항목 및 기본 단가 관리',
+                onTap: () => _showCustomCategoryBottomSheet(context, profile, categoryState),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.language_rounded,
+                iconColor: const Color(0xFF0284C7),
+                iconBgColor: const Color(0xFFF0F9FF),
+                title: '글로벌 언어 및 통화 단위 설정',
+                subtitle: '${LocalizationService.currentLanguage.label} · ${LocalizationService.currentCurrency.code} (${LocalizationService.currentCurrency.symbol})',
+                onTap: () => _showLocalizationBottomSheet(context),
+              ),
+              const SizedBox(height: 16),
+
+              // [그룹 2: 출결 & 무인 키오스크 운영]
+              _buildGroupHeader('출결 & 무인 키오스크 운영'),
+              _buildRepresentativeTile(
+                icon: Icons.tablet_mac_rounded,
+                iconColor: const Color(0xFF2563EB),
+                iconBgColor: const Color(0xFFEFF6FF),
+                title: '무인 출결 키오스크 기기 설정',
+                subtitle: _isKioskDedicated ? '자동 실행 활성화됨 · 입구 거치 모드' : '자동 실행 꺼짐 · 학생용/체험 모드 지원',
+                trailingBadge: _isKioskDedicated
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('자동ON', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                      )
+                    : null,
+                onTap: () => _showKioskSettingsBottomSheet(context, profile),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.notifications_active_rounded,
+                iconColor: const Color(0xFF059669),
+                iconBgColor: const Color(0xFFECFDF5),
+                title: '스마트 안심 알림 센터 & 감사 로그',
+                subtitle: '등·하원 미발송 알림 일괄 전송, 독촉 릴레이, 전체 감사 로그',
+                onTap: () => SmartNotificationCenterModal.show(context),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.edit_note_rounded,
+                iconColor: const Color(0xFFD97706),
+                iconBgColor: const Color(0xFFFFFBEB),
+                title: '문자 알림 및 청구 서식 관리',
+                subtitle: '수강료 청구서, 입실 안심 문자, 퇴실 문자 서식 편집',
+                onTap: () => _showSmsTemplatesBottomSheet(context, profile),
+              ),
+              const SizedBox(height: 16),
+
+              // [그룹 3: 금융 결제 & 데이터 보안]
+              _buildGroupHeader('금융 결제 & 데이터 보안'),
+              _buildRepresentativeTile(
+                icon: Icons.credit_card_rounded,
+                iconColor: const Color(0xFF2563EB),
+                iconBgColor: const Color(0xFFEFF6FF),
+                title: '비대면 신용카드 결제 링크 (0원 연동)',
+                subtitle: profile.cardPaymentEnabled ? '비대면 카드결제 켜짐' : '가입비 0원 · 월관리비 0원 · 전용 링크 신청',
+                onTap: () => _showCardPaymentBottomSheet(context, profile),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.lock_outline_rounded,
+                iconColor: const Color(0xFF0F172A),
+                iconBgColor: const Color(0xFFF1F5F9),
+                title: '로컬 데이터 보안 금고 (100% 온디바이스)',
+                subtitle: '암호화 백업, 카카오톡/드라이브 전송, 복원, 초기화',
+                onTap: () => _showDataVaultBottomSheet(context),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.security_rounded,
+                iconColor: const Color(0xFF059669),
+                iconBgColor: const Color(0xFFECFDF5),
+                title: '금융 푸시 필터 보안 설정',
+                subtitle: profile.autoBankDetectEnabled ? '은행 입금 푸시 감지 켜짐' : '은행 입금 푸시 감지 꺼짐',
+                onTap: () => _showBankPushSecurityBottomSheet(context, profile),
+              ),
+              const SizedBox(height: 16),
+
+              // [그룹 4: 가이드 & 규정 준수]
+              _buildGroupHeader('가이드 & 규정 준수'),
+              _buildRepresentativeTile(
+                icon: Icons.auto_stories_rounded,
+                iconColor: const Color(0xFF2563EB),
+                iconBgColor: const Color(0xFFEFF6FF),
+                title: '원장님 실전 가이드 센터 & 튜토리얼',
+                subtitle: '4단계 실전 연습 코칭 · 업종 프리셋 · 셋업 마법사 · FAQ',
+                onTap: () => _openGuideCenterSheet(context, profile),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.gavel_rounded,
+                iconColor: const Color(0xFF64748B),
+                iconBgColor: const Color(0xFFF8FAFC),
+                title: '법적 고지 및 규정 준수 (Compliance)',
+                subtitle: '개인정보 처리방침 · 이용약관 · 로컬 암호화 보안 확약',
+                onTap: () => _showComplianceBottomSheet(context),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStudioCompactHeroCard(BuildContext context, StudioProfile profile) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => _showLogoPickerSheet(context, profile),
+                child: Stack(
+                  children: [
+                    _buildStudioLogoAvatar(profile, size: 54),
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 10),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            profile.studioName,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                              letterSpacing: -0.4,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            profile.category,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlue,
+                            ),
+                          ),
+                        ),
+                        if (profile.logoPath != null && profile.logoPath!.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              '로고 적용됨',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    InkWell(
+                      onTap: () => _showLogoPickerSheet(context, profile),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 1),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              profile.logoPath != null ? Icons.photo_camera_outlined : Icons.add_photo_alternate_outlined,
+                              size: 13,
+                              color: AppTheme.primaryBlue,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              profile.logoPath != null ? '로고 변경/삭제' : '상호 로고 등록하기',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${profile.instructorName} ${profile.roleTitle} · 호칭: ${profile.memberWord}/${profile.feeWord}',
+                      style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${profile.bankName} ${profile.accountNumber} (${profile.accountHolder})',
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _openEditProfileDialog(context, profile),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  label: const Text('기본 정보 수정', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showEditTerminologyModal(context, profile),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.badge_outlined, size: 15),
+                  label: const Text('맞춤 호칭 설정', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: AppTheme.textSecondary,
+          letterSpacing: -0.3,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRepresentativeTile({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String title,
+    required String subtitle,
+    Widget? trailingBadge,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (trailingBadge != null) ...[
+                const SizedBox(width: 8),
+                trailingBadge,
+              ],
+              const SizedBox(width: 8),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textTertiary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetHeader(BuildContext context, String title, IconData icon, Color iconColor) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                      letterSpacing: -0.4,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 22, color: AppTheme.textSecondary),
+            onPressed: () => Navigator.pop(context),
+            visualDensity: VisualDensity.compact,
+            splashRadius: 20,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCustomCategoryBottomSheet(BuildContext context, StudioProfile profile, CustomCategoryState categoryState) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (sheetCtx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(sheetCtx, '업종별 카테고리 & 템플릿', Icons.category_rounded, const Color(0xFF8B5CF6)),
+            _buildCustomCategorySection(context, profile, categoryState),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLocalizationBottomSheet(BuildContext context) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.60,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHeader(sheetCtx, '글로벌 언어 및 통화 단위 설정', Icons.language_rounded, const Color(0xFF0284C7)),
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -722,553 +1189,707 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Studio Logo & Branding Header Row
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        GestureDetector(
-                          onTap: () => _showLogoPickerSheet(context, profile),
-                          child: Stack(
-                            children: [
-                              _buildStudioLogoAvatar(profile, size: 68),
-                              Positioned(
-                                right: -2,
-                                bottom: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.all(5),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryBlue,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
-                                  ),
-                                  child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 12),
-                                ),
-                              ),
-                            ],
-                          ),
+                        const Row(
+                          children: [
+                            Icon(Icons.language_rounded, size: 18, color: AppTheme.primaryBlue),
+                            SizedBox(width: 8),
+                            Text('앱 언어', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                          ],
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Text(
-                                    profile.studioName,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                    softWrap: true,
-                                  ),
-                                  if (profile.logoPath != null && profile.logoPath!.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const Text(
-                                        '로고 적용됨',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF059669),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 3),
-                              const Text(
-                                '무인 키오스크 및 알림장 브랜드 표기',
-                                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                              ),
-                              const SizedBox(height: 6),
-                              InkWell(
-                                onTap: () => _showLogoPickerSheet(context, profile),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        profile.logoPath != null ? Icons.photo_camera_outlined : Icons.add_photo_alternate_outlined,
-                                        size: 14,
-                                        color: AppTheme.primaryBlue,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        profile.logoPath != null ? '로고 변경/삭제' : '상호 로고 등록하기',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.primaryBlue,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        DropdownButton<AppLanguage>(
+                          value: LocalizationService.currentLanguage,
+                          underline: const SizedBox(),
+                          borderRadius: BorderRadius.circular(12),
+                          items: AppLanguage.values.map((lang) {
+                            return DropdownMenuItem<AppLanguage>(
+                              value: lang,
+                              child: Text(lang.label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                            );
+                          }).toList(),
+                          onChanged: (lang) {
+                            if (lang != null) {
+                              LocalizationService.setLanguage(lang);
+                              setSheetState(() {});
+                              setState(() {});
+                            }
+                          },
                         ),
                       ],
                     ),
-                    const Divider(height: 24, color: AppTheme.borderSubtle),
-                    _buildProfileRow('상호 / 브랜드명', profile.studioName),
-                    const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('업종 카테고리', profile.category),
-                    const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow(profile.roleTitle, profile.instructorName),
-                    const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('고객 / 회원 호칭', '${profile.memberWord} (예: ${profile.memberWord} 등록/출결)'),
-                    const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('비용 / 수납 호칭', '${profile.feeWord} (예: ${profile.feeWord} 청구/안내)'),
-                    const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('${profile.feeTitle} 수납 계좌', '${profile.bankName} ${profile.accountNumber}'),
-                    const Divider(height: 20, color: AppTheme.borderSubtle),
-                    _buildProfileRow('예금주', profile.accountHolder),
-                    const SizedBox(height: 14),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _openEditProfileDialog(context, profile),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            icon: const Icon(Icons.edit_outlined, size: 16),
-                            label: const Text('기본 정보 변경'),
-                          ),
+                        const Row(
+                          children: [
+                            Icon(Icons.monetization_on_outlined, size: 18, color: AppTheme.softMint),
+                            SizedBox(width: 8),
+                            Text('통화 단위', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _showEditTerminologyModal(context, profile),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0F172A),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              minimumSize: const Size(0, 48),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            icon: const Icon(Icons.badge_outlined, size: 16),
-                            label: const Text('맞춤 호칭 설정'),
-                          ),
+                        DropdownButton<AppCurrency>(
+                          value: LocalizationService.currentCurrency,
+                          underline: const SizedBox(),
+                          borderRadius: BorderRadius.circular(12),
+                          items: AppCurrency.values.map((cur) {
+                            return DropdownMenuItem<AppCurrency>(
+                              value: cur,
+                              child: Text('${cur.code} (${cur.symbol})', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                            );
+                          }).toList(),
+                          onChanged: (cur) {
+                            if (cur != null) {
+                              LocalizationService.setCurrency(cur);
+                              setSheetState(() {});
+                              setState(() {});
+                            }
+                          },
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // 1-1. VIP ROI Membership & Retention Flywheel Card (선순환 결제 전환 & 누적 절감액 보드)
-              _buildVipMembershipRoiCard(context),
-              const SizedBox(height: 6),
-
-              // 1-2. 시니어 큰글씨 & 고대비 접근성 모드 설정 (단정한 설정 타일로 통합)
-              _buildSeniorModeSection(context, isSeniorMode),
-
-              // 1-2. 비대면 신용카드 결제 링크 (0원 연동)
-              _buildSectionTitle('비대면 신용카드 결제 링크 (0원 연동)', icon: Icons.credit_card_rounded),
+  void _showKioskSettingsBottomSheet(BuildContext context, StudioProfile profile) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHeader(sheetCtx, '무인 출결 키오스크 기기 설정', Icons.tablet_mac_rounded, const Color(0xFF2563EB)),
               Material(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(8),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '앱 실행 시 키오스크 자동 실행',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
                               ),
-                              child: const FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  '가입비 0원 · 월관리비 0원',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.primaryBlue,
-                                  ),
-                                ),
+                              SizedBox(height: 3),
+                              Text(
+                                '입구 거치 태블릿으로 설정 시 관리자 대시보드 없이 바로 출결 키오스크로 시작합니다.',
+                                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
                               ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Transform.scale(
-                            scale: 0.85,
-                            child: Switch(
-                              value: profile.cardPaymentEnabled,
-                              activeThumbColor: AppTheme.primaryBlue,
-                              onChanged: (val) async {
-                                final updated = profile.copyWith(cardPaymentEnabled: val);
-                                await ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                              },
+                        ),
+                        Switch(
+                          value: _isKioskDedicated,
+                          activeThumbColor: AppTheme.primaryBlue,
+                          onChanged: (val) async {
+                            await _setKioskDedicatedMode(val);
+                            setSheetState(() {});
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFEFF6FF),
+                        child: Icon(Icons.touch_app_rounded, color: AppTheme.primaryBlue),
+                      ),
+                      title: const Text('학생 출결 키오스크 실행 (실제 운영용)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                      subtitle: const Text('입구 거치용 전체화면. 체험 핀이 일체 숨겨지는 클린 학생 운영 화면입니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () {
+                        final members = ref.read(membersProvider).value ?? [];
+                        if (members.isEmpty) {
+                          _showEmptyMembersKioskDialog(context);
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
+                          );
+                        }
+                      },
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFEEF2FF),
+                        child: Icon(Icons.science_rounded, color: Color(0xFF6366F1)),
+                      ),
+                      title: const Text('키오스크 기능 테스트 (체험 모드)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                      subtitle: const Text('1234 체험 핀으로 출결 완료 축하 및 알림 화면 결과를 즉시 확인합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
+                        );
+                      },
+                    ),
+                    const Divider(height: 16, color: AppTheme.borderSubtle),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFECFDF5),
+                        child: Icon(Icons.screen_lock_portrait_rounded, color: AppTheme.softMint),
+                      ),
+                      title: const Text('안드로이드 앱 화면 고정(Pinning) 가이드', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                      subtitle: const Text('학생들이 홈 화면이나 유튜브 등으로 나가지 못하게 기기를 고정 잠금합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _showAppPinningGuideDialog(context),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Icon(Icons.lock_rounded, size: 18, color: Color(0xFFD97706)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '안심 보안 잠금: 등록된 학생이 있을 때는 키오스크에 회원 명단/PIN이 일체 표시되지 않으며, 우측 상단 자물쇠 터치 시 관리자 비밀번호(0000)를 입력해야만 원장님 화면으로 나갈 수 있습니다.',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.45),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '원격 비대면 카드 결제 연동',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '토스페이먼츠, 페이앱, 결제선생 등 원장님이 사용하시는 PG사의 결제 링크를 연동하면, 수강료 청구 문자/카톡에 비대면 카드결제 링크가 자동 포함됩니다.',
-                        style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
-                      ),
-                      const SizedBox(height: 14),
-                      if (profile.cardPaymentEnabled) ...[
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(Icons.link_rounded, size: 16, color: AppTheme.primaryBlue),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      profile.cardPaymentUrl.trim().isEmpty
-                                          ? '등록된 카드결제 링크 없음 (링크를 설정해주세요)'
-                                          : profile.cardPaymentUrl,
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: profile.cardPaymentUrl.trim().isEmpty
-                                            ? AppTheme.textSecondary
-                                            : AppTheme.textPrimary,
-                                      ),
-                                      softWrap: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                '💡 팁: URL에 {금액}을 입력하면 회원별 청구 금액이 링크에 자동으로 채워집니다.',
-                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _openCardPaymentUrlDialog(context, profile),
-                                icon: const Icon(Icons.edit_outlined, size: 15),
-                                label: const FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text('결제 링크 설정'),
-                                ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSmsTemplatesBottomSheet(BuildContext context, StudioProfile profile) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.85,
+      builder: (sheetCtx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(sheetCtx, '문자 알림 및 청구 서식 관리', Icons.edit_note_rounded, const Color(0xFFD97706)),
+            Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFEFF6FF),
+                      child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
+                    ),
+                    title: Text('${profile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                    subtitle: Text('${profile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.', style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () => _openTemplateEditorDialog(
+                      context: context,
+                      title: '${profile.feeTitle} 청구서 문자 서식 편집',
+                      initialText: profile.invoiceTemplate,
+                      defaultText: StudioProfile.defaultInvoiceTemplate,
+                      placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
+                      profile: profile,
+                      onSave: (newTemplate, updatedProfile) {
+                        final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
+                        ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                      },
+                    ),
+                  ),
+                  const Divider(height: 16, color: AppTheme.borderSubtle),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFECFDF5),
+                      child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
+                    ),
+                    title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                    subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () => _openTemplateEditorDialog(
+                      context: context,
+                      title: '출석 / 입실 문자 서식 편집',
+                      initialText: profile.attendanceTemplate,
+                      defaultText: StudioProfile.defaultAttendanceTemplate,
+                      placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
+                      profile: profile,
+                      onSave: (newTemplate, updatedProfile) {
+                        final updated = updatedProfile.copyWith(attendanceTemplate: newTemplate);
+                        ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                      },
+                    ),
+                  ),
+                  const Divider(height: 16, color: AppTheme.borderSubtle),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFFFFBEB),
+                      child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
+                    ),
+                    title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                    subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () => _openTemplateEditorDialog(
+                      context: context,
+                      title: '퇴실 / 일정종료 문자 서식 편집',
+                      initialText: profile.departureTemplate,
+                      defaultText: StudioProfile.defaultDepartureTemplate,
+                      placeholders: '#{상호명}, #{회원명}',
+                      profile: profile,
+                      onSave: (newTemplate, updatedProfile) {
+                        final updated = updatedProfile.copyWith(departureTemplate: newTemplate);
+                        ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCardPaymentBottomSheet(BuildContext context, StudioProfile profile) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHeader(sheetCtx, '비대면 신용카드 결제 링크', Icons.credit_card_rounded, AppTheme.primaryBlue),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '가입비 0원 · 월관리비 0원',
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
                               ),
                             ),
-                            if (profile.cardPaymentUrl.trim().isNotEmpty) ...[
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () async {
-                                    final testUrl = profile.getFormattedCardPaymentUrl(
-                                      amount: 100000,
-                                      orderTitle: '테스트수강료',
-                                      customerName: '홍길동',
-                                    );
-                                    final uri = Uri.tryParse(testUrl);
-                                    if (uri != null && await canLaunchUrl(uri)) {
-                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                    } else {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('유효한 웹 링크 형식이 아닙니다. (http:// 또는 https:// 포함)')),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  icon: const Icon(Icons.open_in_browser_rounded, size: 15),
-                                  label: const FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text('링크 테스트'),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryBlue,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                      ] else ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final updated = profile.copyWith(cardPaymentEnabled: true);
+                        const SizedBox(width: 8),
+                        Transform.scale(
+                          scale: 0.85,
+                          child: Switch(
+                            value: profile.cardPaymentEnabled,
+                            activeThumbColor: AppTheme.primaryBlue,
+                            onChanged: (val) async {
+                              final updated = profile.copyWith(cardPaymentEnabled: val);
                               await ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                              if (context.mounted) {
-                                _openCardPaymentUrlDialog(context, updated);
-                              }
+                              setSheetState(() {});
+                              setState(() {});
                             },
-                            icon: const Icon(Icons.add_link_rounded, size: 16),
-                            label: const Text('비대면 카드결제 기능 켜기'),
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 2. Local Data Vault (Zero Server) - 온디바이스 로컬 암호화 보안 금고
-              _buildSectionTitle('로컬 데이터 보안 금고 (100% 온디바이스 암호화)', icon: Icons.lock_outline_rounded),
-              Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEFF6FF),
-                          child: Icon(Icons.share_outlined, color: AppTheme.primaryBlue),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text('원격 비대면 카드 결제 연동', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '토스페이먼츠, 페이앱, 결제선생 등 원장님이 사용하시는 PG사의 결제 링크를 연동하면, 수강료 청구 문자/카톡에 비대면 카드결제 링크가 자동 포함됩니다.',
+                      style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
+                    ),
+                    const SizedBox(height: 14),
+                    if (profile.cardPaymentEnabled) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
-                        title: const Text('로컬 백업 파일 생성 & 카톡/드라이브 전송', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('회원·출결·수납 데이터를 암호화하여 카톡/드라이브로 안전 보관합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () async {
-                          final file = await DataVaultService.exportEncryptedBackup();
-                          await DataVaultService.shareBackupFile(file);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('백업 파일이 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? '\\' : '/').last}'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFECFDF5),
-                          child: Icon(Icons.table_view_outlined, color: AppTheme.softMint),
-                        ),
-                        title: const Text('수납 장부 엑셀(CSV) 내보내기 & 공유', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('세무/결산용 엑셀 호환 CSV를 생성하여 카톡/엑셀로 공유합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () async {
-                          final file = await DataVaultService.exportLedgerCsv();
-                          await DataVaultService.shareLedgerCsv(file);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('수납 장부 CSV가 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? '\\' : '/').last}'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEEF2FF),
-                          child: Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5)),
-                        ),
-                        title: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Expanded(
-                              child: Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                            ),
-                            InkWell(
-                              onTap: () => TaxGuideModal.show(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEEF2FF),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFC7D2FE)),
-                                ),
-                                child: const Text('세무 가이드 💡', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
-                              ),
-                            ),
-                          ],
-                        ),
-                        subtitle: const Text('수입과 지출을 통합 정렬하여 5월 종합소득세 및 2월 사업장현황신고 세무사용 표준 CSV를 생성합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () async {
-                          try {
-                            final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
-                            await DataVaultService.shareSimplifiedBookkeepingCsv(file);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('국세청 간편장부 CSV가 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? '\\' : '/').last}'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('간편장부 내보내기 오류: $e')),
-                              );
-                            }
-                          }
-                        },
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFF0FDF4),
-                          child: Icon(Icons.restore_page_outlined, color: AppTheme.softMint),
-                        ),
-                        title: const Text('백업 데이터 복원하기 (텍스트 / JSON)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('카카오톡 등으로 보관한 백업 JSON 내용을 입력하여 복원합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () => _openRestoreDataDialog(context),
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFFEF2F2),
-                          child: Icon(Icons.cleaning_services_outlined, color: AppTheme.danger),
-                        ),
-                        title: const Text('체험용 가상 데이터 비우기 (실제 운영 시작)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.danger)),
-                        subtitle: const Text('샘플 5명 데이터를 모두 지우고 실제 회원만 등록합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (c) => AlertDialog(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              actionsOverflowButtonSpacing: 8,
-                              actionsOverflowDirection: VerticalDirection.down,
-                              actionsAlignment: MainAxisAlignment.end,
-                              title: const Row(
-                                children: [
-                                  Icon(Icons.cleaning_services_rounded, color: AppTheme.danger, size: 22),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text('연습 데이터를 모두 비우시겠습니까?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                            Row(
+                              children: [
+                                const Icon(Icons.link_rounded, size: 16, color: AppTheme.primaryBlue),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    profile.cardPaymentUrl.trim().isEmpty
+                                        ? '등록된 카드결제 링크 없음 (링크를 설정해주세요)'
+                                        : profile.cardPaymentUrl,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: profile.cardPaymentUrl.trim().isEmpty
+                                          ? AppTheme.textSecondary
+                                          : AppTheme.textPrimary,
+                                    ),
+                                    softWrap: true,
                                   ),
-                                ],
-                              ),
-                              content: const SingleChildScrollView(
-                                child: Text(
-                                  '현재 등록된 가상 회원, 출석 기록, 청구서 내역이 모두 삭제되어 실제 운영 모드로 초기화됩니다.\n(스튜디오 프로필 설정은 유지됩니다.)',
-                                  style: TextStyle(height: 1.5, fontSize: 13),
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(c, false),
-                                  child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () => Navigator.pop(c, true),
-                                  icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.white),
-                                  label: const Text('깨끗이 비우기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
                                 ),
                               ],
                             ),
-                          );
-
-                          if (confirm == true && context.mounted) {
-                            final db = ref.read(databaseServiceProvider);
-                            await db.clearAllData();
-                            await ref.read(membersProvider.notifier).reload();
-                            await ref.read(passRecordsProvider.notifier).reload();
-                            await ref.read(invoicesProvider.notifier).reload();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('체험용 데이터가 비워졌습니다. 이제 실제 회원을 등록해 보세요!'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFF3E8FF),
-                          child: Icon(Icons.restart_alt, color: Colors.purple),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '💡 팁: URL에 {금액}을 입력하면 회원별 청구 금액이 링크에 자동으로 채워집니다.',
+                              style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                            ),
+                          ],
                         ),
-                        title: const Text('체험용 샘플 데이터 다시 불러오기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('학원/PT/공방 연습용 5명 예시 데이터를 다시 채웁니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () async {
-                          final db = ref.read(databaseServiceProvider);
-                          await db.restoreSampleData();
-                          await ref.read(membersProvider.notifier).reload();
-                          await ref.read(passRecordsProvider.notifier).reload();
-                          await ref.read(invoicesProvider.notifier).reload();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('연습용 샘플 데이터가 성공적으로 복원되었습니다.'),
-                                behavior: SnackBarBehavior.floating,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _openCardPaymentUrlDialog(context, profile),
+                              icon: const Icon(Icons.edit_outlined, size: 15),
+                              label: const FittedBox(fit: BoxFit.scaleDown, child: Text('결제 링크 설정')),
+                            ),
+                          ),
+                          if (profile.cardPaymentUrl.trim().isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  final testUrl = profile.getFormattedCardPaymentUrl(
+                                    amount: 100000,
+                                    orderTitle: '테스트수강료',
+                                    customerName: '홍길동',
+                                  );
+                                  final uri = Uri.tryParse(testUrl);
+                                  if (uri != null && await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('유효한 웹 링크 형식이 아닙니다. (http:// 또는 https:// 포함)')),
+                                      );
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.open_in_browser_rounded, size: 15),
+                                label: const FittedBox(fit: BoxFit.scaleDown, child: Text('링크 테스트')),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryBlue,
+                                  foregroundColor: Colors.white,
+                                ),
                               ),
-                            );
-                          }
-                        },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ] else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final updated = profile.copyWith(cardPaymentEnabled: true);
+                            await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                            if (context.mounted) {
+                              _openCardPaymentUrlDialog(context, updated);
+                            }
+                          },
+                          icon: const Icon(Icons.add_link_rounded, size: 16),
+                          label: const Text('비대면 카드결제 기능 켜기'),
+                        ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // 3. Bank Push Parser Security Setting (금융 푸시 필터 보안)
-              _buildSectionTitle('금융 푸시 필터 보안 설정', icon: Icons.security_rounded),
+  void _showDataVaultBottomSheet(BuildContext context) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.90,
+      builder: (sheetCtx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(sheetCtx, '로컬 데이터 보안 금고', Icons.lock_outline_rounded, const Color(0xFF0F172A)),
+            Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFEFF6FF),
+                      child: Icon(Icons.share_outlined, color: AppTheme.primaryBlue),
+                    ),
+                    title: const Text('로컬 백업 파일 생성 & 카톡/드라이브 전송', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                    subtitle: const Text('회원·출결·수납 데이터를 암호화하여 카톡/드라이브로 안전 보관합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () async {
+                      final file = await DataVaultService.exportEncryptedBackup();
+                      await DataVaultService.shareBackupFile(file);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('백업 파일이 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? "\\" : "/").last}'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const Divider(height: 16, color: AppTheme.borderSubtle),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFECFDF5),
+                      child: Icon(Icons.table_view_outlined, color: AppTheme.softMint),
+                    ),
+                    title: const Text('수납 장부 엑셀(CSV) 내보내기 & 공유', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                    subtitle: const Text('세무/결산용 엑셀 호환 CSV를 생성하여 카톡/엑셀로 공유합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () async {
+                      final file = await DataVaultService.exportLedgerCsv();
+                      await DataVaultService.shareLedgerCsv(file);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('수납 장부 CSV가 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? "\\" : "/").last}'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const Divider(height: 16, color: AppTheme.borderSubtle),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFEEF2FF),
+                      child: Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5)),
+                    ),
+                    title: Row(
+                      children: [
+                        const Expanded(
+                          child: Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        ),
+                        InkWell(
+                          onTap: () => TaxGuideModal.show(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFC7D2FE)),
+                            ),
+                            child: const Text('세무 가이드 💡', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: const Text('수입과 지출을 통합 정렬하여 5월 종합소득세 및 2월 사업장현황신고 세무사용 표준 CSV를 생성합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () async {
+                      try {
+                        final file = await DataVaultService.exportSimplifiedBookkeepingCsv();
+                        await DataVaultService.shareSimplifiedBookkeepingCsv(file);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('국세청 간편장부 CSV가 생성되어 공유 창이 열렸습니다: ${file.path.split(Platform.isWindows ? "\\" : "/").last}'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('간편장부 내보내기 오류: $e')));
+                        }
+                      }
+                    },
+                  ),
+                  const Divider(height: 16, color: AppTheme.borderSubtle),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFF0FDF4),
+                      child: Icon(Icons.restore_page_outlined, color: AppTheme.softMint),
+                    ),
+                    title: const Text('백업 데이터 복원하기 (텍스트 / JSON)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                    subtitle: const Text('카카오톡 등으로 보관한 백업 JSON 내용을 입력하여 복원합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () => _openRestoreDataDialog(context),
+                  ),
+                  const Divider(height: 16, color: AppTheme.borderSubtle),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFFEF2F2),
+                      child: Icon(Icons.cleaning_services_outlined, color: AppTheme.danger),
+                    ),
+                    title: const Text('체험용 가상 데이터 비우기 (실제 운영 시작)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.danger)),
+                    subtitle: const Text('샘플 5명 데이터를 모두 지우고 실제 회원만 등록합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () => _showResetDataDialog(context),
+                  ),
+                ],
+              ),
+            ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showResetDataDialog(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actionsOverflowButtonSpacing: 8,
+        actionsOverflowDirection: VerticalDirection.down,
+        actionsAlignment: MainAxisAlignment.end,
+        title: const Row(
+          children: [
+            Icon(Icons.cleaning_services_rounded, color: AppTheme.danger, size: 22),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text('연습 데이터를 모두 비우시겠습니까?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            ),
+          ],
+        ),
+        content: const SingleChildScrollView(
+          child: Text(
+            '현재 등록된 가상 회원, 출석 기록, 청구서 내역이 모두 삭제되어 실제 운영 모드로 초기화됩니다.\n(스튜디오 프로필 설정은 유지됩니다.)',
+            style: TextStyle(height: 1.5, fontSize: 13),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(c, true),
+            icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.white),
+            label: const Text('깨끗이 비우기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      final db = ref.read(databaseServiceProvider);
+      await db.clearAllData();
+      await ref.read(membersProvider.notifier).reload();
+      await ref.read(passRecordsProvider.notifier).reload();
+      await ref.read(invoicesProvider.notifier).reload();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('체험용 데이터가 비워졌습니다. 이제 실제 회원을 등록해 보세요!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showBankPushSecurityBottomSheet(BuildContext context, StudioProfile profile) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.60,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHeader(sheetCtx, '금융 푸시 필터 보안 설정', Icons.security_rounded, const Color(0xFF059669)),
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -1294,11 +1915,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           activeThumbColor: AppTheme.primaryBlue,
                           onChanged: (val) {
                             ref.read(studioProfileProvider.notifier).toggleBankDetect(val);
+                            setSheetState(() {});
+                            setState(() {});
                           },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -1322,477 +1945,61 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // 4. Smart Notification Center & Audit Log Management (스마트 안심 알림 센터 & 발송 감사 로그)
-              _buildSectionTitle('스마트 안심 알림 센터 & 발송 감사 로그', icon: Icons.notifications_active_rounded),
-              Material(
-                color: Colors.white,
+  void _showComplianceBottomSheet(BuildContext context) {
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.65,
+      builder: (sheetCtx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(sheetCtx, '법적 고지 및 규정 준수 (Compliance)', Icons.gavel_rounded, const Color(0xFF64748B)),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEFF6FF),
-                          child: Icon(Icons.mark_chat_read_rounded, color: AppTheme.primaryBlue),
-                        ),
-                        title: const Text('스마트 알림 센터 열기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('등·하원 미발송 알림 일괄 전송, 미납 독촉 릴레이, 전체 발송 감사 로그 조회', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () => SmartNotificationCenterModal.show(context),
-                      ),
-                    ],
-                  ),
-                ),
+                border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
               ),
-              const SizedBox(height: 24),
-              _buildSectionTitle('무인 출결 키오스크 기기 설정 (입구 거치용)', icon: Icons.tablet_mac_rounded),
-              Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Row(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '앱 실행 시 키오스크 자동 실행',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-                                ),
-                                SizedBox(height: 3),
-                                Text(
-                                  '입구 거치 태블릿으로 설정 시 관리자 대시보드 없이 바로 출결 키오스크로 시작합니다.',
-                                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Switch(
-                            value: _isKioskDedicated,
-                            activeThumbColor: AppTheme.primaryBlue,
-                            onChanged: (val) => _setKioskDedicatedMode(val),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 20, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEFF6FF),
-                          child: Icon(Icons.touch_app_rounded, color: AppTheme.primaryBlue),
-                        ),
-                        title: const Text('학생 출결 키오스크 실행 (실제 운영용)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('입구 거치용 전체화면. 체험 핀이 일체 숨겨지는 클린 학생 운영 화면입니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () {
-                          final members = ref.read(membersProvider).value ?? [];
-                          if (members.isEmpty) {
-                            _showEmptyMembersKioskDialog(context);
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
-                            );
-                          }
-                        },
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEEF2FF),
-                          child: Icon(Icons.science_rounded, color: Color(0xFF6366F1)),
-                        ),
-                        title: const Text('키오스크 기능 테스트 (체험 모드)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('1234 체험 핀으로 출결 완료 축하 및 알림 화면 결과를 즉시 확인합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
-                          );
-                        },
-                      ),
-                      const Divider(height: 16, color: AppTheme.borderSubtle),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFECFDF5),
-                          child: Icon(Icons.screen_lock_portrait_rounded, color: AppTheme.softMint),
-                        ),
-                        title: const Text('안드로이드 앱 화면 고정(Pinning) 가이드', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                        subtitle: const Text('학생들이 홈 화면이나 유튜브 등으로 나가지 못하게 기기를 고정 잠금합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () => _showAppPinningGuideDialog(context),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Icon(Icons.lock_rounded, size: 18, color: Color(0xFFD97706)),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '안심 보안 잠금: 등록된 학생이 있을 때는 키오스크에 회원 명단/PIN이 일체 표시되지 않으며, 우측 상단 자물쇠 터치 시 관리자 비밀번호(0000)를 입력해야만 원장님 화면으로 나갈 수 있습니다.',
-                                style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.45),
-                              ),
-                            ),
-                          ],
+                      Icon(Icons.verified_user_rounded, size: 18, color: Color(0xFF059669)),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '100% 로컬 온디바이스 보안 보증',
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 5. 업종별 맞춤 카테고리 및 청구 템플릿 관리
-              _buildCustomCategorySection(context, profile, categoryState),
-
-              // 6. 문자 알림 및 청구 양식 관리 (사용자 정의 서식)
-              _buildSectionTitle('문자 알림 및 청구 서식 관리', icon: Icons.edit_note_rounded),
-              Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                    boxShadow: AppTheme.cardShadow,
+                  SizedBox(height: 10),
+                  Text(
+                    '본 앱은 오프라인 장부 및 메시지 서식 도구이며, 모든 데이터는 기기에만 AES 암호화 보관됩니다. 원격 중앙 서버 및 제3자 분석 서버로 데이터를 전송하지 않습니다.\n회원 정보 수집 동의 및 회원과의 수납·거래 책임은 운영자 본인에게 있습니다.',
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.5),
                   ),
-                  child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFEFF6FF),
-                        child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
-                      ),
-                      title: Text('${profile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                      subtitle: Text('${profile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.', style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                      onTap: () => _openTemplateEditorDialog(
-                        context: context,
-                        title: '${profile.feeTitle} 청구서 문자 서식 편집',
-                        initialText: profile.invoiceTemplate,
-                        defaultText: StudioProfile.defaultInvoiceTemplate,
-                        placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
-                        profile: profile,
-                        onSave: (newTemplate, updatedProfile) {
-                          final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
-                          ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                        },
-                      ),
-                    ),
-                    const Divider(height: 16, color: AppTheme.borderSubtle),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFECFDF5),
-                        child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
-                      ),
-                      title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                      subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                      onTap: () => _openTemplateEditorDialog(
-                        context: context,
-                        title: '출석 / 입실 문자 서식 편집',
-                        initialText: profile.attendanceTemplate,
-                        defaultText: StudioProfile.defaultAttendanceTemplate,
-                        placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
-                        profile: profile,
-                        onSave: (newTemplate, updatedProfile) {
-                          final updated = updatedProfile.copyWith(attendanceTemplate: newTemplate);
-                          ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                        },
-                      ),
-                    ),
-                    const Divider(height: 16, color: AppTheme.borderSubtle),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFFFFBEB),
-                        child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
-                      ),
-                      title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                      subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                      onTap: () => _openTemplateEditorDialog(
-                        context: context,
-                        title: '퇴실 / 일정종료 문자 서식 편집',
-                        initialText: profile.departureTemplate,
-                        defaultText: StudioProfile.defaultDepartureTemplate,
-                        placeholders: '#{상호명}, #{회원명}',
-                        profile: profile,
-                        onSave: (newTemplate, updatedProfile) {
-                          final updated = updatedProfile.copyWith(departureTemplate: newTemplate);
-                          ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-
-              // 5. Global Language & Currency Localization Card
-              _buildSectionTitle('글로벌 언어 및 통화 설정 (Language & Currency)', icon: Icons.language_rounded),
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                  boxShadow: AppTheme.cardShadow,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Expanded(
-                          child: Row(
-                            children: [
-                              Icon(Icons.language_rounded, size: 18, color: AppTheme.primaryBlue),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text('앱 언어', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        DropdownButton<AppLanguage>(
-                          value: LocalizationService.currentLanguage,
-                          underline: const SizedBox(),
-                          borderRadius: BorderRadius.circular(12),
-                          items: AppLanguage.values.map((lang) {
-                            return DropdownMenuItem<AppLanguage>(
-                              value: lang,
-                              child: Text(lang.label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                            );
-                          }).toList(),
-                          onChanged: (lang) {
-                            if (lang != null) {
-                              setState(() {
-                                LocalizationService.setLanguage(lang);
-                              });
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 16, color: AppTheme.borderSubtle),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Expanded(
-                          child: Row(
-                            children: [
-                              Icon(Icons.monetization_on_outlined, size: 18, color: AppTheme.softMint),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text('통화 단위', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        DropdownButton<AppCurrency>(
-                          value: LocalizationService.currentCurrency,
-                          underline: const SizedBox(),
-                          borderRadius: BorderRadius.circular(12),
-                          items: AppCurrency.values.map((cur) {
-                            return DropdownMenuItem<AppCurrency>(
-                              value: cur,
-                              child: Text('${cur.code} (${cur.symbol})', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                            );
-                          }).toList(),
-                          onChanged: (cur) {
-                            if (cur != null) {
-                              setState(() {
-                                LocalizationService.setCurrency(cur);
-                              });
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 6. Unified Guide Center Entry Card (원장님 실전 가이드 센터)
-              _buildSectionTitle('원장님 실전 가이드 센터 (이용 안내 & 튜토리얼)', icon: Icons.auto_stories_rounded),
-              InkWell(
-                onTap: () => _openGuideCenterSheet(context, profile),
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.35), width: 1.2),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.school_rounded, color: AppTheme.primaryBlue, size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '원장님 실전 가이드 센터',
-                                  style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                                ),
-                                SizedBox(height: 3),
-                                Text(
-                                  '스텝바이스텝 연습 · 업종 프리셋 · 셋업 마법사 · FAQ',
-                                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppTheme.primaryBlue),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        '화면 마커를 따라 터치하며 배우는 4단계 실전 튜토리얼부터 업종별(학원/PT/필라테스/공방) 원클릭 프리셋까지 필요한 모든 가이드를 한 곳에서 이용하실 수 있습니다.',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.45),
-                      ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildGuideTag('4단계 스텝바이스텝', Icons.touch_app_outlined),
-                          _buildGuideTag('3단계 핵심 팁', Icons.lightbulb_outline),
-                          _buildGuideTag('원클릭 업종 프리셋', Icons.swap_horiz_rounded),
-                          _buildGuideTag('자주 묻는 질문 FAQ', Icons.help_outline_rounded),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _openGuideCenterSheet(context, profile),
-                          icon: const Icon(Icons.explore_rounded, size: 18),
-                          label: const Text('실전 가이드 센터 열기', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 7. Compliance & Legal Terms Card
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Row(
-                      children: [
-                        Icon(Icons.gavel_outlined, size: 18, color: AppTheme.textSecondary),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '법적 고지 및 규정 준수 (Compliance)',
-                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      '본 앱은 오프라인 장부 및 메시지 서식 도구이며, 모든 데이터는 기기에만 암호화 보관됩니다. 원격 중앙 서버 및 제3자 분석 서버로 데이터를 전송하지 않습니다.\n회원 정보 수집 동의 및 회원과의 수납·거래 책임은 운영자 본인에게 있습니다.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: AppTheme.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildGuideTag(String label, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: AppTheme.textSecondary),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildVipMembershipRoiCard(BuildContext context) {
     return AnimatedBuilder(
@@ -2110,40 +2317,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   }
 
 
-  Widget _buildProfileRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 130),
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13.5,
-                color: AppTheme.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              softWrap: true,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildStudioLogoAvatar(StudioProfile profile, {double size = 64}) {
     final hasLogo = profile.logoPath != null && profile.logoPath!.isNotEmpty && File(profile.logoPath!).existsSync();

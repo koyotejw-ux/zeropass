@@ -25,6 +25,7 @@ import '../widgets/attendance_notify_dialog.dart';
 import '../widgets/design_system.dart';
 import '../widgets/native_inline_ad_card.dart';
 import '../widgets/senior_easy_guide_modal.dart';
+import '../widgets/schedule_calendar_modal.dart';
 import 'home_navigation_screen.dart';
 import 'onboarding_screen.dart';
 import 'pro_store_screen.dart';
@@ -605,6 +606,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
+          // 0. 스케줄 달력 (주요일정 & 출결 캘린더)
+          IconButton(
+            icon: const Icon(
+              Icons.calendar_month_outlined,
+              size: 22,
+              color: Color(0xFF3F3F46),
+            ),
+            tooltip: '스케줄 달력',
+            splashRadius: 20,
+            onPressed: () => ScheduleCalendarModal.show(context),
+          ),
           // 1. 무인 자율출결 키오스크 (심플 라인 아이콘)
           IconButton(
             icon: const Icon(
@@ -2894,6 +2906,35 @@ class _StickySearchAndFilterHeaderDelegate extends SliverPersistentHeaderDelegat
                           ),
                           const SizedBox(width: 2),
                           const Icon(Icons.keyboard_arrow_down, size: 15, color: AppTheme.textSecondary),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => ScheduleCalendarModal.show(context),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 34,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.calendar_month_rounded, size: 14, color: AppTheme.primaryBlue),
+                          SizedBox(width: 4),
+                          Text(
+                            '스케줄 달력',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlue,
+                            ),
+                          ),
                         ],
                       ),
                     ),

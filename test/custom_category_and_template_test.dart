@@ -183,18 +183,22 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      // Scroll to custom category section
+      // Scroll to custom category representative tile
       await tester.scrollUntilVisible(
-        find.textContaining('업종별 맞춤 카테고리 및 청구 서식 관리'),
+        find.text('업종별 카테고리 & 청구 템플릿'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
-      // Verify custom category section header is present
-      expect(find.textContaining('업종별 맞춤 카테고리 및 청구 서식 관리'), findsOneWidget);
+      // Verify custom category representative tile is present
+      expect(find.text('업종별 카테고리 & 청구 템플릿'), findsOneWidget);
 
-      // Verify all 4 feature tiles are present
+      // Tap representative tile to open detail bottom sheet
+      await tester.tap(find.text('업종별 카테고리 & 청구 템플릿'));
+      await tester.pumpAndSettle();
+
+      // Verify all 4 feature tiles are present inside the bottom sheet
       expect(find.text('수업 / 반 그룹 카테고리 관리'), findsOneWidget);
       expect(find.text('학생 등록 간편 템플릿 관리'), findsOneWidget);
       expect(find.text('청구 항목 및 금액 템플릿 관리'), findsOneWidget);

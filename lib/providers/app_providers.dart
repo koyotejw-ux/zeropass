@@ -8,8 +8,10 @@ import '../models/custom_category_template.dart';
 import '../models/vendor.dart';
 import '../models/expense_item.dart';
 import '../models/notification_log.dart';
+import '../models/schedule_item.dart';
 import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
+import '../services/schedule_service.dart';
 
 // Database Instance Provider
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
@@ -451,6 +453,39 @@ class SeniorModeNotifier extends Notifier<bool> {
 
 final seniorModeProvider = NotifierProvider<SeniorModeNotifier, bool>(() {
   return SeniorModeNotifier();
+});
+
+// Studio & Academy Schedules Provider
+class SchedulesNotifier extends AsyncNotifier<List<ScheduleItem>> {
+  @override
+  Future<List<ScheduleItem>> build() async {
+    return await ScheduleService.loadSchedules();
+  }
+
+  Future<void> reload() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async => await ScheduleService.loadSchedules());
+  }
+
+  Future<void> addSchedule(ScheduleItem item) async {
+    await ScheduleService.addSchedule(item);
+    await reload();
+  }
+
+  Future<void> deleteSchedule(String id) async {
+    await ScheduleService.deleteSchedule(id);
+    await reload();
+  }
+
+  Future<void> updateSchedule(ScheduleItem item) async {
+    await ScheduleService.updateSchedule(item);
+    await reload();
+  }
+}
+
+final schedulesProvider =
+    AsyncNotifierProvider<SchedulesNotifier, List<ScheduleItem>>(() {
+  return SchedulesNotifier();
 });
 
 

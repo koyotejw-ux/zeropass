@@ -102,14 +102,23 @@ void main() {
       );
 
       await tester.pumpAndSettle();
+      if (find.text('안심하고 사용할게요').evaluate().isNotEmpty) {
+        await tester.tap(find.text('안심하고 사용할게요'));
+        await tester.pumpAndSettle();
+      }
 
-      // Check top title
-      expect(find.text('설정 · 보안 금고'), findsOneWidget);
+      // Check top title (synchronized with bottom nav label '운영·설정')
+      expect(find.text('운영·설정'), findsOneWidget);
 
       // 1. Studio Profile Card is rendered
-      expect(find.textContaining('프로필'), findsWidgets);
       expect(find.text('마스터 아카데미'), findsWidgets);
-      expect(find.text('김원장'), findsWidgets);
+      expect(find.textContaining('김원장'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.textContaining('프로필'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.textContaining('프로필'), findsWidgets);
 
       // 2. Local Data Vault is rendered
       await tester.scrollUntilVisible(
@@ -118,7 +127,15 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.textContaining('로컬 데이터 보안 금고'), findsOneWidget);
+
+      // Tap Data Vault tile to open bottom sheet
+      await tester.tap(find.textContaining('로컬 데이터 보안 금고'));
+      await tester.pumpAndSettle();
       expect(find.textContaining('로컬 백업 파일 생성'), findsOneWidget);
+
+      // Close bottom sheet
+      Navigator.pop(tester.element(find.textContaining('로컬 백업 파일 생성')));
+      await tester.pumpAndSettle();
 
       // Scroll to Bank Push Security
       await tester.scrollUntilVisible(
@@ -129,20 +146,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('금융 푸시 필터 보안 설정'), findsOneWidget);
 
-      // Scroll down to reveal Guide Center card if needed
+      // Scroll down to reveal Guide Center tile if needed
       await tester.scrollUntilVisible(
-        find.text('원장님 실전 가이드 센터'),
+        find.textContaining('원장님 실전 가이드 센터'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
-      // 6. Consolidated Guide Center entry card is rendered
-      expect(find.text('원장님 실전 가이드 센터'), findsOneWidget);
-      expect(find.text('실전 가이드 센터 열기'), findsOneWidget);
+      // 6. Consolidated Guide Center representative tile is rendered
+      expect(find.textContaining('원장님 실전 가이드 센터'), findsOneWidget);
 
-      // Verify tapping '실전 가이드 센터 열기' opens the consolidated guide bottom sheet
-      await tester.tap(find.text('실전 가이드 센터 열기'));
+      // Verify tapping opens the consolidated guide bottom sheet
+      await tester.tap(find.textContaining('원장님 실전 가이드 센터'));
       await tester.pumpAndSettle();
 
       // Inside bottom sheet modal:

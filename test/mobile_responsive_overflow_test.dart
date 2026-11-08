@@ -175,9 +175,9 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('설정 · 보안 금고'), findsOneWidget);
-        expect(find.text('상호 / 브랜드명'), findsOneWidget);
-        expect(find.text('김서연 대표원장'), findsOneWidget);
+        expect(find.text('운영·설정'), findsOneWidget);
+        expect(find.text('마인드핏 아카데미 & PT 스튜디오'), findsOneWidget);
+        expect(find.textContaining('김서연 대표원장'), findsWidgets);
 
         // Cleanly reset widget tree for next viewport size
         await tester.pumpWidget(const SizedBox());
@@ -207,7 +207,13 @@ void main() {
         await tester.pump(const Duration(milliseconds: 200));
 
         expect(find.text('김민준학생'), findsOneWidget);
-        expect(find.text('체크인'), findsNWidgets(2));
+        expect(find.text('체크인'), findsWidgets);
+        await tester.scrollUntilVisible(
+          find.text('이서연수강생'),
+          150,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(find.text('이서연수강생'), findsOneWidget);
       }
       await tester.binding.setSurfaceSize(null);
     });

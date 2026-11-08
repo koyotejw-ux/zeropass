@@ -296,10 +296,9 @@ void main() {
       expect(find.text('로고 적용됨'), findsOneWidget);
       expect(find.text('로고 변경/삭제'), findsOneWidget);
 
-      await tester.scrollUntilVisible(
-        find.text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기'),
-        300,
-      );
+      await tester.scrollUntilVisible(find.text('로컬 데이터 보안 금고 (100% 온디바이스)'), 300);
+      await tester.tap(find.text('로컬 데이터 보안 금고 (100% 온디바이스)'));
+      await tester.pumpAndSettle();
       expect(find.text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기'), findsOneWidget);
     });
 

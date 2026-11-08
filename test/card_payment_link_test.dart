@@ -209,8 +209,17 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Check Section Title and Badge
+      if (find.text('안심하고 사용할게요').evaluate().isNotEmpty) {
+        await tester.tap(find.text('안심하고 사용할게요'));
+        await tester.pumpAndSettle();
+      }
+
+      await tester.scrollUntilVisible(find.text('비대면 신용카드 결제 링크 (0원 연동)'), 300);
       expect(find.text('비대면 신용카드 결제 링크 (0원 연동)'), findsOneWidget);
+
+      await tester.tap(find.text('비대면 신용카드 결제 링크 (0원 연동)'));
+      await tester.pumpAndSettle();
+
       expect(find.text('가입비 0원 · 월관리비 0원'), findsOneWidget);
       expect(find.text('결제 링크 설정'), findsOneWidget);
       expect(find.text('링크 테스트'), findsOneWidget);
