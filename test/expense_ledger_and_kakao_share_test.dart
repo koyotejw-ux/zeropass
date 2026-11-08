@@ -233,7 +233,7 @@ void main() {
 
       expect(msg.contains('이민호 학생이 안전하게 출석'), isTrue);
       expect(msg.contains('14시 30분'), isTrue);
-      expect(msg.contains('ZeroPass'), isTrue);
+      expect(msg.contains('체크앤페이'), isTrue);
     });
 
     test('generateDepartureKakaoMessage contains departure time and safe return note', () {
@@ -298,7 +298,7 @@ void main() {
 
     test('generateAppInviteKakaoMessage generates viral referral invitation', () {
       final msg = KakaoShareService.generateAppInviteKakaoMessage(studio: studio);
-      expect(msg.contains('제로패스'), isTrue);
+      expect(msg.contains('체크앤페이'), isTrue);
       expect(msg.contains('100% 무료'), isTrue);
       expect(msg.contains('구글 플레이스토어'), isTrue);
     });
@@ -336,7 +336,7 @@ void main() {
       // Tab 0 is initially selected: Shows "새 청구서 작성" FAB and Unpaid invoice
       expect(find.text('새 청구서 작성'), findsOneWidget);
       expect(find.text('5월 수강료'), findsOneWidget);
-      expect(find.text('카톡 청구'), findsOneWidget);
+      expect(find.text('카톡 청구서'), findsOneWidget);
 
       // Switch to Tab 2: "지출 / 매입"
       await tester.tap(find.textContaining('지출 / 매입'));

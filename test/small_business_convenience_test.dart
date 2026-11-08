@@ -329,7 +329,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('4월 PT 전담 강사료 정산'), findsOneWidget);
-      expect(find.text('원천징수(3.3%)'), findsOneWidget);
+      expect(find.textContaining('원천징수(3.3%)'), findsOneWidget);
       expect(find.textContaining('원천징수 3.3%'), findsOneWidget);
       expect(find.textContaining('실수령 967,000원'), findsOneWidget);
     });

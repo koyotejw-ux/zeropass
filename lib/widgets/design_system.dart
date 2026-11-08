@@ -33,14 +33,14 @@ class ZeroTokens {
   static const double borderStandard = 1.0;
   static const double borderThick = 1.5;
 
-  // Semantic Colors (High-Contrast & Low-Saturation Micro Pastels)
+  // Semantic Colors (High-Contrast & Low-Saturation Micro Pastels Harmonized with Passy Mascot)
   static const Color successBg = Color(0xFFECFDF5);
   static const Color successBorder = Color(0xFFA7F3D0);
   static const Color successText = Color(0xFF059669);
 
-  static const Color dangerBg = Color(0xFFFEF2F2);
-  static const Color dangerBorder = Color(0xFFFECACA);
-  static const Color dangerText = Color(0xFFDC2626);
+  static const Color dangerBg = Color(0xFFFFF1F2);
+  static const Color dangerBorder = Color(0xFFFECDD3);
+  static const Color dangerText = Color(0xFFE11D48);
 
   static const Color warningBg = Color(0xFFFFFBEB);
   static const Color warningBorder = Color(0xFFFDE68A);
@@ -48,9 +48,9 @@ class ZeroTokens {
 
   static const Color primaryBg = Color(0xFFEFF6FF);
   static const Color primaryBorder = Color(0xFFBFDBFE);
-  static const Color primaryText = Color(0xFF1D4ED8);
+  static const Color primaryText = Color(0xFF2563EB);
 
-  static const Color neutralBg = Color(0xFFF1F5F9);
+  static const Color neutralBg = Color(0xFFF8FAFC);
   static const Color neutralBorder = Color(0xFFE2E8F0);
   static const Color neutralText = Color(0xFF475569);
 

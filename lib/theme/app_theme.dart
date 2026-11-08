@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand & High-End Luxury Fintech Color Palette
-  static const Color primaryDark = Color(0xFF09090B); // Pure Onyx Black (Linear / Apple style)
-  static const Color primaryBlue = Color(0xFF1D4ED8); // Deep Royal Sapphire
+  // Brand & Character-Harmonized Luxury Fintech Color Palette
+  static const Color primaryDark = Color(0xFF0F172A); // Midnight Obsidian (Matches Passy Penguin)
+  static const Color primaryBlue = Color(0xFF2563EB); // Royal Cerulean Blue
   static const Color trustBlue = Color(0xFF2563EB); // Refined Action Blue
-  static const Color softMint = Color(0xFF059669); // Deep Emerald
-  static const Color background = Color(0xFFF9FAFB); // Pure Minimalist Canvas
-  static const Color cardSurface = Color(0xFFFFFFFF); // Pure White
+  static const Color softMint = Color(0xFF059669); // Calm Deep Sage
+  static const Color background = Color(0xFFF8FAFC); // Clean Porcelain Canvas
+  static const Color cardSurface = Color(0xFFFFFFFF); // Pure Crisp White
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF09090B); // High-Contrast Deep Obsidian
-  static const Color textSecondary = Color(0xFF71717A); // Refined Slate Muted
-  static const Color textTertiary = Color(0xFFA1A1AA); // Titanium Muted
+  static const Color textPrimary = Color(0xFF0F172A); // High-Contrast Midnight Slate
+  static const Color textSecondary = Color(0xFF475569); // Refined Calm Slate
+  static const Color textTertiary = Color(0xFF94A3B8); // Soft Slate Muted
 
-  // Status Indicators
+  // Status Indicators (Harmonious, Non-jarring Micro Tones)
   static const Color success = Color(0xFF059669);
   static const Color warning = Color(0xFFD97706);
-  static const Color danger = Color(0xFFDC2626);
+  static const Color danger = Color(0xFFE11D48);
+  static const Color dangerText = Color(0xFFE11D48);
   static const Color info = Color(0xFF0284C7);
 
   // Borders & Dividers
-  static const Color borderSubtle = Color(0xFFE4E4E7); // Ultra-fine Precision Hairline
-  static const Color chipBackground = Color(0xFFF4F4F5);
+  static const Color borderSubtle = Color(0xFFE2E8F0); // Subtle Slate Hairline
+  static const Color chipBackground = Color(0xFFF1F5F9);
 
   // Senior High-Contrast Palette (고령자/시니어 맞춤 팔레트)
   static const Color seniorTextPrimary = Color(0xFF000000); // 100% Black for maximum contrast

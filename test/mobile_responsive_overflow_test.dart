@@ -151,9 +151,9 @@ void main() {
         // Verify elements rendered without RenderFlex overflow
         expect(find.text('카드링크 연동'), findsOneWidget);
         expect(find.text('2026년 4월 정기 수강료 및 교재비 합산 청구'), findsOneWidget);
-        expect(find.text('카톡 청구'), findsOneWidget);
-        expect(find.text('문자 청구'), findsOneWidget);
-        expect(find.text('1초 리마인드'), findsOneWidget);
+        expect(find.text('카톡 청구서'), findsOneWidget);
+        expect(find.text('문자 청구서'), findsOneWidget);
+        expect(find.text('1초 입금 안내 리마인드 문자'), findsOneWidget);
       }
       await tester.binding.setSurfaceSize(null);
     });

@@ -1029,8 +1029,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
       decoration: BoxDecoration(
         color: isChecked ? const Color(0xFFF8FAFC) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1045,28 +1045,32 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Row (최대 2개 컬럼): 좌측 [아바타 + 회원명] ↔ 우측 [출결 상태 배지]
+          // 1. Top Meta Row: Course & Group (Left) <-> Attendance Status Badge (Right)
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              ZeroAvatar(
-                name: member.name,
-                size: ZeroAvatarSize.medium,
-                backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
-                textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  member.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                    letterSpacing: -0.3,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    [
+                      if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                      if (member.groupName.isNotEmpty) member.groupName,
+                      if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569),
+                    ),
                   ),
                 ),
               ),
@@ -1087,104 +1091,92 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          // 2. Middle Row (가변 데이터 전용 100% 단일 컬럼 박스 - 좌우 충돌 원천 차단)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: isChecked ? Colors.white : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1행: 코스 태그 · 소속 그룹 (단일 행 전체 가로폭 사용)
-                Text(
-                  [
-                    if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
-                    if (member.groupName.isNotEmpty) member.groupName,
-                    if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
-                  ].join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                // 2행: 회차 잔여 정보 & 모바일 패스 퀵 액션
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // 2. Primary Member Identity (UNCONSTRAINED FULL WIDTH: Avatar + Name 17px + Sessions 13px)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ZeroAvatar(
+                name: member.name,
+                size: ZeroAvatarSize.medium,
+                backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+                textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Text(
-                        isSessionBased
-                            ? '잔여 회차: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
-                            : '정기권 회원 (무제한 출석)',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isExpiringSoon ? const Color(0xFFEF4444) : AppTheme.textPrimary,
-                        ),
+                    // Member Name: Unconstrained full width, 17px bold, softWrap enabled!
+                    Text(
+                      member.name,
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.4,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        DigitalPassCardDialog.show(
-                          context: context,
-                          member: member,
-                          studio: studio,
-                          latestRecord: todayPass,
-                        );
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.qr_code_2_rounded, size: 13, color: Color(0xFF64748B)),
-                          const SizedBox(width: 3),
-                          const Text(
-                            '모바일 패스',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 3),
+                    // Sessions info: Clear 13px font
+                    Text(
+                      isSessionBased
+                          ? '잔여 회차: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
+                          : '정기권 회원 (무제한 출석)',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isExpiringSoon ? const Color(0xFFE11D48) : const Color(0xFF64748B),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              // Mobile Pass Shortcut Button
+              InkWell(
+                onTap: () {
+                  DigitalPassCardDialog.show(
+                    context: context,
+                    member: member,
+                    studio: studio,
+                    latestRecord: todayPass,
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                  ),
+                  child: const Icon(Icons.qr_code_2_rounded, size: 20, color: Color(0xFF64748B)),
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
-          // 3. Bottom Row: 액션 버튼 (전폭 단일 컬럼 배치로 밀림 없는 터치 환경)
+          // 3. Action Button (Full Width!)
           if (!isChecked)
             SizedBox(
               width: double.infinity,
-              height: 38,
+              height: 42,
               child: ElevatedButton.icon(
                 onPressed: () => _handleOneTouchCheckIn(member),
-                icon: const Icon(Icons.check_rounded, size: 17),
+                icon: const Icon(Icons.check_rounded, size: 18),
                 label: const Text(
                   '체크인',
                   style: TextStyle(
                     fontFamily: 'Pretendard',
-                    fontSize: 14.5,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
                   ),

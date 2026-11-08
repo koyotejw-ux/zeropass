@@ -359,78 +359,97 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isExpiring ? const Color(0xFFFECACA) : const Color(0xFFE4E4E7),
+          color: isExpiring ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0),
           width: isExpiring ? 1.2 : 0.8,
         ),
         boxShadow: AppTheme.cardShadow,
       ),
       child: InkWell(
         onTap: () => _openMemberDetailSheet(context, member),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Left Avatar (42x42 규격화)
-              ZeroAvatar(
-                name: member.name,
-                size: ZeroAvatarSize.medium,
+              // 1. Top Meta Row: Course & Group (Left) <-> Remaining Sessions / Pass Badge (Right)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        [
+                          if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                          if (member.groupName.isNotEmpty) member.groupName,
+                          if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                        ].join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  isSession
+                      ? (isExpiring
+                          ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium)
+                          : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium))
+                      : ZeroBadge.neutral('정기권', size: ZeroBadgeSize.medium),
+                ],
               ),
-              const SizedBox(width: 12),
 
-              // 2. Central 2-Row Information Stack (100% 단일 컬럼 가변 텍스트 흐름)
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 1행: 회원명 (온전한 단일 라인 확보)
-                    Text(
+              const SizedBox(height: 9),
+
+              // 2. Member Name (UNCONSTRAINED FULL WIDTH) & Phone & Chevron
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ZeroAvatar(
+                    name: member.name,
+                    size: ZeroAvatarSize.medium,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
                       member.primaryName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                       style: const TextStyle(
                         fontFamily: 'Pretendard',
-                        fontSize: 15.5,
+                        fontSize: 16.5,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.textPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 3),
-
-                    // 2행: 코스 태그 · 그룹명 · 연락처 (가변 텍스트 일목정렬)
-                    Text(
-                      [
-                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
-                        if (member.groupName.isNotEmpty) member.groupName,
-                        member.phone,
-                      ].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textSecondary,
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    member.phone,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFF94A3B8)),
+                ],
               ),
-              const SizedBox(width: 8),
-
-              // 3. Right Status Pill (단정한 상태 뱃지)
-              isSession
-                  ? (isExpiring
-                      ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium)
-                      : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium))
-                  : ZeroBadge.neutral('정기권', size: ZeroBadgeSize.medium),
-              const SizedBox(width: 4),
-              const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFCBD5E1)),
             ],
           ),
         ),
