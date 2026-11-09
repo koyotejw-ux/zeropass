@@ -186,5 +186,40 @@ void main() {
       expect(find.text('LANG:en'), findsOneWidget);
       expect(find.text('CUR:USD'), findsOneWidget);
     });
+
+    test('7. LocalizationService translates all banner, notice, and bookkeeping keys across 6 languages', () {
+      final bannerKeys = [
+        'expiring_banner_title',
+        'expiring_banner_btn',
+        'unpaid_members_waiting',
+        'batch_dispatch_btn',
+        'vendors_label',
+        'simple_bookkeeping_excel',
+        'tax_guide_1min',
+        'new_expense_btn',
+        'unpaid_expense_status',
+        'share_order_payment',
+        'instructor_settlement_btn',
+        'edit_expense_btn',
+        'delete_expense_btn',
+        'btn_edit',
+        'btn_delete',
+        'btn_cancel',
+        'empty_expense_title',
+        'empty_expense_sub',
+        'filter_all',
+        'filter_unpaid',
+        'filter_paid',
+      ];
+
+      for (final lang in AppLanguage.values) {
+        LocalizationService.setLanguage(lang, persist: false);
+        for (final k in bannerKeys) {
+          final translated = LocalizationService.tr(k);
+          expect(translated.isNotEmpty, isTrue, reason: '$k should not be empty for ${lang.code}');
+          expect(translated, isNot(k), reason: '$k should not return raw key for ${lang.code}');
+        }
+      }
+    });
   });
 }

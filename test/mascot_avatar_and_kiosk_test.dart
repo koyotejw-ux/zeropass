@@ -74,6 +74,47 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    test('MascotExpression correctly maps attendance rates to expressions and asset paths', () {
+      expect(MascotExpression.fromAttendanceRate(100), MascotExpression.laughing);
+      expect(MascotExpression.fromAttendanceRate(75), MascotExpression.laughing);
+      expect(MascotExpression.fromAttendanceRate(70), MascotExpression.laughing);
+      expect(MascotExpression.fromAttendanceRate(69), MascotExpression.smile);
+      expect(MascotExpression.fromAttendanceRate(50), MascotExpression.smile);
+      expect(MascotExpression.fromAttendanceRate(35), MascotExpression.smile);
+      expect(MascotExpression.fromAttendanceRate(34), MascotExpression.crying);
+      expect(MascotExpression.fromAttendanceRate(10), MascotExpression.crying);
+      expect(MascotExpression.fromAttendanceRate(0), MascotExpression.crying);
+      expect(MascotExpression.fromAttendanceRate(null), MascotExpression.smile);
+
+      expect(MascotExpression.laughing.assetPath, 'assets/icons/mascot_profile_laughing.png');
+      expect(MascotExpression.smile.assetPath, 'assets/icons/mascot_profile.png');
+      expect(MascotExpression.crying.assetPath, 'assets/icons/mascot_profile_crying.png');
+
+      expect(MascotExpression.laughing.emoji, '😄');
+      expect(MascotExpression.smile.emoji, '🙂');
+      expect(MascotExpression.crying.emoji, '😢');
+    });
+
+    testWidgets('ZeroPassMascotAvatar dynamically reacts to attendanceRate', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                ZeroPassMascotAvatar(size: 60, attendanceRate: 90),
+                ZeroPassMascotAvatar(size: 60, attendanceRate: 50),
+                ZeroPassMascotAvatar(size: 60, attendanceRate: 15),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(ZeroPassMascotAvatar), findsNWidgets(3));
+      expect(find.byType(ClipOval), findsNWidgets(3));
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('TabletKioskScreen Celebration Overflow Resilience Tests (Test Mode)', () {

@@ -488,6 +488,26 @@ class ZeroButton extends StatelessWidget {
         isLoading: isLoading,
       );
 
+  factory ZeroButton.danger({
+    required String label,
+    required VoidCallback? onPressed,
+    ZeroButtonSize size = ZeroButtonSize.medium,
+    IconData? icon,
+    IconData? trailingIcon,
+    bool fullWidth = false,
+    bool isLoading = false,
+  }) =>
+      ZeroButton(
+        label: label,
+        onPressed: onPressed,
+        variant: ZeroButtonVariant.danger,
+        size: size,
+        icon: icon,
+        trailingIcon: trailingIcon,
+        fullWidth: fullWidth,
+        isLoading: isLoading,
+      );
+
   factory ZeroButton.compactCapsule({
     required String label,
     required VoidCallback? onPressed,

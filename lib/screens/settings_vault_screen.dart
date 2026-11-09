@@ -211,10 +211,16 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             ],
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('확인했습니다', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+          SizedBox(
+            width: double.infinity,
+            child: ZeroButton.primary(
+              label: '확인했습니다',
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => Navigator.pop(ctx),
+            ),
           ),
         ],
       ),
@@ -2268,16 +2274,30 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             style: TextStyle(height: 1.5, fontSize: 13),
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.pop(c, true),
-            icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.white),
-            label: const Text('깨끗이 비우기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+          Row(
+            children: [
+              Expanded(
+                child: ZeroButton(
+                  label: LocalizationService.tr('btn_cancel'),
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () => Navigator.pop(c, false),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ZeroButton.danger(
+                  label: '깨끗이 비우기',
+                  icon: Icons.delete_sweep_rounded,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () => Navigator.pop(c, true),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -4320,34 +4340,51 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ],
                 ),
               ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(dlgContext), child: const Text('취소')),
-                ElevatedButton(
-                  onPressed: () async {
-                    final label = labelCtrl.text.trim();
-                    final group = groupCtrl.text.trim();
-                    final fee = int.tryParse(feeCtrl.text.replaceAll(',', '').trim()) ?? 0;
-                    final sessions = int.tryParse(sessionsCtrl.text.trim()) ?? 0;
+                Row(
+                  children: [
+                    Expanded(
+                      child: ZeroButton(
+                        label: LocalizationService.tr('btn_cancel'),
+                        variant: ZeroButtonVariant.neutral,
+                        size: ZeroButtonSize.medium,
+                        fullWidth: true,
+                        onPressed: () => Navigator.pop(dlgContext),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ZeroButton.primary(
+                        label: '저장',
+                        size: ZeroButtonSize.medium,
+                        fullWidth: true,
+                        onPressed: () async {
+                          final label = labelCtrl.text.trim();
+                          final group = groupCtrl.text.trim();
+                          final fee = int.tryParse(feeCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                          final sessions = int.tryParse(sessionsCtrl.text.trim()) ?? 0;
 
-                    if (label.isEmpty || group.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('템플릿명과 그룹명을 입력해주세요.')));
-                      return;
-                    }
+                          if (label.isEmpty || group.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('템플릿명과 그룹명을 입력해주세요.')));
+                            return;
+                          }
 
-                    final newTemplate = MemberCategoryTemplate(
-                      id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
-                      label: label,
-                      groupName: group,
-                      billingType: billingType,
-                      defaultFee: fee,
-                      defaultSessions: billingType == BillingType.sessionBased ? sessions : 0,
-                    );
+                          final newTemplate = MemberCategoryTemplate(
+                            id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
+                            label: label,
+                            groupName: group,
+                            billingType: billingType,
+                            defaultFee: fee,
+                            defaultSessions: billingType == BillingType.sessionBased ? sessions : 0,
+                          );
 
-                    await ref.read(customCategoryProvider.notifier).saveMemberTemplate(newTemplate);
-                    if (dlgContext.mounted) Navigator.pop(dlgContext);
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-                  child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          await ref.read(customCategoryProvider.notifier).saveMemberTemplate(newTemplate);
+                          if (dlgContext.mounted) Navigator.pop(dlgContext);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             );
@@ -4514,31 +4551,48 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dlgContext), child: const Text('취소')),
-            ElevatedButton(
-              onPressed: () async {
-                final title = titleCtrl.text.trim();
-                final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
-                final tag = tagCtrl.text.trim();
+            Row(
+              children: [
+                Expanded(
+                  child: ZeroButton(
+                    label: LocalizationService.tr('btn_cancel'),
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => Navigator.pop(dlgContext),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ZeroButton.primary(
+                    label: '저장',
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () async {
+                      final title = titleCtrl.text.trim();
+                      final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                      final tag = tagCtrl.text.trim();
 
-                if (title.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('청구 항목명을 입력해주세요.')));
-                  return;
-                }
+                      if (title.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('청구 항목명을 입력해주세요.')));
+                        return;
+                      }
 
-                final newTemplate = InvoiceItemTemplate(
-                  id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
-                  title: title,
-                  defaultAmount: amount,
-                  category: tag.isEmpty ? null : tag,
-                );
+                      final newTemplate = InvoiceItemTemplate(
+                        id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                        title: title,
+                        defaultAmount: amount,
+                        category: tag.isEmpty ? null : tag,
+                      );
 
-                await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
-                if (dlgContext.mounted) Navigator.pop(dlgContext);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
-              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
+                      if (dlgContext.mounted) Navigator.pop(dlgContext);
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         );

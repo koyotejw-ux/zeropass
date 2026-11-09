@@ -622,7 +622,21 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 0. 스케줄 달력 (주요일정 & 출결 캘린더)
+          // 0. 무인 자율출결 키오스크 (맨 좌측 배치 & 균형잡힌 볼륨 & 전용 프라이머리 블루 컬러)
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.tablet_mac_rounded, size: 19.5, color: AppTheme.primaryBlue),
+              tooltip: '무인 키오스크 모드',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _openTabletKioskMode(context),
+            ),
+          ),
+          // 1. 스케줄 달력 (주요일정 & 출결 캘린더)
           SizedBox(
             width: 40,
             height: 40,
@@ -634,20 +648,6 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               visualDensity: VisualDensity.compact,
               onPressed: () => ScheduleCalendarModal.show(context),
-            ),
-          ),
-          // 1. 무인 자율출결 키오스크 (심플 라인 아이콘)
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: IconButton(
-              icon: const Icon(Icons.tablet_mac_outlined, size: 21, color: Color(0xFF3F3F46)),
-              tooltip: '무인 키오스크 모드',
-              splashRadius: 20,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              visualDensity: VisualDensity.compact,
-              onPressed: () => _openTabletKioskMode(context),
             ),
           ),
           // 2. 스마트 안심 알림 센터 (심플 라인 아이콘)
@@ -811,8 +811,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
                                   child: ZeroNoticeBanner(
-                                    title: '장기 미출석 안심 케어 (${absentMembers.length}명)',
-                                    actionLabel: '자세히 보기',
+                                    title: '${LocalizationService.tr("golden_time_care")} (${absentMembers.length})',
+                                    actionLabel: LocalizationService.tr('view_details'),
                                     icon: Icons.favorite_border_rounded,
                                     variant: ZeroBannerVariant.care,
                                     onAction: () => _showGoldenTimeExplanationModal(context, absentMembers),
@@ -851,8 +851,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                     children: [
                                       Icon(Icons.event_available_outlined, size: 48, color: AppTheme.textTertiary),
                                       const SizedBox(height: 12),
-                                      const Text(
-                                        '해당 조건의 회원이 없습니다',
+                                      Text(
+                                        LocalizationService.tr('no_matching_members'),
                                         style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
                                       ),
                                     ],
@@ -1697,9 +1697,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 child: const Icon(Icons.elderly_rounded, color: Colors.white, size: 22),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '시니어 간편 3대 업무 보드',
+                  LocalizationService.tr('senior_board_title'),
                   softWrap: true,
                   style: TextStyle(
                     fontSize: 17,
@@ -1767,8 +1767,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 iconColor: const Color(0xFF059669),
                 bgColor: const Color(0xFFECFDF5),
                 borderColor: const Color(0xFF10B981),
-                title: '간편 출석',
-                subtitle: '오늘 출석 체크 및 안심 알림',
+                title: LocalizationService.tr('senior_attendance'),
+                subtitle: LocalizationService.tr('senior_attendance_sub'),
                 badgeText: '$attendedToday명 완료 · 원터치 체크인',
                 onTap: () => _showSeniorAttendanceSheet(context, members, todayRecords),
               ),
@@ -1778,8 +1778,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 iconColor: AppTheme.trustBlue,
                 bgColor: const Color(0xFFEFF6FF),
                 borderColor: AppTheme.trustBlue,
-                title: '회비 문자',
-                subtitle: '수강료 청구 및 입금 안내',
+                title: LocalizationService.tr('senior_billing'),
+                subtitle: LocalizationService.tr('senior_billing_sub'),
                 badgeText: '수납 계좌번호 안내 문자 전송',
                 onTap: () => _showSeniorBillingSheet(context, members, studio),
               ),
@@ -1789,8 +1789,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 iconColor: const Color(0xFFD97706),
                 bgColor: const Color(0xFFFFFBEB),
                 borderColor: const Color(0xFFF59E0B),
-                title: '바로 통화',
-                subtitle: '원생 및 학부모 안심 통화',
+                title: LocalizationService.tr('senior_call'),
+                subtitle: LocalizationService.tr('senior_call_sub'),
                 badgeText: '원터치 즉시 전화 연결',
                 onTap: () => _showSeniorCallSheet(context, members),
               ),
@@ -2404,14 +2404,14 @@ class _SeniorAttendanceModalSheetState extends ConsumerState<_SeniorAttendanceMo
                                     color: const Color(0xFF16A34A),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Center(
+                                  child: Center(
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                                        SizedBox(width: 6),
+                                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                        const SizedBox(width: 6),
                                         Text(
-                                          '오늘 출석 완료',
+                                          LocalizationService.tr('checked_in'),
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 16,

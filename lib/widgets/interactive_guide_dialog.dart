@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
 import 'mascot_avatar.dart';
+import 'design_system.dart';
+import '../services/localization_service.dart';
 
 class StepByStepPracticeGuideDialog extends ConsumerStatefulWidget {
   final VoidCallback onOpenAddMember;
@@ -279,19 +281,30 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                           style: TextStyle(height: 1.5, fontSize: 13),
                         ),
                       ),
+                      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(c, false),
-                          child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () => Navigator.pop(c, true),
-                          icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
-                          label: const Text('비우고 시작하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryBlue,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ZeroButton(
+                                label: LocalizationService.tr('btn_cancel'),
+                                variant: ZeroButtonVariant.neutral,
+                                size: ZeroButtonSize.medium,
+                                fullWidth: true,
+                                onPressed: () => Navigator.pop(c, false),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ZeroButton.primary(
+                                label: '비우고 시작하기',
+                                icon: Icons.check_rounded,
+                                size: ZeroButtonSize.medium,
+                                fullWidth: true,
+                                onPressed: () => Navigator.pop(c, true),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

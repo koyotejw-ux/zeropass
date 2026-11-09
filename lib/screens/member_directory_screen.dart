@@ -354,7 +354,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       ? (isExpiring
                           ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small)
                           : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small))
-                      : ZeroBadge.neutral('정기권', size: ZeroBadgeSize.small),
+                      : ZeroBadge.neutral(LocalizationService.tr('monthly_pass'), size: ZeroBadgeSize.small),
                 ],
               ),
 
@@ -581,7 +581,7 @@ class _MemberDetailModal extends ConsumerWidget {
                               if (member.billingType == BillingType.sessionBased)
                                 ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회 잔여', size: ZeroBadgeSize.small)
                               else
-                                ZeroBadge.neutral('정기권', size: ZeroBadgeSize.small),
+                                ZeroBadge.neutral(LocalizationService.tr('monthly_pass'), size: ZeroBadgeSize.small),
                             ],
                           ),
                           const SizedBox(height: 6),
@@ -1484,19 +1484,36 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
           hint: '예: 고등 내신반, 1:1 기구필라',
           prefixIcon: Icons.group_add_outlined,
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('취소')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = groupInputCtrl.text.trim();
-              if (name.isNotEmpty) {
-                await ref.read(customCategoryProvider.notifier).addGroupCategory(name);
-                setState(() => _groupController.text = name);
-                if (dlgCtx.mounted) Navigator.pop(dlgCtx);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-            child: const Text('추가 및 선택', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Expanded(
+                child: ZeroButton(
+                  label: LocalizationService.tr('btn_cancel'),
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () => Navigator.pop(dlgCtx),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ZeroButton.primary(
+                  label: '추가 및 선택',
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () async {
+                    final name = groupInputCtrl.text.trim();
+                    if (name.isNotEmpty) {
+                      await ref.read(customCategoryProvider.notifier).addGroupCategory(name);
+                      setState(() => _groupController.text = name);
+                      if (dlgCtx.mounted) Navigator.pop(dlgCtx);
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1616,7 +1633,7 @@ class _StickyMemberSearchAndFilterDelegate extends SliverPersistentHeaderDelegat
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '등록 회원 총 $totalCount명',
+                      LocalizationService.tr('total_members_count').replaceAll('{count}', totalCount.toString()),
                       style: const TextStyle(
                         fontFamily: 'Pretendard',
                         fontSize: 12.5,
@@ -1634,13 +1651,13 @@ class _StickyMemberSearchAndFilterDelegate extends SliverPersistentHeaderDelegat
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.send_rounded, size: 11.5, color: Color(0xFF475569)),
-                            SizedBox(width: 4),
+                            const Icon(Icons.send_rounded, size: 11.5, color: Color(0xFF475569)),
+                            const SizedBox(width: 4),
                             Text(
-                              '순차 릴레이 발송',
+                              LocalizationService.tr('sequential_dispatch_btn'),
                               style: TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontSize: 11,

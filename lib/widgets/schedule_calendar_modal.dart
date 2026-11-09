@@ -9,6 +9,8 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
 import 'app_bottom_sheet.dart';
+import 'design_system.dart';
+import '../services/localization_service.dart';
 
 class ScheduleCalendarModal extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -145,38 +147,48 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final title = titleController.text.trim();
-                if (title.isEmpty) return;
-                final newItem = ScheduleItem(
-                  id: 'sch_${DateTime.now().millisecondsSinceEpoch}',
-                  title: title,
-                  date: targetDate,
-                  category: selectedCat,
-                  memo: memoController.text.trim().isEmpty ? null : memoController.text.trim(),
-                  createdAt: DateTime.now(),
-                );
-                ref.read(schedulesProvider.notifier).addSchedule(newItem);
-                Navigator.pop(dialogCtx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('\'$title\' 일정이 등록되었습니다.'),
-                    behavior: SnackBarBehavior.floating,
+            Row(
+              children: [
+                Expanded(
+                  child: ZeroButton(
+                    label: LocalizationService.tr('btn_cancel'),
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => Navigator.pop(dialogCtx),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('등록하기', style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ZeroButton.primary(
+                    label: '등록하기',
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () {
+                      final title = titleController.text.trim();
+                      if (title.isEmpty) return;
+                      final newItem = ScheduleItem(
+                        id: 'sch_${DateTime.now().millisecondsSinceEpoch}',
+                        title: title,
+                        date: targetDate,
+                        category: selectedCat,
+                        memo: memoController.text.trim().isEmpty ? null : memoController.text.trim(),
+                        createdAt: DateTime.now(),
+                      );
+                      ref.read(schedulesProvider.notifier).addSchedule(newItem);
+                      Navigator.pop(dialogCtx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('\'$title\' 일정이 등록되었습니다.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

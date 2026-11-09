@@ -55,8 +55,8 @@ class BillingLedgerScreen extends ConsumerStatefulWidget {
 
 class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
   int _selectedTab = 0; // 0: 미납 / 청구 대상, 1: 수납 완료 내역, 2: 지출 / 매입 장부
-  String _selectedExpenseCategory = '전체';
-  String _selectedExpensePayFilter = '전체';
+  String _selectedExpenseCategory = 'all';
+  String _selectedExpensePayFilter = 'all';
   final NumberFormat _currencyFormat = NumberFormat('#,###');
 
   @override
@@ -242,10 +242,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                       : const Color(0xFFFB7185);
 
               final String heroTitle = _selectedTab == 0
-                  ? '수납 대기 (미납 총액)'
+                  ? LocalizationService.tr('hero_unpaid_title')
                   : _selectedTab == 1
-                      ? '이번 달 총 수납액'
-                      : '이번 달 총 지출액';
+                      ? LocalizationService.tr('hero_paid_title')
+                      : LocalizationService.tr('hero_expense_title');
 
               final int heroAmount = _selectedTab == 0
                   ? totalUnpaidAmount
@@ -550,9 +550,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             child: ZeroNoticeBanner(
                               variant: ZeroBannerVariant.care,
                               icon: Icons.warning_amber_rounded,
-                              title: '회차 만료 임박 (${expiringMembers.length}명)',
+                              title: '${LocalizationService.tr("expiring_banner_title")} (${expiringMembers.length})',
                               subtitle: expiringMembers.map((m) => m.name.split(' ').first).join(', '),
-                              actionLabel: '만료 안내문자',
+                              actionLabel: LocalizationService.tr('expiring_banner_btn'),
                               onAction: () => _sendExpiryAlert(context, studio, expiringMembers.first),
                             ),
                           ),
@@ -564,7 +564,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                             child: ZeroNoticeBanner(
                               variant: ZeroBannerVariant.info,
                               icon: Icons.mark_chat_unread_outlined,
-                              title: '미납 회원 ${unpaidInvoices.length}명 대기 중',
+                              title: LocalizationService.tr('unpaid_members_waiting').replaceAll('{count}', unpaidInvoices.length.toString()),
                               trailing: InkWell(
                                 onTap: () {
                                   final unpaidMemberIds = unpaidInvoices.expand((i) => i.memberIds).toSet();
@@ -584,13 +584,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                     color: AppTheme.primaryBlue,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
-                                      SizedBox(width: 4),
+                                      const Icon(Icons.forward_to_inbox_rounded, size: 13, color: Colors.white),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        '미납 순차 발송',
+                                        LocalizationService.tr('batch_dispatch_btn'),
                                         style: TextStyle(
                                           fontFamily: 'Pretendard',
                                           fontSize: 11.5,
@@ -621,7 +621,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                   Expanded(
                                     child: _buildQuickTaxActionTile(
                                       icon: Icons.business_center_outlined,
-                                      label: '거래처·강사 (${vendors.length})',
+                                      label: '${LocalizationService.tr("vendors_label")} (${vendors.length})',
                                       color: const Color(0xFF4F46E5),
                                       onTap: () => _openVendorManagementSheet(context, vendors),
                                     ),
@@ -630,7 +630,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                   Expanded(
                                     child: _buildQuickTaxActionTile(
                                       icon: Icons.table_view_outlined,
-                                      label: '간편장부 엑셀',
+                                      label: LocalizationService.tr('simple_bookkeeping_excel'),
                                       color: const Color(0xFF059669),
                                       onTap: () => _showBookkeepingExportSheet(context),
                                     ),
@@ -639,7 +639,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                   Expanded(
                                     child: _buildQuickTaxActionTile(
                                       icon: Icons.menu_book_outlined,
-                                      label: '1분 세무 가이드',
+                                      label: LocalizationService.tr('tax_guide_1min'),
                                       color: AppTheme.primaryBlue,
                                       onTap: () => TaxGuideModal.show(context),
                                     ),
@@ -657,10 +657,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                 padding: const EdgeInsets.all(3),
                                 child: Row(
                                   children: [
-                                    _buildTabButton('미납 / 청구 (${unpaidInvoices.length})', 0),
-                                    _buildTabButton('수납 완료 (${paidInvoices.length})', 1),
+                                    _buildTabButton('${LocalizationService.tr("unpaid_tab_short")} (${unpaidInvoices.length})', 0),
+                                    _buildTabButton('${LocalizationService.tr("paid_tab_short")} (${paidInvoices.length})', 1),
                                     if (widget.mode == LedgerScreenMode.all)
-                                      _buildTabButton('지출 / 매입 (${expenses.length})', 2),
+                                      _buildTabButton('${LocalizationService.tr("expense_tab_short")} (${expenses.length})', 2),
                                   ],
                                 ),
                               ),
@@ -683,7 +683,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                               Icon(Icons.receipt_long_outlined, size: 52, color: AppTheme.textTertiary),
                               const SizedBox(height: 14),
                               Text(
-                                _selectedTab == 0 ? '미납된 청구서가 없습니다' : '수납 완료 내역이 없습니다',
+                                _selectedTab == 0 ? LocalizationService.tr('empty_unpaid_title') : LocalizationService.tr('empty_paid_title'),
                                 style: const TextStyle(
                                   fontFamily: 'Pretendard',
                                   fontSize: 16,
@@ -756,9 +756,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               backgroundColor: const Color(0xFFE11D48),
               elevation: 3,
               icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white, size: 20),
-              label: const Text(
-                '새 지출 등록',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
+              label: Text(
+                LocalizationService.tr('new_expense_btn'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
               ),
             )
           : FloatingActionButton.extended(
@@ -881,10 +881,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     final isSeniorMode = ref.watch(seniorModeProvider);
     final isPaid = invoice.status == PaymentStatus.paid;
     final memberNames = invoiceMembers.map((m) => m.name).join(', ');
-    final dateLabel = isPaid ? '수납일' : '납부기한';
+    final dateLabel = isPaid ? LocalizationService.tr('paid_date_label') : LocalizationService.tr('due_date_label');
     final dateValue = isPaid && invoice.paidAt != null
-        ? DateFormat('yyyy.MM.dd').format(invoice.paidAt!)
-        : DateFormat('yyyy.MM.dd').format(invoice.dueDate);
+        ? LocalizationService.formatDate(invoice.paidAt!)
+        : LocalizationService.formatDate(invoice.dueDate);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -913,11 +913,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     isPaid
-                        ? ZeroBadge.success('수납 완료', size: ZeroBadgeSize.medium)
-                        : ZeroBadge.danger('미납', size: ZeroBadgeSize.medium),
+                        ? ZeroBadge.success(LocalizationService.tr('paid_status'), size: ZeroBadgeSize.medium)
+                        : ZeroBadge.danger(LocalizationService.tr('unpaid_status'), size: ZeroBadgeSize.medium),
                     if (!isPaid && studio.cardPaymentEnabled && studio.cardPaymentUrl.trim().isNotEmpty)
-                      const ZeroBadge(
-                        label: '카드링크 연동',
+                      ZeroBadge(
+                        label: LocalizationService.tr('card_link_integrated'),
                         variant: ZeroBadgeVariant.neutral,
                         size: ZeroBadgeSize.small,
                         icon: Icons.link_rounded,
@@ -940,7 +940,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
           // 2. Mobile-First Vertical Focal Stack: Tier-1 Amount -> Tier-2 Title -> Tier-3 Member & Phone (Zero Truncation!)
           Text(
-            '${_currencyFormat.format(invoice.amount)}원',
+            LocalizationService.formatAmount(invoice.amount),
             style: TextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w900,
@@ -1038,7 +1038,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           if (!isPaid) ...[
             // Tier 1 Primary Action: 수납확인 완료 처리 (Full-width solid Royal Blue CTA, minHeight 52)
             ZeroButton.primary(
-              label: '수납확인 완료 처리',
+              label: LocalizationService.tr('mark_paid'),
               icon: Icons.check_circle_outline_rounded,
               fullWidth: true,
               size: ZeroButtonSize.large,
@@ -1049,7 +1049,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             // Tier 2: 2 Clean Equal Utility Buttons (1 Column Full-Width in Senior Mode)
             if (isSeniorMode) ...[
               ZeroButton(
-                label: '카톡 청구서',
+                label: LocalizationService.tr('kakao_invoice_btn'),
                 icon: Icons.chat_bubble_outline_rounded,
                 variant: ZeroButtonVariant.neutral,
                 size: ZeroButtonSize.large,
@@ -1068,7 +1068,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
               const SizedBox(height: 8),
               ZeroButton(
-                label: '문자 청구서',
+                label: LocalizationService.tr('sms_invoice_btn'),
                 icon: Icons.sms_outlined,
                 variant: ZeroButtonVariant.neutral,
                 size: ZeroButtonSize.large,
@@ -1080,7 +1080,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 children: [
                   Expanded(
                     child: ZeroButton(
-                      label: '카톡 청구서',
+                      label: LocalizationService.tr('kakao_invoice_btn'),
                       icon: Icons.chat_bubble_outline_rounded,
                       variant: ZeroButtonVariant.neutral,
                       size: ZeroButtonSize.medium,
@@ -1101,7 +1101,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: ZeroButton(
-                      label: '문자 청구서',
+                      label: LocalizationService.tr('sms_invoice_btn'),
                       icon: Icons.sms_outlined,
                       variant: ZeroButtonVariant.neutral,
                       size: ZeroButtonSize.medium,
@@ -1115,7 +1115,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
             // Tier 3: Full-width Tint Reminder CTA
             ZeroButton(
-              label: '1초 입금 안내 리마인드 문자',
+              label: LocalizationService.tr('remind_1sec'),
               icon: Icons.notifications_none_rounded,
               variant: ZeroButtonVariant.tint,
               size: isSeniorMode ? ZeroButtonSize.large : ZeroButtonSize.medium,
@@ -1136,7 +1136,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             // Paid Invoice Utilities (1 Column Full-Width in Senior Mode)
             if (isSeniorMode) ...[
               ZeroButton.secondary(
-                label: '영수증 알림 (0원)',
+                label: LocalizationService.tr('receipt_notice_btn'),
                 icon: Icons.receipt_long_rounded,
                 size: ZeroButtonSize.large,
                 fullWidth: true,
@@ -1152,7 +1152,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
               const SizedBox(height: 8),
               ZeroButton.secondary(
-                label: '영수증 문자 전송',
+                label: LocalizationService.tr('receipt_sms_btn'),
                 icon: Icons.sms_outlined,
                 size: ZeroButtonSize.large,
                 fullWidth: true,
@@ -1163,7 +1163,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 children: [
                   Expanded(
                     child: ZeroButton.secondary(
-                      label: '영수증 알림 (0원)',
+                      label: LocalizationService.tr('receipt_notice_btn'),
                       icon: Icons.receipt_long_rounded,
                       size: ZeroButtonSize.medium,
                       fullWidth: true,
@@ -1181,7 +1181,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: ZeroButton.secondary(
-                      label: '영수증 문자 전송',
+                      label: LocalizationService.tr('receipt_sms_btn'),
                       icon: Icons.sms_outlined,
                       size: ZeroButtonSize.medium,
                       fullWidth: true,
@@ -1293,7 +1293,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text('취소'),
+                  child: Text(LocalizationService.tr('btn_cancel')),
                 ),
                 primary: ElevatedButton.icon(
                   onPressed: () async {
@@ -1388,7 +1388,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${invoice.title} (${_currencyFormat.format(invoice.amount)}원)',
+                            '${invoice.title} (${LocalizationService.formatAmount(invoice.amount)})',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
@@ -1541,16 +1541,29 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     List<Vendor> vendors,
     StudioProfile studio,
   ) {
-    final payFilters = ['전체', '완납', '미지급'];
-    final categoryFilters = ['전체', '교재비', '임대료', '강사료', '소모품비', '시설관리', '공과금', '기타'];
+    final payFilters = [
+      (id: 'all', label: LocalizationService.tr('filter_all')),
+      (id: 'paid', label: LocalizationService.tr('filter_paid')),
+      (id: 'unpaid', label: LocalizationService.tr('filter_unpaid')),
+    ];
+    final categoryFilters = [
+      (id: 'all', label: LocalizationService.tr('filter_all')),
+      (id: '교재비', label: '교재비'),
+      (id: '임대료', label: '임대료'),
+      (id: '강사료', label: '강사료'),
+      (id: '소모품비', label: '소모품비'),
+      (id: '시설관리', label: '시설관리'),
+      (id: '공과금', label: '공과금'),
+      (id: '기타', label: '기타'),
+    ];
 
     var filtered = List<ExpenseItem>.from(expenses);
-    if (_selectedExpensePayFilter == '완납') {
+    if (_selectedExpensePayFilter == 'paid') {
       filtered = filtered.where((e) => e.isPaid).toList();
-    } else if (_selectedExpensePayFilter == '미지급') {
+    } else if (_selectedExpensePayFilter == 'unpaid') {
       filtered = filtered.where((e) => !e.isPaid).toList();
     }
-    if (_selectedExpenseCategory != '전체') {
+    if (_selectedExpenseCategory != 'all') {
       filtered = filtered.where((e) => e.category == _selectedExpenseCategory).toList();
     }
     filtered.sort((a, b) => b.date.compareTo(a.date));
@@ -1566,12 +1579,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               children: [
                 // 결제 상태 필터
                 ...payFilters.map((p) {
-                  final isSel = _selectedExpensePayFilter == p;
+                  final isSel = _selectedExpensePayFilter == p.id;
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: FilterChip(
                       label: Text(
-                        p,
+                        p.label,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
@@ -1587,7 +1600,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         side: BorderSide(color: isSel ? AppTheme.primaryDark : Colors.transparent),
                       ),
                       onSelected: (val) {
-                        if (val) setState(() => _selectedExpensePayFilter = p);
+                        if (val) setState(() => _selectedExpensePayFilter = p.id);
                       },
                     ),
                   );
@@ -1597,12 +1610,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 const SizedBox(width: 8),
                 // 카테고리 필터
                 ...categoryFilters.map((c) {
-                  final isSel = _selectedExpenseCategory == c;
+                  final isSel = _selectedExpenseCategory == c.id;
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: FilterChip(
                       label: Text(
-                        c,
+                        c.label,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
@@ -1617,7 +1630,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         side: BorderSide(color: isSel ? AppTheme.primaryBlue : AppTheme.borderSubtle),
                       ),
                       onSelected: (val) {
-                        setState(() => _selectedExpenseCategory = val ? c : '전체');
+                        setState(() => _selectedExpenseCategory = val ? c.id : 'all');
                       },
                     ),
                   );
@@ -1738,34 +1751,34 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               const SizedBox(width: 8),
               expense.isPaid
                   ? ZeroBadge.success(
-                      '완납',
+                      LocalizationService.tr('filter_paid'),
                       icon: Icons.check_circle_outline,
                       size: ZeroBadgeSize.medium,
                       onTap: () async {
                         await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('미지급 상태로 변경되었습니다.'),
+                            SnackBar(
+                              content: Text(LocalizationService.tr('status_changed_unpaid')),
                               behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 2),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         }
                       },
                     )
                   : ZeroBadge.danger(
-                      '미지급 대기',
+                      LocalizationService.tr('unpaid_expense_status'),
                       icon: Icons.pending_actions_outlined,
                       size: ZeroBadgeSize.medium,
                       onTap: () async {
                         await ref.read(expensesProvider.notifier).togglePaymentStatus(expense.id);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('지급 완료(완납) 처리되었습니다.'),
+                            SnackBar(
+                              content: Text(LocalizationService.tr('status_changed_paid')),
                               behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 2),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         }
@@ -1777,7 +1790,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
           // 2. Mobile-First Vertical Focal Stack: Tier-1 Amount -> Tier-2 Expense Title -> Tier-3 Vendor & Bank Account (Zero Truncation!)
           Text(
-            '- ${_currencyFormat.format(expense.amount)}원',
+            '- ${LocalizationService.formatAmount(expense.amount)}',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -1902,7 +1915,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                           const SizedBox(width: 5),
                           Expanded(
                             child: Text(
-                              '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
+                              '원천징수 3.3% (-${LocalizationService.formatAmount(expense.withholdingTax)}) · 실수령 ${LocalizationService.formatAmount(expense.actualPayoutAmount)}',
                               softWrap: true,
                               style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue, height: 1.25),
                             ),
@@ -1924,7 +1937,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           if (isInstructor || expense.isWithholdingApplied) ...[
             if (isSeniorMode) ...[
               ZeroButton(
-                label: '카톡 발주/입금서',
+                label: LocalizationService.tr('share_order_payment'),
                 icon: Icons.chat_bubble_outline_rounded,
                 variant: ZeroButtonVariant.neutral,
                 size: ZeroButtonSize.large,
@@ -1948,7 +1961,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
               const SizedBox(height: 8),
               ZeroButton(
-                label: '강사 정산서',
+                label: LocalizationService.tr('instructor_settlement_btn'),
                 icon: Icons.badge_outlined,
                 variant: ZeroButtonVariant.neutral,
                 size: ZeroButtonSize.large,
@@ -1960,7 +1973,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 children: [
                   Expanded(
                     child: ZeroButton(
-                      label: '카톡 발주/입금서',
+                      label: LocalizationService.tr('share_order_payment'),
                       icon: Icons.chat_bubble_outline_rounded,
                       variant: ZeroButtonVariant.neutral,
                       size: ZeroButtonSize.medium,
@@ -1986,7 +1999,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: ZeroButton(
-                      label: '강사 정산서',
+                      label: LocalizationService.tr('instructor_settlement_btn'),
                       icon: Icons.badge_outlined,
                       variant: ZeroButtonVariant.neutral,
                       size: ZeroButtonSize.medium,
@@ -1998,7 +2011,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ),
           ] else ...[
             ZeroButton(
-              label: '카톡 발주/입금서 전송',
+              label: LocalizationService.tr('share_order_payment'),
               icon: Icons.chat_bubble_outline_rounded,
               variant: ZeroButtonVariant.neutral,
               size: isSeniorMode ? ZeroButtonSize.large : ZeroButtonSize.medium,
@@ -2026,7 +2039,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           // 5. Tier-4 Utility Actions (Standardized ZeroButtons for Edit & Delete)
           if (isSeniorMode) ...[
             ZeroButton(
-              label: '지출 항목 수정',
+              label: LocalizationService.tr('edit_expense_btn'),
               icon: Icons.edit_outlined,
               variant: ZeroButtonVariant.neutral,
               size: ZeroButtonSize.medium,
@@ -2035,7 +2048,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             ),
             const SizedBox(height: 8),
             ZeroButton(
-              label: '지출 항목 삭제',
+              label: LocalizationService.tr('delete_expense_btn'),
               icon: Icons.delete_outline_rounded,
               variant: ZeroButtonVariant.neutral,
               size: ZeroButtonSize.medium,
@@ -2047,12 +2060,29 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     title: const Text('지출 내역 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     content: Text('\'${expense.title}\' 지출 내역을 장부에서 삭제하시겠습니까?'),
+                    actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(dCtx, true),
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                        child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ZeroButton(
+                              label: LocalizationService.tr('btn_cancel'),
+                              variant: ZeroButtonVariant.neutral,
+                              size: ZeroButtonSize.medium,
+                              fullWidth: true,
+                              onPressed: () => Navigator.pop(dCtx, false),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ZeroButton.danger(
+                              label: LocalizationService.tr('btn_delete'),
+                              size: ZeroButtonSize.medium,
+                              fullWidth: true,
+                              onPressed: () => Navigator.pop(dCtx, true),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -2064,21 +2094,25 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             ),
           ] else
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ZeroButton(
-                  label: '수정',
-                  icon: Icons.edit_outlined,
-                  variant: ZeroButtonVariant.neutral,
-                  size: ZeroButtonSize.compact,
-                  onPressed: () => _openAddExpenseSheet(context, vendors, expense),
+                Expanded(
+                  child: ZeroButton(
+                    label: LocalizationService.tr('btn_edit'),
+                    icon: Icons.edit_outlined,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => _openAddExpenseSheet(context, vendors, expense),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                ZeroButton(
-                  label: '삭제',
-                  icon: Icons.delete_outline_rounded,
-                  variant: ZeroButtonVariant.neutral,
-                  size: ZeroButtonSize.compact,
+                Expanded(
+                  child: ZeroButton(
+                    label: LocalizationService.tr('btn_delete'),
+                    icon: Icons.delete_outline_rounded,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
                   onPressed: () async {
                     final confirm = await showDialog<bool>(
                       context: context,
@@ -2086,12 +2120,29 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         title: const Text('지출 내역 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         content: Text('\'${expense.title}\' 지출 내역을 장부에서 삭제하시겠습니까?'),
+                        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(dCtx, true),
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                            child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ZeroButton(
+                                  label: LocalizationService.tr('btn_cancel'),
+                                  variant: ZeroButtonVariant.neutral,
+                                  size: ZeroButtonSize.medium,
+                                  fullWidth: true,
+                                  onPressed: () => Navigator.pop(dCtx, false),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ZeroButton.danger(
+                                  label: LocalizationService.tr('btn_delete'),
+                                  size: ZeroButtonSize.medium,
+                                  fullWidth: true,
+                                  onPressed: () => Navigator.pop(dCtx, true),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -2101,8 +2152,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     }
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
+          )
         ],
       ),
     );
@@ -2318,7 +2370,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('원천징수 세액 (3.3%)', style: TextStyle(fontSize: 12.5, color: Color(0xFF4338CA), fontWeight: FontWeight.w600)),
-                                Text('- ${_currencyFormat.format(calcTax)}원', style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626), fontWeight: FontWeight.w700)),
+                                Text('- ${LocalizationService.formatAmount(calcTax)}', style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626), fontWeight: FontWeight.w700)),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -2326,7 +2378,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('실제 이체할 실수령액', style: TextStyle(fontSize: 13.5, color: Color(0xFF1E1B4B), fontWeight: FontWeight.w800)),
-                                Text('${_currencyFormat.format(actualPayout)}원', style: const TextStyle(fontSize: 15, color: Color(0xFF4338CA), fontWeight: FontWeight.w900)),
+                                Text(LocalizationService.formatAmount(actualPayout), style: const TextStyle(fontSize: 15, color: Color(0xFF4338CA), fontWeight: FontWeight.w900)),
                               ],
                             ),
                           ],
@@ -2601,11 +2653,11 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                       title: const Text('거래처 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                       content: Text('\'${v.name}\' 거래처를 삭제하시겠습니까?'),
                                       actions: [
-                                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
+                                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text(LocalizationService.tr('btn_cancel'))),
                                         ElevatedButton(
                                           onPressed: () => Navigator.pop(dCtx, true),
                                           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                                          child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                          child: Text(LocalizationService.tr('btn_delete'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                         ),
                                       ],
                                     ),
@@ -2766,10 +2818,26 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('취소')),
-            ElevatedButton(
-              onPressed: () async {
+            Row(
+              children: [
+                Expanded(
+                  child: ZeroButton(
+                    label: LocalizationService.tr('btn_cancel'),
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => Navigator.pop(dlgCtx),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ZeroButton.primary(
+                    label: editVendor != null ? '수정 완료' : '등록 완료',
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () async {
                 final name = nameCtrl.text.trim();
                 if (name.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('거래처 상호를 입력해주세요.')));
@@ -2795,9 +2863,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 }
 
                 if (dlgCtx.mounted) Navigator.pop(dlgCtx);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
-              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -2849,7 +2918,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(payerOrStudent, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: Text('${_currencyFormat.format(inv.amount)}원 입금 시뮬레이션 (입금자: $simSenderName)'),
+                      subtitle: Text('${LocalizationService.formatAmount(inv.amount)} 입금 시뮬레이션 (입금자: $simSenderName)'),
                       trailing: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(ctx);
@@ -2857,7 +2926,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                           final event = BankNotificationFilter.parseDepositNotification(
                             packageName: 'viva.republica.toss',
                             title: '토스뱅크',
-                            text: '입금 ${_currencyFormat.format(inv.amount)}원 $simSenderName',
+                            text: '입금 ${LocalizationService.formatAmount(inv.amount)} $simSenderName',
                           );
                           if (event != null) {
                             final match = BankNotificationFilter.matchInvoiceWithDeposit(
@@ -2870,7 +2939,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                               ref.read(invoicesProvider.notifier).markAsPaid(invoiceId: match.invoice.id, paymentMethod: 'TRANSFER');
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('은행 알림 감지 [${match.matchType}]: ${match.matchedMemberName ?? match.invoice.title} (${_currencyFormat.format(event.amount)}원) 자동 입금 처리 완료!'),
+                                  content: Text('은행 알림 감지 [${match.matchType}]: ${match.matchedMemberName ?? match.invoice.title} (${LocalizationService.formatAmount(event.amount)}) 자동 입금 처리 완료!'),
                                   backgroundColor: AppTheme.softMint,
                                   behavior: SnackBarBehavior.floating,
                                 ),
@@ -3488,8 +3557,8 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('정상 합계: ${_currencyFormat.format(_originalSiblingTotal)}원', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
-                          Text('할인: -${_currencyFormat.format(_calculatedSiblingDiscount)}원', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE11D48))),
-                          Text('최종 청구: ${_currencyFormat.format(_originalSiblingTotal - _calculatedSiblingDiscount)}원', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
+                          Text('할인: -${LocalizationService.formatAmount(_calculatedSiblingDiscount)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE11D48))),
+                          Text('최종 청구: ${LocalizationService.formatAmount(_originalSiblingTotal - _calculatedSiblingDiscount)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
                         ],
                       ),
                     ),
@@ -3764,7 +3833,7 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${newInvoice.title} (${_currencyFormat.format(amount)}원) 청구서가 등록되었습니다.'),
+                          content: Text('${newInvoice.title} (${LocalizationService.formatAmount(amount)}) 청구서가 등록되었습니다.'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -3799,7 +3868,7 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${newInvoice.title} (${_currencyFormat.format(amount)}원) 청구서가 등록되었습니다.'),
+                          content: Text('${newInvoice.title} (${LocalizationService.formatAmount(amount)}) 청구서가 등록되었습니다.'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -3867,10 +3936,26 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
             ],
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('취소')),
-          ElevatedButton(
-            onPressed: () async {
+          Row(
+            children: [
+              Expanded(
+                child: ZeroButton(
+                  label: LocalizationService.tr('btn_cancel'),
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () => Navigator.pop(dlgCtx),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ZeroButton.primary(
+                  label: '추가 및 적용',
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () async {
               final title = titleCtrl.text.trim();
               final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
               final tag = tagCtrl.text.trim();
@@ -3894,10 +3979,11 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
               });
               if (dlgCtx.mounted) Navigator.pop(dlgCtx);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
-            child: const Text('추가 및 적용', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
+                  ),
+                ),
+              ],
+            ),
+          ],
       ),
     );
   }

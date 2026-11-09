@@ -1263,10 +1263,11 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
                           SizedBox(height: vGap),
 
-                          // 2. Avatar Circle: Member Photo if registered, else Naturally Masked 3D Penguin
+                          // 2. Avatar Circle: Member Photo if registered, else Naturally Masked 3D Penguin (축하 활짝 웃음)
                           ZeroPassMascotAvatar(
                             size: avatarSize,
                             photoPath: celebration.photoPath,
+                            expression: MascotExpression.laughing,
                             isLightMode: true,
                             border: Border.all(color: const Color(0xFF10B981), width: 3),
                             boxShadow: [

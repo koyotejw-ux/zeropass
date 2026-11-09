@@ -1,12 +1,67 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/localization_service.dart';
+
+/// 마스코트 펭귄의 감정 표정 (출석률 연동)
+enum MascotExpression {
+  /// 활짝 웃는 모습 (출석률 70% 이상 또는 완벽 출석)
+  laughing,
+  /// 잔잔한 미소 (출석률 35% ~ 69% 보통)
+  smile,
+  /// 눈물 글썽/우는 모습 (출석률 35% 미만 저조)
+  crying;
+
+  /// 출석률(0~100)에 따른 감정 상태 판별
+  static MascotExpression fromAttendanceRate(num? rate) {
+    if (rate == null) return MascotExpression.smile;
+    if (rate >= 70) return MascotExpression.laughing;
+    if (rate >= 35) return MascotExpression.smile;
+    return MascotExpression.crying;
+  }
+
+  /// 해당 표정의 에셋 경로
+  String get assetPath {
+    switch (this) {
+      case MascotExpression.laughing:
+        return 'assets/icons/mascot_profile_laughing.png';
+      case MascotExpression.crying:
+        return 'assets/icons/mascot_profile_crying.png';
+      case MascotExpression.smile:
+        return 'assets/icons/mascot_profile.png';
+    }
+  }
+
+  /// 해당 감정의 한 줄 설명 / 뱃지 텍스트
+  String get label {
+    switch (this) {
+      case MascotExpression.laughing:
+        return LocalizationService.tr('mascot_mood_great');
+      case MascotExpression.smile:
+        return LocalizationService.tr('mascot_mood_steady');
+      case MascotExpression.crying:
+        return LocalizationService.tr('mascot_mood_needs_boost');
+    }
+  }
+
+  /// 해당 감정의 대표 이모지
+  String get emoji {
+    switch (this) {
+      case MascotExpression.laughing:
+        return '😄';
+      case MascotExpression.smile:
+        return '🙂';
+      case MascotExpression.crying:
+        return '😢';
+    }
+  }
+}
 
 /// ZeroPass 럭셔리 모노그램 & 회원 사진 & 마스코트 반응형 원형 아바타
 /// 
 /// - 회원의 등록 사진이 존재하면 원형 프레임에 꽉 차게 표시
 /// - 사진이 없으면 디폴트로 하이엔드 럭셔리 B2B 모노그램/엠블럼 (Deep Obsidian & Titanium) 렌더링
 /// - 이름(name) 전달 시 이니셜 모노그램 자동 추출 표기
-/// - showMascot: true 지정 시 귀여운 마스코트 펭귄 표기 지원
+/// - showMascot: true 지정 시 귀여운 마스코트 펭귄 표기 지원 (출석률 연동 동적 표정 지원)
 class ZeroPassMascotAvatar extends StatelessWidget {
   final double size;
   final String? photoPath;
@@ -19,6 +74,8 @@ class ZeroPassMascotAvatar extends StatelessWidget {
   final bool isLightMode;
   final Widget? badge;
   final double paddingRatio;
+  final MascotExpression? expression;
+  final num? attendanceRate;
 
   const ZeroPassMascotAvatar({
     super.key,
@@ -33,6 +90,8 @@ class ZeroPassMascotAvatar extends StatelessWidget {
     this.isLightMode = true,
     this.badge,
     this.paddingRatio = 0.0,
+    this.expression,
+    this.attendanceRate,
   });
 
   @override
@@ -133,14 +192,52 @@ class ZeroPassMascotAvatar extends StatelessWidget {
         child: innerGraphic,
       );
     } else {
-      // 3D 펭귄 마스코트 렌더링
+      // 3D 펭귄 마스코트 렌더링 (출석률 연동 동적 감정 표정)
+      final effectiveExpr = expression ??
+          (attendanceRate != null
+              ? MascotExpression.fromAttendanceRate(attendanceRate)
+              : MascotExpression.smile);
+
       final profileImg = Image.asset(
-        'assets/icons/mascot_profile.png',
+        effectiveExpr.assetPath,
         width: size,
         height: size,
         fit: BoxFit.cover,
         alignment: Alignment.center,
+        errorBuilder: (_, __, ___) => Image.asset(
+          'assets/icons/mascot_profile.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
       );
+
+      final List<Color> bgGradientColors;
+      if (isLightMode) {
+        switch (effectiveExpr) {
+          case MascotExpression.laughing:
+            bgGradientColors = const [Color(0xFFECFDF5), Color(0xFFD1FAE5)];
+            break;
+          case MascotExpression.smile:
+            bgGradientColors = const [Color(0xFFF0F9FF), Color(0xFFE0F2FE)];
+            break;
+          case MascotExpression.crying:
+            bgGradientColors = const [Color(0xFFFFF1F2), Color(0xFFFFE4E6)];
+            break;
+        }
+      } else {
+        switch (effectiveExpr) {
+          case MascotExpression.laughing:
+            bgGradientColors = const [Color(0xFF064E3B), Color(0xFF0F172A)];
+            break;
+          case MascotExpression.smile:
+            bgGradientColors = const [Color(0xFF1E293B), Color(0xFF0F172A)];
+            break;
+          case MascotExpression.crying:
+            bgGradientColors = const [Color(0xFF4C0519), Color(0xFF0F172A)];
+            break;
+        }
+      }
 
       avatarContent = Container(
         width: size,
@@ -150,9 +247,7 @@ class ZeroPassMascotAvatar extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: isLightMode
-                ? const [Color(0xFFF0F9FF), Color(0xFFE0F2FE)]
-                : const [Color(0xFF1E293B), Color(0xFF0F172A)],
+            colors: bgGradientColors,
           ),
         ),
         child: paddingRatio > 0

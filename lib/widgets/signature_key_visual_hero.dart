@@ -1,8 +1,10 @@
+import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
+import 'mascot_avatar.dart';
 
 /// ZeroPass 하이엔드 이그제큐티브 출결 브리핑 콕핏 (Signature Key Visual Hero)
 ///
@@ -34,6 +36,37 @@ class SignatureKeyVisualHero extends StatelessWidget {
         .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 2)
         .length;
     final attendanceRate = totalCount == 0 ? 0 : ((checkedCount / totalCount) * 100).toInt();
+    final expression = MascotExpression.fromAttendanceRate(attendanceRate);
+
+    final List<Color> auraGradient;
+    final Color auraBorder;
+    final Color statusBadgeBg;
+    final Color statusBadgeBorder;
+    final Color statusBadgeTextColor;
+
+    switch (expression) {
+      case MascotExpression.laughing:
+        auraGradient = const [Color(0xFFD1FAE5), Color(0xFFA7F3D0)];
+        auraBorder = const Color(0xFF10B981);
+        statusBadgeBg = const Color(0xFF10B981).withValues(alpha: 0.18);
+        statusBadgeBorder = const Color(0xFF10B981).withValues(alpha: 0.45);
+        statusBadgeTextColor = const Color(0xFF6EE7B7);
+        break;
+      case MascotExpression.smile:
+        auraGradient = const [Color(0xFFE0F2FE), Color(0xFFBAE6FD)];
+        auraBorder = const Color(0xFF38BDF8);
+        statusBadgeBg = const Color(0xFF0284C7).withValues(alpha: 0.18);
+        statusBadgeBorder = const Color(0xFF38BDF8).withValues(alpha: 0.45);
+        statusBadgeTextColor = const Color(0xFF7DD3FC);
+        break;
+      case MascotExpression.crying:
+        auraGradient = const [Color(0xFFFFE4E6), Color(0xFFFECDD3)];
+        auraBorder = const Color(0xFFF43F5E);
+        statusBadgeBg = const Color(0xFFE11D48).withValues(alpha: 0.18);
+        statusBadgeBorder = const Color(0xFFF43F5E).withValues(alpha: 0.45);
+        statusBadgeTextColor = const Color(0xFFFDA4AF);
+        break;
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
@@ -75,40 +108,64 @@ class SignatureKeyVisualHero extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 1. 3D 펭귄 마스코트(Passy) 프로필 - 산뜻한 파스텔 스카이블루 그라데이션 컬러 배경 + 빛나는 아우라 링
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFE0F2FE), // Soft Sky Pastel
-                            Color(0xFFBAE6FD), // Vibrant Cyan Tint
-                          ],
-                        ),
-                        border: Border.all(
-                          color: const Color(0xFF38BDF8),
-                          width: 1.8,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/icons/mascot_profile.png',
+                    // 1. 3D 펭귄 마스코트(Passy) 프로필 - 출석률 연동 동적 감정 표정(웃음/미소/울음) + 아우라 링 & 이모지 뱃지
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
                           width: 46,
                           height: 46,
-                          fit: BoxFit.cover,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: auraGradient,
+                            ),
+                            border: Border.all(
+                              color: auraBorder,
+                              width: 1.8,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: auraBorder.withValues(alpha: 0.35),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              expression.assetPath,
+                              width: 46,
+                              height: 46,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Image.asset(
+                                'assets/icons/mascot_profile.png',
+                                width: 46,
+                                height: 46,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: auraBorder, width: 1.2),
+                            ),
+                            child: Text(
+                              expression.emoji,
+                              style: const TextStyle(fontSize: 10, height: 1.0),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 12),
                     // 2. 상호명 및 시설/출석 뱃지 분리 줄바꿈 재레이아웃 (상호 길이에 무관하게 단정한 정렬감 유지)
@@ -182,14 +239,14 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              // 실시간 출석률 뱃지
+                              // 실시간 출석률 뱃지 (출석률 연동 동적 상태 뱃지)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.18),
+                                  color: statusBadgeBg,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.45),
+                                    color: statusBadgeBorder,
                                     width: 0.8,
                                   ),
                                 ),
@@ -199,17 +256,17 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                     Container(
                                       width: 5,
                                       height: 5,
-                                      decoration: const BoxDecoration(
+                                      decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Color(0xFF10B981),
+                                        color: auraBorder,
                                       ),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      '출석률 $attendanceRate%',
-                                      style: const TextStyle(
+                                      '${LocalizationService.tr("attendance_rate")} $attendanceRate% (${expression.label})',
+                                      style: TextStyle(
                                         fontFamily: 'Pretendard',
-                                        color: Color(0xFF6EE7B7),
+                                        color: statusBadgeTextColor,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: -0.2,
@@ -285,21 +342,21 @@ class SignatureKeyVisualHero extends StatelessWidget {
                 child: Row(
                   children: [
                     _buildKpiCell(
-                      label: '출석 완료',
+                      label: LocalizationService.tr('checked_in'),
                       value: '$checkedCount명',
                       accentColor: const Color(0xFF34D399),
                       valueColor: Colors.white,
                     ),
                     _buildVerticalDivider(),
                     _buildKpiCell(
-                      label: '출결 대기',
+                      label: LocalizationService.tr('waiting_checkin'),
                       value: '$waitingCount명',
                       accentColor: const Color(0xFF38BDF8),
                       valueColor: Colors.white,
                     ),
                     _buildVerticalDivider(),
                     _buildKpiCell(
-                      label: '만료 임박',
+                      label: LocalizationService.tr('expiring_soon'),
                       value: '$expiringCount명',
                       accentColor: const Color(0xFFFBBF24),
                       valueColor: expiringCount > 0 ? const Color(0xFFFDE68A) : Colors.white,
