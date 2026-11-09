@@ -1547,9 +1547,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                       children: [
                                         const Icon(Icons.receipt_long_outlined, size: 13, color: Color(0xFF64748B)),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          '세무: ',
-                                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        Expanded(
+                                          child: Text(
+                                            cur.taxPolicy,
+                                            style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1611,9 +1615,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('예시 청구 금액 (Sample Fee)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          Text(LocalizationService.tr('sample_fee_label'), style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                           Text(
-                            curCur.format(150000),
+                            curCur.format(curCur.sampleAmount),
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryDark),
                           ),
                         ],
@@ -1622,7 +1626,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('표기 일자 (Sample Date)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          Text(LocalizationService.tr('sample_date_label'), style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                           Text(
                             LocalizationService.formatDate(DateTime.now()),
                             style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),

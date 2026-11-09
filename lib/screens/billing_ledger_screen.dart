@@ -83,6 +83,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    ref.watch(currencyProvider);
     final invoicesAsync = ref.watch(invoicesProvider);
     final membersAsync = ref.watch(membersProvider);
     final studioAsync = ref.watch(studioProfileProvider);
@@ -769,8 +771,8 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               backgroundColor: AppTheme.fabPrimary,
               elevation: 3,
               icon: const Icon(Icons.edit_note, color: Colors.white, size: 21),
-              label: const Text(
-                '새 청구서 작성',
+              label: Text(
+                LocalizationService.tr('create_invoice'),
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
               ),
             ),

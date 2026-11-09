@@ -73,6 +73,8 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    ref.watch(currencyProvider);
     final membersAsync = ref.watch(membersProvider);
     final studio = ref.watch(studioProfileProvider).value ?? StudioProfile.defaultProfile();
     final isSeniorMode = ref.watch(seniorModeProvider);
@@ -259,8 +261,8 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         backgroundColor: AppTheme.fabPrimary,
         elevation: 3,
         icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 21),
-        label: const Text(
-          '신규 회원 등록',
+        label: Text(
+          LocalizationService.tr('add_member_btn'),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white, letterSpacing: -0.2),
         ),
       ),
@@ -1121,8 +1123,8 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    '신규 회원 등록',
+                  Text(
+                    LocalizationService.tr('add_member_btn'),
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   IconButton(

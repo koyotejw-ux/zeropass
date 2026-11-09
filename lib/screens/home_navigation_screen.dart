@@ -53,6 +53,8 @@ class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    ref.watch(currencyProvider);
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0 ||
         View.of(context).viewInsets.bottom > 0;

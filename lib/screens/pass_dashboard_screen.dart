@@ -43,7 +43,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
-  String _selectedGroup = '전체 그룹';
+  String _selectedGroup = LocalizationService.tr('all_groups');
   String _statusFilter = '전체'; // '전체', '출결 대기', '체크 완료', '만료 임박'
 
   @override
@@ -576,6 +576,8 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    ref.watch(currencyProvider);
     final membersAsync = ref.watch(membersProvider);
     final passRecordsAsync = ref.watch(passRecordsProvider);
     final studioAsync = ref.watch(studioProfileProvider);
@@ -594,7 +596,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           children: [
             if (!isLandscape) ...[
               Text(
-                DateFormat('M월 d일 (E)', 'ko_KR').format(DateTime.now()),
+                LocalizationService.formatHeaderDate(DateTime.now()),
                 style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -716,11 +718,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               }).toList();
 
               // Extract all groups
-              final groups = ['전체 그룹', ...members.map((m) => m.groupName).toSet()];
+              final groups = [LocalizationService.tr('all_groups'), ...members.map((m) => m.groupName).toSet()];
 
               // Filter members list using ChosungSearchService and Status filters
               var filteredMembers = members.where((m) {
-                if (_selectedGroup != '전체 그룹' && m.groupName != _selectedGroup) {
+                if (_selectedGroup != LocalizationService.tr('all_groups') && m.groupName != _selectedGroup) {
                   return false;
                 }
                 final isChecked = checkedMemberIds.contains(m.id);
@@ -792,7 +794,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                                       children: [
-                                        _buildStatItem('출석 완료', attendedCount, AppTheme.softMint, isCompact: true),
+                                        _buildStatItem(LocalizationService.tr('checked_in'), attendedCount, AppTheme.softMint, isCompact: true),
                                         _buildDivider(),
                                         _buildStatItem('지각/조퇴', lateCount, AppTheme.warning, isCompact: true),
                                         _buildDivider(),
@@ -1015,7 +1017,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               children: [
                 if (isChecked)
                   ZeroBadge.success(
-                    todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
+                    todayPass?.status == AttendanceStatus.late ? '지각' : LocalizationService.tr('checked_in'),
                     size: ZeroBadgeSize.medium,
                     icon: Icons.check_circle_rounded,
                   )
@@ -1086,7 +1088,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 const SizedBox(width: 8),
                 if (isChecked)
                   ZeroBadge.success(
-                    todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
+                    todayPass?.status == AttendanceStatus.late ? '지각' : LocalizationService.tr('checked_in'),
                     size: ZeroBadgeSize.medium,
                     icon: Icons.check_circle_rounded,
                   )

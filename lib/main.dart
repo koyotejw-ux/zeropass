@@ -14,7 +14,14 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('ko_KR', null);
+  await Future.wait([
+    initializeDateFormatting('ko_KR', null),
+    initializeDateFormatting('en_US', null),
+    initializeDateFormatting('ja_JP', null),
+    initializeDateFormatting('zh_CN', null),
+    initializeDateFormatting('vi_VN', null),
+    initializeDateFormatting('es_ES', null),
+  ]);
 
   await MonetizationService.instance.initialize();
   await LocalizationService.initialize();
@@ -95,7 +102,7 @@ class _ZeroPassAppState extends ConsumerState<ZeroPassApp> {
     }
 
     return MaterialApp(
-      title: ' - ',
+      title: LocalizationService.tr('app_name'),
       debugShowCheckedModeBanner: false,
       locale: Locale(activeLang.code),
       supportedLocales: AppLanguage.supportedLocales,
