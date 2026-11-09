@@ -24,6 +24,19 @@ import '../widgets/member_name_badge.dart';
 import '../widgets/native_inline_ad_card.dart';
 import '../widgets/sequential_dispatch_modal.dart';
 
+String _formatPhone(String raw) {
+  final clean = raw.replaceAll(RegExp(r'\D'), '');
+  if (clean.length == 11) {
+    return '${clean.substring(0, 3)}-${clean.substring(3, 7)}-${clean.substring(7)}';
+  } else if (clean.length == 10) {
+    if (clean.startsWith('02')) {
+      return '${clean.substring(0, 2)}-${clean.substring(2, 6)}-${clean.substring(6)}';
+    }
+    return '${clean.substring(0, 3)}-${clean.substring(3, 6)}-${clean.substring(6)}';
+  }
+  return raw;
+}
+
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
   final bool enableAutoCoachMark;
 
@@ -74,51 +87,65 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         ),
         actions: [
           // 1. 순차 릴레이 단체발송 마법사 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(Icons.mark_chat_unread_outlined, size: 22, color: AppTheme.textPrimary),
-            tooltip: '순차 릴레이 발송',
-            splashRadius: 20,
-            onPressed: () {
-              final members = membersAsync.value ?? [];
-              if (members.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('등록된 회원이 없습니다.')),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.mark_chat_unread_outlined, size: 21, color: AppTheme.textPrimary),
+              tooltip: '순차 릴레이 발송',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                final members = membersAsync.value ?? [];
+                if (members.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('등록된 회원이 없습니다.')),
+                  );
+                  return;
+                }
+                final invoices = ref.read(invoicesProvider).value ?? [];
+                SequentialDispatchModal.show(
+                  context: context,
+                  allMembers: members,
+                  studio: studio,
+                  invoices: invoices,
                 );
-                return;
-              }
-              final invoices = ref.read(invoicesProvider).value ?? [];
-              SequentialDispatchModal.show(
-                context: context,
-                allMembers: members,
-                studio: studio,
-                invoices: invoices,
-              );
-            },
+              },
+            ),
           ),
           // 2. 회원 명부 엑셀(CSV) 내보내기 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined, size: 22, color: AppTheme.textPrimary),
-            tooltip: '명부 엑셀 내보내기',
-            splashRadius: 20,
-            onPressed: () async {
-              final members = membersAsync.value ?? [];
-              if (members.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('내보낼 등록 회원이 없습니다.')),
-                );
-                return;
-              }
-              try {
-                final file = await DataVaultService.exportMembersCsv();
-                await DataVaultService.shareMembersCsv(file);
-              } catch (e) {
-                if (context.mounted) {
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.file_download_outlined, size: 21, color: AppTheme.textPrimary),
+              tooltip: '명부 엑셀 내보내기',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () async {
+                final members = membersAsync.value ?? [];
+                if (members.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('CSV 내보내기 오류: $e')),
+                    const SnackBar(content: Text('내보낼 등록 회원이 없습니다.')),
                   );
+                  return;
                 }
-              }
-            },
+                try {
+                  final file = await DataVaultService.exportMembersCsv();
+                  await DataVaultService.shareMembersCsv(file);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('CSV 내보내기 오류: $e')),
+                    );
+                  }
+                }
+              },
+            ),
           ),
           // 3. 시니어 큰글씨 모드 퀵 토글 (공통 규격: 가장 우측 배치)
           Padding(
@@ -126,11 +153,14 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             child: IconButton(
               icon: Icon(
                 Icons.format_size_rounded,
-                size: 22,
+                size: 21,
                 color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
               ),
               tooltip: '큰글씨 모드',
               splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
               onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
             ),
           ),
@@ -256,51 +286,11 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         onTap: () => _openMemberDetailSheet(context, member),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Top Meta Row: Course & Group (Left) <-> Remaining Sessions / Pass Badge (Right)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        [
-                          if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
-                          if (member.groupName.isNotEmpty) member.groupName,
-                          if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
-                        ].join(' · '),
-                        softWrap: true,
-                        style: const TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
-                          height: 1.25,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  isSession
-                      ? (isExpiring
-                          ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium)
-                          : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.medium))
-                      : ZeroBadge.neutral('정기권', size: ZeroBadgeSize.medium),
-                ],
-              ),
-
-              const SizedBox(height: 9),
-
-              // 2. Member Name (UNCONSTRAINED FULL WIDTH) & Phone & Chevron
+              // Tier 1: Avatar + Member Name (UNCONSTRAINED FULL WIDTH) + Chevron
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -322,18 +312,80 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFF94A3B8)),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // Tier 2: Grouped Badges Cluster (배치는 배치끼리 깔끔하게 묶음)
+              Wrap(
+                spacing: 6,
+                runSpacing: 5,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                    ),
+                    child: Text(
+                      [
+                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                        if (member.groupName.isNotEmpty) member.groupName,
+                        if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                      ].join(' · '),
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                  isSession
+                      ? (isExpiring
+                          ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small)
+                          : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small))
+                      : ZeroBadge.neutral('정기권', size: ZeroBadgeSize.small),
+                ],
+              ),
+
+              const SizedBox(height: 7),
+
+              // Tier 3: Contact & Meta Row (전화번호는 따로 독립 분리)
+              Row(
+                children: [
+                  const Icon(Icons.phone_iphone_rounded, size: 13, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
                   Text(
-                    member.phone,
+                    _formatPhone(member.phone),
                     style: const TextStyle(
                       fontFamily: 'Pretendard',
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFF94A3B8)),
+                  if (member.payerName != null && member.payerName!.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '· 입금자: ${member.payerName}',
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -454,39 +506,64 @@ class _MemberDetailModal extends ConsumerWidget {
                             ),
                             showGroupName: false,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 5),
+                          // Badges Cluster (배치는 배치끼리 깔끔하게 묶음)
                           Wrap(
-                            spacing: 8,
+                            spacing: 6,
                             runSpacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.chipBackground,
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                                 ),
                                 child: Text(
-                                  member.groupName,
-                                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                                  member.groupName.isNotEmpty ? member.groupName : '일반 회원',
+                                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
                                 ),
                               ),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.phone_outlined, size: 12, color: AppTheme.textSecondary),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    member.phone,
-                                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                              if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFDBEAFE), width: 0.8),
                                   ),
-                                ],
-                              ),
-                              if (member.payerName != null && member.payerName!.isNotEmpty)
-                                Text(
-                                  '(입금자: ${member.payerName})',
-                                  style: const TextStyle(fontSize: 11.5, color: AppTheme.textTertiary),
+                                  child: Text(
+                                    member.secondaryTag!,
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                                  ),
                                 ),
+                              if (member.billingType == BillingType.sessionBased)
+                                ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회 잔여', size: ZeroBadgeSize.small)
+                              else
+                                ZeroBadge.neutral('정기권', size: ZeroBadgeSize.small),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          // Contact Row (전화번호는 따로 독립 분리)
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_iphone_rounded, size: 13, color: Color(0xFF64748B)),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatPhone(member.phone),
+                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                              ),
+                              if (member.payerName != null && member.payerName!.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '· 입금자: ${member.payerName}',
+                                    softWrap: true,
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],
@@ -569,6 +646,19 @@ class _MemberDetailModal extends ConsumerWidget {
                     labelColor: AppTheme.primaryBlue,
                     unselectedLabelColor: AppTheme.textSecondary,
                     indicatorColor: AppTheme.primaryBlue,
+                    indicatorWeight: 2.5,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelStyle: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    unselectedLabelStyle: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                     tabs: [
                       Tab(text: '출석 기록 타임라인'),
                       Tab(text: '수납 내역 로그'),
@@ -585,13 +675,56 @@ class _MemberDetailModal extends ConsumerWidget {
                                 itemCount: memberPasses.length,
                                 itemBuilder: (ctx, i) {
                                   final p = memberPasses[i];
-                                  return ListTile(
-                                    leading: const Icon(Icons.check_circle, color: AppTheme.softMint),
-                                    title: Text(DateFormat('yyyy.MM.dd HH:mm').format(p.timestamp)),
-                                    subtitle: Text(p.status == AttendanceStatus.attended ? '출석 완료' : '지각/보강'),
-                                    trailing: p.sessionDeduction != null && p.sessionDeduction! > 0
-                                        ? const Text('-1회 차감', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold))
-                                        : null,
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(7),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFECFDF5),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: const Color(0xFFA7F3D0), width: 0.8),
+                                          ),
+                                          child: const Icon(Icons.check_rounded, color: AppTheme.softMint, size: 14),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                DateFormat('yyyy.MM.dd HH:mm').format(p.timestamp),
+                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                p.status == AttendanceStatus.attended ? '정상 출석 완료' : '지각/보강',
+                                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (p.sessionDeduction != null && p.sessionDeduction! > 0)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFEE2E2),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Text(
+                                              '-1회 차감',
+                                              style: TextStyle(fontSize: 11.5, color: Color(0xFFDC2626), fontWeight: FontWeight.w700),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   );
                                 },
                               ),
@@ -603,16 +736,50 @@ class _MemberDetailModal extends ConsumerWidget {
                                 itemCount: memberInvoices.length,
                                 itemBuilder: (ctx, i) {
                                   final inv = memberInvoices[i];
-                                  return ListTile(
-                                    leading: Icon(
-                                      inv.status == PaymentStatus.paid ? Icons.done_all : Icons.pending_outlined,
-                                      color: inv.status == PaymentStatus.paid ? AppTheme.softMint : AppTheme.warning,
+                                  final isPaid = inv.status == PaymentStatus.paid;
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                                     ),
-                                    title: Text(inv.title),
-                                    subtitle: Text('기한: ${DateFormat('yyyy.MM.dd').format(inv.dueDate)}'),
-                                    trailing: Text(
-                                      '${currency.format(inv.amount)}원',
-                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(7),
+                                          decoration: BoxDecoration(
+                                            color: isPaid ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            isPaid ? Icons.check_circle_outline_rounded : Icons.pending_actions_rounded,
+                                            color: isPaid ? AppTheme.softMint : const Color(0xFFEF4444),
+                                            size: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                inv.title,
+                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '${currency.format(inv.amount)}원 · ${DateFormat('yyyy.MM.dd').format(inv.dueDate)}',
+                                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        isPaid
+                                            ? ZeroBadge.success('완납', size: ZeroBadgeSize.small)
+                                            : ZeroBadge.danger('미납', size: ZeroBadgeSize.small),
+                                      ],
                                     ),
                                   );
                                 },

@@ -638,32 +638,48 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         ),
         actions: [
           // 1. PRO VIP 샵 퀵 버튼 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(Icons.workspace_premium_outlined, size: 22, color: Color(0xFFD97706)),
-            tooltip: 'PRO 샵',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-              );
-            },
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.workspace_premium_outlined, size: 21, color: Color(0xFFD97706)),
+              tooltip: 'PRO 샵',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                );
+              },
+            ),
           ),
           // 2. 로컬 금고 암호화 백업 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(Icons.shield_outlined, size: 22, color: AppTheme.textPrimary),
-            tooltip: '로컬 금고 암호화 백업',
-            onPressed: () async {
-              try {
-                final backupFile = await DataVaultService.exportEncryptedBackup();
-                await DataVaultService.shareBackupFile(backupFile);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('백업 실패: $e')),
-                  );
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.shield_outlined, size: 21, color: AppTheme.textPrimary),
+              tooltip: '로컬 금고 암호화 백업',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () async {
+                try {
+                  final backupFile = await DataVaultService.exportEncryptedBackup();
+                  await DataVaultService.shareBackupFile(backupFile);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('백업 실패: $e')),
+                    );
+                  }
                 }
-              }
-            },
+              },
+            ),
           ),
           // 3. 시니어 모드 퀵 토글 (공통: 가장 우측 배치)
           Padding(
@@ -671,10 +687,14 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             child: IconButton(
               icon: Icon(
                 Icons.format_size_rounded,
-                size: 22,
+                size: 21,
                 color: isSeniorMode ? AppTheme.primaryBlue : AppTheme.textSecondary,
               ),
               tooltip: '큰글씨 모드',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
               onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
             ),
           ),
@@ -850,31 +870,34 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
 
   Widget _buildStudioCompactHeroCard(BuildContext context, StudioProfile profile) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderSubtle, width: 0.9),
         boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Samsung One UI Profile Header: Avatar + Studio Name & Badges
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
                 onTap: () => _showLogoPickerSheet(context, profile),
                 child: Stack(
                   children: [
-                    _buildStudioLogoAvatar(profile, size: 54),
+                    _buildStudioLogoAvatar(profile, size: 56),
                     Positioned(
-                      right: -2,
-                      bottom: -2,
+                      right: 0,
+                      bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryBlue,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 10),
                       ),
@@ -887,27 +910,32 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    // Studio Name: UNCONSTRAINED FULL SOFT-WRAP (NO ELLIPSIS!)
+                    Text(
+                      profile.studioName,
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.4,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Badges Cluster: Category + Logo Status + Logo Action
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 5,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Flexible(
-                          child: Text(
-                            profile.studioName,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textPrimary,
-                              letterSpacing: -0.4,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                           decoration: BoxDecoration(
                             color: const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFDBEAFE), width: 0.8),
                           ),
                           child: Text(
                             profile.category,
@@ -918,83 +946,125 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                             ),
                           ),
                         ),
-                        if (profile.logoPath != null && profile.logoPath!.isNotEmpty) ...[
-                          const SizedBox(width: 6),
+                        if (profile.logoPath != null && profile.logoPath!.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                              color: const Color(0xFFECFDF5),
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFA7F3D0), width: 0.8),
                             ),
                             child: const Text(
                               '로고 적용됨',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF059669),
                               ),
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    InkWell(
-                      onTap: () => _showLogoPickerSheet(context, profile),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 1),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              profile.logoPath != null ? Icons.photo_camera_outlined : Icons.add_photo_alternate_outlined,
-                              size: 13,
-                              color: AppTheme.primaryBlue,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
+                        InkWell(
+                          onTap: () => _showLogoPickerSheet(context, profile),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Text(
                               profile.logoPath != null ? '로고 변경/삭제' : '상호 로고 등록하기',
                               style: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryBlue,
+                                color: Color(0xFF64748B),
+                                decoration: TextDecoration.underline,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${profile.instructorName} ${profile.roleTitle} · 호칭: ${profile.memberWord}/${profile.feeWord}',
-                      style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${profile.bankName} ${profile.accountNumber} (${profile.accountHolder})',
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      ],
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 14),
+
+          // 2. Inset Metadata Card (Instructor, Custom Words, Bank Account - Grouped Cleanly)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.badge_outlined, size: 14, color: Color(0xFF64748B)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${profile.instructorName} ${profile.roleTitle} · 호칭: ${profile.memberWord} / ${profile.feeWord}',
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (profile.bankName.isNotEmpty && profile.accountNumber.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.account_balance_outlined, size: 14, color: Color(0xFF64748B)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${profile.bankName} ${profile.accountNumber} (${profile.accountHolder})',
+                          softWrap: true,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF475569),
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // 3. Samsung One UI 2-Column Action Grid
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _openEditProfileDialog(context, profile),
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
                   ),
-                  icon: const Icon(Icons.edit_outlined, size: 15),
-                  label: const Text('기본 정보 수정', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  icon: const Icon(Icons.edit_outlined, size: 15, color: AppTheme.textPrimary),
+                  label: const Text(
+                    '기본 정보 수정',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1005,12 +1075,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     backgroundColor: const Color(0xFF0F172A),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    minimumSize: const Size(0, 44),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  icon: const Icon(Icons.badge_outlined, size: 15),
-                  label: const Text('맞춤 호칭 설정', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  icon: const Icon(Icons.tune_rounded, size: 15, color: Colors.white),
+                  label: const Text(
+                    '맞춤 호칭 설정',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -1084,13 +1157,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
+                      softWrap: true,
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: AppTheme.textSecondary,
                         letterSpacing: -0.2,
+                        height: 1.35,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

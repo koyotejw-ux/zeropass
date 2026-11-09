@@ -107,41 +107,69 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         ),
         actions: [
           // 1. 간편장부 엑셀 내보내기 & 세무 가이드 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(Icons.table_view_outlined, size: 22, color: Color(0xFF3F3F46)),
-            tooltip: '간편장부 엑셀 & 세무',
-            splashRadius: 20,
-            onPressed: () => _showBookkeepingExportSheet(context),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.table_view_outlined, size: 21, color: Color(0xFF3F3F46)),
+              tooltip: '간편장부 엑셀 & 세무',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _showBookkeepingExportSheet(context),
+            ),
           ),
           // 2. 세무 장부 모드 시 세무 일정 가이드 퀵 아이콘
           if (widget.mode == LedgerScreenMode.expenseTaxOnly)
-            IconButton(
-              icon: const Icon(Icons.menu_book_outlined, size: 22, color: Color(0xFF3F3F46)),
-              tooltip: '소상공인 세무 가이드',
-              splashRadius: 20,
-              onPressed: () => TaxGuideModal.show(context),
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: IconButton(
+                icon: const Icon(Icons.menu_book_outlined, size: 21, color: Color(0xFF3F3F46)),
+                tooltip: '소상공인 세무 가이드',
+                splashRadius: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => TaxGuideModal.show(context),
+              ),
             ),
           // 3. 거래처 수첩 or 실시간 입금 감지 (심플 라인 아이콘)
           if (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)
-            IconButton(
-              icon: const Icon(Icons.business_center_outlined, size: 22, color: Color(0xFF4F46E5)),
-              tooltip: '거래처 수첩',
-              splashRadius: 20,
-              onPressed: () {
-                final vendors = vendorsAsync.value ?? [];
-                _openVendorManagementSheet(context, vendors);
-              },
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: IconButton(
+                icon: const Icon(Icons.business_center_outlined, size: 21, color: Color(0xFF4F46E5)),
+                tooltip: '거래처 수첩',
+                splashRadius: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  final vendors = vendorsAsync.value ?? [];
+                  _openVendorManagementSheet(context, vendors);
+                },
+              ),
             )
           else
-            IconButton(
-              icon: const Icon(Icons.notifications_active_outlined, size: 22, color: Color(0xFF059669)),
-              tooltip: '실시간 입금 감지',
-              splashRadius: 20,
-              onPressed: () {
-                final members = membersAsync.value ?? [];
-                final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
-                _showBankNotificationSimulator(context, members, unpaid);
-              },
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: IconButton(
+                icon: const Icon(Icons.notifications_active_outlined, size: 21, color: Color(0xFF059669)),
+                tooltip: '실시간 입금 감지',
+                splashRadius: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  final members = membersAsync.value ?? [];
+                  final unpaid = (invoicesAsync.value ?? []).where((i) => i.status == PaymentStatus.unpaid).toList();
+                  _showBankNotificationSimulator(context, members, unpaid);
+                },
+              ),
             ),
           // 4. 시니어 큰글씨 모드 퀵 토글 (공통 규격: 가장 우측 배치)
           Padding(
@@ -149,11 +177,14 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             child: IconButton(
               icon: Icon(
                 Icons.format_size_rounded,
-                size: 22,
+                size: 21,
                 color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
               ),
               tooltip: '큰글씨 모드',
               splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
               onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
             ),
           ),
@@ -826,6 +857,19 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     );
   }
 
+  String _formatPhone(String raw) {
+    final clean = raw.replaceAll(RegExp(r'\D'), '');
+    if (clean.length == 11) {
+      return '${clean.substring(0, 3)}-${clean.substring(3, 7)}-${clean.substring(7)}';
+    } else if (clean.length == 10) {
+      if (clean.startsWith('02')) {
+        return '${clean.substring(0, 2)}-${clean.substring(2, 6)}-${clean.substring(6)}';
+      }
+      return '${clean.substring(0, 3)}-${clean.substring(3, 6)}-${clean.substring(6)}';
+    }
+    return raw;
+  }
+
   Widget _buildInvoiceCard(
     BuildContext context,
     Invoice invoice,
@@ -914,16 +958,76 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               height: 1.3,
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            '$memberNames (${invoice.recipientPhone})',
-            softWrap: true,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.textSecondary,
-              height: 1.3,
-            ),
+          const SizedBox(height: 8),
+          // Sub-info: member badges & phone pill cluster (clean structured badges!)
+          Wrap(
+            spacing: 6,
+            runSpacing: 5,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (invoiceMembers.isNotEmpty)
+                for (final m in invoiceMembers)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                    ),
+                    child: Text(
+                      m.name,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                  )
+              else if (memberNames.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                  ),
+                  child: Text(
+                    memberNames,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              if (invoice.recipientPhone.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFDBEAFE), width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.phone_iphone_rounded, size: 12.5, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 3.5),
+                      Text(
+                        _formatPhone(invoice.recipientPhone),
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D4ED8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 14),
 
@@ -1636,95 +1740,125 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               height: 1.3,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 8),
 
-          // 3. Tier-3 Vendor & Account Info (Wrap-safe, Zero Truncation)
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.storefront_outlined, size: 13.5, color: AppTheme.textSecondary),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      expense.vendorName,
-                      softWrap: true,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+          // 3. Inset Grouped Metadata Container (Vendor, Account, Memo, Withholding Tax)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Vendor & Account Row
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.storefront_outlined, size: 14, color: AppTheme.textSecondary),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            expense.vendorName,
+                            softWrap: true,
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (vendor?.bankName != null && vendor?.accountNumber != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFCBD5E1), width: 0.6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.account_balance_outlined, size: 12, color: Color(0xFF475569)),
+                            const SizedBox(width: 3.5),
+                            Text(
+                              '${vendor!.bankName} ${vendor.accountNumber}',
+                              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            ),
+                            const SizedBox(width: 5),
+                            InkWell(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: '${vendor.bankName} ${vendor.accountNumber} ${vendor.accountHolder ?? ''}'));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('${vendor.bankName} 계좌번호가 복사되었습니다.'), behavior: SnackBarBehavior.floating),
+                                );
+                              },
+                              child: const Icon(Icons.copy_rounded, size: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                if (expense.memo != null && expense.memo!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(Icons.description_outlined, size: 13, color: AppTheme.textTertiary),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          expense.memo!,
+                          softWrap: true,
+                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (expense.isWithholdingApplied) ...[
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () => _showStaffSettlementModal(context, expense, vendor, studio),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFDBEAFE), width: 0.8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calculate_outlined, size: 13.5, color: AppTheme.primaryBlue),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
+                              softWrap: true,
+                              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue, height: 1.25),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 9, color: AppTheme.primaryBlue),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              ),
-              if (vendor?.bankName != null && vendor?.accountNumber != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '${vendor!.bankName} ${vendor.accountNumber}',
-                        softWrap: true,
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(Icons.copy_rounded, size: 13, color: AppTheme.textSecondary),
-                      tooltip: '계좌번호 복사',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: '${vendor.bankName} ${vendor.accountNumber} ${vendor.accountHolder ?? ''}'));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${vendor.bankName} 계좌번호가 복사되었습니다.'), behavior: SnackBarBehavior.floating),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-            ],
+              ],
+            ),
           ),
-
-          if (expense.isWithholdingApplied) ...[
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () => _showStaffSettlementModal(context, expense, vendor, studio),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calculate_outlined, size: 14, color: AppTheme.primaryBlue),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        '원천징수 3.3% (-${_currencyFormat.format(expense.withholdingTax)}원) · 실수령 ${_currencyFormat.format(expense.actualPayoutAmount)}원',
-                        softWrap: true,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue, height: 1.3),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppTheme.primaryBlue),
-                  ],
-                ),
-              ),
-            ),
-          ],
-
-          if (expense.memo != null && expense.memo!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              '메모: ${expense.memo}',
-              style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
-            ),
-          ],
 
           const SizedBox(height: 12),
 
@@ -1797,29 +1931,23 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           ],
           const SizedBox(height: 8),
 
-          // 5. Tier-4 Utility Actions (Edit & Delete Row)
+          // 5. Tier-4 Utility Actions (Standardized ZeroButtons for Edit & Delete)
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton.icon(
+              ZeroButton(
+                label: '수정',
+                icon: Icons.edit_outlined,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.compact,
                 onPressed: () => _openAddExpenseSheet(context, vendors, expense),
-                icon: const Icon(Icons.edit_outlined, size: 14, color: AppTheme.textSecondary),
-                label: const Text(
-                  '수정',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppTheme.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
               ),
               const SizedBox(width: 8),
-              TextButton.icon(
+              ZeroButton(
+                label: '삭제',
+                icon: Icons.delete_outline_rounded,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.compact,
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
@@ -1841,20 +1969,6 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                     await ref.read(expensesProvider.notifier).deleteExpense(expense.id);
                   }
                 },
-                icon: const Icon(Icons.delete_outline, size: 14, color: AppTheme.dangerText),
-                label: const Text(
-                  '삭제',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppTheme.dangerText,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
               ),
             ],
           ),

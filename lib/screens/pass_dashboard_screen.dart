@@ -621,37 +621,46 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         ),
         actions: [
           // 0. 스케줄 달력 (주요일정 & 출결 캘린더)
-          IconButton(
-            icon: const Icon(
-              Icons.calendar_month_outlined,
-              size: 22,
-              color: Color(0xFF3F3F46),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.calendar_month_outlined, size: 21, color: Color(0xFF3F3F46)),
+              tooltip: '스케줄 달력',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => ScheduleCalendarModal.show(context),
             ),
-            tooltip: '스케줄 달력',
-            splashRadius: 20,
-            onPressed: () => ScheduleCalendarModal.show(context),
           ),
           // 1. 무인 자율출결 키오스크 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(
-              Icons.tablet_mac_outlined,
-              size: 22,
-              color: Color(0xFF3F3F46),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.tablet_mac_outlined, size: 21, color: Color(0xFF3F3F46)),
+              tooltip: '무인 키오스크 모드',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _openTabletKioskMode(context),
             ),
-            tooltip: '무인 키오스크 모드',
-            splashRadius: 20,
-            onPressed: () => _openTabletKioskMode(context),
           ),
           // 2. 스마트 안심 알림 센터 (심플 라인 아이콘)
-          IconButton(
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              size: 22,
-              color: Color(0xFF3F3F46),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              icon: const Icon(Icons.notifications_none_rounded, size: 21, color: Color(0xFF3F3F46)),
+              tooltip: '안심 알림 센터',
+              splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => SmartNotificationCenterModal.show(context),
             ),
-            tooltip: '안심 알림 센터',
-            splashRadius: 20,
-            onPressed: () => SmartNotificationCenterModal.show(context),
           ),
           // 3. 시니어 큰글씨 모드 퀵 토글 (공통: 가장 우측 배치)
           Padding(
@@ -659,11 +668,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             child: IconButton(
               icon: Icon(
                 Icons.format_size_rounded,
-                size: 22,
+                size: 21,
                 color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
               ),
               tooltip: '큰글씨 모드',
               splashRadius: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              visualDensity: VisualDensity.compact,
               onPressed: () => ref.read(seniorModeProvider.notifier).toggle(),
             ),
           ),

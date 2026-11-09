@@ -168,6 +168,25 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: primaryBlue,
+        unselectedLabelColor: textSecondary,
+        indicatorColor: primaryBlue,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.2,
+        ),
+      ),
     );
   }
 
@@ -189,12 +208,12 @@ class AppTheme {
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 34),
         displayMedium: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 30),
-        headlineLarge: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 26),
-        headlineMedium: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 23),
-        headlineSmall: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 21),
-        titleLarge: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 20),
-        titleMedium: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w800, letterSpacing: -0.1, color: seniorTextPrimary, fontSize: 18),
-        titleSmall: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w800, letterSpacing: -0.1, color: seniorTextSecondary, fontSize: 16),
+        headlineLarge: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 26, height: 1.35),
+        headlineMedium: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 23, height: 1.35),
+        headlineSmall: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 21, height: 1.35),
+        titleLarge: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w900, letterSpacing: -0.2, color: seniorTextPrimary, fontSize: 20, height: 1.35),
+        titleMedium: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w800, letterSpacing: -0.1, color: seniorTextPrimary, fontSize: 18, height: 1.35),
+        titleSmall: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w800, letterSpacing: -0.1, color: seniorTextSecondary, fontSize: 16, height: 1.35),
         bodyLarge: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w700, letterSpacing: 0, color: seniorTextPrimary, fontSize: 18, height: 1.5),
         bodyMedium: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w600, letterSpacing: 0, color: seniorTextPrimary, fontSize: 16, height: 1.5),
         bodySmall: TextStyle(fontFamily: 'Pretendard', fontWeight: FontWeight.w600, letterSpacing: 0, color: seniorTextSecondary, fontSize: 14.5, height: 1.45),
@@ -267,6 +286,25 @@ class AppTheme {
         unselectedLabelStyle: TextStyle(fontFamily: 'Pretendard', fontSize: 12, fontWeight: FontWeight.w700),
         type: BottomNavigationBarType.fixed,
         elevation: 10,
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: seniorPrimaryBlue,
+        unselectedLabelColor: seniorTextSecondary,
+        indicatorColor: seniorPrimaryBlue,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 16,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.2,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
+        ),
       ),
     );
   }
