@@ -5,10 +5,10 @@ import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import 'monetization_service.dart';
+import 'localization_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SmsTemplateService {
-  static final NumberFormat _currencyFormat = NumberFormat('#,###');
-
   /// 1. 청구서 수납 안내 문자 (사용자 정의 템플릿 치환)
   static String generateInvoiceMessage({
     required StudioProfile studio,
@@ -22,7 +22,7 @@ class SmsTemplateService {
 
     final memberNames = members.map((m) => m.name.split(' ').first).join(', ');
     final accountInfo = '${studio.bankName} ${studio.accountNumber} (${studio.accountHolder})';
-    final formattedAmount = _currencyFormat.format(invoice.amount);
+    final formattedAmount = NumberFormat('#,###').format(invoice.amount);
     final dueDateStr = DateFormat('yyyy.MM.dd').format(invoice.dueDate);
     
     // Clean account for 1-touch copy format (e.g. "토스뱅크 1000-2026-8899 김서연")
@@ -114,7 +114,7 @@ class SmsTemplateService {
     } else if (paymentMethod == 'VOUCHER') {
       methodStr = '바우처/지역화폐';
     }
-    final formattedAmount = _currencyFormat.format(amount);
+    final formattedAmount = LocalizationService.formatAmount(amount);
     final sessionStr = remainingSessions != null ? '\n• 갱신 잔여 회차: $remainingSessions회' : '';
 
     return '''
@@ -135,7 +135,7 @@ ${member.name.split(' ').first} ${studio.memberWord}님의 ${studio.feeWord}가 
     required Member member,
   }) {
     final accountInfo = '${studio.bankName} ${studio.accountNumber} (${studio.accountHolder})';
-    final fee = _currencyFormat.format(member.defaultFee);
+    final fee = LocalizationService.formatAmount(member.defaultFee);
 
     return '''
 [${studio.studioName}] 패스 만료 임박 안내
@@ -159,7 +159,7 @@ ${member.name.split(' ').first} ${studio.memberWord}님의 잔여 패스가 [${m
     final memberNames = members.map((m) => m.name.split(' ').first).join(', ');
     final accountInfo = '${studio.bankName} ${studio.accountNumber} (${studio.accountHolder})';
     final copyAccountText = '${studio.bankName} ${studio.accountNumber} ${studio.accountHolder}';
-    final formattedAmount = _currencyFormat.format(invoice.amount);
+    final formattedAmount = NumberFormat('#,###').format(invoice.amount);
     final dueDateStr = DateFormat('yyyy.MM.dd').format(invoice.dueDate);
 
     final cardLink = studio.getFormattedCardPaymentUrl(
@@ -231,5 +231,34 @@ $memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도�
     } catch (_) {
       return false;
     }
+  }
+
+  /// Launches WhatsApp with recipient and prefilled message for international users.
+  static Future<bool> launchWhatsApp({
+    required String recipientPhone,
+    required String body,
+  }) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
+    MonetizationService.instance.recordValueAction(smsCount: 1);
+    final cleanPhone = recipientPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    final encoded = Uri.encodeComponent(body);
+    final uri = Uri.parse('https://wa.me/$cleanPhone?text=$encoded');
+    try {
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// Launches system universal share dialog (WhatsApp, Messenger, Email, Slack, etc.)
+  static Future<void> launchUniversalShare({
+    required String title,
+    required String body,
+  }) async {
+    MonetizationService.instance.suppressAppOpenAdTemporarily(seconds: 60);
+    MonetizationService.instance.recordValueAction(smsCount: 1);
+    // ignore: deprecated_member_use
+    await Share.share(body, subject: title);
   }
 }

@@ -268,6 +268,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   }
 
   Widget _buildMemberTile(BuildContext context, Member member, StudioProfile studio) {
+    final isSeniorMode = ref.watch(seniorModeProvider);
     final isSession = member.billingType == BillingType.sessionBased;
     final isExpiring = isSession && member.remainingSessions <= 1;
 
@@ -357,37 +358,72 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
 
               const SizedBox(height: 7),
 
-              // Tier 3: Contact & Meta Row (전화번호는 따로 독립 분리)
-              Row(
-                children: [
-                  const Icon(Icons.phone_iphone_rounded, size: 13, color: Color(0xFF64748B)),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatPhone(member.phone),
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF64748B),
+              // Tier 3: Contact & Meta Row (1-Column Stack in Senior Mode)
+              if (isSeniorMode)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_iphone_rounded, size: 14, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatPhone(member.phone),
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF334155),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  if (member.payerName != null && member.payerName!.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '· 입금자: ${member.payerName}',
+                    if (member.payerName != null && member.payerName!.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        '입금자(보호자): ${member.payerName}',
                         softWrap: true,
                         style: const TextStyle(
                           fontFamily: 'Pretendard',
-                          fontSize: 11.5,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF94A3B8),
+                          color: Color(0xFF64748B),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
-              ),
+                )
+              else
+                Row(
+                  children: [
+                    const Icon(Icons.phone_iphone_rounded, size: 13, color: Color(0xFF64748B)),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatPhone(member.phone),
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    if (member.payerName != null && member.payerName!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '· 입금자: ${member.payerName}',
+                          softWrap: true,
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
             ],
           ),
         ),
@@ -429,6 +465,7 @@ class _MemberDetailModal extends ConsumerWidget {
 
     final memberPasses = passRecords.where((p) => p.memberId == member.id).toList();
     final memberInvoices = invoices.where((i) => i.memberIds.contains(member.id)).toList();
+    final isSeniorMode = ref.watch(seniorModeProvider);
     final currency = NumberFormat('#,###');
 
     return Padding(
@@ -438,6 +475,7 @@ class _MemberDetailModal extends ConsumerWidget {
         children: [
           // Header
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
@@ -580,60 +618,108 @@ class _MemberDetailModal extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Shortcut Action Buttons (Standardized ZeroButtons)
-          Row(
-            children: [
-              if (member.billingType == BillingType.sessionBased)
+          // Shortcut Action Buttons (1 Column Full-Width in Senior Mode)
+          if (isSeniorMode) ...[
+            if (member.billingType == BillingType.sessionBased) ...[
+              ZeroButton.primary(
+                label: '+10회 충전',
+                icon: Icons.add,
+                fullWidth: true,
+                size: ZeroButtonSize.large,
+                onPressed: () {
+                  ref.read(membersProvider.notifier).addSessions(member.id, 10);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${member.primaryName} 잔여 회차 10회가 추가되었습니다.'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+            ZeroButton.secondary(
+              label: '청구서 즉시 발송',
+              icon: Icons.send_outlined,
+              fullWidth: true,
+              size: ZeroButtonSize.large,
+              onPressed: () async {
+                // Create invoice on the fly
+                final invoice = Invoice(
+                  id: 'inv_${const Uuid().v4().substring(0, 8)}',
+                  memberIds: [member.id],
+                  recipientPhone: member.phone,
+                  title: '${member.primaryName} 수강 패스 재등록 안내',
+                  amount: member.defaultFee,
+                  dueDate: DateTime.now().add(const Duration(days: 5)),
+                  status: PaymentStatus.unpaid,
+                );
+                await ref.read(invoicesProvider.notifier).addInvoice(invoice);
+                final message = SmsTemplateService.generateInvoiceMessage(
+                  studio: studio,
+                  members: [member],
+                  invoice: invoice,
+                );
+                await SmsTemplateService.launchNativeSms(
+                  recipientPhone: member.phone,
+                  body: message,
+                );
+              },
+            ),
+          ] else
+            Row(
+              children: [
+                if (member.billingType == BillingType.sessionBased)
+                  Expanded(
+                    child: ZeroButton.primary(
+                      label: '+10회 충전',
+                      icon: Icons.add,
+                      fullWidth: true,
+                      size: ZeroButtonSize.large,
+                      onPressed: () {
+                        ref.read(membersProvider.notifier).addSessions(member.id, 10);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${member.primaryName} 잔여 회차 10회가 추가되었습니다.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                if (member.billingType == BillingType.sessionBased) const SizedBox(width: 8),
                 Expanded(
-                  child: ZeroButton.primary(
-                    label: '+10회 충전',
-                    icon: Icons.add,
+                  child: ZeroButton.secondary(
+                    label: '청구서 즉시 발송',
+                    icon: Icons.send_outlined,
                     fullWidth: true,
                     size: ZeroButtonSize.large,
-                    onPressed: () {
-                      ref.read(membersProvider.notifier).addSessions(member.id, 10);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${member.primaryName} 잔여 회차 10회가 추가되었습니다.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                    onPressed: () async {
+                      // Create invoice on the fly
+                      final invoice = Invoice(
+                        id: 'inv_${const Uuid().v4().substring(0, 8)}',
+                        memberIds: [member.id],
+                        recipientPhone: member.phone,
+                        title: '${member.primaryName} 수강 패스 재등록 안내',
+                        amount: member.defaultFee,
+                        dueDate: DateTime.now().add(const Duration(days: 5)),
+                        status: PaymentStatus.unpaid,
+                      );
+                      await ref.read(invoicesProvider.notifier).addInvoice(invoice);
+                      final message = SmsTemplateService.generateInvoiceMessage(
+                        studio: studio,
+                        members: [member],
+                        invoice: invoice,
+                      );
+                      await SmsTemplateService.launchNativeSms(
+                        recipientPhone: member.phone,
+                        body: message,
                       );
                     },
                   ),
                 ),
-              if (member.billingType == BillingType.sessionBased) const SizedBox(width: 8),
-              Expanded(
-                child: ZeroButton.secondary(
-                  label: '청구서 즉시 발송',
-                  icon: Icons.send_outlined,
-                  fullWidth: true,
-                  size: ZeroButtonSize.large,
-                  onPressed: () async {
-                    // Create invoice on the fly
-                    final invoice = Invoice(
-                      id: 'inv_${const Uuid().v4().substring(0, 8)}',
-                      memberIds: [member.id],
-                      recipientPhone: member.phone,
-                      title: '${member.primaryName} 수강 패스 재등록 안내',
-                      amount: member.defaultFee,
-                      dueDate: DateTime.now().add(const Duration(days: 5)),
-                      status: PaymentStatus.unpaid,
-                    );
-                    await ref.read(invoicesProvider.notifier).addInvoice(invoice);
-                    final message = SmsTemplateService.generateInvoiceMessage(
-                      studio: studio,
-                      members: [member],
-                      invoice: invoice,
-                    );
-                    await SmsTemplateService.launchNativeSms(
-                      recipientPhone: member.phone,
-                      body: message,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
           const SizedBox(height: 20),
 
           // Timeline Tabs: Pass Attendance vs Payment History
@@ -1270,11 +1356,12 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               ),
               const SizedBox(height: 14),
 
-              // Default Fee & Sessions (Responsive side-by-side or stacked)
+              // Default Fee & Sessions (1 Column Stack in Senior Mode or Narrow Screens)
               LayoutBuilder(
                 builder: (context, constraints) {
+                  final isSenior = ref.watch(seniorModeProvider);
                   final isCompact = constraints.maxWidth < 320;
-                  if (isCompact && _billingType == BillingType.sessionBased) {
+                  if ((isSenior || isCompact) && _billingType == BillingType.sessionBased) {
                     return Column(
                       children: [
                         AppTextField(

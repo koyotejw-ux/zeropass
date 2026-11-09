@@ -627,6 +627,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   Widget build(BuildContext context) {
     final studioAsync = ref.watch(studioProfileProvider);
     final isSeniorMode = ref.watch(seniorModeProvider);
+    final activeLanguage = ref.watch(languageProvider);
+    final activeCurrency = ref.watch(currencyProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -763,11 +765,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 8),
               _buildRepresentativeTile(
-                icon: Icons.language_rounded,
+                icon: Icons.public_rounded,
                 iconColor: const Color(0xFF0284C7),
                 iconBgColor: const Color(0xFFF0F9FF),
-                title: '글로벌 언어 및 통화 단위 설정',
-                subtitle: '${LocalizationService.currentLanguage.label} · ${LocalizationService.currentCurrency.code} (${LocalizationService.currentCurrency.symbol})',
+                title: LocalizationService.tr("global_center_title"),
+                subtitle: "${activeLanguage.flag} ${activeLanguage.label} · ${activeCurrency.flag} ${activeCurrency.code} (${activeCurrency.symbol})",
                 onTap: () => _showLocalizationBottomSheet(context),
               ),
               const SizedBox(height: 16),
@@ -869,6 +871,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   }
 
   Widget _buildStudioCompactHeroCard(BuildContext context, StudioProfile profile) {
+    final isSeniorMode = ref.watch(seniorModeProvider);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1048,46 +1051,84 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
 
           const SizedBox(height: 14),
 
-          // 3. Samsung One UI 2-Column Action Grid
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
+          // 3. Samsung One UI Action Grid (1 Column Full-Width in Senior Mode)
+          if (isSeniorMode)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                OutlinedButton.icon(
                   onPressed: () => _openEditProfileDialog(context, profile),
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 46),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
+                    minimumSize: const Size(double.infinity, 50),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
                   ),
-                  icon: const Icon(Icons.edit_outlined, size: 15, color: AppTheme.textPrimary),
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.textPrimary),
                   label: const Text(
                     '기본 정보 수정',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
                   onPressed: () => _showEditTerminologyModal(context, profile),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0F172A),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    minimumSize: const Size(0, 46),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    minimumSize: const Size(double.infinity, 50),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  icon: const Icon(Icons.tune_rounded, size: 15, color: Colors.white),
+                  icon: const Icon(Icons.tune_rounded, size: 18, color: Colors.white),
                   label: const Text(
                     '맞춤 호칭 설정',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openEditProfileDialog(context, profile),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 46),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
+                    ),
+                    icon: const Icon(Icons.edit_outlined, size: 15, color: AppTheme.textPrimary),
+                    label: const Text(
+                      '기본 정보 수정',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showEditTerminologyModal(context, profile),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 46),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.tune_rounded, size: 15, color: Colors.white),
+                    label: const Text(
+                      '맞춤 호칭 설정',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -1245,94 +1286,394 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   }
 
   void _showLocalizationBottomSheet(BuildContext context) {
+    bool autoSuggestCurrency = true;
+
     AppBottomSheet.show(
       context: context,
-      maxHeightRatio: 0.60,
+      maxHeightRatio: 0.90,
       builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSheetHeader(sheetCtx, '글로벌 언어 및 통화 단위 설정', Icons.language_rounded, const Color(0xFF0284C7)),
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                  boxShadow: AppTheme.cardShadow,
+        builder: (ctx, setSheetState) {
+          final curLang = ref.watch(languageProvider);
+          final curCur = ref.watch(currencyProvider);
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSheetHeader(
+                  sheetCtx,
+                  LocalizationService.tr('global_center_title'),
+                  Icons.public_rounded,
+                  const Color(0xFF0284C7),
                 ),
-                child: Column(
+                Text(
+                  LocalizationService.tr('global_center_subtitle'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 1. Language Selection Section
+                Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.language_rounded, size: 18, color: AppTheme.primaryBlue),
-                            SizedBox(width: 8),
-                            Text('앱 언어', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                          ],
-                        ),
-                        DropdownButton<AppLanguage>(
-                          value: LocalizationService.currentLanguage,
-                          underline: const SizedBox(),
-                          borderRadius: BorderRadius.circular(12),
-                          items: AppLanguage.values.map((lang) {
-                            return DropdownMenuItem<AppLanguage>(
-                              value: lang,
-                              child: Text(lang.label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                            );
-                          }).toList(),
-                          onChanged: (lang) {
-                            if (lang != null) {
-                              LocalizationService.setLanguage(lang);
-                              setSheetState(() {});
-                              setState(() {});
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 16, color: AppTheme.borderSubtle),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.monetization_on_outlined, size: 18, color: AppTheme.softMint),
-                            SizedBox(width: 8),
-                            Text('통화 단위', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                          ],
-                        ),
-                        DropdownButton<AppCurrency>(
-                          value: LocalizationService.currentCurrency,
-                          underline: const SizedBox(),
-                          borderRadius: BorderRadius.circular(12),
-                          items: AppCurrency.values.map((cur) {
-                            return DropdownMenuItem<AppCurrency>(
-                              value: cur,
-                              child: Text('${cur.code} (${cur.symbol})', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                            );
-                          }).toList(),
-                          onChanged: (cur) {
-                            if (cur != null) {
-                              LocalizationService.setCurrency(cur);
-                              setSheetState(() {});
-                              setState(() {});
-                            }
-                          },
-                        ),
-                      ],
+                    const Icon(Icons.translate_rounded, size: 18, color: AppTheme.primaryBlue),
+                    const SizedBox(width: 8),
+                    Text(
+                      LocalizationService.tr('language_selector'),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: AppLanguage.values.map((lang) {
+                    final isSelected = lang == curLang;
+                    return InkWell(
+                      onTap: () async {
+                        await ref.read(languageProvider.notifier).setLanguage(
+                              lang,
+                              autoUpdateCurrency: autoSuggestCurrency,
+                            );
+                        setSheetState(() {});
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? AppTheme.primaryBlue : AppTheme.borderSubtle,
+                            width: isSelected ? 1.8 : 1.0,
+                          ),
+                          boxShadow: isSelected ? AppTheme.cardShadow : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(lang.flag, style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  lang.label,
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSelected ? AppTheme.primaryBlue : AppTheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  lang.englishLabel,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isSelected ? AppTheme.primaryBlue.withAlpha(204) : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isSelected) ...[
+                              const SizedBox(width: 8),
+                              const Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.primaryBlue),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 16),
+                // Auto Suggest Currency Switch
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sync_rounded, size: 18, color: Color(0xFF0284C7)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          LocalizationService.tr('auto_suggest_currency'),
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                        ),
+                      ),
+                      Switch(
+                        value: autoSuggestCurrency,
+                        activeThumbColor: AppTheme.primaryBlue,
+                        onChanged: (val) {
+                          setSheetState(() {
+                            autoSuggestCurrency = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                // 2. Currency & Accounting Policy Selection
+                Row(
+                  children: [
+                    const Icon(Icons.monetization_on_outlined, size: 18, color: AppTheme.softMint),
+                    const SizedBox(width: 8),
+                    Text(
+                      LocalizationService.tr('currency_selector'),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Column(
+                  children: AppCurrency.values.map((cur) {
+                    final isSelected = cur == curCur;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: InkWell(
+                        onTap: () async {
+                          await ref.read(currencyProvider.notifier).setCurrency(cur);
+                          setSheetState(() {});
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFF16A34A) : AppTheme.borderSubtle,
+                              width: isSelected ? 1.8 : 1.0,
+                            ),
+                            boxShadow: isSelected ? AppTheme.cardShadow : null,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(cur.flag, style: const TextStyle(fontSize: 20)),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              '${cur.code} (${cur.symbol})',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w800,
+                                                color: isSelected ? const Color(0xFF15803D) : AppTheme.textPrimary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: cur.decimalPlaces == 0 ? const Color(0xFFEFF6FF) : const Color(0xFFFEF3C7),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                cur.decimalPlaces == 0 ? '소수점 0자리 (정수)' : '소수점 ${cur.decimalPlaces}자리 (.00)',
+                                                style: TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: cur.decimalPlaces == 0 ? const Color(0xFF1D4ED8) : const Color(0xFFB45309),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          cur.displayName,
+                                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(Icons.check_circle_rounded, size: 20, color: Color(0xFF16A34A)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.white.withAlpha(204) : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.payment_rounded, size: 13, color: Color(0xFF64748B)),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            cur.paymentChannels.join(' · '),
+                                            style: const TextStyle(fontSize: 11, color: Color(0xFF334155), fontWeight: FontWeight.w500),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.receipt_long_outlined, size: 13, color: Color(0xFF64748B)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '세무: ',
+                                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 16),
+                // 3. Live Preview Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF0FDF4), Color(0xFFEFF6FF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFBAE6FD), width: 1.2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.visibility_outlined, size: 16, color: Color(0xFF0369A1)),
+                              const SizedBox(width: 6),
+                              Text(
+                                LocalizationService.tr('live_preview_card'),
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0369A1)),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${curLang.flag} ${curLang.label} · ${curCur.flag} ${curCur.code}',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('예시 청구 금액 (Sample Fee)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          Text(
+                            curCur.format(150000),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryDark),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('표기 일자 (Sample Date)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          Text(
+                            LocalizationService.formatDate(DateTime.now()),
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('출결 상태 (Status)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withAlpha(38),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              LocalizationService.tr('checked_in'),
+                              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF047857)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    onPressed: () => Navigator.pop(sheetCtx),
+                    child: Text(
+                      LocalizationService.tr('btn_confirm'),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

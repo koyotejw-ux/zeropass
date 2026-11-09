@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
+import '../services/localization_service.dart';
 import '../services/database_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
@@ -401,9 +402,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final studio = ref.watch(studioProfileProvider).value ?? StudioProfile.defaultProfile();
     final members = ref.watch(membersProvider).value ?? [];
-    final dateStr = DateFormat('yyyy년 MM월 dd일 (E)', 'ko_KR').format(_currentTime);
+    final dateStr = DateFormat.yMMMEd(LocalizationService.currentLanguage.code).format(_currentTime);
     final timeStr = DateFormat('HH:mm:ss').format(_currentTime);
 
     final showEmptyState = members.isEmpty && !_localTestMode;
@@ -935,10 +937,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildPromptAndMascot() {
-    return const Column(
+    return Column(
       children: [
         Text(
-          '전화번호 뒷자리 4자리를 입력해주세요',
+          LocalizationService.tr('kiosk_prompt'),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 17,

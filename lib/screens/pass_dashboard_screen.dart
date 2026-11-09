@@ -990,6 +990,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   ]) {
     final isSessionBased = member.billingType == BillingType.sessionBased;
     final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
+    final isSeniorMode = ref.watch(seniorModeProvider);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1008,126 +1009,236 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Meta Row: Course & Group (Left) <-> Attendance Status Badge (Right)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(6),
+          // 1. Top Meta Row: Course & Group <-> Attendance Status Badge
+          if (isSeniorMode)
+            Row(
+              children: [
+                if (isChecked)
+                  ZeroBadge.success(
+                    todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
+                    size: ZeroBadgeSize.medium,
+                    icon: Icons.check_circle_rounded,
+                  )
+                else if (isSessionBased && isExpiringSoon)
+                  ZeroBadge.danger('만료 임박', size: ZeroBadgeSize.medium)
+                else
+                  ZeroBadge.neutral(
+                    isSessionBased ? '수강 중' : '정기권',
+                    size: ZeroBadgeSize.medium,
                   ),
-                  child: Text(
-                    [
-                      if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
-                      if (member.groupName.isNotEmpty) member.groupName,
-                      if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
-                    ].join(' · '),
-                    softWrap: true,
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF475569),
-                      height: 1.25,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      [
+                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                        if (member.groupName.isNotEmpty) member.groupName,
+                        if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                        height: 1.25,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              if (isChecked)
-                ZeroBadge.success(
-                  todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
-                  size: ZeroBadgeSize.medium,
-                  icon: Icons.check_circle_rounded,
-                )
-              else if (isSessionBased && isExpiringSoon)
-                ZeroBadge.danger('만료 임박', size: ZeroBadgeSize.medium)
-              else
-                ZeroBadge.neutral(
-                  isSessionBased ? '수강 중' : '정기권',
-                  size: ZeroBadgeSize.medium,
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // 2. Primary Member Identity (UNCONSTRAINED FULL WIDTH: Avatar + Name 17px + Sessions 13px)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ZeroAvatar(
-                name: member.name,
-                size: ZeroAvatarSize.medium,
-                backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
-                textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Member Name: Unconstrained full width, 17px bold, softWrap enabled!
-                    Text(
-                      member.name,
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      [
+                        if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
+                        if (member.groupName.isNotEmpty) member.groupName,
+                        if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                      ].join(' · '),
                       softWrap: true,
                       style: const TextStyle(
                         fontFamily: 'Pretendard',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.4,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                        height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    // Sessions info: Clear 13px font
-                    Text(
-                      isSessionBased
-                          ? '잔여 회차: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
-                          : '정기권 회원 (무제한 출석)',
-                      style: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isExpiringSoon ? const Color(0xFFE11D48) : const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (isChecked)
+                  ZeroBadge.success(
+                    todayPass?.status == AttendanceStatus.late ? '지각' : '출석 완료',
+                    size: ZeroBadgeSize.medium,
+                    icon: Icons.check_circle_rounded,
+                  )
+                else if (isSessionBased && isExpiringSoon)
+                  ZeroBadge.danger('만료 임박', size: ZeroBadgeSize.medium)
+                else
+                  ZeroBadge.neutral(
+                    isSessionBased ? '수강 중' : '정기권',
+                    size: ZeroBadgeSize.medium,
+                  ),
+              ],
+            ),
+
+          const SizedBox(height: 10),
+
+          // 2. Primary Member Identity (UNCONSTRAINED FULL WIDTH: Avatar + Name + Sessions)
+          if (isSeniorMode)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ZeroAvatar(
+                      name: member.name,
+                      size: ZeroAvatarSize.medium,
+                      backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+                      textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        member.name,
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        DigitalPassCardDialog.show(
+                          context: context,
+                          member: member,
+                          studio: studio,
+                          latestRecord: todayPass,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                        ),
+                        child: const Icon(Icons.qr_code_2_rounded, size: 20, color: Color(0xFF64748B)),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Mobile Pass Shortcut Button
-              InkWell(
-                onTap: () {
-                  DigitalPassCardDialog.show(
-                    context: context,
-                    member: member,
-                    studio: studio,
-                    latestRecord: todayPass,
-                  );
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    isSessionBased
+                        ? '잔여 회차: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
+                        : '정기권 회원 (무제한 출석)',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: isExpiringSoon ? const Color(0xFFE11D48) : const Color(0xFF64748B),
+                    ),
                   ),
-                  child: const Icon(Icons.qr_code_2_rounded, size: 20, color: Color(0xFF64748B)),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ZeroAvatar(
+                  name: member.name,
+                  size: ZeroAvatarSize.medium,
+                  backgroundColor: isChecked ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+                  textColor: isChecked ? AppTheme.softMint : AppTheme.primaryDark,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        member.name,
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        isSessionBased
+                            ? '잔여 회차: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
+                            : '정기권 회원 (무제한 출석)',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isExpiringSoon ? const Color(0xFFE11D48) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    DigitalPassCardDialog.show(
+                      context: context,
+                      member: member,
+                      studio: studio,
+                      latestRecord: todayPass,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                    ),
+                    child: const Icon(Icons.qr_code_2_rounded, size: 20, color: Color(0xFF64748B)),
+                  ),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 12),
 
-          // 3. Action Button (Full Width, Minimum 48dp Touch Target, Zero Text Clipping!)
+          // 3. Action Button (Full Width 1-Column in Senior Mode, Zero Text Clipping!)
           if (!isChecked)
             SizedBox(
               width: double.infinity,
@@ -1152,6 +1263,44 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
+            )
+          else if (isSeniorMode)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ZeroButton.tint(
+                  label: '등원 안심 알림 전송 (카톡/SMS)',
+                  icon: Icons.send_rounded,
+                  size: ZeroButtonSize.large,
+                  fullWidth: true,
+                  onPressed: () {
+                    AttendanceNotifyDialog.show(
+                      context: context,
+                      member: member,
+                      studio: studio,
+                      type: AttendanceNotifyType.checkIn,
+                      time: todayPass?.timestamp ?? DateTime.now(),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ZeroButton(
+                  label: '하원 귀가 알림 전송 (카톡/SMS)',
+                  icon: Icons.exit_to_app_rounded,
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.large,
+                  fullWidth: true,
+                  onPressed: () {
+                    AttendanceNotifyDialog.show(
+                      context: context,
+                      member: member,
+                      studio: studio,
+                      type: AttendanceNotifyType.checkOut,
+                      time: DateTime.now(),
+                    );
+                  },
+                ),
+              ],
             )
           else
             Row(
@@ -1533,7 +1682,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
@@ -1546,31 +1695,19 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 child: const Icon(Icons.elderly_rounded, color: Colors.white, size: 22),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '시니어 간편 3대 업무 보드',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '오늘 출석: $attendedToday명 / 미출석: $remainingCount명 (총 $totalMembers명)',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.trustBlue,
-                      ),
-                    ),
-                  ],
+              const Expanded(
+                child: Text(
+                  '시니어 간편 3대 업무 보드',
+                  softWrap: true,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                    letterSpacing: -0.4,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () => SeniorEasyGuideModal.show(context),
                 borderRadius: BorderRadius.circular(12),
@@ -1600,47 +1737,60 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(200),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.trustBlue.withAlpha(60), width: 1.0),
+            ),
+            child: Text(
+              '오늘 출석: $attendedToday명  ·  미출석: $remainingCount명 (총 $totalMembers명)',
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.trustBlue,
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
-          // 3 Big Touch Action Tiles
-          Row(
+          // 3 Big Touch Action Tiles (Senior Mode 1-Column Full-Width Stack)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _buildSeniorActionTile(
-                  icon: Icons.check_circle_rounded,
-                  iconColor: const Color(0xFF059669),
-                  bgColor: const Color(0xFFECFDF5),
-                  borderColor: const Color(0xFF10B981),
-                  title: '간편 출석',
-                  subtitle: '오늘 출석 체크',
-                  badgeText: '$attendedToday명 완료',
-                  onTap: () => _showSeniorAttendanceSheet(context, members, todayRecords),
-                ),
+              _buildSeniorActionTile(
+                icon: Icons.check_circle_rounded,
+                iconColor: const Color(0xFF059669),
+                bgColor: const Color(0xFFECFDF5),
+                borderColor: const Color(0xFF10B981),
+                title: '간편 출석',
+                subtitle: '오늘 출석 체크 및 안심 알림',
+                badgeText: '$attendedToday명 완료 · 원터치 체크인',
+                onTap: () => _showSeniorAttendanceSheet(context, members, todayRecords),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSeniorActionTile(
-                  icon: Icons.mark_email_read_rounded,
-                  iconColor: AppTheme.trustBlue,
-                  bgColor: const Color(0xFFEFF6FF),
-                  borderColor: AppTheme.trustBlue,
-                  title: '회비 문자',
-                  subtitle: '수강료 안내',
-                  badgeText: '계좌번호 전송',
-                  onTap: () => _showSeniorBillingSheet(context, members, studio),
-                ),
+              const SizedBox(height: 10),
+              _buildSeniorActionTile(
+                icon: Icons.mark_email_read_rounded,
+                iconColor: AppTheme.trustBlue,
+                bgColor: const Color(0xFFEFF6FF),
+                borderColor: AppTheme.trustBlue,
+                title: '회비 문자',
+                subtitle: '수강료 청구 및 입금 안내',
+                badgeText: '수납 계좌번호 안내 문자 전송',
+                onTap: () => _showSeniorBillingSheet(context, members, studio),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSeniorActionTile(
-                  icon: Icons.phone_in_talk_rounded,
-                  iconColor: const Color(0xFFD97706),
-                  bgColor: const Color(0xFFFFFBEB),
-                  borderColor: const Color(0xFFF59E0B),
-                  title: '바로 통화',
-                  subtitle: '학부모 전화',
-                  badgeText: '원터치 연결',
-                  onTap: () => _showSeniorCallSheet(context, members),
-                ),
+              const SizedBox(height: 10),
+              _buildSeniorActionTile(
+                icon: Icons.phone_in_talk_rounded,
+                iconColor: const Color(0xFFD97706),
+                bgColor: const Color(0xFFFFFBEB),
+                borderColor: const Color(0xFFF59E0B),
+                title: '바로 통화',
+                subtitle: '원생 및 학부모 안심 통화',
+                badgeText: '원터치 즉시 전화 연결',
+                onTap: () => _showSeniorCallSheet(context, members),
               ),
             ],
           ),
@@ -1665,52 +1815,81 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: borderColor, width: 1.5),
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(icon, color: iconColor, size: 28),
-              const SizedBox(height: 6),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                  letterSpacing: -0.3,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: iconColor.withAlpha(25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(icon, color: iconColor, size: 26),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_ios_rounded, size: 16, color: iconColor.withAlpha(180)),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
-                ),
-              ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: borderColor.withAlpha(150), width: 0.8),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: borderColor.withAlpha(120), width: 1.2),
                 ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: iconColor,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      badgeText,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: iconColor,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.touch_app_rounded, size: 15, color: iconColor),
+                  ],
                 ),
               ),
             ],
@@ -2149,119 +2328,130 @@ class _SeniorAttendanceModalSheetState extends ConsumerState<_SeniorAttendanceMo
                             ),
                             boxShadow: AppTheme.cardShadow,
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: isChecked ? const Color(0xFFDCFCE7) : const Color(0xFFEFF6FF),
-                                child: Text(
-                                  m.name.isNotEmpty ? m.name[0] : '?',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: isChecked ? const Color(0xFF16A34A) : AppTheme.trustBlue,
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: isChecked ? const Color(0xFFDCFCE7) : const Color(0xFFEFF6FF),
+                                    child: Text(
+                                      m.name.isNotEmpty ? m.name[0] : '?',
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        color: isChecked ? const Color(0xFF16A34A) : AppTheme.trustBlue,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Flexible(
-                                          child: Text(
-                                            m.name,
-                                            style: const TextStyle(
-                                              fontSize: 18.5,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.black,
+                                        Wrap(
+                                          spacing: 6,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          children: [
+                                            Text(
+                                              m.name,
+                                              style: const TextStyle(
+                                                fontSize: 18.5,
+                                                fontWeight: FontWeight.w900,
+                                                color: Colors.black,
+                                              ),
                                             ),
-                                          ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF1F5F9),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                m.groupName,
+                                                style: const TextStyle(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF475569),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF1F5F9),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            m.groupName,
-                                            style: const TextStyle(
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF475569),
-                                            ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          m.phone,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF475569),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      m.phone,
-                                      style: const TextStyle(
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF334155),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(height: 12),
                               if (isChecked)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  width: double.infinity,
+                                  height: 48,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF16A34A),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        '출석완료',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w900,
+                                  child: const Center(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          '오늘 출석 완료',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 )
                               else
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF059669),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                    elevation: 1,
-                                  ),
-                                  onPressed: () async {
-                                    await ref.read(passRecordsProvider.notifier).checkInMember(member: m);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '${m.name} 학생 출석 체크 완료!',
-                                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF059669),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      elevation: 0,
+                                    ),
+                                    icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                                    label: const Text(
+                                      '출석 확인',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                                    ),
+                                    onPressed: () async {
+                                      await ref.read(passRecordsProvider.notifier).checkInMember(member: m);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              ' 학생 출석 체크 완료!',
+                                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                            ),
+                                            backgroundColor: const Color(0xFF059669),
+                                            behavior: SnackBarBehavior.floating,
+                                            duration: const Duration(seconds: 2),
                                           ),
-                                          backgroundColor: const Color(0xFF059669),
-                                          behavior: SnackBarBehavior.floating,
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: const Text(
-                                    '출석 확인',
-                                    style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
                             ],
@@ -2422,32 +2612,40 @@ class _SeniorBillingModalSheetState extends State<_SeniorBillingModalSheet> {
                                       children: [
                                         Text(
                                           m.name,
+                                          softWrap: true,
                                           style: const TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 18.5,
                                             fontWeight: FontWeight.w900,
                                             color: Colors.black,
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          m.payerName != null && m.payerName!.isNotEmpty
-                                              ? '입금자(보호자): ${m.payerName}'
-                                              : '연락처: ${m.phone}',
-                                          style: const TextStyle(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF475569),
-                                          ),
+                                        const SizedBox(height: 3),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                m.payerName != null && m.payerName!.isNotEmpty
+                                                    ? '입금자: '
+                                                    : '연락처: ',
+                                                style: const TextStyle(
+                                                  fontSize: 13.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF475569),
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              '',
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1D4ED8),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
-                                    ),
-                                  ),
-                                  Text(
-                                    '$formattedFee원',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF1D4ED8),
                                     ),
                                   ),
                                 ],
@@ -2615,93 +2813,100 @@ class _SeniorCallModalSheetState extends State<_SeniorCallModalSheet> {
                             border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
                             boxShadow: AppTheme.cardShadow,
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: const Color(0xFFFEF3C7),
-                                child: Text(
-                                  m.name.isNotEmpty ? m.name[0] : '?',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFFD97706),
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: const Color(0xFFFEF3C7),
+                                    child: Text(
+                                      m.name.isNotEmpty ? m.name[0] : '?',
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFFD97706),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Flexible(
-                                          child: Text(
-                                            m.name,
-                                            style: const TextStyle(
-                                              fontSize: 18.5,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.black,
+                                        Wrap(
+                                          spacing: 6,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          children: [
+                                            Text(
+                                              m.name,
+                                              style: const TextStyle(
+                                                fontSize: 18.5,
+                                                fontWeight: FontWeight.w900,
+                                                color: Colors.black,
+                                              ),
                                             ),
-                                          ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFFEF3C7),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                label,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Color(0xFFB45309),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFFEF3C7),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFFB45309),
-                                            ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          callTarget,
+                                          style: const TextStyle(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF334155),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      callTarget,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF334155),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF059669),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                  elevation: 1,
-                                ),
-                                icon: const Icon(Icons.phone_rounded, size: 18),
-                                label: const Text(
-                                  '전화걸기',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-                                ),
-                                onPressed: () async {
-                                  final uri = Uri.parse('tel:$callTarget');
-                                  if (await canLaunchUrl(uri)) {
-                                    await launchUrl(uri);
-                                  } else {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('$callTarget 연결 실패')),
-                                      );
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF059669),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    elevation: 0,
+                                  ),
+                                  icon: const Icon(Icons.phone_rounded, size: 20),
+                                  label: const Text(
+                                    '원터치 바로 통화',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                                  ),
+                                  onPressed: () async {
+                                    final uri = Uri.parse('tel:$callTarget');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri);
+                                    } else {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('$callTarget 연결 실패')),
+                                        );
+                                      }
                                     }
-                                  }
-                                },
+                                  },
+                                ),
                               ),
                             ],
                           ),

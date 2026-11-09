@@ -876,6 +876,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     List<Member> invoiceMembers,
     StudioProfile studio,
   ) {
+    final isSeniorMode = ref.watch(seniorModeProvider);
     final isPaid = invoice.status == PaymentStatus.paid;
     final memberNames = invoiceMembers.map((m) => m.name).join(', ');
     final dateLabel = isPaid ? '수납일' : '납부기한';
@@ -1043,42 +1044,71 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Tier 2: 2 Clean Equal Utility Buttons (Max 2 columns!)
-            Row(
-              children: [
-                Expanded(
-                  child: ZeroButton(
-                    label: '카톡 청구서',
-                    icon: Icons.chat_bubble_outline_rounded,
-                    variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () async {
-                      final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
-                        studio: studio,
-                        members: invoiceMembers,
-                        invoice: invoice,
-                      );
-                      await KakaoShareService.shareMessage(
-                        text: kakaoMsg,
-                        subject: '[${studio.studioName}] 수강료 청구 안내',
-                      );
-                    },
+            // Tier 2: 2 Clean Equal Utility Buttons (1 Column Full-Width in Senior Mode)
+            if (isSeniorMode) ...[
+              ZeroButton(
+                label: '카톡 청구서',
+                icon: Icons.chat_bubble_outline_rounded,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () async {
+                  final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
+                    studio: studio,
+                    members: invoiceMembers,
+                    invoice: invoice,
+                  );
+                  await KakaoShareService.shareMessage(
+                    text: kakaoMsg,
+                    subject: '[${studio.studioName}] 수강료 청구 안내',
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              ZeroButton(
+                label: '문자 청구서',
+                icon: Icons.sms_outlined,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
+              ),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    child: ZeroButton(
+                      label: '카톡 청구서',
+                      icon: Icons.chat_bubble_outline_rounded,
+                      variant: ZeroButtonVariant.neutral,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () async {
+                        final kakaoMsg = KakaoShareService.generateInvoiceKakaoMessage(
+                          studio: studio,
+                          members: invoiceMembers,
+                          invoice: invoice,
+                        );
+                        await KakaoShareService.shareMessage(
+                          text: kakaoMsg,
+                          subject: '[${studio.studioName}] 수강료 청구 안내',
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ZeroButton(
-                    label: '문자 청구서',
-                    icon: Icons.sms_outlined,
-                    variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ZeroButton(
+                      label: '문자 청구서',
+                      icon: Icons.sms_outlined,
+                      variant: ZeroButtonVariant.neutral,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () => _sendSmsInvoice(context, studio, invoiceMembers, invoice),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             const SizedBox(height: 8),
 
             // Tier 3: Full-width Tint Reminder CTA
@@ -1086,7 +1116,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               label: '1초 입금 안내 리마인드 문자',
               icon: Icons.notifications_none_rounded,
               variant: ZeroButtonVariant.tint,
-              size: ZeroButtonSize.medium,
+              size: isSeniorMode ? ZeroButtonSize.large : ZeroButtonSize.medium,
               fullWidth: true,
               onPressed: () {
                 final reminderMsg = SmsTemplateService.generateUnpaidReminderMessage(
@@ -1101,38 +1131,63 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               },
             ),
           ] else ...[
-            // Paid Invoice Utilities: 2 Equal Secondary Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ZeroButton.secondary(
-                    label: '영수증 알림 (0원)',
-                    icon: Icons.receipt_long_rounded,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () async {
-                      if (invoiceMembers.isEmpty) return;
-                      ReceiptNotifyDialog.show(
-                        context: context,
-                        member: invoiceMembers.first,
-                        invoice: invoice,
-                        studio: studio,
-                      );
-                    },
+            // Paid Invoice Utilities (1 Column Full-Width in Senior Mode)
+            if (isSeniorMode) ...[
+              ZeroButton.secondary(
+                label: '영수증 알림 (0원)',
+                icon: Icons.receipt_long_rounded,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () async {
+                  if (invoiceMembers.isEmpty) return;
+                  ReceiptNotifyDialog.show(
+                    context: context,
+                    member: invoiceMembers.first,
+                    invoice: invoice,
+                    studio: studio,
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              ZeroButton.secondary(
+                label: '영수증 문자 전송',
+                icon: Icons.sms_outlined,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
+              ),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    child: ZeroButton.secondary(
+                      label: '영수증 알림 (0원)',
+                      icon: Icons.receipt_long_rounded,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () async {
+                        if (invoiceMembers.isEmpty) return;
+                        ReceiptNotifyDialog.show(
+                          context: context,
+                          member: invoiceMembers.first,
+                          invoice: invoice,
+                          studio: studio,
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ZeroButton.secondary(
-                    label: '영수증 문자 전송',
-                    icon: Icons.sms_outlined,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ZeroButton.secondary(
+                      label: '영수증 문자 전송',
+                      icon: Icons.sms_outlined,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () => _sendReceiptSms(context, studio, invoiceMembers, invoice),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ],
       ),
@@ -1639,6 +1694,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     List<Vendor> vendors,
     StudioProfile studio,
   ) {
+    final isSeniorMode = ref.watch(seniorModeProvider);
     final vendor = vendors.where((v) => v.id == expense.vendorId || v.name == expense.vendorName).firstOrNull;
     final dateStr = DateFormat('yyyy.MM.dd').format(expense.date);
     final isInstructor = expense.category == '강사료' || vendor?.category == '강사/코치료';
@@ -1862,54 +1918,88 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
           const SizedBox(height: 12),
 
-          // 4. Action Row (Max 2 Columns, Zero Text Cramming!)
+          // 4. Action Row (1 Column Full-Width in Senior Mode)
           if (isInstructor || expense.isWithholdingApplied) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: ZeroButton(
-                    label: '카톡 발주/입금서',
-                    icon: Icons.chat_bubble_outline_rounded,
-                    variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () async {
-                      final kakaoMsg = KakaoShareService.generateVendorOrderKakaoMessage(
-                        studio: studio,
-                        vendorName: expense.vendorName,
-                        title: expense.title,
-                        amount: expense.amount,
-                        bankInfo: vendor != null && vendor.accountNumber != null
-                            ? '${vendor.bankName} ${vendor.accountNumber} (${vendor.accountHolder ?? ''})'
-                            : null,
-                        memo: expense.memo,
-                      );
-                      await KakaoShareService.shareMessage(
-                        text: kakaoMsg,
-                        subject: '[${studio.studioName}] 발주 및 입금 확인',
-                      );
-                    },
+            if (isSeniorMode) ...[
+              ZeroButton(
+                label: '카톡 발주/입금서',
+                icon: Icons.chat_bubble_outline_rounded,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () async {
+                  final kakaoMsg = KakaoShareService.generateVendorOrderKakaoMessage(
+                    studio: studio,
+                    vendorName: expense.vendorName,
+                    title: expense.title,
+                    amount: expense.amount,
+                    bankInfo: vendor != null && vendor.accountNumber != null
+                        ? '${vendor.bankName} ${vendor.accountNumber} (${vendor.accountHolder ?? ''})'
+                        : null,
+                    memo: expense.memo,
+                  );
+                  await KakaoShareService.shareMessage(
+                    text: kakaoMsg,
+                    subject: '[${studio.studioName}] 발주 및 입금 확인',
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              ZeroButton(
+                label: '강사 정산서',
+                icon: Icons.badge_outlined,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () => _showStaffSettlementModal(context, expense, vendor, studio),
+              ),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    child: ZeroButton(
+                      label: '카톡 발주/입금서',
+                      icon: Icons.chat_bubble_outline_rounded,
+                      variant: ZeroButtonVariant.neutral,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () async {
+                        final kakaoMsg = KakaoShareService.generateVendorOrderKakaoMessage(
+                          studio: studio,
+                          vendorName: expense.vendorName,
+                          title: expense.title,
+                          amount: expense.amount,
+                          bankInfo: vendor != null && vendor.accountNumber != null
+                              ? '${vendor.bankName} ${vendor.accountNumber} (${vendor.accountHolder ?? ''})'
+                              : null,
+                          memo: expense.memo,
+                        );
+                        await KakaoShareService.shareMessage(
+                          text: kakaoMsg,
+                          subject: '[${studio.studioName}] 발주 및 입금 확인',
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ZeroButton(
-                    label: '강사 정산서',
-                    icon: Icons.badge_outlined,
-                    variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () => _showStaffSettlementModal(context, expense, vendor, studio),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ZeroButton(
+                      label: '강사 정산서',
+                      icon: Icons.badge_outlined,
+                      variant: ZeroButtonVariant.neutral,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () => _showStaffSettlementModal(context, expense, vendor, studio),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ] else ...[
             ZeroButton(
               label: '카톡 발주/입금서 전송',
               icon: Icons.chat_bubble_outline_rounded,
               variant: ZeroButtonVariant.neutral,
-              size: ZeroButtonSize.medium,
+              size: isSeniorMode ? ZeroButtonSize.large : ZeroButtonSize.medium,
               fullWidth: true,
               onPressed: () async {
                 final kakaoMsg = KakaoShareService.generateVendorOrderKakaoMessage(
@@ -1932,46 +2022,85 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           const SizedBox(height: 8),
 
           // 5. Tier-4 Utility Actions (Standardized ZeroButtons for Edit & Delete)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ZeroButton(
-                label: '수정',
-                icon: Icons.edit_outlined,
-                variant: ZeroButtonVariant.neutral,
-                size: ZeroButtonSize.compact,
-                onPressed: () => _openAddExpenseSheet(context, vendors, expense),
-              ),
-              const SizedBox(width: 8),
-              ZeroButton(
-                label: '삭제',
-                icon: Icons.delete_outline_rounded,
-                variant: ZeroButtonVariant.neutral,
-                size: ZeroButtonSize.compact,
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (dCtx) => AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: const Text('지출 내역 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      content: Text('\'${expense.title}\' 지출 내역을 장부에서 삭제하시겠습니까?'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(dCtx, true),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                          child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
-                    await ref.read(expensesProvider.notifier).deleteExpense(expense.id);
-                  }
-                },
-              ),
-            ],
-          ),
+          if (isSeniorMode) ...[
+            ZeroButton(
+              label: '지출 항목 수정',
+              icon: Icons.edit_outlined,
+              variant: ZeroButtonVariant.neutral,
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => _openAddExpenseSheet(context, vendors, expense),
+            ),
+            const SizedBox(height: 8),
+            ZeroButton(
+              label: '지출 항목 삭제',
+              icon: Icons.delete_outline_rounded,
+              variant: ZeroButtonVariant.neutral,
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: const Text('지출 내역 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    content: Text('\'${expense.title}\' 지출 내역을 장부에서 삭제하시겠습니까?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(dCtx, true),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                        child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await ref.read(expensesProvider.notifier).deleteExpense(expense.id);
+                }
+              },
+            ),
+          ] else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ZeroButton(
+                  label: '수정',
+                  icon: Icons.edit_outlined,
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.compact,
+                  onPressed: () => _openAddExpenseSheet(context, vendors, expense),
+                ),
+                const SizedBox(width: 8),
+                ZeroButton(
+                  label: '삭제',
+                  icon: Icons.delete_outline_rounded,
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.compact,
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (dCtx) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: const Text('지출 내역 삭제', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        content: Text('\'${expense.title}\' 지출 내역을 장부에서 삭제하시겠습니까?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('취소')),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(dCtx, true),
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                            child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await ref.read(expensesProvider.notifier).deleteExpense(expense.id);
+                    }
+                  },
+                ),
+              ],
+            ),
         ],
       ),
     );

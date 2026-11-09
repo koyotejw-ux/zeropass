@@ -311,59 +311,77 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
               ),
               const SizedBox(height: 18),
 
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _isSending ? null : _sendViaKakao,
-                      icon: const Icon(Icons.chat_bubble_rounded, size: 16, color: Color(0xFF191919)),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '카톡 0원 전송',
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF191919),
-                          ),
+              // Action Buttons (1 Column Full-Width in Senior Mode)
+              Builder(
+                builder: (context) {
+                  final isSenior = Theme.of(context).primaryColor == AppTheme.seniorPrimaryBlue;
+                  final kakaoBtn = ElevatedButton.icon(
+                    onPressed: _isSending ? null : _sendViaKakao,
+                    icon: const Icon(Icons.chat_bubble_rounded, size: 16, color: Color(0xFF191919)),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '카톡 0원 전송',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: isSenior ? 15.5 : 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF191919),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEE500),
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _isSending ? null : _sendViaSms,
-                      icon: const Icon(Icons.sms_outlined, size: 16, color: Colors.white),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '문자(SMS) 전송',
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFEE500),
+                      minimumSize: isSenior ? const Size(double.infinity, 50) : Size.zero,
+                      padding: EdgeInsets.symmetric(vertical: isSenior ? 14 : 13),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  );
+
+                  final smsBtn = ElevatedButton.icon(
+                    onPressed: _isSending ? null : _sendViaSms,
+                    icon: const Icon(Icons.sms_outlined, size: 16, color: Colors.white),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '문자(SMS) 전송',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: isSenior ? 15.5 : 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
                     ),
-                  ),
-                ],
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      minimumSize: isSenior ? const Size(double.infinity, 50) : Size.zero,
+                      padding: EdgeInsets.symmetric(vertical: isSenior ? 14 : 13),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  );
+
+                  if (isSenior) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        kakaoBtn,
+                        const SizedBox(height: 10),
+                        smsBtn,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: kakaoBtn),
+                      const SizedBox(width: 8),
+                      Expanded(child: smsBtn),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 8),
               Center(

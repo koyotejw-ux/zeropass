@@ -11,7 +11,9 @@ import '../models/notification_log.dart';
 import '../models/schedule_item.dart';
 import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
+import 'dart:ui';
 import '../services/schedule_service.dart';
+import '../services/localization_service.dart';
 
 // Database Instance Provider
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
@@ -490,3 +492,70 @@ final schedulesProvider =
 
 
 
+
+
+// Global Language Notifier
+class LanguageNotifier extends Notifier<AppLanguage> {
+  @override
+  AppLanguage build() {
+    _load();
+    return LocalizationService.currentLanguage;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString(LocalizationService.keySelectedLanguage);
+    if (code != null && code.isNotEmpty) {
+      final lang = AppLanguage.fromCode(code);
+      await LocalizationService.setLanguage(lang, persist: false);
+      state = lang;
+    }
+  }
+
+  Future<void> setLanguage(AppLanguage lang, {bool autoUpdateCurrency = false}) async {
+    await LocalizationService.setLanguage(lang, persist: true);
+    state = lang;
+    if (autoUpdateCurrency) {
+      final cur = AppCurrency.defaultForLanguage(lang);
+      await ref.read(currencyProvider.notifier).setCurrency(cur);
+    }
+  }
+}
+
+final languageProvider = NotifierProvider<LanguageNotifier, AppLanguage>(() {
+  return LanguageNotifier();
+});
+
+// Global Currency Policy Notifier
+class CurrencyNotifier extends Notifier<AppCurrency> {
+  @override
+  AppCurrency build() {
+    _load();
+    return LocalizationService.currentCurrency;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString(LocalizationService.keySelectedCurrency);
+    if (code != null && code.isNotEmpty) {
+      final cur = AppCurrency.fromCode(code);
+      await LocalizationService.setCurrency(cur, persist: false);
+      state = cur;
+    }
+  }
+
+  Future<void> setCurrency(AppCurrency cur) async {
+    await LocalizationService.setCurrency(cur, persist: true);
+    state = cur;
+  }
+}
+
+final currencyProvider = NotifierProvider<CurrencyNotifier, AppCurrency>(() {
+  return CurrencyNotifier();
+});
+
+// Active Locale Provider
+final localeProvider = Provider<Locale>((ref) {
+  final lang = ref.watch(languageProvider);
+  return Locale(lang.code);
+});

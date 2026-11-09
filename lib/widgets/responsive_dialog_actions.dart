@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Responsive button row/column for dialogs and modal bottom sheets.
 /// If available width is tight (< [breakpoint] px, default 300) or buttons cannot fit on one line,
-/// it smoothly adapts into a vertical Column of full-width buttons.
+/// or if Senior Mode is active, it smoothly adapts into a vertical Column of full-width buttons.
 /// Otherwise, it aligns them neatly side-by-side in a Row.
 class ResponsiveDialogActions extends StatelessWidget {
   final Widget primary;
@@ -26,7 +27,8 @@ class ResponsiveDialogActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < breakpoint;
+        final isSenior = Theme.of(context).primaryColor == AppTheme.seniorPrimaryBlue;
+        final isNarrow = isSenior || constraints.maxWidth < breakpoint;
 
         if (isNarrow) {
           final columnChildren = <Widget>[];

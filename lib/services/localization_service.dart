@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 enum AppLanguage {
   korean('ko', '한국어'),
   english('en', 'English'),
@@ -14,6 +18,39 @@ enum AppLanguage {
       orElse: () => AppLanguage.korean,
     );
   }
+
+  String get flag {
+    switch (this) {
+      case AppLanguage.korean:
+        return '🇰🇷';
+      case AppLanguage.english:
+        return '🇺🇸';
+      case AppLanguage.japanese:
+        return '🇯🇵';
+      case AppLanguage.spanish:
+        return '🇪🇸';
+    }
+  }
+
+  String get englishLabel {
+    switch (this) {
+      case AppLanguage.korean:
+        return 'Korean';
+      case AppLanguage.english:
+        return 'English';
+      case AppLanguage.japanese:
+        return 'Japanese';
+      case AppLanguage.spanish:
+        return 'Spanish';
+    }
+  }
+
+  static const List<Locale> supportedLocales = [
+    Locale('ko'),
+    Locale('en'),
+    Locale('ja'),
+    Locale('es'),
+  ];
 }
 
 enum AppCurrency {
@@ -44,6 +81,64 @@ enum AppCurrency {
     );
   }
 
+  String get flag {
+    switch (this) {
+      case AppCurrency.krw:
+        return '🇰🇷';
+      case AppCurrency.usd:
+        return '🇺🇸';
+      case AppCurrency.jpy:
+        return '🇯🇵';
+      case AppCurrency.eur:
+        return '🇪🇺';
+      case AppCurrency.gbp:
+        return '🇬🇧';
+    }
+  }
+
+  String get displayName {
+    switch (this) {
+      case AppCurrency.krw:
+        return '대한민국 원 (KRW)';
+      case AppCurrency.usd:
+        return '미국 달러 (USD)';
+      case AppCurrency.jpy:
+        return '일본 엔 (JPY)';
+      case AppCurrency.eur:
+        return '유럽 유로 (EUR)';
+      case AppCurrency.gbp:
+        return '영국 파운드 (GBP)';
+    }
+  }
+
+  List<String> get paymentChannels {
+    switch (this) {
+      case AppCurrency.krw:
+        return ['무통장 계좌입금', '국내 신용카드', '카카오페이 / 토스 / 제로페이', '지역화폐 / 바우처', '현금'];
+      case AppCurrency.usd:
+        return ['Credit Card / Stripe', 'Apple Pay', 'Google Pay', 'Zelle / Wire', 'Cash'];
+      case AppCurrency.jpy:
+        return ['銀行振込', 'クレジットカード', 'PayPay / LINE Pay', '交通系IC / 電子マネー', '現金'];
+      case AppCurrency.eur:
+        return ['SEPA Bank Transfer', 'Credit Card', 'Apple Pay / Google Pay', 'Cash'];
+      case AppCurrency.gbp:
+        return ['Faster Payments / BACS', 'Credit Card', 'Apple Pay / Google Pay', 'Cash'];
+    }
+  }
+
+  static AppCurrency defaultForLanguage(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.korean:
+        return AppCurrency.krw;
+      case AppLanguage.japanese:
+        return AppCurrency.jpy;
+      case AppLanguage.spanish:
+        return AppCurrency.eur;
+      case AppLanguage.english:
+        return AppCurrency.usd;
+    }
+  }
+
   String format(num amount) {
     if (decimalPlaces == 0) {
       final intVal = amount.round();
@@ -64,18 +159,51 @@ enum AppCurrency {
 }
 
 class LocalizationService {
+  static const String keySelectedLanguage = 'selected_language';
+  static const String keySelectedCurrency = 'selected_currency';
+
   static AppLanguage _currentLanguage = AppLanguage.korean;
   static AppCurrency _currentCurrency = AppCurrency.krw;
 
   static AppLanguage get currentLanguage => _currentLanguage;
   static AppCurrency get currentCurrency => _currentCurrency;
 
-  static void setLanguage(AppLanguage lang) {
-    _currentLanguage = lang;
+  static Future<void> initialize() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final langCode = prefs.getString(keySelectedLanguage);
+      if (langCode != null && langCode.isNotEmpty) {
+        _currentLanguage = AppLanguage.fromCode(langCode);
+      }
+      final curCode = prefs.getString(keySelectedCurrency);
+      if (curCode != null && curCode.isNotEmpty) {
+        _currentCurrency = AppCurrency.fromCode(curCode);
+      }
+    } catch (_) {}
   }
 
-  static void setCurrency(AppCurrency cur) {
+  static Future<void> setLanguage(AppLanguage lang, {bool persist = true}) async {
+    _currentLanguage = lang;
+    if (persist) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(keySelectedLanguage, lang.code);
+      } catch (_) {}
+    }
+  }
+
+  static Future<void> setCurrency(AppCurrency cur, {bool persist = true}) async {
     _currentCurrency = cur;
+    if (persist) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(keySelectedCurrency, cur.code);
+      } catch (_) {}
+    }
+  }
+
+  static String formatDate(DateTime date) {
+    return DateFormat('yyyy.MM.dd').format(date);
   }
 
   // --- Translation Dictionary (KO, EN, JA, ES) ---
@@ -306,6 +434,36 @@ class LocalizationService {
       'en': 'Settings & Security Vault',
       'ja': '設定・セキュリティ金庫',
       'es': 'Ajustes y Seguridad',
+    },
+    'global_center_title': {
+      'ko': '글로벌 언어 및 통화 단위 설정',
+      'en': 'Global Language & Currency',
+      'ja': '言語・通貨単位設定',
+      'es': 'Idioma y Moneda',
+    },
+    'global_center_subtitle': {
+      'ko': '전 세계 190개국 해외 교민 학원, 한인 스튜디오, 글로벌 현지 사업장을 위한 다국어 & 다통화 결제 지원 센터입니다.',
+      'en': 'Multi-language and currency support for studios worldwide.',
+      'ja': 'グローバルなスタジオのための多言語・多通貨決済センターです。',
+      'es': 'Soporte multilingüe y multidivisa para estudios en todo el mundo.',
+    },
+    'auto_suggest_currency': {
+      'ko': '언어 선택 시 대표 통화 자동 연동',
+      'en': 'Auto-link default currency when language changes',
+      'ja': '言語選択時に代表通貨を自動連動',
+      'es': 'Vincular moneda predeterminada al cambiar idioma',
+    },
+    'live_preview_card': {
+      'ko': '실시간 앱 표기 미리보기',
+      'en': 'Live App Display Preview',
+      'ja': 'リアルタイム表示プレビュー',
+      'es': 'Vista Previa en Vivo',
+    },
+    'btn_confirm': {
+      'ko': '설정 완료',
+      'en': 'Done',
+      'ja': '完了',
+      'es': 'Listo',
     },
     'language_selector': {
       'ko': '다국어 언어 설정 (Language)',

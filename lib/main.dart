@@ -1,3 +1,5 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -15,6 +17,7 @@ void main() async {
   await initializeDateFormatting('ko_KR', null);
 
   await MonetizationService.instance.initialize();
+  await LocalizationService.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   final showOnboarding = !(prefs.getBool('onboarding_completed') ?? false);
@@ -77,6 +80,8 @@ class _ZeroPassAppState extends ConsumerState<ZeroPassApp> {
   @override
   Widget build(BuildContext context) {
     final isSeniorMode = ref.watch(seniorModeProvider);
+    final activeLang = ref.watch(languageProvider);
+    ref.watch(currencyProvider);
 
     Widget homeScreen;
     if (_showOnboarding) {
@@ -90,8 +95,15 @@ class _ZeroPassAppState extends ConsumerState<ZeroPassApp> {
     }
 
     return MaterialApp(
-      title: '체크앤페이 - 무료 출결관리 & 학원·교습소·PT 회원 수납 출석체크 키오스크',
+      title: ' - ',
       debugShowCheckedModeBanner: false,
+      locale: Locale(activeLang.code),
+      supportedLocales: AppLanguage.supportedLocales,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: isSeniorMode ? AppTheme.seniorTheme : AppTheme.lightTheme,
       builder: (context, child) => MediaQuery.withClampedTextScaling(
         minScaleFactor: isSeniorMode ? 1.25 : 0.85,

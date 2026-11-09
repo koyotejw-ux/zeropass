@@ -1017,82 +1017,169 @@ class ZeroNoticeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _resolveStyle();
+    final isSenior = Theme.of(context).primaryColor == AppTheme.seniorPrimaryBlue;
 
     Widget banner = Container(
       margin: margin,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: isSenior ? 12 : 10),
       decoration: BoxDecoration(
         color: style.bg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: style.border, width: ZeroTokens.hairline),
       ),
-      child: Row(
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16, color: style.text),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: isSenior
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: style.text,
-                    letterSpacing: -0.2,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (icon != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Icon(icon, size: 18, color: style.text),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            softWrap: true,
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: style.text,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              subtitle!,
+                              softWrap: true,
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: style.text.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: trailing!,
+                  ),
+                ] else if (actionLabel != null && onAction != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: InkWell(
+                      onTap: onAction,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              actionLabel!,
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: style.text,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Icon(Icons.chevron_right_rounded, size: 16, color: style.text),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            )
+          : Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: style.text),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: style.text,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          subtitle!,
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: style.text.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 1),
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: style.text.withValues(alpha: 0.8),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing!,
+                ] else if (actionLabel != null && onAction != null) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: onAction,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            actionLabel!,
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: style.text,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(Icons.chevron_right_rounded, size: 14, color: style.text),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ],
             ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: 8),
-            trailing!,
-          ] else if (actionLabel != null && onAction != null) ...[
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: onAction,
-              borderRadius: BorderRadius.circular(6),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      actionLabel!,
-                      style: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: style.text,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(Icons.chevron_right_rounded, size: 14, color: style.text),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
     );
 
     if (onAction != null) {
