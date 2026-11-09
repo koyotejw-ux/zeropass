@@ -153,15 +153,16 @@ class SignatureKeyVisualHero extends StatelessWidget {
                           right: -2,
                           bottom: -2,
                           child: Container(
-                            padding: const EdgeInsets.all(2),
+                            padding: const EdgeInsets.all(2.5),
                             decoration: BoxDecoration(
                               color: const Color(0xFF0F172A),
                               shape: BoxShape.circle,
                               border: Border.all(color: auraBorder, width: 1.2),
                             ),
-                            child: Text(
-                              expression.emoji,
-                              style: const TextStyle(fontSize: 10, height: 1.0),
+                            child: Icon(
+                              expression.vectorIcon,
+                              size: 11,
+                              color: auraBorder,
                             ),
                           ),
                         ),
@@ -253,14 +254,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Container(
-                                      width: 5,
-                                      height: 5,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: auraBorder,
-                                      ),
-                                    ),
+                                    Icon(expression.vectorIcon, size: 12, color: auraBorder),
                                     const SizedBox(width: 4),
                                     Text(
                                       '${LocalizationService.tr("attendance_rate")} $attendanceRate% (${expression.label})',

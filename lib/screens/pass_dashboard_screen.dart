@@ -318,9 +318,17 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '👑 정기 구독 시 광고 완전 제거 + 무인 키오스크 무제한',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                      Row(
+                        children: const [
+                          Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFFD97706)),
+                          SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              '정기 구독 시 광고 완전 제거 + 무인 키오스크 무제한',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -333,63 +341,78 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _showKioskLaunchSelector(context);
-              },
-              child: const Text('기능 테스트 체험'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () {
-                final bm = MonetizationService.instance;
-                if (bm.isRewardedAdAvailable) {
-                  bm.showRewardedAd(
-                    onRewarded: () async {
-                      await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('🎉 24시간 무인 키오스크 + 광고 제거 VIP 패스가 활성화되었습니다!')),
-                        );
-                        _showKioskLaunchSelector(context);
-                      }
-                    },
-                    onFailed: () async {
-                      await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('🎁 24시간 무인 키오스크 VIP 패스가 무료로 활성화되었습니다!')),
-                        );
-                        _showKioskLaunchSelector(context);
-                      }
-                    },
-                  );
-                } else {
-                  bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('🎁 24시간 무인 키오스크 + 광고 제거 VIP 패스가 열렸습니다!')),
-                  );
-                  _showKioskLaunchSelector(context);
-                }
-              },
-              icon: const Icon(Icons.play_circle_outline_rounded, size: 16),
-              label: const Text('짧은 광고 보고 24시간 무료 개방'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-              icon: const Icon(Icons.workspace_premium_rounded, size: 16, color: Colors.white),
-              label: const Text('월 4,900원 키오스크 구독 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ZeroButton.primary(
+                  label: '월 4,900원 키오스크 구독 시작',
+                  icon: Icons.workspace_premium_rounded,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ZeroButton(
+                  label: '짧은 광고 보고 1시간 무료 개방',
+                  icon: Icons.play_circle_outline_rounded,
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () {
+                    final bm = MonetizationService.instance;
+                    if (bm.isRewardedAdAvailable) {
+                      bm.showRewardedAd(
+                        onRewarded: () async {
+                          await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('1시간 무인 키오스크 + 광고 제거 VIP 패스가 활성화되었습니다!')),
+                            );
+                            _showKioskLaunchSelector(context);
+                          }
+                        },
+                        onFailed: () async {
+                          await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('1시간 무인 키오스크 VIP 패스가 무료로 활성화되었습니다!')),
+                            );
+                            _showKioskLaunchSelector(context);
+                          }
+                        },
+                      );
+                    } else {
+                      bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('1시간 무인 키오스크 + 광고 제거 VIP 패스가 열렸습니다!')),
+                      );
+                      _showKioskLaunchSelector(context);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                ZeroButton(
+                  label: '기능 테스트 체험',
+                  variant: ZeroButtonVariant.secondary,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showKioskLaunchSelector(context);
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -420,40 +443,55 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             '등록된 원생 데이터가 없어 학생용 키오스크를 바로 실행할 수 없습니다.\n\n샘플 학생 5명을 등록하여 즉시 학생 모드를 시작하시거나, 기능 테스트 모드로 키오스크를 체험해 보세요.',
             style: TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textPrimary),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('닫기'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
-                );
-              },
-              icon: const Icon(Icons.science_rounded, size: 16),
-              label: const Text('기능 테스트 모드'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await DatabaseService.instance.restoreSampleData();
-                await ref.read(membersProvider.notifier).reload();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 학생용 키오스크를 시작합니다.')),
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-              icon: const Icon(Icons.group_add_rounded, size: 16, color: Colors.white),
-              label: const Text('샘플 5명 등록 후 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ZeroButton.primary(
+                  label: '샘플 5명 등록 후 시작',
+                  icon: Icons.group_add_rounded,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await DatabaseService.instance.restoreSampleData();
+                    await ref.read(membersProvider.notifier).reload();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 학생용 키오스크를 시작합니다.')),
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                ZeroButton(
+                  label: '기능 테스트 모드',
+                  icon: Icons.science_rounded,
+                  variant: ZeroButtonVariant.neutral,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ZeroButton(
+                  label: '닫기',
+                  variant: ZeroButtonVariant.secondary,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
             ),
           ],
         ),

@@ -112,13 +112,20 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.45)),
                           ),
-                          child: Text(
-                            '👑 ${bm.retentionTierTitle}',
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFFFBBF24),
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.workspace_premium_rounded, size: 13, color: Color(0xFFFBBF24)),
+                              const SizedBox(width: 4),
+                              Text(
+                                bm.retentionTierTitle,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFFFBBF24),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         Container(
@@ -127,13 +134,20 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             color: Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            '🔥 연속 ${bm.activeStreakDays}일 스마트 운영 중',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.local_fire_department_rounded, size: 13, color: Color(0xFFF97316)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '연속 ${bm.activeStreakDays}일 스마트 운영 중',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -235,7 +249,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 1-B. Reverse-Trial Bridge Card (광고 시청으로 24시간 VIP 먼저 써보고 결제 전환)
+              // 1-B. Reverse-Trial Bridge Card (광고 시청으로 1시간 VIP 먼저 써보고 결제 전환)
               if (!bm.isPermanentVip) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -265,7 +279,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                           ),
                           Text(
                             bm.isTemporaryPassActive
-                                ? '현재 24시간 VIP 패스 활성화 중 (${bm.remainingTemporaryPassDuration.inHours.clamp(1, 24)}시간 남음)'
+                                ? '현재 1시간 VIP 패스 활성화 중 (${bm.remainingTemporaryPassFormatted})'
                                 : '광고 없는 쾌적함과 태블릿 키오스크를 먼저 경험해보세요',
                             style: const TextStyle(
                               fontSize: 12,
@@ -278,7 +292,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        '짧은 응원 광고 1회 시청으로 24시간 동안 [모든 광고 완전 제거 + 무인 출결 키오스크]를 즉시 개방합니다. 써보시고 마음에 드실 때 월 커피 한 잔 값으로 정기 구독하세요!',
+                        '짧은 응원 광고 1회 시청으로 1시간 동안 [모든 광고 완전 제거 + 무인 출결 키오스크]를 즉시 개방합니다. 써보시고 마음에 드실 때 월 커피 한 잔 값으로 정기 구독하세요!',
                         style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.4),
                         softWrap: true,
                       ),
@@ -290,22 +304,22 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             if (bm.isRewardedAdAvailable) {
                               bm.showRewardedAd(
                                 onRewarded: () async {
-                                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                                  await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('🎉 24시간 올인원 VIP 패스(광고 제거 + 키오스크)가 활성화되었습니다!'),
+                                        content: Text('1시간 올인원 VIP 패스(광고 제거 + 키오스크)가 활성화되었습니다!'),
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
                                   }
                                 },
                                 onFailed: () async {
-                                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                                  await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('🎁 원장님 응원 혜택으로 24시간 올인원 VIP 패스가 즉시 지급되었습니다!'),
+                                        content: Text('원장님 응원 혜택으로 1시간 올인원 VIP 패스가 즉시 지급되었습니다!'),
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
@@ -313,10 +327,10 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                                 },
                               );
                             } else {
-                              bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                              bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('🎁 24시간 올인원 VIP 패스(광고 제거 + 키오스크)가 즉시 활성화되었습니다!'),
+                                  content: Text('1시간 올인원 VIP 패스(광고 제거 + 키오스크)가 즉시 활성화되었습니다!'),
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
@@ -325,8 +339,8 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                           icon: const Icon(Icons.play_circle_fill_rounded, size: 18, color: AppTheme.primaryBlue),
                           label: Text(
                             bm.isTemporaryPassActive
-                                ? '24시간 VIP 체험 시간 연장하기 (무료)'
-                                : '24시간 올인원 VIP 무료 패스 켜기',
+                                ? '1시간 VIP 체험 시간 연장하기 (무료)'
+                                : '1시간 올인원 VIP 무료 패스 켜기',
                             style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
                             softWrap: true,
                           ),
@@ -508,8 +522,9 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               const SizedBox(height: 18),
 
               // Developer Testing Unlock Button
-              Center(
-                child: TextButton.icon(
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
                   onPressed: () {
                     MonetizationService.instance.debugUnlockAll();
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -523,6 +538,11 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   label: const Text(
                     '개발/검수용 전체 구독 기능 언락 (스토어 심사용)',
                     style: TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: const BorderSide(color: AppTheme.borderSubtle),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

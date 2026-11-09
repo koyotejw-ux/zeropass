@@ -5,6 +5,7 @@ import '../models/member.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/database_service.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/mascot_avatar.dart';
@@ -40,19 +41,10 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
   ];
 
   // STEP 2: Bank Account
-  String _selectedBank = '토스뱅크';
+  late String _selectedBank = LocalizationService.getBankPresets().first;
   final TextEditingController _accountNumberCtrl = TextEditingController();
   final TextEditingController _accountHolderCtrl = TextEditingController();
-  final List<String> _bankPresets = [
-    '토스뱅크',
-    '카카오뱅크',
-    '국민은행',
-    '신한은행',
-    '우리은행',
-    '하나은행',
-    '농협은행',
-    '기업은행',
-  ];
+  List<String> get _bankPresets => LocalizationService.getBankPresets();
 
   // STEP 3: First Member
   final TextEditingController _memberNameCtrl = TextEditingController();

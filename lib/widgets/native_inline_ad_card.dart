@@ -240,7 +240,7 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          '타사 월 49,000원 기기 대신 광고 없는 올인원 VIP 패스로 24시간 무료 체험해 보세요.',
+                          '타사 월 49,000원 기기 대신 광고 없는 올인원 VIP 패스로 1시간 무료 체험해 보세요.',
                           softWrap: true,
                           style: TextStyle(
                             fontSize: 12,
@@ -259,22 +259,22 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                         if (bm.isRewardedAdAvailable) {
                           bm.showRewardedAd(
                             onRewarded: () async {
-                              await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                              await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('🎉 24시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
+                                    content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
                               }
                             },
                             onFailed: () async {
-                              await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                              await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('🎁 24시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
+                                    content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -282,10 +282,10 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                             },
                           );
                         } else {
-                          bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                          bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('🎁 24시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
+                              content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );

@@ -270,6 +270,61 @@ class LocalizationService {
 
   static AppLanguage get currentLanguage => _currentLanguage;
   static AppCurrency get currentCurrency => _currentCurrency;
+  static bool get isDomestic => _currentLanguage == AppLanguage.korean;
+
+  /// 국가/언어별 맞춤형 금융 기관 / 은행 프리셋 목록
+  static List<String> getBankPresets() {
+    switch (_currentLanguage) {
+      case AppLanguage.korean:
+        return ['토스뱅크', '카카오뱅크', '국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행', '새마을금고', '우체국', '기타'];
+      case AppLanguage.english:
+        return ['Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'Capital One', 'PayPal', 'Wise', 'Wire Transfer', 'Other'];
+      case AppLanguage.japanese:
+        return ['三菱UFJ銀行', '三井住友銀行', 'みずほ銀行', 'ゆうちょ銀行', 'りそな銀行', 'PayPay銀行', '楽天銀行', 'その他'];
+      case AppLanguage.chinese:
+        return ['中国工商银行', '中国建设银行', '中国农业银行', '中国银行', '招商银行', '交通银行', '微信支付', '支付宝', '其他'];
+      case AppLanguage.vietnamese:
+        return ['Vietcombank', 'Techcombank', 'BIDV', 'VietinBank', 'MB Bank', 'ACB', 'MoMo / ZaloPay', 'Khác'];
+      case AppLanguage.spanish:
+        return ['Banco Santander', 'BBVA', 'CaixaBank', 'Banco Sabadell', 'Bankinter', 'Revolut', 'SEPA Transfer', 'Otro'];
+    }
+  }
+
+  /// 메신저/공유 버튼 라벨 (국내: 카카오톡 알림톡/공유, 글로벌: 메신저/시스템 공유)
+  static String get shareMessengerLabel {
+    switch (_currentLanguage) {
+      case AppLanguage.korean:
+        return '카카오톡 전송';
+      case AppLanguage.english:
+        return 'Share via Messenger';
+      case AppLanguage.japanese:
+        return 'メッセージ共有';
+      case AppLanguage.chinese:
+        return '分享至社交软件';
+      case AppLanguage.vietnamese:
+        return 'Chia sẻ qua tin nhắn';
+      case AppLanguage.spanish:
+        return 'Compartir mensaje';
+    }
+  }
+
+  /// 국세청 / 세무 리포트 타이틀
+  static String get taxReportTitle {
+    switch (_currentLanguage) {
+      case AppLanguage.korean:
+        return '국세청 사업소득 간편장부 엑셀(CSV) 내보내기';
+      case AppLanguage.english:
+        return 'IRS Schedule C / Business Ledger Export (CSV)';
+      case AppLanguage.japanese:
+        return '青色申告決算・帳簿データ出力 (CSV)';
+      case AppLanguage.chinese:
+        return '企业简易收支明细记账导出 (CSV)';
+      case AppLanguage.vietnamese:
+        return 'Xuất sổ sách thu chi kinh doanh (CSV)';
+      case AppLanguage.spanish:
+        return 'Exportar libro de ingresos y gastos (CSV)';
+    }
+  }
 
   static Future<void> initialize() async {
     try {

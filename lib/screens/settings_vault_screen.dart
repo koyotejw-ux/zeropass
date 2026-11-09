@@ -111,40 +111,55 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           '등록된 원생 데이터가 없어 학생용 키오스크를 바로 실행할 수 없습니다.\n\n샘플 학생 5명을 등록하여 즉시 학생 모드를 시작하시거나, 기능 테스트 모드로 키오스크를 체험해 보세요.',
           style: TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textPrimary),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('닫기'),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
-              );
-            },
-            icon: const Icon(Icons.science_rounded, size: 16),
-            label: const Text('기능 테스트 모드'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await DatabaseService.instance.restoreSampleData();
-              await ref.read(membersProvider.notifier).reload();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 학생용 키오스크를 시작합니다.')),
-                );
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-            icon: const Icon(Icons.group_add_rounded, size: 16, color: Colors.white),
-            label: const Text('샘플 5명 등록 후 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ZeroButton.primary(
+                label: '샘플 5명 등록 후 시작',
+                icon: Icons.group_add_rounded,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await DatabaseService.instance.restoreSampleData();
+                  await ref.read(membersProvider.notifier).reload();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 학생용 키오스크를 시작합니다.')),
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              ZeroButton(
+                label: '기능 테스트 모드',
+                icon: Icons.science_rounded,
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              ZeroButton(
+                label: '닫기',
+                variant: ZeroButtonVariant.secondary,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ],
           ),
         ],
       ),
@@ -2179,8 +2194,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     ),
                     title: Row(
                       children: [
-                        const Expanded(
-                          child: Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                        Expanded(
+                          child: Text(LocalizationService.taxReportTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
                         ),
                         InkWell(
                           onTap: () => TaxGuideModal.show(context),
@@ -2191,7 +2206,14 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(color: const Color(0xFFC7D2FE)),
                             ),
-                            child: const Text('세무 가이드 💡', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.lightbulb_rounded, size: 11, color: Color(0xFF4F46E5)),
+                                SizedBox(width: 3),
+                                Text('세무 가이드', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -2520,7 +2542,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 isVip
                     ? '모든 광고가 차단되었으며 입구 거치형 무인 출결 키오스크를 무제한으로 이용하실 수 있습니다.'
                     : isTemp
-                        ? '현재 24시간 무료 VIP 체험권이 작동 중입니다. 월 커피 한 잔 값으로 평생 쾌적한 매장을 유지하세요.'
+                        ? '현재 1시간 무료 VIP 체험권이 작동 중입니다 (${bm.remainingTemporaryPassFormatted}). 월 커피 한 잔 값으로 평생 쾌적한 매장을 유지하세요.'
                         : '0원 문자(${bm.cumulativeSavedSmsCount}건)와 자동 출결(${bm.cumulativeCheckInCount}건)로 아낀 비용으로 광고 없는 VIP 매장과 무인 키오스크를 시작하세요.',
                 style: TextStyle(
                   fontSize: 12.5,
@@ -2530,80 +2552,87 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 softWrap: true,
               ),
               const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF59E0B),
-                      foregroundColor: const Color(0xFF0F172A),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.workspace_premium_rounded, size: 16, color: Color(0xFF0F172A)),
-                    label: Text(
-                      isVip ? 'VIP 구독 관리 열기' : '월 1,900원~ VIP 멤버십 보기',
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF59E0B),
+                        foregroundColor: const Color(0xFF0F172A),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.workspace_premium_rounded, size: 16, color: Color(0xFF0F172A)),
+                      label: Text(
+                        isVip ? 'VIP 구독 관리 열기' : '월 1,900원~ VIP 멤버십 보기',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                      ),
                     ),
                   ),
-                  if (!isVip)
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        if (bm.isRewardedAdAvailable) {
-                          bm.showRewardedAd(
-                            onRewarded: () async {
-                              await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('🎉 24시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
-                            onFailed: () async {
-                              await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('🎁 24시간 올인원 VIP 패스가 무료로 활성화되었습니다!'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
-                          );
-                        } else {
-                          bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('🎁 24시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      icon: const Icon(Icons.play_circle_outline_rounded, size: 15, color: Color(0xFFFBBF24)),
-                      label: const Text(
-                        '24시간 VIP 무료 체험',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  if (!isVip) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          if (bm.isRewardedAdAvailable) {
+                            bm.showRewardedAd(
+                              onRewarded: () async {
+                                await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
+                              onFailed: () async {
+                                await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('원장님 응원 혜택으로 1시간 올인원 VIP 패스가 무료로 활성화되었습니다!'),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
+                            );
+                          } else {
+                            bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.play_circle_outline_rounded, size: 15, color: Color(0xFFFBBF24)),
+                        label: const Text(
+                          '1시간 VIP 무료 체험',
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                        ),
                       ),
                     ),
+                  ],
                 ],
               ),
             ],
@@ -4184,28 +4213,18 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Expanded(
-                        child: Text('학생 등록 간편 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _openAddMemberTemplateDialog(context, catState),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('새 템플릿', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
+                  const Text('학생 등록 간편 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
                   const Text('회원 등록 시 탭 한 번으로 그룹명, 수강유형, 기본 수강료를 자동 입력해 주는 편리한 템플릿입니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
+                  const SizedBox(height: 14),
+                  ZeroButton.primary(
+                    label: '새 학생 등록 템플릿 추가하기',
+                    icon: Icons.add_rounded,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => _openAddMemberTemplateDialog(context, catState),
+                  ),
                   const SizedBox(height: 18),
 
                   if (catState.memberTemplates.isEmpty)
@@ -4412,29 +4431,19 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Expanded(
-                        child: Text('청구 항목 및 금액 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _openAddInvoiceTemplateDialog(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B5CF6),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('새 항목 추가', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
+                  const Text('청구 항목 및 금액 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
                   const Text('청구서 작성 시 자주 사용하는 수납 항목과 권장 금액을 등록해 두면 터치 한 번으로 빠르게 청구서를 작성할 수 있습니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
+                  ZeroButton.primary(
+                    label: '새 청구 항목 템플릿 추가하기',
+                    icon: Icons.add_rounded,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => _openAddInvoiceTemplateDialog(context),
+                  ),
+                  const SizedBox(height: 16),
 
                   if (catState.invoiceTemplates.isEmpty)
                     Container(

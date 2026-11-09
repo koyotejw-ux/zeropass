@@ -93,6 +93,17 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     return latest.difference(now);
   }
 
+  /// 보상형 패스 잔여 시간 포맷 (1시간 기준 분/시간 단위 자동 표기)
+  String get remainingTemporaryPassFormatted {
+    final d = remainingTemporaryPassDuration;
+    if (d.inHours >= 1) {
+      final mins = d.inMinutes % 60;
+      return mins > 0 ? '${d.inHours}시간 $mins분 남음' : '${d.inHours}시간 남음';
+    }
+    final mins = d.inMinutes.clamp(1, 60);
+    return '$mins분 남음';
+  }
+
   int get activeStreakDays => _activeStreakDays;
   int get cumulativeSavedSmsCount => _cumulativeSavedSmsCount;
   int get cumulativeCheckInCount => _cumulativeCheckInCount;

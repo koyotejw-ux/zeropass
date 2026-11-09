@@ -43,7 +43,19 @@ enum MascotExpression {
     }
   }
 
-  /// 해당 감정의 대표 이모지
+  /// 해당 감정의 대표 벡터 아이콘
+  IconData get vectorIcon {
+    switch (this) {
+      case MascotExpression.laughing:
+        return Icons.sentiment_very_satisfied_rounded;
+      case MascotExpression.smile:
+        return Icons.sentiment_satisfied_rounded;
+      case MascotExpression.crying:
+        return Icons.sentiment_dissatisfied_rounded;
+    }
+  }
+
+  /// 해당 감정의 대표 이모지 (하위 호환성 유지)
   String get emoji {
     switch (this) {
       case MascotExpression.laughing:

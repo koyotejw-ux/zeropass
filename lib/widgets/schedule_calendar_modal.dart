@@ -90,58 +90,75 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               ),
             ],
           ),
+          contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('일정 분류', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: ScheduleCategory.values.map((cat) {
-                    final isSel = cat == selectedCat;
-                    return ChoiceChip(
-                      label: Text(cat.label, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.w800 : FontWeight.w600, color: isSel ? Colors.white : AppTheme.textPrimary)),
-                      selected: isSel,
-                      selectedColor: Color(cat.colorValue),
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      onSelected: (val) {
-                        if (val) {
-                          setDialogState(() => selectedCat = cat);
-                        }
-                      },
-                    );
-                  }).toList(),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(2, 4, 2, 8),
+                  child: Text('일정 분류', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
                 ),
-                const SizedBox(height: 14),
-                const Text('일정 명칭', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: titleController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: '예: 겨울방학 특강 개강, 정기 모의고사',
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.borderSubtle)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ScheduleCategory.values.map((cat) {
+                      final isSel = cat == selectedCat;
+                      return ChoiceChip(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        label: Text(cat.label, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.w800 : FontWeight.w600, color: isSel ? Colors.white : AppTheme.textPrimary)),
+                        selected: isSel,
+                        selectedColor: Color(cat.colorValue),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        onSelected: (val) {
+                          if (val) {
+                            setDialogState(() => selectedCat = cat);
+                          }
+                        },
+                      );
+                    }).toList(),
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text('상세 메모 (선택)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: memoController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: '일정에 대한 간단한 안내나 준비사항을 입력하세요.',
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.borderSubtle)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(2, 6, 2, 8),
+                  child: Text('일정 명칭', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  child: TextField(
+                    controller: titleController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: '예: 겨울방학 특강 개강, 정기 모의고사',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.borderSubtle)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(2, 6, 2, 8),
+                  child: Text('상세 메모 (선택)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  child: TextField(
+                    controller: memoController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: '일정에 대한 간단한 안내나 준비사항을 입력하세요.',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.borderSubtle)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
                   ),
                 ),
               ],
@@ -798,20 +815,35 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 final sch = schedules[idx];
                 return ListTile(
                   dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: Container(
-                    width: 34,
-                    height: 34,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: Color(sch.category.colorValue).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.calendar_today_rounded, size: 16, color: Color(sch.category.colorValue)),
+                    child: Icon(Icons.calendar_today_rounded, size: 17, color: Color(sch.category.colorValue)),
                   ),
-                  title: Text(sch.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                  subtitle: sch.memo != null && sch.memo!.isNotEmpty
-                      ? Text(sch.memo!, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary))
-                      : Text(sch.category.label, style: TextStyle(fontSize: 11.5, color: Color(sch.category.colorValue), fontWeight: FontWeight.w600)),
+                  title: Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Text(
+                      sch.title,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: sch.memo != null && sch.memo!.isNotEmpty
+                        ? Text(
+                            sch.memo!,
+                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
+                          )
+                        : Text(
+                            sch.category.label,
+                            style: TextStyle(fontSize: 11.5, color: Color(sch.category.colorValue), fontWeight: FontWeight.w600),
+                          ),
+                  ),
                   trailing: IconButton(
                     icon: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textTertiary),
                     onPressed: () {

@@ -110,9 +110,8 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   Widget build(BuildContext context) {
     final bm = MonetizationService.instance;
 
-    // 1. 만약 24시간 VIP 체험권(보상형 광고 패스)이 활성화된 상태라면 -> 구독 전환 브릿지 바 노출
+    // 1. 만약 1시간 VIP 체험권(보상형 광고 패스)이 활성화된 상태라면 -> 구독 전환 브릿지 바 노출
     if (bm.isTemporaryPassActive && !bm.isPermanentVip) {
-      final remHours = bm.remainingTemporaryPassDuration.inHours.clamp(1, 24);
       return Material(
         color: const Color(0xFF0F172A),
         child: InkWell(
@@ -139,7 +138,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          '광고 없는 VIP 쾌적 모드 체험 중 ($remHours시간 남음)',
+                          '광고 없는 VIP 쾌적 모드 체험 중 (${bm.remainingTemporaryPassFormatted})',
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
@@ -187,22 +186,22 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
             if (bm.isRewardedAdAvailable) {
               bm.showRewardedAd(
                 onRewarded: () async {
-                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                  await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('🎉 24시간 동안 광고 제거 + 무인 키오스크 VIP 패스가 지급되었습니다!'),
+                        content: Text('1시간 동안 광고 제거 + 무인 키오스크 VIP 패스가 지급되었습니다!'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
                   }
                 },
                 onFailed: () async {
-                  await bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+                  await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('🎁 원장님 응원 혜택으로 24시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
+                        content: Text('원장님 응원 혜택으로 1시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -210,10 +209,10 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                 },
               );
             } else {
-              bm.grantTemporaryAdFreeHours(24, includeKiosk: true);
+              bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🎁 24시간 동안 광고 없는 VIP 패스 + 무인 키오스크가 무료로 열렸습니다!'),
+                  content: Text('1시간 동안 광고 없는 VIP 패스 + 무인 키오스크가 무료로 열렸습니다!'),
                   behavior: SnackBarBehavior.floating,
                 ),
               );

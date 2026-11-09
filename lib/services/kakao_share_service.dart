@@ -6,6 +6,7 @@ import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/studio_profile.dart';
 import 'monetization_service.dart';
+import 'localization_service.dart';
 
 /// 카카오톡 0원 직접 공유 & 시스템 공유 서비스
 /// 유료 알림톡 충전 비용 없이, 대표님 스마트폰의 카카오톡 앱을 통해
@@ -258,7 +259,7 @@ $bankSection${details != null && details.isNotEmpty ? '• 정산 산출 근거 
 '''.trim();
   }
 
-  /// 카카오톡 직접 공유 또는 시스템 공유 호출 (비용 0원)
+  /// 카카오톡 직접 공유 또는 글로벌 시스템 공유 호출 (비용 0원)
   static Future<bool> shareMessage({
     required String text,
     String? subject,
@@ -270,18 +271,20 @@ $bankSection${details != null && details.isNotEmpty ? '• 정산 산출 근거 
       await Clipboard.setData(ClipboardData(text: text));
     } catch (_) {}
 
-    // 2. 카카오톡 스킴 URL 시도
-    final encoded = Uri.encodeComponent(text);
-    final kakaoUri = Uri.parse('kakaotalk://msg/send?text=$encoded');
+    // 2. 국내 사용자의 경우 카카오톡 스킴 URL 우선 시도
+    if (LocalizationService.isDomestic) {
+      final encoded = Uri.encodeComponent(text);
+      final kakaoUri = Uri.parse('kakaotalk://msg/send?text=$encoded');
 
-    try {
-      if (await canLaunchUrl(kakaoUri)) {
-        final launched = await launchUrl(kakaoUri);
-        if (launched) return true;
-      }
-    } catch (_) {}
+      try {
+        if (await canLaunchUrl(kakaoUri)) {
+          final launched = await launchUrl(kakaoUri);
+          if (launched) return true;
+        }
+      } catch (_) {}
+    }
 
-    // 3. Share.share로 폴백 (안드로이드/iOS 공유창에서 카카오톡이 최상단 노출)
+    // 3. 글로벌 사용자 및 카카오톡 미설치 시 시스템 네이티브 공유 시트(WhatsApp/Messages/LINE 등)로 자동 연동
     try {
       // ignore: deprecated_member_use
       final result = await Share.share(

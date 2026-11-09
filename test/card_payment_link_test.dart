@@ -194,7 +194,7 @@ void main() {
 
   group('4. SettingsVaultScreen & BillingLedgerScreen UI Tests', () {
     testWidgets('SettingsVaultScreen displays remote card payment section and switches state', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -215,6 +215,8 @@ void main() {
       }
 
       await tester.scrollUntilVisible(find.text('비대면 신용카드 결제 링크 (0원 연동)'), 300);
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -150));
+      await tester.pumpAndSettle();
       expect(find.text('비대면 신용카드 결제 링크 (0원 연동)'), findsOneWidget);
 
       await tester.tap(find.text('비대면 신용카드 결제 링크 (0원 연동)'));

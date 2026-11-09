@@ -1334,7 +1334,7 @@ class ZeroAvatar extends StatelessWidget {
 }
 
 /// ============================================================================
-/// [ZeroAdUtilityBar] 광고 제거 및 오늘 하루 끄기 표준 유틸리티 바
+/// [ZeroAdUtilityBar] 광고 제거 및 1시간 광고 끄기 표준 유틸리티 바
 /// ============================================================================
 class ZeroAdUtilityBar extends StatelessWidget {
   final VoidCallback onFreeAdDismiss;
@@ -1371,7 +1371,7 @@ class ZeroAdUtilityBar extends StatelessWidget {
                   Icon(Icons.play_circle_fill_rounded, size: 14, color: Color(0xFF2563EB)),
                   SizedBox(width: 4),
                   Text(
-                    '오늘 하루 광고 끄기 (무료)',
+                    '1시간 광고 끄기 (무료)',
                     style: TextStyle(
                       fontFamily: 'Pretendard',
                       fontSize: 11.5,
