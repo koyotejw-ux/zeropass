@@ -374,41 +374,39 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                 : Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      // Top Header Row: Category Icon & Title + Status Badge
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      // Top Header Row: Category Icon & Title + Status Badge (with responsive wrap)
+                                      Wrap(
+                                        alignment: WrapAlignment.spaceBetween,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 6,
                                         children: [
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  padding: const EdgeInsets.all(6),
-                                                  decoration: BoxDecoration(
-                                                    color: heroIconColor.withAlpha((255 * 0.18).round()),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: Icon(
-                                                    heroIcon,
-                                                    color: heroIconColor,
-                                                    size: 16,
-                                                  ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: heroIconColor.withAlpha((255 * 0.18).round()),
+                                                  shape: BoxShape.circle,
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    heroTitle,
-                                                    softWrap: true,
-                                                    style: const TextStyle(
-                                                      color: Color(0xFF94A3B8),
-                                                      fontSize: 13.5,
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
-                                                  ),
+                                                child: Icon(
+                                                  heroIcon,
+                                                  color: heroIconColor,
+                                                  size: 16,
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                heroTitle,
+                                                style: const TextStyle(
+                                                  color: Color(0xFF94A3B8),
+                                                  fontSize: 13.5,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                             decoration: BoxDecoration(
@@ -1208,68 +1206,95 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '수납 완료 처리',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${invoice.title} (${_currencyFormat.format(invoice.amount)}원)의 결제 수단을 선택하세요.',
-                  style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_circle_outline_rounded, color: AppTheme.primaryBlue, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '수납 완료 처리',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${invoice.title} (${_currencyFormat.format(invoice.amount)}원)',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                      splashRadius: 18,
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                ListTile(
+                _buildPaymentMethodTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFEFF6FF),
                     child: Icon(Icons.account_balance, color: AppTheme.primaryBlue),
                   ),
-                  title: const Text('계좌 입금 확인'),
-                  subtitle: const Text('은행 통장으로 실시간 무통장 입금 완료'),
+                  title: '계좌 입금 확인',
+                  subtitle: '은행 통장으로 실시간 무통장 입금 완료',
                   onTap: () => _confirmPayment(ctx, invoice, 'TRANSFER', invoiceMembers, studio),
                 ),
-                ListTile(
+                _buildPaymentMethodTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFECFDF5),
                     child: Icon(Icons.credit_card, color: AppTheme.softMint),
                   ),
-                  title: const Text('오프라인 카드 단말기 (현장 결제)'),
-                  subtitle: const Text('매장/학원 현장 신용·체크카드 결제'),
+                  title: '오프라인 카드 단말기 (현장 결제)',
+                  subtitle: '매장/학원 현장 신용·체크카드 결제',
                   onTap: () => _confirmPayment(ctx, invoice, 'OFFLINE_CARD', invoiceMembers, studio),
                 ),
-                ListTile(
+                _buildPaymentMethodTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFEFF6FF),
                     child: Icon(Icons.link_rounded, color: AppTheme.primaryBlue),
                   ),
-                  title: const Text('비대면 신용카드 결제 (원격 결제 링크)'),
-                  subtitle: const Text('토스페이먼츠/페이앱/결제선생 원격 링크 승인 확인'),
+                  title: '비대면 신용카드 결제 (원격 결제 링크)',
+                  subtitle: '토스페이먼츠/페이앱/결제선생 원격 링크 승인 확인',
                   onTap: () => _confirmPayment(ctx, invoice, 'ONLINE_CARD', invoiceMembers, studio),
                 ),
-                ListTile(
+                _buildPaymentMethodTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFFEF3C7),
                     child: Icon(Icons.qr_code_scanner, color: Color(0xFFD97706)),
                   ),
-                  title: const Text('간편결제 (카카오페이 / 토스 / 제로페이 QR)'),
-                  subtitle: const Text('매장 비치 QR 코드 또는 송금 링크 결제'),
+                  title: '간편결제 (카카오페이 / 토스 / 제로페이 QR)',
+                  subtitle: '매장 비치 QR 코드 또는 송금 링크 결제',
                   onTap: () => _confirmPayment(ctx, invoice, 'EASY_PAY', invoiceMembers, studio),
                 ),
-                ListTile(
+                _buildPaymentMethodTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFF3E8FF),
                     child: Icon(Icons.card_giftcard, color: Color(0xFF9333EA)),
                   ),
-                  title: const Text('지역화폐 · 교육/스포츠 바우처'),
-                  subtitle: const Text('지역사랑상품권, 평생교육바우처, 스포츠강좌이용권'),
+                  title: '지역화폐 · 교육/스포츠 바우처',
+                  subtitle: '지역사랑상품권, 평생교육바우처, 스포츠강좌이용권',
                   onTap: () => _confirmPayment(ctx, invoice, 'VOUCHER', invoiceMembers, studio),
                 ),
-                ListTile(
+                _buildPaymentMethodTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFFFFBEB),
                     child: Icon(Icons.payments_outlined, color: AppTheme.warning),
                   ),
-                  title: const Text('현금 수납'),
-                  subtitle: const Text('현장 현금 수령 및 간이 영수'),
+                  title: '현금 수납',
+                  subtitle: '현장 현금 수령 및 간이 영수',
                   onTap: () => _confirmPayment(ctx, invoice, 'CASH', invoiceMembers, studio),
                 ),
               ],
@@ -1277,6 +1302,33 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPaymentMethodTile({
+    required Widget leading,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: const Color(0xFFF8FAFC),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          leading: leading,
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+          subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 13, color: AppTheme.textSecondary),
+          onTap: onTap,
+        ),
+      ),
     );
   }
 
@@ -2624,13 +2676,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
     Vendor? vendor,
     StudioProfile studio,
   ) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      maxHeightRatio: 0.90,
       builder: (ctx) => _StaffSettlementSheet(
         expense: expense,
         vendor: vendor,
@@ -2640,38 +2688,70 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
   }
 
   void _showBookkeepingExportSheet(BuildContext context) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
+      maxHeightRatio: 0.85,
+      builder: (ctx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.table_view_rounded, color: Color(0xFF4F46E5), size: 22),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '간편장부 엑셀 및 세무 관리',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        '국세청 표준 사업소득 간편장부 CSV 추출 및 1분 세무 가이드',
+                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                  splashRadius: 18,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              const SizedBox(height: 14),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFEEF2FF),
-                  child: Icon(Icons.table_view_rounded, color: Color(0xFF4F46E5)),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEEF2FF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.table_view_rounded, color: Color(0xFF4F46E5)),
                 ),
                 title: const Text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
                 subtitle: const Text('수입과 지출 통합 정렬 엑셀 호환 표준 CSV 생성 및 카톡 공유', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textSecondary),
                 onTap: () async {
                   Navigator.pop(ctx);
                   try {
@@ -2689,23 +2769,35 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   }
                 },
               ),
-              const Divider(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFFFBEB),
-                  child: Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFD97706)),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFFBEB),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFD97706)),
                 ),
                 title: const Text('소상공인 간편장부 세무 신고 꿀팁 가이드', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
                 subtitle: const Text('5월 종합소득세, 2월 사업장현황신고, 3.3% 원천세 1분 마스터', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textSecondary),
                 onTap: () {
                   Navigator.pop(ctx);
                   TaxGuideModal.show(context);
                 },
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );

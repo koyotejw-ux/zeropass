@@ -285,8 +285,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close_rounded, size: 22, color: AppTheme.textSecondary),
                   onPressed: () => Navigator.pop(ctx),
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 20,
                 ),
               ],
             ),
@@ -368,8 +370,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close_rounded, size: 22, color: AppTheme.textSecondary),
                   onPressed: () => Navigator.pop(ctx),
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 20,
                 ),
               ],
             ),
@@ -2356,35 +2360,27 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   }
 
   Future<void> _showLogoPickerSheet(BuildContext context, StudioProfile profile) async {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+      maxHeightRatio: 0.85,
+      builder: (ctx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(ctx, '상호 및 브랜드 로고 관리', Icons.photo_camera_rounded, AppTheme.primaryBlue),
+            const SizedBox(height: 4),
+            const Text('무인 키오스크 상단 및 알림장에 우리 학원 전용 로고가 표기됩니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary)),
+            const SizedBox(height: 16),
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              const Text('상호 / 브랜드 로고 관리', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 4),
-              const Text('무인 키오스크 상단 및 알림장에 우리 학원 전용 로고가 표기됩니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary)),
-              const SizedBox(height: 16),
-              ListTile(
+              child: ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -2400,7 +2396,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   await _pickAndSaveLogo(ImageSource.gallery, profile);
                 },
               ),
-              ListTile(
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -2416,8 +2420,16 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   await _pickAndSaveLogo(ImageSource.camera, profile);
                 },
               ),
-              if (profile.logoPath != null && profile.logoPath!.isNotEmpty)
-                ListTile(
+            ),
+            if (profile.logoPath != null && profile.logoPath!.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFECDD3)),
+                ),
+                child: ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -2438,9 +2450,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     }
                   },
                 ),
-              const SizedBox(height: 12),
-            ],
-          ),
+              ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );
@@ -2506,25 +2518,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.badge_rounded, color: AppTheme.primaryBlue, size: 22),
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          '고객 & 비용 맞춤 호칭 설정',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildSheetHeader(ctx, '고객 & 비용 맞춤 호칭 설정', Icons.badge_rounded, const Color(0xFF0F172A)),
                   const SizedBox(height: 6),
                   const Text(
                     '학원, 피트니스, 공방, 유치원 등 대표님의 업종에 맞추어 "수강생 / 수강료", "회원 / 회비", "원생 / 원비", "원아 / 교육비" 등 자유롭게 변경하세요.',
@@ -2741,8 +2735,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('스튜디오 프로필 수정', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
+                  _buildSheetHeader(ctx, '스튜디오 프로필 수정', Icons.storefront_rounded, AppTheme.primaryBlue),
+                  const SizedBox(height: 4),
                   const Text('청구서 및 알림 문자에 표기될 사업장 정보입니다.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
                   const SizedBox(height: 18),
 

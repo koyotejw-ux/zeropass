@@ -22,6 +22,7 @@ import '../widgets/mascot_avatar.dart';
 import '../widgets/signature_key_visual_hero.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/attendance_notify_dialog.dart';
+import '../widgets/app_bottom_sheet.dart';
 import '../widgets/design_system.dart';
 import '../widgets/native_inline_ad_card.dart';
 import '../widgets/senior_easy_guide_modal.dart';
@@ -61,15 +62,11 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   }
 
   void _openInteractiveGuide(BuildContext context) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      maxHeightRatio: 0.85,
+      builder: (ctx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,35 +74,42 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             Row(
               children: [
                 const ZeroPassMascotAvatar(
-                  size: 44,
+                  size: 42,
                   icon: Icons.menu_book_rounded,
                 ),
-                const SizedBox(width: 14),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '패시 가이드 센터',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.5,
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '패시 가이드 센터',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      '원하시는 안내 가이드를 선택해주세요',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary,
+                      SizedBox(height: 2),
+                      Text(
+                        '원하시는 안내 가이드를 선택해주세요',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                  splashRadius: 18,
+                  onPressed: () => Navigator.pop(ctx),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               shape: RoundedRectangleBorder(
@@ -458,103 +462,113 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     }
 
     // 2. 학생이 등록되어 있는 경우 -> [📱 학생용 운영 키오스크] vs [🧪 원장님 기능 테스트] 선택 바텀시트
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+      maxHeightRatio: 0.85,
+      builder: (ctx) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.tablet_mac_rounded, color: AppTheme.primaryBlue, size: 22),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '무인 출결 키오스크 실행',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        '실제 학생 출석용 또는 원장님 기능 테스트 중 선택하세요.',
+                        style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const Text(
-                '무인 출결 키오스크 실행 모드 선택',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '실제 학생 출석용 또는 원장님 기능 테스트 중 선택하세요.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              Material(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.35), width: 1.2),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                  splashRadius: 18,
+                  onPressed: () => Navigator.pop(ctx),
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFEFF6FF),
-                    child: Icon(Icons.touch_app_rounded, color: AppTheme.primaryBlue),
-                  ),
-                  title: const Text(
-                    '학생 출결 키오스크 (실제 운영용)',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
-                  ),
-                  subtitle: const Text(
-                    '입구 태블릿 거치용 전체화면. 체험 핀이 일체 노출되지 않는 클린 화면입니다.',
-                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
-                    );
-                  },
-                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Material(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.35), width: 1.2),
               ),
-              const SizedBox(height: 10),
-              Material(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: const Color(0xFF6366F1).withValues(alpha: 0.35), width: 1.2),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEFF6FF),
+                  child: Icon(Icons.touch_app_rounded, color: AppTheme.primaryBlue),
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFEEF2FF),
-                    child: Icon(Icons.science_rounded, color: Color(0xFF6366F1)),
-                  ),
-                  title: const Text(
-                    '키오스크 기능 테스트 (체험 모드)',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
-                  ),
-                  subtitle: const Text(
-                    '1234 체험 핀으로 출결 완료 축하 및 알림 화면 결과를 즉시 확인합니다.',
-                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
-                    );
-                  },
+                title: const Text(
+                  '학생 출결 키오스크 (실제 운영용)',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
                 ),
+                subtitle: const Text(
+                  '입구 태블릿 거치용 전체화면. 체험 핀이 일체 노출되지 않는 클린 화면입니다.',
+                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: false)),
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
+            Material(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: const Color(0xFF6366F1).withValues(alpha: 0.35), width: 1.2),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEEF2FF),
+                  child: Icon(Icons.science_rounded, color: Color(0xFF6366F1)),
+                ),
+                title: const Text(
+                  '키오스크 기능 테스트 (체험 모드)',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
+                ),
+                subtitle: const Text(
+                  '1234 체험 핀으로 출결 완료 축하 및 알림 화면 결과를 즉시 확인합니다.',
+                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TabletKioskScreen(isTestMode: true)),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );
@@ -1309,178 +1323,160 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   }
 
   void _showGoldenTimeExplanationModal(BuildContext context, List<Member> absentMembers) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      maxHeightRatio: 0.88,
       builder: (modalCtx) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(modalCtx).viewInsets.bottom + 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag Handle
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(2),
+                      color: const Color(0xFFFFF1F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFECDD3), width: 1),
+                    ),
+                    child: const Icon(Icons.favorite_rounded, color: Color(0xFFE11D48), size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '장기 미출석 안심 케어 안내',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          '최근 7일 이상 결석한 회원 골든타임 케어',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+                    splashRadius: 18,
+                    onPressed: () => Navigator.pop(modalCtx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Detailed Guide Card
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
                 ),
-                // Header Row
-                Row(
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1F2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFFECDD3), width: 1),
-                      ),
-                      child: const Icon(Icons.favorite_rounded, color: Color(0xFFE11D48), size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '장기 미출석 안심 케어 안내',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textPrimary,
-                              letterSpacing: -0.4,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            '최근 7일 이상 결석한 회원 골든타임 케어',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      '💡 왜 7일 이상 미출석 관리가 중요한가요?',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
-                      onPressed: () => Navigator.pop(modalCtx),
+                    SizedBox(height: 6),
+                    Text(
+                      '• 7일 이상 결석이 지속되면 출결 습관이 끊겨 중도 이탈로 이어질 확률이 80%에 달합니다.\n'
+                      '• 지금 원장님의 따뜻한 안부 톡이나 간단한 전화 한 통이 회원 복귀율을 78% 이상 높여줍니다.\n'
+                      '• 아래 버튼을 누르면 해당 회원들만 모아서 편리하게 안부 메시지를 보낼 수 있습니다.',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 12.5,
+                        color: Color(0xFF475569),
+                        height: 1.45,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                // Detailed Guide Card
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '💡 왜 7일 이상 미출석 관리가 중요한가요?',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        '• 7일 이상 결석이 지속되면 출결 습관이 끊겨 중도 이탈로 이어질 확률이 80%에 달합니다.\n'
-                        '• 지금 원장님의 따뜻한 안부 톡이나 간단한 전화 한 통이 회원 복귀율을 78% 이상 높여줍니다.\n'
-                        '• 아래 버튼을 누르면 해당 회원들만 모아서 편리하게 안부 메시지를 보낼 수 있습니다.',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontSize: 12.5,
-                          color: Color(0xFF475569),
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 14),
+              // Absent Members Chips
+              Text(
+                '현재 케어 대상 회원 (${absentMembers.length}명)',
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textSecondary,
                 ),
-                const SizedBox(height: 14),
-                // Absent Members Chips
-                Text(
-                  '현재 케어 대상 회원 (${absentMembers.length}명)',
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: absentMembers.take(8).map((m) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1F2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFECDD3), width: 0.8),
-                      ),
-                      child: Text(
-                        ' ()',
-                        style: const TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFBE123C),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 18),
-                // Primary Action Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(modalCtx);
-                      setState(() => _statusFilter = '골든타임 케어');
-                    },
-                    icon: const Icon(Icons.filter_list_rounded, size: 18),
-                    label: Text('대상 회원 ${absentMembers.length}명 목록 바로보기'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE11D48),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      textStyle: const TextStyle(
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: absentMembers.take(8).map((m) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF1F2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFECDD3), width: 0.8),
+                    ),
+                    child: Text(
+                      '${m.name} (${m.groupName.isNotEmpty ? m.groupName : "일반"})',
+                      style: const TextStyle(
                         fontFamily: 'Pretendard',
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFBE123C),
                       ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 18),
+              // Primary Action Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(modalCtx);
+                    setState(() => _statusFilter = '골든타임 케어');
+                  },
+                  icon: const Icon(Icons.filter_list_rounded, size: 18),
+                  label: Text('대상 회원 ${absentMembers.length}명 목록 바로보기'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE11D48),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -1488,13 +1484,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
   }
 
   void _showGoldenTimeCareModal(BuildContext context, Member member, StudioProfile studio) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      maxHeightRatio: 0.90,
       builder: (modalCtx) => _GoldenTimeCareSheet(
         member: member,
         studio: studio,
@@ -1721,10 +1713,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     List<Member> members,
     List<PassRecord> todayRecords,
   ) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightRatio: 0.90,
       builder: (modalCtx) => _SeniorAttendanceModalSheet(
         members: members,
         todayRecords: todayRecords,
@@ -1737,10 +1728,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     List<Member> members,
     StudioProfile studio,
   ) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightRatio: 0.90,
       builder: (modalCtx) => _SeniorBillingModalSheet(
         members: members,
         studio: studio,
@@ -1752,10 +1742,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     BuildContext context,
     List<Member> members,
   ) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightRatio: 0.90,
       builder: (modalCtx) => _SeniorCallModalSheet(
         members: members,
       ),
@@ -2046,29 +2035,12 @@ class _SeniorAttendanceModalSheetState extends ConsumerState<_SeniorAttendanceMo
       return m.name.contains(_filter) || m.phone.contains(_filter);
     }).toList();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: media.size.height * 0.90),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 8, 12),
               child: Row(
                 children: [
                   Container(
@@ -2287,9 +2259,7 @@ class _SeniorAttendanceModalSheetState extends ConsumerState<_SeniorAttendanceMo
                     ),
             ),
           ],
-        ),
-      ),
-    );
+        );
   }
 }
 
@@ -2319,27 +2289,11 @@ class _SeniorBillingModalSheetState extends State<_SeniorBillingModalSheet> {
       return m.name.contains(_filter) || m.phone.contains(_filter);
     }).toList();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: media.size.height * 0.90),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 8, 12),
               child: Row(
                 children: [
                   Container(
@@ -2522,9 +2476,7 @@ class _SeniorBillingModalSheetState extends State<_SeniorBillingModalSheet> {
                     ),
             ),
           ],
-        ),
-      ),
-    );
+        );
   }
 }
 
@@ -2552,27 +2504,11 @@ class _SeniorCallModalSheetState extends State<_SeniorCallModalSheet> {
       return m.name.contains(_filter) || m.phone.contains(_filter);
     }).toList();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: media.size.height * 0.90),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 8, 12),
               child: Row(
                 children: [
                   Container(
@@ -2762,9 +2698,7 @@ class _SeniorCallModalSheetState extends State<_SeniorCallModalSheet> {
                     ),
             ),
           ],
-        ),
-      ),
-    );
+        );
   }
 }
 

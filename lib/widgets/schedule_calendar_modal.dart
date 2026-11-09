@@ -233,27 +233,33 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryBlue, size: 20),
                     ),
-                    child: const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryBlue, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    '출결 & 일정 스케줄 달력',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
-                      letterSpacing: -0.4,
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        '출결 & 일정 스케줄 달력',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close_rounded, size: 22, color: AppTheme.textSecondary),

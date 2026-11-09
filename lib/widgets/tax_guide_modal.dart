@@ -1,84 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
+import 'app_bottom_sheet.dart';
 
 class TaxGuideModal extends StatelessWidget {
   const TaxGuideModal({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
+    return AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      maxHeightRatio: 0.90,
       builder: (ctx) => const TaxGuideModal(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          const SizedBox(height: 12),
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFC7D2FE)),
+                ),
+                child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5), size: 22),
               ),
-            ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '국세청 간편장부 & 세무 꿀팁',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '소상공인 원장님을 위한 1분 세무 마스터 가이드',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textSecondary),
+                splashRadius: 18,
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFC7D2FE)),
-                  ),
-                  child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5), size: 22),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '국세청 간편장부 & 세무 꿀팁',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        '소상공인 원장님을 위한 1분 세무 마스터 가이드',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 20, color: AppTheme.borderSubtle),
+        ),
+        const Divider(height: 12, color: AppTheme.borderSubtle),
 
           // Scrollable content
           Expanded(
@@ -190,8 +170,7 @@ class TaxGuideModal extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildSectionHeader(String text) {
