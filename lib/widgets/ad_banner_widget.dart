@@ -158,7 +158,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
-                    '월 1,900원 평생 유지 >',
+                    '광고 제거 월 1,900원 (한 달) >',
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,

@@ -2542,7 +2542,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 isVip
                     ? '모든 광고가 차단되었으며 입구 거치형 무인 출결 키오스크를 무제한으로 이용하실 수 있습니다.'
                     : isTemp
-                        ? '현재 1시간 무료 VIP 체험권이 작동 중입니다 (${bm.remainingTemporaryPassFormatted}). 월 커피 한 잔 값으로 평생 쾌적한 매장을 유지하세요.'
+                        ? '현재 1시간 무료 VIP 체험권이 작동 중입니다 (${bm.remainingTemporaryPassFormatted}). 월 1,900원(한 달 구독)으로 쾌적한 매장을 유지하세요.'
                         : '0원 문자(${bm.cumulativeSavedSmsCount}건)와 자동 출결(${bm.cumulativeCheckInCount}건)로 아낀 비용으로 광고 없는 VIP 매장과 무인 키오스크를 시작하세요.',
                 style: TextStyle(
                   fontSize: 12.5,
