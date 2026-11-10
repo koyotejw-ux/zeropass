@@ -326,6 +326,20 @@ class LocalizationService {
     }
   }
 
+  /// 프로샵 타이틀
+  static String get proStoreTitle => isDomestic ? '체크앤페이 PRO 샵' : 'Check-in Pay PRO Shop';
+
+  /// 구독 복원 라벨
+  static String get proStoreRestore => isDomestic ? '구독 복원' : 'Restore Purchases';
+
+  /// 타사 출결 ERP 비교 라벨
+  static String get proStoreComparisonOld =>
+      isDomestic ? '타사 출결 키오스크·ERP (월 49,000원)' : 'Traditional Attendance ERP (\$39.99/mo)';
+
+  /// 체크앤페이 VIP 절감 라벨
+  static String get proStoreComparisonNew =>
+      isDomestic ? '체크앤페이 VIP 월 5,900원 (88% 절감)' : 'Check-in Pay VIP \$4.99/mo (88% Off)';
+
   static Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();

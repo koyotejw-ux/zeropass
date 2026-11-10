@@ -74,6 +74,15 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
   bool get isPermanentVip => _isAdsRemoved && _isKioskProUnlocked;
 
+  /// 실제 구글 플레이 광고 제거 정기 구독 여부 (임시 1시간 무료 패스 제외)
+  bool get isSubscriptionAdsRemoved => _isAdsRemoved;
+
+  /// 실제 구글 플레이 키오스크 정기 구독 여부 (임시 1시간 무료 패스 제외)
+  bool get isSubscriptionKioskPro => _isKioskProUnlocked;
+
+  /// 실제 구글 플레이 올인원 정기 구독 여부 (임시 1시간 무료 패스 제외)
+  bool get isSubscriptionAllInOne => _isAdsRemoved && _isKioskProUnlocked;
+
   bool get isTemporaryPassActive =>
       (!_isAdsRemoved && _rewardedAdFreeUntil != null && DateTime.now().isBefore(_rewardedAdFreeUntil!)) ||
       (!_isKioskProUnlocked && _rewardedKioskPassUntil != null && DateTime.now().isBefore(_rewardedKioskPassUntil!));
@@ -179,6 +188,17 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> debugUnlockAll() async {
     await setDebugUnlock(adsRemoved: true, kioskPro: true);
+  }
+
+  /// 개발/검수용 모든 구독 초기화 (무료 체험 및 구독 전체 리셋)
+  Future<void> debugResetAll() async {
+    await setDebugUnlock(adsRemoved: false, kioskPro: false);
+    _rewardedAdFreeUntil = null;
+    _rewardedKioskPassUntil = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('rewarded_ad_free_until');
+    await prefs.remove('rewarded_kiosk_pass_until');
+    notifyListeners();
   }
 
   Future<void> setDebugUnlock({bool? adsRemoved, bool? kioskPro}) async {
