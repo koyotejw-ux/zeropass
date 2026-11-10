@@ -332,7 +332,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '지금까지 원장님이 체크앤페이로 절감한 누적 가치: 약 ${NumberFormat("#,###").format(MonetizationService.instance.estimatedTotalSavedKRW)}원!',
+                        '지금까지 체크앤페이로 절감한 누적 가치: 약 ${NumberFormat("#,###").format(MonetizationService.instance.estimatedTotalSavedKRW)}원!',
                         style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
                       ),
                     ],
@@ -531,7 +531,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        '실제 학생 출석용 또는 원장님 기능 테스트 중 선택하세요.',
+                        '실제 출석용 또는 관리자 기능 테스트 중 선택하세요.',
                         style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
                       ),
                     ],
@@ -1759,7 +1759,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                     SizedBox(height: 6),
                     Text(
                       '• 7일 이상 결석이 지속되면 출결 습관이 끊겨 중도 이탈로 이어질 확률이 80%에 달합니다.\n'
-                      '• 지금 원장님의 따뜻한 안부 톡이나 간단한 전화 한 통이 회원 복귀율을 78% 이상 높여줍니다.\n'
+                      '• 따뜻한 안부 톡이나 간단한 전화 한 통이 회원 복귀율을 78% 이상 높여줍니다.\n'
                       '• 아래 버튼을 누르면 해당 회원들만 모아서 편리하게 안부 메시지를 보낼 수 있습니다.',
                       style: TextStyle(
                         fontFamily: 'Pretendard',

@@ -9,6 +9,18 @@ import 'localization_service.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SmsTemplateService {
+  static String _applyProfilePlaceholders(String template, StudioProfile studio) {
+    return template
+        .replaceAll('#{상호명}', studio.studioName)
+        .replaceAll('#{담당자}', studio.instructorName)
+        .replaceAll('#{대표자}', studio.instructorName)
+        .replaceAll('#{강사명}', studio.instructorName)
+        .replaceAll('#{직함}', studio.roleTitle)
+        .replaceAll('#{고객호칭}', studio.memberWord)
+        .replaceAll('#{비용호칭}', studio.feeWord)
+        .replaceAll('#{장소호칭}', studio.placeTitle);
+  }
+
   /// 1. 청구서 수납 안내 문자 (사용자 정의 템플릿 치환)
   static String generateInvoiceMessage({
     required StudioProfile studio,
@@ -39,8 +51,7 @@ class SmsTemplateService {
       customerName: memberNames,
     );
 
-    String rendered = studio.invoiceTemplate
-        .replaceAll('#{상호명}', studio.studioName)
+    String rendered = _applyProfilePlaceholders(studio.invoiceTemplate, studio)
         .replaceAll('#{회원명}', memberNames)
         .replaceAll('#{청구제목}', invoice.title)
         .replaceAll('#{안내내용}', invoice.title)
@@ -50,9 +61,7 @@ class SmsTemplateService {
         .replaceAll('#{토스송금링크}', tossLink)
         .replaceAll('#{카드결제링크}', cardLink)
         .replaceAll('{카드결제링크}', cardLink)
-        .replaceAll('#{납부기한}', dueDateStr)
-        .replaceAll('#{고객호칭}', studio.memberWord)
-        .replaceAll('#{비용호칭}', studio.feeWord);
+        .replaceAll('#{납부기한}', dueDateStr);
 
     if (cardLink.isEmpty) {
       // If card payment is not enabled or empty, remove dangling card payment labels
@@ -74,8 +83,7 @@ class SmsTemplateService {
     final isSession = member.billingType == BillingType.sessionBased;
     final sessionText = isSession ? '• 잔여 회차: ${member.remainingSessions}회' : '• 이용권: 정기 패스';
 
-    return studio.attendanceTemplate
-        .replaceAll('#{상호명}', studio.studioName)
+    return _applyProfilePlaceholders(studio.attendanceTemplate, studio)
         .replaceAll('#{회원명}', member.name.split(' ').first)
         .replaceAll('#{출석시간}', timeStr)
         .replaceAll('#{잔여회차}', sessionText)
@@ -88,8 +96,7 @@ class SmsTemplateService {
     required Member member,
     required DateTime time,
   }) {
-    return studio.departureTemplate
-        .replaceAll('#{상호명}', studio.studioName)
+    return _applyProfilePlaceholders(studio.departureTemplate, studio)
         .replaceAll('#{회원명}', member.name.split(' ').first)
         .trim();
   }
@@ -172,7 +179,7 @@ ${member.name.split(' ').first} ${studio.memberWord}님의 잔여 패스가 [${m
     return '''[${studio.studioName}] 입금 안내 리마인드
   
 안녕하세요, ${studio.studioName}입니다.
-$memberNames 회원님의 [${invoice.title}] 납부 기한($dueDateStr)이 도래하여 정중히 안내드립니다.
+$memberNames ${studio.memberWord}님의 [${invoice.title}] 납부 기한($dueDateStr)이 도래하여 정중히 안내드립니다.
 
 ────────────────
 [입금 안내]

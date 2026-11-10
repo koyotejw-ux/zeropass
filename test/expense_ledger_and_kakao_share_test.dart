@@ -231,7 +231,7 @@ void main() {
         time: DateTime(2026, 5, 5, 14, 30),
       );
 
-      expect(msg.contains('이민호 학생이 안전하게 출석'), isTrue);
+      expect(msg.contains('이민호 ${studio.memberWord}님이 안전하게 출석'), isTrue);
       expect(msg.contains('14시 30분'), isTrue);
       expect(msg.contains('체크앤페이'), isTrue);
     });
@@ -243,7 +243,7 @@ void main() {
         time: DateTime(2026, 5, 5, 16, 0),
       );
 
-      expect(msg.contains('이민호 학생이 수업을 마치고'), isTrue);
+      expect(msg.contains('이민호 ${studio.memberWord}님이 일정을 마치고'), isTrue);
       expect(msg.contains('16시 00분'), isTrue);
     });
 

@@ -148,17 +148,17 @@ void main() {
 
       // Scroll down to reveal Guide Center tile if needed
       await tester.scrollUntilVisible(
-        find.textContaining('원장님 실전 가이드 센터'),
+        find.textContaining('실전 가이드 센터'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
       // 6. Consolidated Guide Center representative tile is rendered
-      expect(find.textContaining('원장님 실전 가이드 센터'), findsOneWidget);
+      expect(find.textContaining('실전 가이드 센터'), findsOneWidget);
 
       // Verify tapping opens the consolidated guide bottom sheet
-      await tester.tap(find.textContaining('원장님 실전 가이드 센터'));
+      await tester.tap(find.textContaining('실전 가이드 센터'));
       await tester.pumpAndSettle();
 
       // Inside bottom sheet modal:

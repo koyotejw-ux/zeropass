@@ -123,12 +123,12 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   int get estimatedTotalSavedKRW =>
       (_cumulativeSavedSmsCount * 25) + (_cumulativeCheckInCount * 15) + 35000;
 
-  /// 원장님 매장 운영 등급 (습관화 리텐션 배지)
+  /// 매장 운영 등급 (습관화 리텐션 배지)
   String get retentionTierTitle {
-    if (isPermanentVip) return '로열 VIP 스마트 원장님';
-    if (_activeStreakDays >= 14) return '골든 마스터 원장님';
-    if (_activeStreakDays >= 3) return '스마트 케어 원장님';
-    return '스타트업 원장님';
+    if (isPermanentVip) return '로열 VIP 마스터';
+    if (_activeStreakDays >= 14) return '골든 마스터';
+    if (_activeStreakDays >= 3) return '스마트 케어 파트너';
+    return '스타트업 파트너';
   }
 
   // 광고 객체 및 로드 상태

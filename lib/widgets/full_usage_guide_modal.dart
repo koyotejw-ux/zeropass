@@ -68,7 +68,7 @@ class _FullUsageGuideModalState extends ConsumerState<FullUsageGuideModal> {
           ],
         ),
         content: const Text(
-          '연습용 샘플 회원·출석·청구·거래처·지출·일정 데이터를 모두 지우고 대표님의 실제 데이터만 입력할 수 있는 깨끗한 상태로 초기화합니다.\n(스튜디오 상호·계좌·템플릿 설정은 유지됩니다.)',
+          '연습용 샘플 회원·출석·청구·거래처·지출·일정 데이터를 모두 지우고 실제 매장 데이터만 입력할 수 있는 깨끗한 상태로 초기화합니다.\n(스튜디오 상호·계좌·템플릿 설정은 유지됩니다.)',
           style: TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
         ),
         actions: [

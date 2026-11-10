@@ -204,7 +204,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('원장님 응원 혜택으로 1시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
+                        content: Text('응원 혜택으로 1시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );

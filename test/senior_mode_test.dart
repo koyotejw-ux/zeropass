@@ -111,7 +111,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('어르신 원장님 큰글씨 사용 안내'), findsOneWidget);
+      expect(find.text('큰글씨 간편 사용 안내'), findsOneWidget);
       expect(find.text('돋보기 없이도 3초 만에 끝내는 쉬운 사용법'), findsOneWidget);
       expect(find.text('오늘 온 학생 출석 찍기'), findsOneWidget);
       expect(find.text('이번 달 수강료(회비) 문자 보내기'), findsOneWidget);
@@ -253,7 +253,7 @@ void main() {
       await tester.tap(find.text('큰글씨 사용 가이드 보기'));
       await tester.pumpAndSettle();
 
-      expect(find.text('어르신 원장님 큰글씨 사용 안내'), findsOneWidget);
+      expect(find.text('큰글씨 간편 사용 안내'), findsOneWidget);
     });
   });
 }

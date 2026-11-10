@@ -219,11 +219,11 @@ void main() {
 
       // Scroll down to check representative tiles
       await tester.scrollUntilVisible(
-        find.text('고객 & 비용 맞춤 호칭 설정'),
+        find.text('맞춤 호칭 & 용어 설정'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('고객 & 비용 맞춤 호칭 설정'), findsOneWidget);
+      expect(find.text('맞춤 호칭 & 용어 설정'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('무인 출결 키오스크 기기 설정'),

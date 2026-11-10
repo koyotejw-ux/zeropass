@@ -290,7 +290,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           ],
         ),
         content: const Text(
-          '관리자 마스터 비밀번호(0000)가 정상 확인되었습니다.\n태블릿 키오스크 모드를 종료하고 원장님 대시보드로 복귀하시겠습니까?',
+          '관리자 마스터 비밀번호(0000)가 정상 확인되었습니다.\n태블릿 키오스크 모드를 종료하고 관리자 대시보드로 복귀하시겠습니까?',
           style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.5),
         ),
         actions: [
@@ -857,7 +857,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           const SizedBox(width: 8),
           const Flexible(
             child: Text(
-              '원장님 테스트 모드',
+              '관리자 테스트 모드',
               style: TextStyle(
                 color: Color(0xFFA5B4FC),
                 fontSize: 12,

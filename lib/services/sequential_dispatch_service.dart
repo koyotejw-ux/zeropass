@@ -54,11 +54,11 @@ class SequentialDispatchService {
       case DispatchTemplateType.billing:
         return '수강료 수납/미납 안내';
       case DispatchTemplateType.notice:
-        return '학원/센터 공지사항';
+        return '매장 공지사항';
       case DispatchTemplateType.sessionExpiry:
         return '회차 만료 재등록 안내';
       case DispatchTemplateType.custom:
-        return '원장님 직접 작성 공지';
+        return '직접 작성 공지';
     }
   }
 
@@ -66,10 +66,10 @@ class SequentialDispatchService {
     switch (type) {
       case DispatchTemplateType.billing:
         return '''
-[📢 #{상호명} 수강료 납부 안내]
+[📢 #{상호명} #{비용호칭} 납부 안내]
 
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님의 수강료 안내장을 전송해 드립니다.
+#{회원명} #{고객호칭}님의 #{비용호칭} 안내장을 전송해 드립니다.
 
 ────────────────
 • 수납 대상 : #{회원명} (#{그룹명})
@@ -82,7 +82,7 @@ class SequentialDispatchService {
 #{토스송금링크}
 (위 링크를 누르시면 금액과 계좌가 토스에 자동 채워집니다)
 
-감사합니다. 알찬 수업으로 보답하겠습니다!
+감사합니다. 알찬 서비스로 보답하겠습니다!
 '''.trim();
 
       case DispatchTemplateType.notice:
@@ -90,15 +90,15 @@ class SequentialDispatchService {
 [📢 #{상호명} 안내사항]
 
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님 및 학부모님께 공지사항을 안내해 드립니다.
+#{회원명} #{고객호칭}님께 주요 안내사항을 전달해 드립니다.
 
 ────────────────
 [공지 내용]
-• 수업 일정 및 주요 전달사항을 확인해 주세요.
+• 일정 및 주요 전달사항을 확인해 주세요.
 • 문의사항이 있으시면 편하게 회신 주시기 바랍니다.
 ────────────────
 
-늘 최선을 다해 지도하겠습니다. 감사합니다!
+늘 최선을 다해 함께하겠습니다. 감사합니다!
 '''.trim();
 
       case DispatchTemplateType.sessionExpiry:
@@ -106,10 +106,10 @@ class SequentialDispatchService {
 [🔔 #{상호명} 잔여 회차 만료 안내]
 
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님의 잔여 수업 회차가 [#{잔여회차}] 남았습니다.
+#{회원명} #{고객호칭}님의 잔여 회차가 [#{잔여회차}] 남았습니다.
 
-원활한 수업 예약 및 연속적인 지도를 위해 재등록 안내를 드립니다.
-• 재등록 수강료 : #{금액}
+원활한 예약 및 연속적인 이용을 위해 재등록 안내를 드립니다.
+• 재등록 #{비용호칭} : #{금액}
 • 입금 계좌 : #{계좌정보}
 
 문의사항은 언제든 편하게 말씀해주세요. 감사합니다!
@@ -117,7 +117,7 @@ class SequentialDispatchService {
 
       case DispatchTemplateType.custom:
         return '''
-[#{상호명}] 안녕하세요, #{회원명} 회원님.
+[#{상호명}] 안녕하세요, #{회원명} #{고객호칭}님.
 '''.trim();
     }
   }
@@ -177,7 +177,19 @@ class SequentialDispatchService {
         .replaceAll('#{카드결제링크}', cardPaymentLink)
         .replaceAll('{카드결제링크}', cardPaymentLink)
         .replaceAll('#{잔여회차}', sessionText)
-        .replaceAll('{잔여회차}', sessionText);
+        .replaceAll('{잔여회차}', sessionText)
+        .replaceAll('#{담당자}', studio.instructorName)
+        .replaceAll('{담당자}', studio.instructorName)
+        .replaceAll('#{대표자}', studio.instructorName)
+        .replaceAll('{대표자}', studio.instructorName)
+        .replaceAll('#{직함}', studio.roleTitle)
+        .replaceAll('{직함}', studio.roleTitle)
+        .replaceAll('#{고객호칭}', studio.memberWord)
+        .replaceAll('{고객호칭}', studio.memberWord)
+        .replaceAll('#{비용호칭}', studio.feeWord)
+        .replaceAll('{비용호칭}', studio.feeWord)
+        .replaceAll('#{장소호칭}', studio.placeTitle)
+        .replaceAll('{장소호칭}', studio.placeTitle);
 
     if (cardPaymentLink.isEmpty) {
       rendered = rendered

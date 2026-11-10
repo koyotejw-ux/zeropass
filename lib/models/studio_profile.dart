@@ -14,6 +14,8 @@ class StudioProfile {
   final String? logoPath;
   final String? customMemberTerm;
   final String? customFeeTerm;
+  final String? customRoleTerm;
+  final String? customPlaceTerm;
 
   static const List<String> businessCategories = [
     '음악 / 피아노',
@@ -48,6 +50,27 @@ class StudioProfile {
     '교육비',
   ];
 
+  static const List<String> roleTermOptions = [
+    '대표',
+    '원장',
+    '실장',
+    '선생님',
+    '코치',
+    '강사',
+    '관장',
+    '관리자',
+  ];
+
+  static const List<String> placeTermOptions = [
+    '스튜디오',
+    '학원',
+    '센터',
+    '공방',
+    '매장',
+    '체육관',
+    '연습실',
+  ];
+
   const StudioProfile({
     required this.studioName,
     required this.instructorName,
@@ -64,6 +87,8 @@ class StudioProfile {
     this.logoPath,
     this.customMemberTerm,
     this.customFeeTerm,
+    this.customRoleTerm,
+    this.customPlaceTerm,
   });
 
   /// 비대면 카드결제 링크 생성 (금액/회원명 치환 지원)
@@ -82,18 +107,21 @@ class StudioProfile {
     return url;
   }
 
-  /// 업종별 대표자 직함 (원장 / 대표 / 코치 / 강사)
+  /// 운영자 직함 호칭 (커스텀 설정 우선, 미설정 시 업종별 기본값)
   String get roleTitle {
+    if (customRoleTerm != null && customRoleTerm!.trim().isNotEmpty) {
+      return customRoleTerm!.trim();
+    }
     if (category.contains('피트니스') || category.contains('PT') || category.contains('스포츠') || category.contains('수영')) {
-      return '대표 / 트레이너';
+      return '코치';
     } else if (category.contains('공방') || category.contains('도예') || category.contains('미술')) {
-      return '대표 / 작가';
+      return '대표';
     } else if (category.contains('필라테스') || category.contains('요가') || category.contains('무용') || category.contains('댄스')) {
-      return '원장 / 강사';
+      return '실장';
     } else if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('코딩')) {
       return '원장';
     }
-    return '대표 / 원장';
+    return '대표';
   }
 
   /// 고객/회원 호칭 (커스텀 설정 우선, 미설정 시 업종별 스마트 기본값)
@@ -156,18 +184,21 @@ class StudioProfile {
     return '회비';
   }
 
-  /// 사업장 성격 (스튜디오 / 센터 / 학원 / 공방 / 매장)
+  /// 사업장 성격 호칭 (커스텀 설정 우선, 미설정 시 업종별 기본값)
   String get placeTitle {
+    if (customPlaceTerm != null && customPlaceTerm!.trim().isNotEmpty) {
+      return customPlaceTerm!.trim();
+    }
     if (category.contains('학원') || category.contains('입시') || category.contains('어학')) {
-      return '학원 / 교습소';
+      return '학원';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('스포츠')) {
-      return '센터 / 피트니스샵';
+      return '센터';
     } else if (category.contains('필라테스') || category.contains('요가') || category.contains('댄스')) {
       return '스튜디오';
     } else if (category.contains('공방') || category.contains('도예')) {
-      return '공방 / 작업실';
+      return '공방';
     }
-    return '사업장 / 매장';
+    return '매장';
   }
 
   StudioProfile copyWith({
@@ -187,6 +218,8 @@ class StudioProfile {
     bool clearLogo = false,
     String? customMemberTerm,
     String? customFeeTerm,
+    String? customRoleTerm,
+    String? customPlaceTerm,
     bool clearCustomTerms = false,
   }) {
     return StudioProfile(
@@ -205,6 +238,8 @@ class StudioProfile {
       logoPath: clearLogo ? null : (logoPath ?? this.logoPath),
       customMemberTerm: clearCustomTerms ? null : (customMemberTerm ?? this.customMemberTerm),
       customFeeTerm: clearCustomTerms ? null : (customFeeTerm ?? this.customFeeTerm),
+      customRoleTerm: clearCustomTerms ? null : (customRoleTerm ?? this.customRoleTerm),
+      customPlaceTerm: clearCustomTerms ? null : (customPlaceTerm ?? this.customPlaceTerm),
     );
   }
 
@@ -225,16 +260,18 @@ class StudioProfile {
       'logoPath': logoPath,
       'customMemberTerm': customMemberTerm,
       'customFeeTerm': customFeeTerm,
+      'customRoleTerm': customRoleTerm,
+      'customPlaceTerm': customPlaceTerm,
     };
   }
 
   factory StudioProfile.fromMap(Map<String, dynamic> map) {
     return StudioProfile(
       studioName: map['studioName'] as String? ?? '체크앤페이 스튜디오',
-      instructorName: map['instructorName'] as String? ?? '김원장',
+      instructorName: map['instructorName'] as String? ?? '담당자',
       bankName: map['bankName'] as String? ?? '토스뱅크',
       accountNumber: map['accountNumber'] as String? ?? '1000-1234-5678',
-      accountHolder: map['accountHolder'] as String? ?? '김원장',
+      accountHolder: map['accountHolder'] as String? ?? '홍길동',
       category: map['category'] as String? ?? '음악 / 피아노',
       autoBankDetectEnabled: (map['autoBankDetectEnabled'] is int)
           ? (map['autoBankDetectEnabled'] == 1)
@@ -249,13 +286,15 @@ class StudioProfile {
       logoPath: map['logoPath'] as String?,
       customMemberTerm: map['customMemberTerm'] as String?,
       customFeeTerm: map['customFeeTerm'] as String?,
+      customRoleTerm: map['customRoleTerm'] as String?,
+      customPlaceTerm: map['customPlaceTerm'] as String?,
     );
   }
 
   static const String defaultInvoiceTemplate = '''[#{상호명}] #{청구제목}
   
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님의 수납 내역 안내드립니다.
+#{회원명} #{고객호칭}님의 #{비용호칭} 내역 안내드립니다.
 
 ────────────────
 [청구 내역]
@@ -268,36 +307,34 @@ class StudioProfile {
 • 복사용 계좌 : #{계좌복사용}
 (계좌번호를 복사 후 토스나 은행 앱을 여시면 바로 송금됩니다)
 
-소중한 회원님과 함께할 수 있어 늘 감사드리며,
+소중한 #{고객호칭}님과 함께할 수 있어 늘 감사드리며,
 입금 확인 즉시 등록·갱신됩니다.
 감사합니다.''';
 
   static const String defaultAttendanceTemplate = '''[#{상호명}] 출석 안심 알림
 
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님이 학원/센터에 안전하게 도착하여
+#{회원명} #{고객호칭}님이 #{장소호칭}에 안전하게 도착하여
 출석 확인(체크인)을 완료하였습니다.
 
 • 출석 일시 : #{출석시간}
 #{잔여회차}
 
-오늘도 즐겁고 유익한 시간이 되도록 정성껏 지도하겠습니다.
+오늘도 즐겁고 유익한 시간이 되도록 정성껏 함께하겠습니다.
 감사합니다.''';
 
-  static const String defaultDepartureTemplate = '''[#{상호명}] 하원 완료 알림
+  static const String defaultDepartureTemplate = '''[#{상호명}] 하원·퇴실 완료 알림
 
 안녕하세요, #{상호명}입니다.
-#{회원명} 회원님이 금일 모든 수업 일정을 마치고
-안전하게 귀가(하원)하였습니다.
+#{회원명} #{고객호칭}님이 금일 일정을 마치고
+안전하게 귀가(퇴실)하였습니다.
 
-오늘 하루도 정말 수고 많았습니다.
-가정에서도 따뜻한 격려와 칭찬 부탁드립니다.
-감사합니다.''';
+오늘 하루도 수고 많으셨습니다. 감사합니다.''';
 
   static StudioProfile defaultProfile() {
     return const StudioProfile(
       studioName: '마인드핏 아카데미 & 스튜디오',
-      instructorName: '김서연 대표/원장',
+      instructorName: '김서연',
       bankName: '토스뱅크',
       accountNumber: '1000-2026-8899',
       accountHolder: '김서연',

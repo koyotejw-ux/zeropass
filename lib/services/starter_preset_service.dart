@@ -54,6 +54,36 @@ enum IndustryPreset {
         return '수강료';
     }
   }
+
+  String get roleTerm {
+    switch (this) {
+      case IndustryPreset.academy:
+        return '원장';
+      case IndustryPreset.fitness:
+        return '코치';
+      case IndustryPreset.pilates:
+        return '실장';
+      case IndustryPreset.taekwondo:
+        return '관장';
+      case IndustryPreset.artMusic:
+        return '대표';
+    }
+  }
+
+  String get placeTerm {
+    switch (this) {
+      case IndustryPreset.academy:
+        return '학원';
+      case IndustryPreset.fitness:
+        return '센터';
+      case IndustryPreset.pilates:
+        return '스튜디오';
+      case IndustryPreset.taekwondo:
+        return '체육관';
+      case IndustryPreset.artMusic:
+        return '공방';
+    }
+  }
 }
 
 class StarterPresetService {
@@ -74,6 +104,8 @@ class StarterPresetService {
         'category': preset.category,
         'customMemberTerm': preset.memberTerm,
         'customFeeTerm': preset.feeTerm,
+        'customRoleTerm': preset.roleTerm,
+        'customPlaceTerm': preset.placeTerm,
       },
       where: 'id = ?',
       whereArgs: [1],

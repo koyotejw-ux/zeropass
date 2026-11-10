@@ -16,8 +16,11 @@ import 'package:zeropass/providers/app_providers.dart';
 import 'package:zeropass/screens/settings_vault_screen.dart';
 import 'package:zeropass/services/data_vault_service.dart';
 import 'package:zeropass/services/database_service.dart';
+import 'package:zeropass/services/kakao_share_service.dart';
 import 'package:zeropass/services/monetization_service.dart';
 import 'package:zeropass/services/schedule_service.dart';
+import 'package:zeropass/services/sequential_dispatch_service.dart';
+import 'package:zeropass/services/sms_template_service.dart';
 
 class _MockMembersNotifier extends MembersNotifier {
   final List<Member> _items;
@@ -232,6 +235,70 @@ void main() {
       await tester.tap(find.text('회원 명부'));
       await tester.pumpAndSettle();
       expect(find.text('2. 회원 정보 수정 · 삭제 · 회차 충전 · 이력 관리'), findsOneWidget);
+    });
+  });
+
+  group('Custom Terminology & Role Personalization Tests', () {
+    test('Custom role, place, member, and fee terms propagate to DB, SMS, Kakao, and Sequential Dispatch', () async {
+      final db = DatabaseService.instance;
+      final customProfile = StudioProfile.defaultProfile().copyWith(
+        studioName: '루나 필라테스',
+        instructorName: '박지현',
+        customRoleTerm: '실장',
+        customPlaceTerm: '스튜디오',
+        customMemberTerm: '회원',
+        customFeeTerm: '레슨비',
+        attendanceTemplate: '[#{상호명}] #{회원명} #{고객호칭}님 #{장소호칭} 출석 (#{직함}: #{담당자})',
+      );
+
+      await db.updateStudioProfile(customProfile);
+      final loaded = await db.getStudioProfile();
+      expect(loaded.roleTitle, equals('실장'));
+      expect(loaded.placeTitle, equals('스튜디오'));
+      expect(loaded.memberWord, equals('회원'));
+      expect(loaded.feeWord, equals('레슨비'));
+
+      final member = Member(
+        id: 'm_custom_1',
+        name: '김수진',
+        phone: '010-1234-5678',
+        groupName: '기구 필라테스',
+        billingType: BillingType.sessionBased,
+        defaultFee: 450000,
+        totalSessions: 10,
+        remainingSessions: 9,
+        registeredAt: DateTime.now(),
+      );
+
+      final smsMsg = SmsTemplateService.generateAttendanceMessage(
+        studio: loaded,
+        member: member,
+        time: DateTime(2026, 11, 11, 14, 30),
+      );
+      expect(smsMsg, contains('[루나 필라테스] 김수진 회원님 스튜디오 출석 (실장: 박지현)'));
+
+      final kakaoVendorMsg = KakaoShareService.generateVendorOrderKakaoMessage(
+        studio: loaded,
+        vendorName: '필라기구몰',
+        title: '리포머 스프링 교체',
+        amount: 120000,
+      );
+      expect(kakaoVendorMsg, contains('루나 필라테스(실장: 박지현)'));
+
+      final kakaoAttMsg = KakaoShareService.generateAttendanceKakaoMessage(
+        studio: loaded,
+        member: member,
+        time: DateTime(2026, 11, 11, 14, 30),
+      );
+      expect(kakaoAttMsg, contains('김수진 회원님이'));
+      expect(kakaoAttMsg.contains('학생'), isFalse);
+
+      final dispatchMsg = SequentialDispatchService.renderMessage(
+        template: '#{상호명} #{직함} #{담당자} / #{고객호칭} #{비용호칭} #{장소호칭}',
+        studio: loaded,
+        member: member,
+      );
+      expect(dispatchMsg, equals('루나 필라테스 실장 박지현 / 회원 레슨비 스튜디오'));
     });
   });
 }

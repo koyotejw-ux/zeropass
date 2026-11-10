@@ -304,6 +304,8 @@ void main() {
       expect(find.text('로고 변경/삭제'), findsOneWidget);
 
       await tester.scrollUntilVisible(find.text('로컬 데이터 보안 금고 (100% 온디바이스)'), 300);
+      await tester.ensureVisible(find.text('로컬 데이터 보안 금고 (100% 온디바이스)'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('로컬 데이터 보안 금고 (100% 온디바이스)'));
       await tester.pumpAndSettle();
       expect(find.text('국세청 사업소득 간편장부 엑셀(CSV) 내보내기'), findsOneWidget);
@@ -413,9 +415,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('국세청 간편장부 & 세무 꿀팁'), findsOneWidget);
-      expect(find.text('소상공인 원장님을 위한 1분 세무 마스터 가이드'), findsOneWidget);
+      expect(find.text('1분 세무 마스터 가이드'), findsOneWidget);
       expect(find.text('국세청 표준 사업소득 간편장부란?'), findsOneWidget);
-      expect(find.text('간편장부 작성 시 원장님 3대 혜택'), findsOneWidget);
+      expect(find.text('간편장부 작성 3대 혜택'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('종합소득세 확정 신고 (모든 개인사업자 필수)'),

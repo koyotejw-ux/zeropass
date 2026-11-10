@@ -45,7 +45,7 @@ class SeniorEasyGuideModal extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '어르신 원장님 큰글씨 사용 안내',
+                      '큰글씨 간편 사용 안내',
                       style: TextStyle(
                         fontSize: isCompact ? 18 : 20,
                         fontWeight: FontWeight.w900,
@@ -97,7 +97,7 @@ class SeniorEasyGuideModal extends StatelessWidget {
                 iconColor: AppTheme.trustBlue,
                 title: '이번 달 수강료(회비) 문자 보내기',
                 description:
-                    '화면 상단의 [💌 회비(수강료) 문자]를 누르면 이번 달 회비를 아직 안 낸 학생 명단이 나옵니다.\n파란색 [문자 보내기] 버튼을 누르면 원장님의 수납 계좌번호와 금액이 적힌 문자가 바로 만들어집니다.',
+                    '화면 상단의 [💌 회비(수강료) 문자]를 누르면 이번 달 회비를 아직 안 낸 회원 명단이 나옵니다.\n파란색 [문자 보내기] 버튼을 누르면 등록된 수납 계좌번호와 금액이 적힌 문자가 바로 만들어집니다.',
                 tip: '💡 카카오톡이나 일반 문자(SMS) 중 편한 방식으로 무료 전송됩니다.',
               ),
               const SizedBox(height: 14),

@@ -121,10 +121,10 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           : _selectedCategory;
       final studio = StudioProfile(
         studioName: _studioNameCtrl.text.trim().isEmpty ? '나의 프라이빗 스튜디오' : _studioNameCtrl.text.trim(),
-        instructorName: _accountHolderCtrl.text.trim().isEmpty ? '대표/원장' : _accountHolderCtrl.text.trim(),
+        instructorName: _accountHolderCtrl.text.trim().isEmpty ? '담당자' : _accountHolderCtrl.text.trim(),
         bankName: _selectedBank,
         accountNumber: _accountNumberCtrl.text.trim().isEmpty ? '3333-01-2345678' : _accountNumberCtrl.text.trim(),
-        accountHolder: _accountHolderCtrl.text.trim().isEmpty ? '원장님' : _accountHolderCtrl.text.trim(),
+        accountHolder: _accountHolderCtrl.text.trim().isEmpty ? '홍길동' : _accountHolderCtrl.text.trim(),
         category: finalCategory,
         autoBankDetectEnabled: false,
         invoiceTemplate: defaultProfile.invoiceTemplate,

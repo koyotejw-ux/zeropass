@@ -80,12 +80,12 @@ $tossLink
     return '''
 [🔔 ${studio.studioName} 출석 체크 알림]
 
-${member.name.split(' ').first} 학생이 안전하게 출석(등원)하였습니다.
+${member.name.split(' ').first} ${studio.memberWord}님이 안전하게 출석(등원)하였습니다.
 
 • 출석 시각 : $timeStr
 $sessionText
 
-오늘도 학생의 안전과 성장을 위해 정성을 다해 지도하겠습니다. 감사합니다!
+오늘도 즐겁고 알찬 시간 되도록 정성을 다해 함께하겠습니다. 감사합니다!
 
 ────────────────
 ⚡ 스마트 출결·수납 체크앤페이
@@ -101,13 +101,13 @@ $sessionText
     final timeStr = DateFormat('HH시 mm분').format(time);
 
     return '''
-[👋 ${studio.studioName} 하원 알림]
+[👋 ${studio.studioName} 하원·퇴실 알림]
 
-${member.name.split(' ').first} 학생이 수업을 마치고 안전하게 하원(퇴실)하였습니다.
+${member.name.split(' ').first} ${studio.memberWord}님이 일정을 마치고 안전하게 귀가(퇴실)하였습니다.
 
-• 하원 시각 : $timeStr
+• 퇴실 시각 : $timeStr
 
-집까지 안전하게 귀가할 수 있도록 지도하였습니다. 편안한 하루 되세요!
+오늘 하루도 수고 많으셨습니다. 편안한 하루 되세요!
 
 ────────────────
 ⚡ 스마트 출결·수납 체크앤페이
@@ -174,7 +174,7 @@ ${member.name.split(' ').first} ${studio.memberWord}님의 ${studio.feeWord} 입
 [📦 ${studio.studioName} 발주 및 입금 확인 안내]
 
 안녕하세요, $vendorName 담당자님.
-${studio.studioName}(대표: ${studio.instructorName})에서 대금 이체 및 발주 내역을 전달드립니다.
+${studio.studioName}(${studio.roleTitle}: ${studio.instructorName})에서 대금 이체 및 발주 내역을 전달드립니다.
 
 ────────────────
 • 발주/정산 내용 : $title
@@ -240,21 +240,21 @@ $bankSection${details != null && details.isNotEmpty ? '• 정산 산출 근거 
 '''.trim();
   }
 
-  /// 7. 동료 원장님 앱 추천 및 초대장
+  /// 7. 앱 추천 및 초대장
   static String generateAppInviteKakaoMessage({
     required StudioProfile studio,
   }) {
     return '''
-[🎁 원장님·대표님을 위한 100% 무료 출결·수납·간편장부 앱 추천]
+[🎁 100% 무료 출결·수납·간편장부 앱 추천]
 
-안녕하세요! ${studio.studioName}에서 매우 유용하게 쓰고 있는 '체크앤페이'를 소개해 드립니다.
+안녕하세요! ${studio.studioName}에서 유용하게 쓰고 있는 '체크앤페이'를 소개해 드립니다.
 
-• 문자비 0원! 부모님 안심 출결 알림 & 전용 키오스크
-• 은행 입금 푸시 알림 100% 자동 매칭 (미납 완벽 해결)
+• 문자비 0원! 안심 출결 알림 & 무인 키오스크
+• 은행 입금 푸시 알림 자동 매칭 (미납 완벽 해결)
 • 토스 1초 무료 송금 딥링크로 결제 수수료 0원
-• 학원/헬스/필라테스/태권도/공방 맞춤형 간편 지출 장부
+• 업종 맞춤형 회원 관리 & 간편 지출 장부
 
-원장님 학원이나 매장 태블릿/스마트폰에 설치해 지금 바로 무료로 사용해보세요!
+매장 태블릿이나 스마트폰에 설치해 지금 바로 무료로 사용해보세요!
 👉 구글 플레이스토어에서 '체크앤페이' 검색
 '''.trim();
   }

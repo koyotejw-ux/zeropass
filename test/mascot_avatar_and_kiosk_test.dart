@@ -138,8 +138,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Verify "원장님 테스트 모드" banner and tap "체험 PIN 1234" to trigger celebration screen
-      expect(find.text('원장님 테스트 모드'), findsOneWidget);
+      // Verify "관리자 테스트 모드" banner and tap "체험 PIN 1234" to trigger celebration screen
+      expect(find.text('관리자 테스트 모드'), findsOneWidget);
       final demoChip = find.text('1234');
       expect(demoChip, findsOneWidget);
       await tester.tap(demoChip);
@@ -241,7 +241,7 @@ void main() {
 
       // Demo PIN '1234' chip should NOT be visible
       expect(find.text('1234'), findsNothing);
-      expect(find.text('원장님 테스트 모드'), findsNothing);
+      expect(find.text('관리자 테스트 모드'), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
@@ -265,7 +265,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Now keypad and test mode banner with 1234 chip should appear
-      expect(find.text('원장님 테스트 모드'), findsOneWidget);
+      expect(find.text('관리자 테스트 모드'), findsOneWidget);
       expect(find.text('1234'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     });

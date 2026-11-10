@@ -475,7 +475,7 @@ class LocalizationService {
       'es': 'Modo Senior',
     },
     'senior_mode_desc': {
-      'ko': '노안 및 스마트폰 조작이 어려운 원장님을 위한 1.4배 큰글씨 & 고대비 간편 화면',
+      'ko': '노안 및 스마트폰 조작이 어려운 분을 위한 1.4배 큰글씨 & 고대비 간편 화면',
       'en': '1.4x larger text & high contrast easy view for elderly business owners',
       'ja': '文字が大きく見やすいシニア向け高コントラスト簡単画面',
       'zh': '为老龄馆长提供1.4倍超大字体与高对比度的极简界面',

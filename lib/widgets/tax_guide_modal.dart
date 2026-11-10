@@ -44,7 +44,7 @@ class TaxGuideModal extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      '소상공인 원장님을 위한 1분 세무 마스터 가이드',
+                      '1분 세무 마스터 가이드',
                       style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                     ),
                   ],
@@ -82,7 +82,7 @@ class TaxGuideModal extends StatelessWidget {
                   iconColor: const Color(0xFF16A34A),
                   bgColor: const Color(0xFFF0FDF4),
                   borderColor: const Color(0xFFBBF7D0),
-                  title: '간편장부 작성 시 원장님 3대 혜택',
+                  title: '간편장부 작성 3대 혜택',
                   body: '1. 무기장 가산세(산출세액의 20%) 완전 면제\n'
                       '2. 임대료, 강사료, 비품 등 실제 지출 경비 100% 인정으로 소득세 절세\n'
                       '3. 엑셀(CSV) 원클릭 추출로 세무사 기장 수수료 절감',
@@ -90,7 +90,7 @@ class TaxGuideModal extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // 3. 주요 세무 일정 캘린더
-                _buildSectionHeader('📅 놓치면 안 되는 원장님 세무 캘린더'),
+                _buildSectionHeader('📅 놓치면 안 되는 세무 캘린더'),
                 const SizedBox(height: 8),
                 _buildScheduleTile(
                   badge: '5월',

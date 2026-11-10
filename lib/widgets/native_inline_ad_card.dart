@@ -161,7 +161,7 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                         ),
                       ),
                       const Text(
-                        '원장님 맞춤 매장 파트너',
+                        '매장 운영 추천 파트너',
                         softWrap: true,
                         style: TextStyle(
                           fontSize: 11.5,

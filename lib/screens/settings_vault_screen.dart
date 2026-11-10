@@ -59,7 +59,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           context: context,
           coachKey: CoachMarkService.keySettingsTab,
           title: '로컬 100% 보안 금고',
-          message: '체크앤페이는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n대표님의 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
+          message: '체크앤페이는 외부 서버로 단 1바이트의 개인정보도 전송하지 않습니다.\n\n내 스마트폰 기기에만 AES 암호화되어 안전하게 보관되며, 원하실 때 언제든 엑셀(CSV)이나 암호화 백업 파일로 추출할 수 있어요.',
           tip: '스튜디오 상호명, 수납 계좌번호, 자동 문자 양식 편집도 모두 여기서 관리하실 수 있습니다.',
           buttonText: '안심하고 사용할게요',
         );
@@ -88,7 +88,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           content: Text(
             value
                 ? '무인 키오스크 전용 모드가 활성화되었습니다. 이제 앱 실행 시 출결 화면으로 바로 진입합니다.'
-                : '무인 키오스크 전용 모드가 해제되었습니다. 앱 실행 시 원장님 대시보드로 진입합니다.',
+                : '무인 키오스크 전용 모드가 해제되었습니다. 앱 실행 시 관리자 대시보드로 진입합니다.',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -203,7 +203,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               const SizedBox(height: 10),
               _buildPinStep('3단계: 체크앤페이 고정', '체크앤페이 키오스크 화면을 켠 뒤, 최근 사용 앱 버튼(III)을 누르고 체크앤페이 아이콘을 터치하여 [이 앱 고정]을 선택합니다.'),
               const SizedBox(height: 10),
-              _buildPinStep('해제 방법 (원장님만 가능)', '뒤로가기 버튼과 최근 앱 버튼을 동시에 길게 누르면 기기 화면 잠금(패턴/PIN)이 풀리며 해제됩니다.'),
+              _buildPinStep('해제 방법 (관리자 전용)', '뒤로가기 버튼과 최근 앱 버튼을 동시에 길게 누르면 기기 화면 잠금(패턴/PIN)이 풀리며 해제됩니다.'),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -333,7 +333,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             ),
             const SizedBox(height: 4),
             const Text(
-              '대표님의 업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
+              '업종을 선택하시면 딱 맞는 출결 용어와 실전 샘플 데이터로 즉시 세팅됩니다.',
               style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 12),
@@ -397,7 +397,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '원장님 실전 가이드 센터',
+                        '실전 가이드 센터',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                       ),
                       SizedBox(height: 2),
@@ -688,7 +688,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   SizedBox(height: 10),
                   Text('Q. 문자 발송 비용이 왜 0원인가요?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                   SizedBox(height: 3),
-                  Text('A. 유료 외부 문자 서버 대신 원장님의 스마트폰 기본 무료 문자를 활용하므로 월 통신비 지출이 0원입니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
+                  Text('A. 유료 외부 문자 서버 대신 내 스마트폰 기본 무료 문자를 활용하므로 월 통신비 지출이 0원입니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
                   Divider(height: 16),
                   Text('Q. 개인정보가 외부 서버에 전송되나요?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                   SizedBox(height: 3),
@@ -696,7 +696,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   Divider(height: 16),
                   Text('Q. 태블릿 무인 키오스크 관리자 비밀번호는?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                   SizedBox(height: 3),
-                  Text('A. 기본 마스터 비밀번호는 [0000]이며, 키패드에서 0000을 입력하면 원장님 대시보드로 즉시 복귀합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
+                  Text('A. 기본 마스터 비밀번호는 [0000]이며, 키패드에서 0000을 입력하면 관리자 대시보드로 즉시 복귀합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.45)),
                 ],
               ),
             ),
@@ -822,8 +822,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 icon: Icons.badge_outlined,
                 iconColor: const Color(0xFF0F172A),
                 iconBgColor: const Color(0xFFF1F5F9),
-                title: '고객 & 비용 맞춤 호칭 설정',
-                subtitle: '현재 호칭: ${profile.memberWord} · ${profile.feeWord}',
+                title: '맞춤 호칭 & 용어 설정',
+                subtitle: '호칭: ${profile.roleTitle} · ${profile.memberWord} · ${profile.feeWord} · ${profile.placeTitle}',
                 trailingBadge: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                   decoration: BoxDecoration(
@@ -831,7 +831,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    '${profile.memberWord}/${profile.feeWord}',
+                    '${profile.roleTitle}/${profile.memberWord}',
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
                   ),
                 ),
@@ -942,7 +942,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 icon: Icons.auto_stories_rounded,
                 iconColor: const Color(0xFF059669),
                 iconBgColor: const Color(0xFFECFDF5),
-                title: '원장님 실전 가이드 센터 & 튜토리얼',
+                title: '실전 가이드 센터 & 튜토리얼',
                 subtitle: '4단계 실전 연습 코칭 · 업종 프리셋 · 셋업 마법사 · FAQ',
                 onTap: () => _openGuideCenterSheet(context, profile),
               ),
@@ -1897,7 +1897,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '안심 보안 잠금: 등록된 학생이 있을 때는 키오스크에 회원 명단/PIN이 일체 표시되지 않으며, 우측 상단 자물쇠 터치 시 관리자 비밀번호(0000)를 입력해야만 원장님 화면으로 나갈 수 있습니다.',
+                              '안심 보안 잠금: 등록된 회원이 있을 때는 키오스크에 회원 명단/PIN이 일체 표시되지 않으며, 우측 상단 자물쇠 터치 시 관리자 비밀번호(0000)를 입력해야만 관리자 화면으로 나갈 수 있습니다.',
                               style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.45),
                             ),
                           ),
@@ -1952,7 +1952,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       title: '${profile.feeTitle} 청구서 문자 서식 편집',
                       initialText: profile.invoiceTemplate,
                       defaultText: StudioProfile.defaultInvoiceTemplate,
-                      placeholders: '#{상호명}, #{회원명}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
+                      placeholders: '#{상호명}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}, #{비용호칭}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
                       profile: profile,
                       onSave: (newTemplate, updatedProfile) {
                         final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
@@ -1975,7 +1975,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       title: '출석 / 입실 문자 서식 편집',
                       initialText: profile.attendanceTemplate,
                       defaultText: StudioProfile.defaultAttendanceTemplate,
-                      placeholders: '#{상호명}, #{회원명}, #{출석시간}, #{잔여회차}',
+                      placeholders: '#{상호명}, #{장소호칭}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}, #{출석시간}, #{잔여회차}',
                       profile: profile,
                       onSave: (newTemplate, updatedProfile) {
                         final updated = updatedProfile.copyWith(attendanceTemplate: newTemplate);
@@ -1998,7 +1998,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       title: '퇴실 / 일정종료 문자 서식 편집',
                       initialText: profile.departureTemplate,
                       defaultText: StudioProfile.defaultDepartureTemplate,
-                      placeholders: '#{상호명}, #{회원명}',
+                      placeholders: '#{상호명}, #{장소호칭}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}',
                       profile: profile,
                       onSave: (newTemplate, updatedProfile) {
                         final updated = updatedProfile.copyWith(departureTemplate: newTemplate);
@@ -2078,7 +2078,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     const Text('원격 비대면 카드 결제 연동', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
                     const SizedBox(height: 4),
                     const Text(
-                      '토스페이먼츠, 페이앱, 결제선생 등 원장님이 사용하시는 PG사의 결제 링크를 연동하면, 수강료 청구 문자/카톡에 비대면 카드결제 링크가 자동 포함됩니다.',
+                      '토스페이먼츠, 페이앱, 결제선생 등 사용 중인 PG사의 결제 링크를 연동하면, 청구 문자/카톡에 비대면 카드결제 링크가 자동 포함됩니다.',
                       style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
                     ),
                     const SizedBox(height: 14),
@@ -2607,7 +2607,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               Text(
                 isVip
                     ? '올인원 VIP 멤버십 활성화 완료'
-                    : '원장님 누적 절감 가치: 약 ${fmt.format(bm.estimatedTotalSavedKRW)}원',
+                    : '누적 절감 가치: 약 ${fmt.format(bm.estimatedTotalSavedKRW)}원',
                 style: const TextStyle(
                   fontSize: 17.5,
                   fontWeight: FontWeight.w900,
@@ -2681,7 +2681,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('원장님 응원 혜택으로 1시간 올인원 VIP 패스가 무료로 활성화되었습니다!'),
+                                      content: Text('응원 혜택으로 1시간 올인원 VIP 패스가 무료로 활성화되었습니다!'),
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
@@ -2790,7 +2790,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       Text(
                         isSeniorMode
                             ? '글씨 1.4배 확대 및 고대비 간편 화면이 적용 중입니다.'
-                            : '노안이나 스마트폰 조작이 어려운 어르신 원장님을 위한 1.4배 큰글씨 & 고대비 모드',
+                            : '1.4배 큰글씨 & 고대비 간편 화면으로 편하게 이용하세요',
                         style: TextStyle(
                           fontSize: isSeniorMode ? 14 : 12.5,
                           fontWeight: FontWeight.w500,
@@ -3035,6 +3035,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   void _showEditTerminologyModal(BuildContext context, StudioProfile current) {
     String selectedMember = current.customMemberTerm ?? current.memberWord;
     String selectedFee = current.customFeeTerm ?? current.feeWord;
+    String selectedRole = current.customRoleTerm ?? current.roleTitle;
+    String selectedPlace = current.customPlaceTerm ?? current.placeTitle;
 
     final customMemberCtrl = TextEditingController(
       text: StudioProfile.memberTermOptions.contains(selectedMember) ? '' : selectedMember,
@@ -3042,12 +3044,20 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     final customFeeCtrl = TextEditingController(
       text: StudioProfile.feeTermOptions.contains(selectedFee) ? '' : selectedFee,
     );
+    final customRoleCtrl = TextEditingController(
+      text: StudioProfile.roleTermOptions.contains(selectedRole) ? '' : selectedRole,
+    );
+    final customPlaceCtrl = TextEditingController(
+      text: StudioProfile.placeTermOptions.contains(selectedPlace) ? '' : selectedPlace,
+    );
     bool isCustomMember = !StudioProfile.memberTermOptions.contains(selectedMember);
     bool isCustomFee = !StudioProfile.feeTermOptions.contains(selectedFee);
+    bool isCustomRole = !StudioProfile.roleTermOptions.contains(selectedRole);
+    bool isCustomPlace = !StudioProfile.placeTermOptions.contains(selectedPlace);
 
     AppBottomSheet.show(
       context: context,
-      maxHeightRatio: 0.90,
+      maxHeightRatio: 0.92,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -3057,6 +3067,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             final activeFeeTerm = isCustomFee
                 ? (customFeeCtrl.text.trim().isEmpty ? '회비' : customFeeCtrl.text.trim())
                 : selectedFee;
+            final activeRoleTerm = isCustomRole
+                ? (customRoleCtrl.text.trim().isEmpty ? '대표' : customRoleCtrl.text.trim())
+                : selectedRole;
+            final activePlaceTerm = isCustomPlace
+                ? (customPlaceCtrl.text.trim().isEmpty ? '매장' : customPlaceCtrl.text.trim())
+                : selectedPlace;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -3064,10 +3080,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSheetHeader(ctx, '고객 & 비용 맞춤 호칭 설정', Icons.badge_rounded, const Color(0xFF0F172A)),
+                  _buildSheetHeader(ctx, '맞춤 호칭 & 용어 설정', Icons.badge_rounded, const Color(0xFF0F172A)),
                   const SizedBox(height: 6),
                   const Text(
-                    '학원, 피트니스, 공방, 유치원 등 대표님의 업종에 맞추어 "수강생 / 수강료", "회원 / 회비", "원생 / 원비", "원아 / 교육비" 등 자유롭게 변경하세요.',
+                    '고객, 수납 비용, 운영자 직함(대표/원장/실장 등), 장소 호칭을 매장 성격에 맞게 직접 정할 수 있으며 문자와 알림장에 즉시 반영됩니다.',
                     style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.4),
                   ),
                   const SizedBox(height: 18),
@@ -3186,7 +3202,121 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ],
                   const SizedBox(height: 20),
 
-                  // 3. Live Preview Card
+                  // 3. Operator Role Term (대표/원장/실장 등)
+                  const Text('3. 운영자 직함 호칭 선택', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ...StudioProfile.roleTermOptions.map((term) {
+                        final isSel = !isCustomRole && selectedRole == term;
+                        return ChoiceChip(
+                          label: Text(term, style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            color: isSel ? Colors.white : AppTheme.textPrimary,
+                          )),
+                          selected: isSel,
+                          selectedColor: const Color(0xFF059669),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() {
+                                isCustomRole = false;
+                                selectedRole = term;
+                              });
+                            }
+                          },
+                        );
+                      }),
+                      ChoiceChip(
+                        label: Text('직접 입력', style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: isCustomRole ? FontWeight.w800 : FontWeight.w600,
+                          color: isCustomRole ? Colors.white : AppTheme.textPrimary,
+                        )),
+                        selected: isCustomRole,
+                        selectedColor: const Color(0xFF059669),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          setModalState(() {
+                            isCustomRole = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (isCustomRole) ...[
+                    const SizedBox(height: 8),
+                    AppTextField(
+                      controller: customRoleCtrl,
+                      label: '직접 입력 직함',
+                      hint: '예: 총괄실장, 수석코치, 디자이너, 매니저',
+                      prefixIcon: Icons.person_pin_outlined,
+                      onChanged: (_) => setModalState(() {}),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  // 4. Place Term (스튜디오/학원/센터 등)
+                  const Text('4. 사업장 성격 호칭 선택', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ...StudioProfile.placeTermOptions.map((term) {
+                        final isSel = !isCustomPlace && selectedPlace == term;
+                        return ChoiceChip(
+                          label: Text(term, style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            color: isSel ? Colors.white : AppTheme.textPrimary,
+                          )),
+                          selected: isSel,
+                          selectedColor: const Color(0xFF0F172A),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() {
+                                isCustomPlace = false;
+                                selectedPlace = term;
+                              });
+                            }
+                          },
+                        );
+                      }),
+                      ChoiceChip(
+                        label: Text('직접 입력', style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: isCustomPlace ? FontWeight.w800 : FontWeight.w600,
+                          color: isCustomPlace ? Colors.white : AppTheme.textPrimary,
+                        )),
+                        selected: isCustomPlace,
+                        selectedColor: const Color(0xFF0F172A),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          setModalState(() {
+                            isCustomPlace = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (isCustomPlace) ...[
+                    const SizedBox(height: 8),
+                    AppTextField(
+                      controller: customPlaceCtrl,
+                      label: '직접 입력 사업장 호칭',
+                      hint: '예: 클리닉, 연습실, 작업실, 랩',
+                      prefixIcon: Icons.storefront_outlined,
+                      onChanged: (_) => setModalState(() {}),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  // 5. Live Preview Card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
@@ -3202,15 +3332,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           children: [
                             Icon(Icons.visibility_outlined, size: 14, color: Color(0xFF38BDF8)),
                             SizedBox(width: 6),
-                            Text('실시간 앱 표기 미리보기', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF38BDF8))),
+                            Text('실시간 앱·문자 표기 미리보기', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF38BDF8))),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text('• 안내장: [${current.studioName}] 홍길동 $activeMemberTerm님의 $activeFeeTerm 청구서', style: const TextStyle(fontSize: 12, color: Colors.white70)),
                         const SizedBox(height: 4),
-                        Text('• 출결: [${current.studioName}] $activeMemberTerm 출석 체크 완료', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                        Text('• 출결: [${current.studioName}] $activeMemberTerm님이 $activePlaceTerm에 도착하여 체크인 완료', style: const TextStyle(fontSize: 12, color: Colors.white70)),
                         const SizedBox(height: 4),
-                        Text('• 명부: 등록 $activeMemberTerm 총 6명 / 신규 $activeMemberTerm 등록', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                        Text('• 발신/서명: ${current.studioName} ($activeRoleTerm: ${current.instructorName})', style: const TextStyle(fontSize: 12, color: Colors.white70)),
                       ],
                     ),
                   ),
@@ -3224,12 +3354,14 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         final updated = current.copyWith(
                           customMemberTerm: activeMemberTerm,
                           customFeeTerm: activeFeeTerm,
+                          customRoleTerm: activeRoleTerm,
+                          customPlaceTerm: activePlaceTerm,
                         );
                         await ref.read(studioProfileProvider.notifier).updateProfile(updated);
                         if (ctx.mounted) Navigator.pop(ctx);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('맞춤 호칭이 "$activeMemberTerm / $activeFeeTerm"(으)로 저장되었습니다.')),
+                            SnackBar(content: Text('맞춤 호칭($activeRoleTerm · $activeMemberTerm · $activeFeeTerm · $activePlaceTerm)이 저장되었습니다.')),
                           );
                         }
                       },
@@ -3268,6 +3400,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     if (isCustom && current.category != '기타 / 맞춤업종') {
       customCategoryCtrl.text = current.category;
     }
+
+    String selectedRole = current.customRoleTerm ?? current.roleTitle;
+    final customRoleCtrl = TextEditingController(
+      text: StudioProfile.roleTermOptions.contains(selectedRole) ? '' : selectedRole,
+    );
+    bool isCustomRole = !StudioProfile.roleTermOptions.contains(selectedRole);
 
     AppBottomSheet.show(
       context: context,
@@ -3441,10 +3579,62 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
 
                   AppTextField(
                     controller: instructorCtrl,
-                    label: '대표자 / 담당자 성명 (원장·대표·강사·작가)',
-                    hint: '예: 홍길동 원장, 김코치',
+                    label: '담당자 성명',
+                    hint: '예: 홍길동',
                     prefixIcon: Icons.badge_outlined,
                   ),
+                  const SizedBox(height: 12),
+                  const Text('직함 / 호칭 (문자·명세서에 반영)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ...StudioProfile.roleTermOptions.map((term) {
+                        final isSel = !isCustomRole && selectedRole == term;
+                        return ChoiceChip(
+                          label: Text(term, style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            color: isSel ? Colors.white : AppTheme.textPrimary,
+                          )),
+                          selected: isSel,
+                          selectedColor: AppTheme.primaryBlue,
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() {
+                                isCustomRole = false;
+                                selectedRole = term;
+                              });
+                            }
+                          },
+                        );
+                      }),
+                      ChoiceChip(
+                        label: Text('직접 입력', style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isCustomRole ? FontWeight.w800 : FontWeight.w600,
+                          color: isCustomRole ? Colors.white : AppTheme.textPrimary,
+                        )),
+                        selected: isCustomRole,
+                        selectedColor: AppTheme.primaryBlue,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          setModalState(() => isCustomRole = true);
+                        },
+                      ),
+                    ],
+                  ),
+                  if (isCustomRole) ...[
+                    const SizedBox(height: 8),
+                    AppTextField(
+                      controller: customRoleCtrl,
+                      label: '직접 입력 직함',
+                      hint: '예: 실장, 코치, 총괄매니저',
+                      prefixIcon: Icons.person_pin_outlined,
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   AppTextField(
                     controller: bankCtrl,
@@ -3498,6 +3688,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         final finalCat = selectedCategory == '기타 / 맞춤업종' && customCategoryCtrl.text.trim().isNotEmpty
                             ? customCategoryCtrl.text.trim()
                             : selectedCategory;
+                        final finalRole = isCustomRole
+                            ? (customRoleCtrl.text.trim().isEmpty ? '대표' : customRoleCtrl.text.trim())
+                            : selectedRole;
                         final updated = current.copyWith(
                           studioName: studioCtrl.text.trim(),
                           instructorName: instructorCtrl.text.trim(),
@@ -3505,6 +3698,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           accountNumber: accountCtrl.text.trim(),
                           accountHolder: holderCtrl.text.trim(),
                           category: finalCat,
+                          customRoleTerm: finalRole,
                           cardPaymentEnabled: cardEnabled,
                           cardPaymentUrl: cardUrlCtrl.text.trim(),
                           logoPath: modalLogoPath,
@@ -3562,7 +3756,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                '토스페이먼츠(페이링크), 페이앱(결제선생), 카카오페이 등 원장님의 비대면 결제 URL을 등록하세요.',
+                '토스페이먼츠(페이링크), 페이앱(결제선생), 카카오페이 등 비대면 결제 URL을 등록하세요.',
                 style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 16),
@@ -3793,27 +3987,34 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             // Live preview generation with comprehensive placeholder support
             final previewBank = bankController.text.trim().isEmpty ? '토스뱅크' : bankController.text.trim();
             final previewAccount = accountController.text.trim().isEmpty ? '1000-2026-8899' : accountController.text.trim();
-            final previewHolder = holderController.text.trim().isEmpty ? '원장님' : holderController.text.trim();
+            final previewHolder = holderController.text.trim().isEmpty ? '담당자' : holderController.text.trim();
             final previewStudio = studioNameController.text.trim().isEmpty ? '스튜디오' : studioNameController.text.trim();
+            final previewInstructor = instructorController.text.trim().isEmpty ? '담당자' : instructorController.text.trim();
             final cleanAccOnly = previewAccount.replaceAll(RegExp(r'[^0-9]'), '');
             final previewCopyAcc = '$previewBank $previewAccount $previewHolder';
             final previewToss = 'supertoss://send?bank=${Uri.encodeComponent(previewBank)}&account=$cleanAccOnly&amount=250000';
             final previewCard = profile.cardPaymentEnabled && profile.cardPaymentUrl.isNotEmpty
-                ? profile.getFormattedCardPaymentUrl(amount: 250000, orderTitle: '9월 정기 수강료', customerName: '김민준')
+                ? profile.getFormattedCardPaymentUrl(amount: 250000, orderTitle: '9월 정기 ${profile.feeWord}', customerName: '김민준')
                 : 'https://pay.toss.im/_m/sample123';
 
             String previewText = textController.text
                 .replaceAll('#{상호명}', previewStudio)
+                .replaceAll('#{담당자}', previewInstructor)
+                .replaceAll('#{대표자}', previewInstructor)
+                .replaceAll('#{강사명}', previewInstructor)
+                .replaceAll('#{직함}', profile.roleTitle)
+                .replaceAll('#{고객호칭}', profile.memberWord)
+                .replaceAll('#{비용호칭}', profile.feeWord)
+                .replaceAll('#{장소호칭}', profile.placeTitle)
                 .replaceAll('#{회원명}', '김민준')
-                .replaceAll('#{강사명}', instructorController.text.trim().isEmpty ? '원장님' : instructorController.text.trim())
                 .replaceAll('#{계좌정보}', '$previewBank $previewAccount ($previewHolder)')
                 .replaceAll('#{계좌복사용}', previewCopyAcc)
                 .replaceAll('#{토스송금링크}', previewToss)
                 .replaceAll('#{카드결제링크}', previewCard)
                 .replaceAll('{카드결제링크}', previewCard)
                 .replaceAll('#{금액}', '250,000')
-                .replaceAll('#{청구제목}', '9월 정기 수강료')
-                .replaceAll('#{안내내용}', '9월 정기 수강료')
+                .replaceAll('#{청구제목}', '9월 정기 ${profile.feeWord}')
+                .replaceAll('#{안내내용}', '9월 정기 ${profile.feeWord}')
                 .replaceAll('#{납부기한}', '2026.09.20')
                 .replaceAll('#{출석시간}', '14:30')
                 .replaceAll('#{잔여회차}', '• 잔여 회차 : 9회');
@@ -3903,7 +4104,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                   AppTextField(
                                     controller: holderController,
                                     label: '예금주 성명',
-                                    hint: '김원장',
+                                    hint: '홍길동',
                                     prefixIcon: Icons.person_outline,
                                     onChanged: (_) => setModalState(() {}),
                                   ),
@@ -3926,7 +4127,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                   child: AppTextField(
                                     controller: holderController,
                                     label: '예금주 성명',
-                                    hint: '김원장',
+                                    hint: '홍길동',
                                     prefixIcon: Icons.person_outline,
                                     onChanged: (_) => setModalState(() {}),
                                   ),
@@ -4025,6 +4226,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       onPressed: () {
                         final updatedProfile = profile.copyWith(
                           studioName: studioNameController.text.trim(),
+                          instructorName: instructorController.text.trim(),
                           bankName: bankController.text.trim(),
                           accountNumber: accountController.text.trim(),
                           accountHolder: holderController.text.trim(),
@@ -4089,7 +4291,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          '어떤 업종이든 100% 맞춤형! 학생 등록 그룹과 청구서 항목을 대표님 사업장 특성에 맞게 자유롭게 편집하세요.',
+                          '어떤 업종이든 100% 맞춤형! 등록 그룹과 청구서 항목을 사업장 특성에 맞게 자유롭게 편집하세요.',
                           style: TextStyle(fontSize: 12.5, color: Colors.blueGrey[800], height: 1.4),
                         ),
                       ),

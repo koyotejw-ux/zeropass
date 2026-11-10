@@ -64,7 +64,7 @@ class DataVaultService {
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/json')],
         subject: '[체크앤페이] 안심 로컬 데이터 백업 파일',
-        text: '체크앤페이 원장님 전용 로컬 데이터 백업 파일입니다. 휴대폰 분실 및 기기 변경 시 복원용으로 보관하세요.',
+        text: '체크앤페이 로컬 데이터 백업 파일입니다. 휴대폰 분실 및 기기 변경 시 복원용으로 보관하세요.',
       ),
     );
   }
@@ -179,7 +179,7 @@ class DataVaultService {
       ShareParams(
         files: [XFile(file.path, mimeType: 'text/csv')],
         subject: '[체크앤페이] 수납 장부 결산 엑셀(CSV)',
-        text: '체크앤페이 원장님 전용 수납 및 매출 결산 엑셀(CSV) 파일입니다.',
+        text: '체크앤페이 수납 및 매출 결산 엑셀(CSV) 파일입니다.',
       ),
     );
   }

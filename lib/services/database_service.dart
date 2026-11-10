@@ -48,7 +48,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -136,6 +136,12 @@ class DatabaseService {
             await db.execute('ALTER TABLE studio_profile ADD COLUMN customFeeTerm TEXT');
           } catch (_) {}
         }
+        if (oldVersion < 10) {
+          try {
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN customRoleTerm TEXT');
+            await db.execute('ALTER TABLE studio_profile ADD COLUMN customPlaceTerm TEXT');
+          } catch (_) {}
+        }
       },
     );
   }
@@ -205,7 +211,9 @@ class DatabaseService {
         cardPaymentEnabled INTEGER NOT NULL DEFAULT 0,
         logoPath TEXT,
         customMemberTerm TEXT,
-        customFeeTerm TEXT
+        customFeeTerm TEXT,
+        customRoleTerm TEXT,
+        customPlaceTerm TEXT
       )
     ''');
 

@@ -42,7 +42,7 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
   final List<GuideStepItem> _steps = const [
     GuideStepItem(
       title: '1단계: 내 스튜디오 & 입금 계좌 설정하기',
-      description: '청구서 및 출결 알림 문자에 표시될 상호명과 원장님 성함, 수강료를 입금받을 은행 계좌를 먼저 등록해 볼까요?',
+      description: '청구서 및 출결 알림 문자에 표시될 상호명, 담당자 성함·직함, 수강료를 입금받을 은행 계좌를 먼저 등록해 볼까요?',
       actionLabel: '내 스튜디오 정보 설정하러 가기',
       tip: '설정 탭에서 1분 만에 등록할 수 있어요!',
       icon: Icons.account_balance_outlined,
@@ -70,7 +70,7 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
     ),
     GuideStepItem(
       title: '5단계: 준비 완료! 실제 데이터로 전환',
-      description: '충분히 둘러보셨나요? 연습용 가상 데이터는 버튼 하나로 깨끗하게 비우고, 대표님의 진짜 학원/스튜디오 운영을 시작하세요!',
+      description: '충분히 둘러보셨나요? 연습용 가상 데이터는 버튼 하나로 깨끗하게 비우고, 진짜 학원/매장 운영을 시작하세요!',
       actionLabel: '연습 데이터 비우고 시작하기',
       tip: '언제든 설정 탭에서 다시 연습 데이터를 불러올 수도 있어요.',
       icon: Icons.rocket_launch_outlined,
@@ -279,7 +279,7 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                       ),
                       content: const SingleChildScrollView(
                         child: Text(
-                          '연습용 가상 데이터 5명을 모두 지우고 대표님의 실제 회원만 등록할 수 있는 깨끗한 상태로 만듭니다.\n(언제든 설정 탭에서 연습 데이터를 다시 불러올 수 있습니다.)',
+                          '연습용 가상 데이터를 모두 지우고 실제 회원만 등록할 수 있는 깨끗한 상태로 만듭니다.\n(언제든 설정 탭에서 연습 데이터를 다시 불러올 수 있습니다.)',
                           style: TextStyle(height: 1.5, fontSize: 13),
                         ),
                       ),
@@ -328,7 +328,7 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('가상 데이터가 모두 비워졌습니다. 이제 대표님의 진짜 회원을 등록해 보세요!'),
+                          content: Text('가상 데이터가 모두 비워졌습니다. 이제 실제 회원을 등록해 보세요!'),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );

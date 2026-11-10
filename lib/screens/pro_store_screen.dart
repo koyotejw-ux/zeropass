@@ -205,7 +205,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             children: [
                               Text(
                                 isSubAllInOne
-                                    ? (isDomestic ? '대표님은 올인원 VIP 정기 구독 이용 중' : 'All-in-One VIP Active')
+                                    ? (isDomestic ? '올인원 VIP 정기 구독 이용 중' : 'All-in-One VIP Active')
                                     : (bm.isTemporaryPassActive
                                         ? (isDomestic ? '1시간 올인원 VIP 무료 체험 이용 중' : '1-Hour Free VIP Pass Active')
                                         : (isDomestic
@@ -581,7 +581,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 iconColor: const Color(0xFF059669),
                 title: isDomestic ? '광고 제거 단독 구독' : 'Remove Ads Standalone',
                 description: isDomestic
-                    ? '하단 배너 및 팝업 광고를 완전히 없애 화면을 널찍하고 쾌적하게 사용하고 싶으신 대표님께 추천합니다.'
+                    ? '하단 배너 및 팝업 광고를 완전히 없애 화면을 널찍하고 쾌적하게 사용하고 싶을 때 추천합니다.'
                     : 'Remove all bottom banner ads and enjoy a clean, wide workspace.',
                 features: isDomestic
                     ? const [
