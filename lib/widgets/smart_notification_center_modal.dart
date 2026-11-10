@@ -95,9 +95,9 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
     // 2. Unpaid Invoices
     final unpaidInvoices = invoices.where((i) => i.status == PaymentStatus.unpaid).toList();
 
-    // 3. Expiring Members (<= 1 session)
+    // 3. Expiring Members (<= 2 sessions)
     final expiringMembers = members
-        .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 1)
+        .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 2)
         .toList();
 
     return Column(
@@ -297,7 +297,7 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
 
         // 3. Expiring Sessions Queue Card
         _buildQueueCard(
-          title: '수강권 만료 임박 (잔여 1회 이하)',
+          title: '수강권 만료 임박 (잔여 2회 이하)',
           count: expiringMembers.length,
           countColor: expiringMembers.isEmpty ? AppTheme.softMint : const Color(0xFFF59E0B),
           icon: Icons.hourglass_bottom_rounded,
@@ -305,7 +305,7 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           iconColor: const Color(0xFFF59E0B),
           subtitle: expiringMembers.isEmpty
               ? '만료 임박 회원이 없습니다.'
-              : '수업이 1회 이하로 남아 연속 지도를 위해 재등록 안내가 필요합니다.',
+              : '수업이 2회 이하로 남아 연속 지도를 위해 재등록 안내가 필요합니다.',
           actionLabel: '재등록 안내 순차 발송 💌',
           actionColor: const Color(0xFFD97706),
           isActionEnabled: expiringMembers.isNotEmpty,

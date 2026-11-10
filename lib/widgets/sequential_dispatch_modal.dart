@@ -135,7 +135,7 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
         return widget.allMembers.where((m) => unpaidMemberIds.contains(m.id)).toList();
       case _TargetFilterMode.expiringOnly:
         return widget.allMembers
-            .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 1)
+            .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 2)
             .toList();
       case _TargetFilterMode.customSelect:
         return widget.allMembers.where((m) => _selectedMemberIds.contains(m.id)).toList();
@@ -369,7 +369,7 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
                 const SizedBox(width: 6),
                 _buildTargetChip('미납 회원만', _TargetFilterMode.unpaidOnly),
                 const SizedBox(width: 6),
-                _buildTargetChip('만료 임박(1회이하)', _TargetFilterMode.expiringOnly),
+                _buildTargetChip('만료 임박(2회이하)', _TargetFilterMode.expiringOnly),
                 const SizedBox(width: 6),
                 _buildTargetChip('직접 선택 (${_selectedMemberIds.length}명)', _TargetFilterMode.customSelect),
               ],

@@ -16,6 +16,8 @@ class SignatureKeyVisualHero extends StatelessWidget {
   final StudioProfile? studio;
   final VoidCallback? onOpenKiosk;
   final VoidCallback? onOpenGuide;
+  final String? activeFilter;
+  final ValueChanged<String>? onFilterSelected;
 
   const SignatureKeyVisualHero({
     super.key,
@@ -24,6 +26,8 @@ class SignatureKeyVisualHero extends StatelessWidget {
     this.studio,
     this.onOpenKiosk,
     this.onOpenGuide,
+    this.activeFilter,
+    this.onFilterSelected,
   });
 
   @override
@@ -340,6 +344,8 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       value: '$checkedCount명',
                       accentColor: const Color(0xFF34D399),
                       valueColor: Colors.white,
+                      isSelected: activeFilter == '체크 완료',
+                      onTap: () => onFilterSelected?.call('체크 완료'),
                     ),
                     _buildVerticalDivider(),
                     _buildKpiCell(
@@ -347,6 +353,8 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       value: '$waitingCount명',
                       accentColor: const Color(0xFF38BDF8),
                       valueColor: Colors.white,
+                      isSelected: activeFilter == '출결 대기',
+                      onTap: () => onFilterSelected?.call('출결 대기'),
                     ),
                     _buildVerticalDivider(),
                     _buildKpiCell(
@@ -354,6 +362,8 @@ class SignatureKeyVisualHero extends StatelessWidget {
                       value: '$expiringCount명',
                       accentColor: const Color(0xFFFBBF24),
                       valueColor: expiringCount > 0 ? const Color(0xFFFDE68A) : Colors.white,
+                      isSelected: activeFilter == '만료 임박',
+                      onTap: () => onFilterSelected?.call('만료 임박'),
                     ),
                   ],
                 ),
@@ -378,57 +388,73 @@ class SignatureKeyVisualHero extends StatelessWidget {
     required String value,
     required Color accentColor,
     required Color valueColor,
+    required bool isSelected,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap?.call();
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              color: isSelected ? accentColor.withValues(alpha: 0.18) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? accentColor.withValues(alpha: 0.60) : Colors.transparent,
+                width: 1.0,
+              ),
+            ),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accentColor,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: accentColor,
                       ),
                     ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: isSelected ? accentColor : valueColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                    height: 1.15,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: valueColor,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                  height: 1.15,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

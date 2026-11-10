@@ -811,6 +811,16 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                                         members: members,
                                         todayRecords: todayRecords,
                                         studio: studio,
+                                        activeFilter: _statusFilter,
+                                        onFilterSelected: (selectedFilter) {
+                                          setState(() {
+                                            if (_statusFilter == selectedFilter) {
+                                              _statusFilter = '전체';
+                                            } else {
+                                              _statusFilter = selectedFilter;
+                                            }
+                                          });
+                                        },
                                         onOpenKiosk: () => _openTabletKioskMode(context),
                                         onOpenGuide: () => _openInteractiveGuide(context),
                                       ),
@@ -1029,8 +1039,29 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
     bool isLongAbsent = false,
   ]) {
     final isSessionBased = member.billingType == BillingType.sessionBased;
-    final isExpiringSoon = isSessionBased && member.remainingSessions <= 1;
+    final isDepleted = isSessionBased && member.remainingSessions == 0;
+    final isExpiringSoon = isSessionBased && member.remainingSessions > 0 && member.remainingSessions <= 2;
+    final isAtRisk = isDepleted || isExpiringSoon;
     final isSeniorMode = ref.watch(seniorModeProvider);
+
+    Widget buildCardBadge() {
+      if (isChecked) {
+        return ZeroBadge.success(
+          todayPass?.status == AttendanceStatus.late ? '지각' : LocalizationService.tr('checked_in'),
+          size: ZeroBadgeSize.medium,
+          icon: Icons.check_circle_rounded,
+        );
+      } else if (isDepleted) {
+        return ZeroBadge.danger('회차 소진 (0회)', size: ZeroBadgeSize.medium);
+      } else if (isExpiringSoon) {
+        return ZeroBadge.warning('만료 임박 (${member.remainingSessions}회)', size: ZeroBadgeSize.medium);
+      } else {
+        return ZeroBadge.neutral(
+          isSessionBased ? '수강 중 (${member.remainingSessions}회)' : '정기권',
+          size: ZeroBadgeSize.medium,
+        );
+      }
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1041,8 +1072,10 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         border: Border.all(
           color: isChecked
               ? AppTheme.softMint.withAlpha((255 * 0.35).round())
-              : (isExpiringSoon ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0)),
-          width: (isChecked || isExpiringSoon) ? 1.2 : 0.9,
+              : (isDepleted
+                  ? const Color(0xFFFDA4AF)
+                  : (isExpiringSoon ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0))),
+          width: (isChecked || isAtRisk) ? 1.2 : 0.9,
         ),
         boxShadow: isChecked ? null : AppTheme.cardShadow,
       ),
@@ -1053,19 +1086,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           if (isSeniorMode)
             Row(
               children: [
-                if (isChecked)
-                  ZeroBadge.success(
-                    todayPass?.status == AttendanceStatus.late ? '지각' : LocalizationService.tr('checked_in'),
-                    size: ZeroBadgeSize.medium,
-                    icon: Icons.check_circle_rounded,
-                  )
-                else if (isSessionBased && isExpiringSoon)
-                  ZeroBadge.danger('만료 임박', size: ZeroBadgeSize.medium)
-                else
-                  ZeroBadge.neutral(
-                    isSessionBased ? '수강 중' : '정기권',
-                    size: ZeroBadgeSize.medium,
-                  ),
+                buildCardBadge(),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(
@@ -1124,19 +1145,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (isChecked)
-                  ZeroBadge.success(
-                    todayPass?.status == AttendanceStatus.late ? '지각' : LocalizationService.tr('checked_in'),
-                    size: ZeroBadgeSize.medium,
-                    icon: Icons.check_circle_rounded,
-                  )
-                else if (isSessionBased && isExpiringSoon)
-                  ZeroBadge.danger('만료 임박', size: ZeroBadgeSize.medium)
-                else
-                  ZeroBadge.neutral(
-                    isSessionBased ? '수강 중' : '정기권',
-                    size: ZeroBadgeSize.medium,
-                  ),
+                buildCardBadge(),
               ],
             ),
 
@@ -1246,7 +1255,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           fontFamily: 'Pretendard',
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isExpiringSoon ? const Color(0xFFE11D48) : const Color(0xFF64748B),
+                          color: isDepleted
+                              ? const Color(0xFFE11D48)
+                              : (isExpiringSoon ? const Color(0xFFD97706) : const Color(0xFF64748B)),
                         ),
                       ),
                     ],
@@ -1278,78 +1289,97 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
 
           const SizedBox(height: 12),
 
-          // 3. Action Button (Full Width 1-Column in Senior Mode, Zero Text Clipping!)
+          // 3. Action Buttons with Session Recharge & Live Status Transition
           if (!isChecked)
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () => _handleOneTouchCheckIn(member),
-                icon: const Icon(Icons.check_rounded, size: 20),
-                label: const Text(
-                  '체크인',
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryDark,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            )
-          else if (isSeniorMode)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ZeroButton.tint(
-                  label: '등원 안심 알림 전송 (카톡/SMS)',
-                  icon: Icons.send_rounded,
-                  size: ZeroButtonSize.large,
-                  fullWidth: true,
-                  onPressed: () {
-                    AttendanceNotifyDialog.show(
-                      context: context,
-                      member: member,
-                      studio: studio,
-                      type: AttendanceNotifyType.checkIn,
-                      time: todayPass?.timestamp ?? DateTime.now(),
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                ZeroButton(
-                  label: '하원 귀가 알림 전송 (카톡/SMS)',
-                  icon: Icons.exit_to_app_rounded,
-                  variant: ZeroButtonVariant.neutral,
-                  size: ZeroButtonSize.large,
-                  fullWidth: true,
-                  onPressed: () {
-                    AttendanceNotifyDialog.show(
-                      context: context,
-                      member: member,
-                      studio: studio,
-                      type: AttendanceNotifyType.checkOut,
-                      time: DateTime.now(),
-                    );
-                  },
-                ),
-              ],
-            )
-          else
             Row(
               children: [
                 Expanded(
-                  child: ZeroButton.tint(
-                    label: '등원 안심 알림',
+                  flex: isAtRisk ? 6 : 10,
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleOneTouchCheckIn(member),
+                      icon: const Icon(Icons.check_rounded, size: 20),
+                      label: Text(
+                        isDepleted ? '출석(0회)' : '체크인',
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDepleted ? const Color(0xFFE11D48) : AppTheme.primaryDark,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ),
+                if (isAtRisk) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 4,
+                    child: SizedBox(
+                      height: 48,
+                      child: ZeroButton.tint(
+                        label: '+10회 충전',
+                        icon: Icons.add_circle_outline_rounded,
+                        size: ZeroButtonSize.medium,
+                        fullWidth: true,
+                        onPressed: () async {
+                          HapticFeedback.lightImpact();
+                          await ref.read(membersProvider.notifier).addSessions(member.id, 10);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${member.primaryName} 10회 충전 완료! (현재 잔여 ${member.remainingSessions + 10}회)'),
+                                duration: const Duration(seconds: 3),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            )
+          else ...[
+            if (isAtRisk) ...[
+              ZeroButton.tint(
+                label: '${member.primaryName} 10회 충전 (현재 ${member.remainingSessions}회)',
+                icon: Icons.add_circle_outline_rounded,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () async {
+                  HapticFeedback.lightImpact();
+                  await ref.read(membersProvider.notifier).addSessions(member.id, 10);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${member.primaryName} 10회 충전 완료! (현재 잔여 ${member.remainingSessions + 10}회)'),
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (isSeniorMode)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ZeroButton.tint(
+                    label: '등원 안심 알림 전송 (카톡/SMS)',
                     icon: Icons.send_rounded,
-                    size: ZeroButtonSize.medium,
+                    size: ZeroButtonSize.large,
                     fullWidth: true,
                     onPressed: () {
                       AttendanceNotifyDialog.show(
@@ -1361,14 +1391,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       );
                     },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ZeroButton(
-                    label: '하원 귀가 알림',
+                  const SizedBox(height: 8),
+                  ZeroButton(
+                    label: '하원 귀가 알림 전송 (카톡/SMS)',
                     icon: Icons.exit_to_app_rounded,
                     variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.medium,
+                    size: ZeroButtonSize.large,
                     fullWidth: true,
                     onPressed: () {
                       AttendanceNotifyDialog.show(
@@ -1380,9 +1408,50 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                       );
                     },
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: ZeroButton.tint(
+                      label: '등원 안심 알림',
+                      icon: Icons.send_rounded,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () {
+                        AttendanceNotifyDialog.show(
+                          context: context,
+                          member: member,
+                          studio: studio,
+                          type: AttendanceNotifyType.checkIn,
+                          time: todayPass?.timestamp ?? DateTime.now(),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ZeroButton(
+                      label: '하원 귀가 알림',
+                      icon: Icons.exit_to_app_rounded,
+                      variant: ZeroButtonVariant.neutral,
+                      size: ZeroButtonSize.medium,
+                      fullWidth: true,
+                      onPressed: () {
+                        AttendanceNotifyDialog.show(
+                          context: context,
+                          member: member,
+                          studio: studio,
+                          type: AttendanceNotifyType.checkOut,
+                          time: DateTime.now(),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+          ],
 
           // 4. 장기 미출석 (최근 7일+ 결석) 골든타임 안부 톡 케어 슬림 바
           if (!isChecked && isLongAbsent) ...[

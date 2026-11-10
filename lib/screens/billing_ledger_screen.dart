@@ -216,9 +216,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               final totalExpenseAmount = expenses.fold<int>(0, (sum, e) => sum + e.amount);
               final netProfit = totalPaidAmount - totalExpenseAmount;
 
-              // 회차 만료 임박 회원 (1회 이하)
+              // 회차 만료 임박 회원 (2회 이하)
               final expiringMembers = members
-                  .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 1)
+                  .where((m) => m.billingType == BillingType.sessionBased && m.remainingSessions <= 2)
                   .toList();
 
               final currentList = _selectedTab == 0 ? unpaidInvoices : paidInvoices;
