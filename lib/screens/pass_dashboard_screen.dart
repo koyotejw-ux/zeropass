@@ -660,12 +660,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 0. 무인 자율출결 키오스크 (맨 좌측 배치 & 균형잡힌 볼륨 & 전용 프라이머리 블루 컬러)
+          // 0. 무인 자율출결 키오스크 (홈헤더 액션 바와 완벽히 일치하는 아웃라인 키오스크 터미널 아이콘)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.tablet_mac_rounded, size: 19.5, color: AppTheme.primaryBlue),
+              icon: const Icon(Icons.point_of_sale_outlined, size: 21, color: Color(0xFF3F3F46)),
               tooltip: '무인 키오스크 모드',
               splashRadius: 20,
               padding: EdgeInsets.zero,
