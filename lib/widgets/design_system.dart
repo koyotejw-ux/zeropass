@@ -412,6 +412,8 @@ class ZeroButton extends StatelessWidget {
   final bool isLoading;
   final double? customHeight;
   final double? customRadius;
+  final int maxLines;
+  final TextAlign textAlign;
 
   const ZeroButton({
     super.key,
@@ -425,6 +427,8 @@ class ZeroButton extends StatelessWidget {
     this.isLoading = false,
     this.customHeight,
     this.customRadius,
+    this.maxLines = 2,
+    this.textAlign = TextAlign.center,
   });
 
   // Convenience Factory Constructors
@@ -436,6 +440,8 @@ class ZeroButton extends StatelessWidget {
     IconData? trailingIcon,
     bool fullWidth = false,
     bool isLoading = false,
+    int maxLines = 2,
+    TextAlign textAlign = TextAlign.center,
   }) =>
       ZeroButton(
         label: label,
@@ -446,6 +452,8 @@ class ZeroButton extends StatelessWidget {
         trailingIcon: trailingIcon,
         fullWidth: fullWidth,
         isLoading: isLoading,
+        maxLines: maxLines,
+        textAlign: textAlign,
       );
 
   factory ZeroButton.secondary({
@@ -456,6 +464,8 @@ class ZeroButton extends StatelessWidget {
     IconData? trailingIcon,
     bool fullWidth = false,
     bool isLoading = false,
+    int maxLines = 2,
+    TextAlign textAlign = TextAlign.center,
   }) =>
       ZeroButton(
         label: label,
@@ -466,6 +476,8 @@ class ZeroButton extends StatelessWidget {
         trailingIcon: trailingIcon,
         fullWidth: fullWidth,
         isLoading: isLoading,
+        maxLines: maxLines,
+        textAlign: textAlign,
       );
 
   factory ZeroButton.tint({
@@ -476,6 +488,8 @@ class ZeroButton extends StatelessWidget {
     IconData? trailingIcon,
     bool fullWidth = false,
     bool isLoading = false,
+    int maxLines = 2,
+    TextAlign textAlign = TextAlign.center,
   }) =>
       ZeroButton(
         label: label,
@@ -486,6 +500,8 @@ class ZeroButton extends StatelessWidget {
         trailingIcon: trailingIcon,
         fullWidth: fullWidth,
         isLoading: isLoading,
+        maxLines: maxLines,
+        textAlign: textAlign,
       );
 
   factory ZeroButton.danger({
@@ -496,6 +512,8 @@ class ZeroButton extends StatelessWidget {
     IconData? trailingIcon,
     bool fullWidth = false,
     bool isLoading = false,
+    int maxLines = 2,
+    TextAlign textAlign = TextAlign.center,
   }) =>
       ZeroButton(
         label: label,
@@ -506,6 +524,8 @@ class ZeroButton extends StatelessWidget {
         trailingIcon: trailingIcon,
         fullWidth: fullWidth,
         isLoading: isLoading,
+        maxLines: maxLines,
+        textAlign: textAlign,
       );
 
   factory ZeroButton.compactCapsule({
@@ -513,6 +533,8 @@ class ZeroButton extends StatelessWidget {
     required VoidCallback? onPressed,
     IconData? icon,
     ZeroButtonVariant variant = ZeroButtonVariant.neutral,
+    int maxLines = 2,
+    TextAlign textAlign = TextAlign.center,
   }) =>
       ZeroButton(
         label: label,
@@ -521,6 +543,8 @@ class ZeroButton extends StatelessWidget {
         size: ZeroButtonSize.compact,
         icon: icon,
         customRadius: ZeroTokens.radiusPill,
+        maxLines: maxLines,
+        textAlign: textAlign,
       );
 
   @override
@@ -550,20 +574,18 @@ class ZeroButton extends StatelessWidget {
           const SizedBox(width: 6),
         ],
         Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              maxLines: 1,
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: _resolveFontSize(),
-                fontWeight: _resolveFontWeight(),
-                color: style.fg,
-                letterSpacing: -0.3,
-                height: 1.25,
-              ),
+          child: Text(
+            label,
+            textAlign: textAlign,
+            maxLines: maxLines,
+            softWrap: true,
+            style: TextStyle(
+              fontFamily: 'Pretendard',
+              fontSize: _resolveFontSize(),
+              fontWeight: _resolveFontWeight(),
+              color: style.fg,
+              letterSpacing: -0.3,
+              height: 1.25,
             ),
           ),
         ),

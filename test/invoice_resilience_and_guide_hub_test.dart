@@ -189,7 +189,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('체크앤페이 PRO 샵'), findsOneWidget);
+      expect(find.text('프로샵'), findsOneWidget);
       expect(find.text('구독 복원'), findsOneWidget);
 
       await tester.scrollUntilVisible(

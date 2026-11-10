@@ -160,7 +160,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 isDomestic
-                                    ? '연속 ${bm.activeStreakDays}일 스마트 운영 중'
+                                    ? '연속 ${bm.activeStreakDays}일 운영 중'
                                     : 'Active Day ${bm.activeStreakDays}',
                                 style: const TextStyle(
                                   fontSize: 11,
@@ -275,14 +275,14 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             Expanded(
                               child: _buildFeaturePill(
                                 Icons.autorenew_rounded,
-                                isDomestic ? '위약금 0원 언제든 해지' : 'Cancel Anytime',
+                                isDomestic ? '위약금 0원 즉시 해지' : 'Cancel Anytime',
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _buildFeaturePill(
                                 Icons.tablet_android_rounded,
-                                isDomestic ? '공기계 태블릿 키오스크' : 'Tablet Kiosk Pass',
+                                isDomestic ? '태블릿 출결 키오스크' : 'Tablet Kiosk Pass',
                               ),
                             ),
                           ],
@@ -293,14 +293,14 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             Expanded(
                               child: _buildFeaturePill(
                                 Icons.block_flipped,
-                                isDomestic ? '100% 광고 없는 쾌적함' : '100% Ad-Free Space',
+                                isDomestic ? '광고 100% 완전 차단' : '100% Ad-Free Space',
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _buildFeaturePill(
                                 Icons.verified_user_outlined,
-                                isDomestic ? 'Google Play 안전 결제' : 'Google Play Billing',
+                                isDomestic ? '구글 안전 정기 결제' : 'Google Play Billing',
                               ),
                             ),
                           ],
@@ -342,18 +342,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                             child: Text(
                               bm.isTemporaryPassActive
                                   ? (isDomestic
-                                      ? '현재 1시간 VIP 패스 작동 중 (${bm.remainingTemporaryPassFormatted})'
+                                      ? '1시간 VIP 패스 이용 중 (${bm.remainingTemporaryPassFormatted})'
                                       : '1-Hour VIP Active (${bm.remainingTemporaryPassFormatted})')
                                   : (isDomestic
-                                      ? '광고 없는 쾌적함과 태블릿 키오스크 1시간 무료'
+                                      ? '광고 제거 & 태블릿 키오스크 1시간 무료'
                                       : 'Try 1-Hour Ad-Free Kiosk for Free'),
                               style: const TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF1E40AF),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
                             ),
                           ),
                         ],
@@ -361,15 +360,15 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       const SizedBox(height: 10),
                       Text(
                         isDomestic
-                            ? '짧은 응원 광고 1회 시청으로 1시간 동안 [모든 광고 완전 제거 + 무인 출결 키오스크]를 즉시 개방합니다. 써보시고 마음에 드실 때 월 1,900원~ 정기 구독하세요!'
-                            : 'Watch one short rewarded video to unlock 1 hour of ad-free kiosk. If you enjoy it, subscribe from just \$1.49/mo!',
+                            ? '광고 1회 시청 시 1시간 동안 광고 완전 제거 및 무인 키오스크를 즉시 이용합니다.'
+                            : 'Watch one short video to unlock 1 hour of ad-free kiosk mode. Cancel or subscribe anytime.',
                         style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45),
                       ),
                       const SizedBox(height: 14),
                       ZeroButton.primary(
                         label: bm.isTemporaryPassActive
-                            ? (isDomestic ? '1시간 VIP 무료 체험 시간 연장하기 (무료)' : 'Extend 1-Hour VIP Pass (Free)')
-                            : (isDomestic ? '1시간 올인원 VIP 무료 패스 켜기 (광고 1회)' : 'Activate 1-Hour VIP Pass (1 Ad)'),
+                            ? (isDomestic ? '1시간 무료 체험 연장하기' : 'Extend 1-Hour VIP Pass')
+                            : (isDomestic ? '1시간 무료 VIP 시작하기 (광고 1회)' : 'Start 1-Hour VIP Pass (1 Ad)'),
                         icon: Icons.play_circle_fill_rounded,
                         fullWidth: true,
                         size: ZeroButtonSize.large,
@@ -478,17 +477,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ],
                 priceText: isDomestic ? '₩5,900 / 월' : '\$4.99 / mo',
                 priceSubtext: isDomestic
-                    ? '또는 연간 결제 시 ₩59,000 / 년 (2개월 무료 혜택)'
+                    ? '또는 연간 결제 시 ₩59,000 / 년 (2개월 할인)'
                     : 'Or save 2 months with annual billing (\$49.99/year)',
                 isUnlocked: isSubAllInOne,
                 actionButtonText: isSubAllInOne
-                    ? (isDomestic ? 'VIP 구독 이용 중 (키오스크 바로가기)' : 'VIP Active (Launch Kiosk)')
-                    : (isDomestic ? '올인원 VIP 정기 구독 시작하기 (₩5,900/월)' : 'Start All-in-One VIP (\$4.99/mo)'),
+                    ? (isDomestic ? 'VIP 이용 중 (키오스크 바로가기)' : 'VIP Active (Launch Kiosk)')
+                    : (isDomestic ? '올인원 VIP 구독 시작 (₩5,900/월)' : 'Start All-in-One VIP (\$4.99/mo)'),
                 actionIcon: isSubAllInOne ? Icons.tablet_mac_rounded : Icons.star_rounded,
                 secondaryButtonText: isSubAllInOne
                     ? null
                     : (isDomestic
-                        ? '연간 구독으로 2개월 할인받기 (₩59,000/년)'
+                        ? '연간 구독 2개월 할인 (₩59,000/년)'
                         : 'Save 2 Months with Annual Plan (\$49.99/yr)'),
                 onAction: () {
                   if (isSubAllInOne) {
@@ -535,15 +534,15 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                         'Flexible monthly subscription, cancel anytime',
                       ],
                 priceText: isSubKiosk
-                    ? (isDomestic ? '키오스크 활성화 완료 (이용 중)' : 'Kiosk Active (Subscribed)')
+                    ? (isDomestic ? '키오스크 이용 중' : 'Kiosk Active (Subscribed)')
                     : (isDomestic ? '₩4,900 / 월' : '\$3.99 / mo'),
                 priceSubtext: isDomestic
                     ? '구글 플레이 매월 자동 갱신 (언제든 취소 가능)'
                     : 'Google Play auto-renewal (Cancel anytime)',
                 isUnlocked: isSubKiosk,
                 actionButtonText: isSubKiosk
-                    ? (isDomestic ? '키오스크 모드 바로 실행' : 'Launch Kiosk Mode')
-                    : (isDomestic ? '키오스크 구독 시작하기 (₩4,900/월)' : 'Start Kiosk Subscription (\$3.99/mo)'),
+                    ? (isDomestic ? '키오스크 바로 실행' : 'Launch Kiosk Mode')
+                    : (isDomestic ? '키오스크 구독 시작 (₩4,900/월)' : 'Start Kiosk Subscription (\$3.99/mo)'),
                 actionIcon: Icons.tablet_mac_rounded,
                 onAction: () {
                   if (isSubKiosk) {
@@ -583,7 +582,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                         'Affordable monthly pass (\$1.49/mo)',
                       ],
                 priceText: isSubNoAds
-                    ? (isDomestic ? '광고 제거 활성화 완료 (이용 중)' : 'Ad-Free Active (Subscribed)')
+                    ? (isDomestic ? '광고 제거 이용 중' : 'Ad-Free Active (Subscribed)')
                     : (isDomestic ? '₩1,900 / 월 (한 달)' : '\$1.49 / mo (1 Month)'),
                 priceSubtext: isDomestic
                     ? '부담 없는 한 달 정기 구독 (언제든 구글 플레이에서 해지)'
@@ -591,7 +590,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 isUnlocked: isSubNoAds,
                 actionButtonText: isSubNoAds
                     ? (isDomestic ? '광고 제거 이용 중' : 'Ad-Free Active')
-                    : (isDomestic ? '광고 제거 한 달 구독하기 (월 ₩1,900)' : 'Subscribe to Remove Ads (\$1.49/mo)'),
+                    : (isDomestic ? '광고 제거 한 달 구독 (월 ₩1,900)' : 'Subscribe to Remove Ads (\$1.49/mo)'),
                 actionIcon: Icons.block_flipped,
                 onAction: () {
                   if (!isSubNoAds) {
@@ -640,7 +639,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                     ),
                     const SizedBox(height: 14),
                     ZeroButton.secondary(
-                      label: isDomestic ? 'Google Play 정기 결제 관리 페이지 열기' : 'Manage Google Play Subscriptions',
+                      label: isDomestic ? 'Google Play 정기 결제 관리' : 'Manage Google Play Subscriptions',
                       icon: Icons.open_in_new_rounded,
                       fullWidth: true,
                       size: ZeroButtonSize.medium,
@@ -656,7 +655,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 children: [
                   Expanded(
                     child: ZeroButton.tint(
-                      label: isDomestic ? '[테스트] 전체 구독 언락' : '[Test] Unlock All',
+                      label: isDomestic ? '[테스트] 전체 언락' : '[Test] Unlock All',
                       icon: Icons.flash_on_rounded,
                       size: ZeroButtonSize.medium,
                       fullWidth: true,
@@ -678,7 +677,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ZeroButton.tint(
-                      label: isDomestic ? '[테스트] 구독 초기화' : '[Test] Reset All',
+                      label: isDomestic ? '[테스트] 초기화' : '[Test] Reset All',
                       icon: Icons.refresh_rounded,
                       size: ZeroButtonSize.medium,
                       fullWidth: true,
@@ -723,12 +722,13 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
             child: Text(
               text,
               textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              softWrap: true,
               style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
+                height: 1.25,
               ),
             ),
           ),
