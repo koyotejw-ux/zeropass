@@ -16,6 +16,15 @@ class DatabaseService {
 
   Database? _database;
 
+  @visibleForTesting
+  static String? testDatabasePath;
+
+  @visibleForTesting
+  Future<void> resetForTesting() async {
+    await _database?.close();
+    _database = null;
+  }
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
@@ -29,8 +38,13 @@ class DatabaseService {
       databaseFactory = databaseFactoryFfi;
     }
 
-    final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, 'zeropass_local_vault.db');
+    final String path;
+    if (testDatabasePath != null) {
+      path = testDatabasePath!;
+    } else {
+      final dbPath = await getDatabasesPath();
+      path = p.join(dbPath, 'zeropass_local_vault.db');
+    }
 
     return await openDatabase(
       path,

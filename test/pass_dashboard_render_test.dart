@@ -76,6 +76,6 @@ void main() {
     expect(find.text('최준혁'), findsOneWidget);
     // Verify essential kiosk icon button (Minimalist line icon in AppBar)
     expect(find.byTooltip('무인 키오스크 모드'), findsOneWidget);
-    expect(find.byIcon(Icons.point_of_sale_outlined), findsWidgets);
+    expect(find.byIcon(Icons.tablet_android_outlined), findsWidgets);
   });
 }

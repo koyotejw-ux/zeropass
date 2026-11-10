@@ -660,12 +660,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 0. 무인 자율출결 키오스크 (홈헤더 액션 바와 완벽히 일치하는 아웃라인 키오스크 터미널 아이콘)
+          // 0. 무인 자율출결 키오스크 (일반 폰/태블릿으로 운영 → 심플 태블릿 아웃라인 아이콘, 우측 아이콘 세트와 동일 계열·동일 크기)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.point_of_sale_outlined, size: 21, color: Color(0xFF3F3F46)),
+              icon: const Icon(Icons.tablet_android_outlined, size: 21, color: Color(0xFF3F3F46)),
               tooltip: '무인 키오스크 모드',
               splashRadius: 20,
               padding: EdgeInsets.zero,

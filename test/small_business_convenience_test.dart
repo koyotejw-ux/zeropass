@@ -73,7 +73,14 @@ void main() {
     );
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    DatabaseService.testDatabasePath = inMemoryDatabasePath;
+    await DatabaseService.instance.resetForTesting();
     await initializeDateFormatting('ko_KR', null);
+  });
+
+  tearDownAll(() async {
+    await DatabaseService.instance.resetForTesting();
+    DatabaseService.testDatabasePath = null;
   });
 
   final testStudioWithLogo = StudioProfile(

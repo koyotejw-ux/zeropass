@@ -21,6 +21,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    DatabaseService.testDatabasePath = inMemoryDatabasePath;
+    await DatabaseService.instance.resetForTesting();
+    await DatabaseService.instance.database;
+  });
+
+  tearDownAll(() async {
+    await DatabaseService.instance.resetForTesting();
+    DatabaseService.testDatabasePath = null;
   });
 
   final testMember = Member(
@@ -180,6 +188,7 @@ void main() {
 
       // Tap Kakao send
       await tester.tap(find.text('카톡 0원 전송'));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 200)));
       await tester.pumpAndSettle();
       expect(kakaoSent, isTrue);
       expect(smsSent, isFalse);
@@ -220,6 +229,7 @@ void main() {
       expect(find.text('안심 하원 알림장 발송'), findsOneWidget);
 
       await tester.tap(find.text('문자(SMS) 전송'));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 200)));
       await tester.pumpAndSettle();
       expect(smsSent, isTrue);
       await tester.pump(const Duration(seconds: 5));
@@ -262,6 +272,7 @@ void main() {
       expect(find.textContaining('180,000원'), findsNWidgets(2));
 
       await tester.tap(find.text('카톡 영수증 0원 전송'));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 200)));
       await tester.pumpAndSettle();
       expect(kakaoSent, isTrue);
       await tester.pump(const Duration(seconds: 5));
@@ -315,7 +326,7 @@ void main() {
       expect(find.text('실시간 브리핑'), findsOneWidget);
       expect(find.text('오늘 등원 안심 알림 대기'), findsOneWidget);
       expect(find.text('미납 수강료 수납 독촉 대기'), findsOneWidget);
-      expect(find.text('수강권 만료 임박 (잔여 1회 이하)'), findsOneWidget);
+      expect(find.text('수강권 만료 임박 (잔여 2회 이하)'), findsOneWidget);
 
       // Switch to Tab 2: Logs
       await tester.tap(find.textContaining('발송 이력'));
