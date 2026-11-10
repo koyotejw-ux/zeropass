@@ -463,6 +463,11 @@ class DatabaseService {
     await db.insert('pass_records', record.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> deletePassRecord(String id) async {
+    final db = await database;
+    await db.delete('pass_records', where: 'id = ?', whereArgs: [id]);
+  }
+
   // Invoices CRUD
   Future<List<Invoice>> getInvoices() async {
     final db = await database;
@@ -478,6 +483,11 @@ class DatabaseService {
   Future<void> updateInvoice(Invoice invoice) async {
     final db = await database;
     await db.update('invoices', invoice.toMap(), where: 'id = ?', whereArgs: [invoice.id]);
+  }
+
+  Future<void> deleteInvoice(String id) async {
+    final db = await database;
+    await db.delete('invoices', where: 'id = ?', whereArgs: [id]);
   }
 
   // Studio Profile

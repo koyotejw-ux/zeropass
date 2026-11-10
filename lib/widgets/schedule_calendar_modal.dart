@@ -61,10 +61,11 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
     });
   }
 
-  void _openAddScheduleDialog(BuildContext context, DateTime targetDate) {
-    final titleController = TextEditingController();
-    final memoController = TextEditingController();
-    var selectedCat = ScheduleCategory.academy;
+  void _openAddScheduleDialog(BuildContext context, DateTime targetDate, {ScheduleItem? editItem}) {
+    final isEdit = editItem != null;
+    final titleController = TextEditingController(text: editItem?.title ?? '');
+    final memoController = TextEditingController(text: editItem?.memo ?? '');
+    var selectedCat = editItem?.category ?? ScheduleCategory.academy;
 
     showDialog(
       context: context,
@@ -84,7 +85,9 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${DateFormat('M월 d일', 'ko_KR').format(targetDate)} 새 일정 등록',
+                  isEdit
+                      ? '${DateFormat('M월 d일', 'ko_KR').format(targetDate)} 일정 수정'
+                      : '${DateFormat('M월 d일', 'ko_KR').format(targetDate)} 새 일정 등록',
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -180,28 +183,45 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ZeroButton.primary(
-                    label: '등록하기',
+                    label: isEdit ? '수정하기' : '등록하기',
                     size: ZeroButtonSize.medium,
                     fullWidth: true,
                     onPressed: () {
                       final title = titleController.text.trim();
                       if (title.isEmpty) return;
-                      final newItem = ScheduleItem(
-                        id: 'sch_${DateTime.now().millisecondsSinceEpoch}',
-                        title: title,
-                        date: targetDate,
-                        category: selectedCat,
-                        memo: memoController.text.trim().isEmpty ? null : memoController.text.trim(),
-                        createdAt: DateTime.now(),
-                      );
-                      ref.read(schedulesProvider.notifier).addSchedule(newItem);
-                      Navigator.pop(dialogCtx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('\'$title\' 일정이 등록되었습니다.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      final memo = memoController.text.trim().isEmpty ? null : memoController.text.trim();
+                      if (isEdit) {
+                        final updated = editItem.copyWith(
+                          title: title,
+                          category: selectedCat,
+                          memo: memo,
+                        );
+                        ref.read(schedulesProvider.notifier).updateSchedule(updated);
+                        Navigator.pop(dialogCtx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('\'$title\' 일정이 수정되었습니다.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      } else {
+                        final newItem = ScheduleItem(
+                          id: 'sch_${DateTime.now().millisecondsSinceEpoch}',
+                          title: title,
+                          date: targetDate,
+                          category: selectedCat,
+                          memo: memo,
+                          createdAt: DateTime.now(),
+                        );
+                        ref.read(schedulesProvider.notifier).addSchedule(newItem);
+                        Navigator.pop(dialogCtx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('\'$title\' 일정이 등록되었습니다.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),
@@ -813,43 +833,47 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, idx) {
                 final sch = schedules[idx];
-                return ListTile(
-                  dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Color(sch.category.colorValue).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                return Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    dense: true,
+                    onTap: () => _openAddScheduleDialog(context, sch.date, editItem: sch),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Color(sch.category.colorValue).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.calendar_today_rounded, size: 17, color: Color(sch.category.colorValue)),
                     ),
-                    child: Icon(Icons.calendar_today_rounded, size: 17, color: Color(sch.category.colorValue)),
-                  ),
-                  title: Padding(
-                    padding: const EdgeInsets.only(bottom: 3),
-                    child: Text(
-                      sch.title,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                    title: Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        sch.title,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                      ),
                     ),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: sch.memo != null && sch.memo!.isNotEmpty
-                        ? Text(
-                            sch.memo!,
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
-                          )
-                        : Text(
-                            sch.category.label,
-                            style: TextStyle(fontSize: 11.5, color: Color(sch.category.colorValue), fontWeight: FontWeight.w600),
-                          ),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textTertiary),
-                    onPressed: () {
-                      ref.read(schedulesProvider.notifier).deleteSchedule(sch.id);
-                    },
-                    tooltip: '일정 삭제',
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: sch.memo != null && sch.memo!.isNotEmpty
+                          ? Text(
+                              sch.memo!,
+                              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
+                            )
+                          : Text(
+                              sch.category.label,
+                              style: TextStyle(fontSize: 11.5, color: Color(sch.category.colorValue), fontWeight: FontWeight.w600),
+                            ),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textTertiary),
+                      onPressed: () {
+                        ref.read(schedulesProvider.notifier).deleteSchedule(sch.id);
+                      },
+                      tooltip: '일정 삭제',
+                    ),
                   ),
                 );
               },

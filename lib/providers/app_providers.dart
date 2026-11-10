@@ -94,7 +94,7 @@ class PassRecordsNotifier extends AsyncNotifier<List<PassRecord>> {
   }) async {
     final db = ref.read(databaseServiceProvider);
     final record = PassRecord(
-      id: 'pass_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'pass_${DateTime.now().microsecondsSinceEpoch}_${member.id}',
       memberId: member.id,
       timestamp: DateTime.now(),
       status: status,
@@ -109,6 +109,25 @@ class PassRecordsNotifier extends AsyncNotifier<List<PassRecord>> {
         remainingSessions: member.remainingSessions - 1,
       );
       await ref.read(membersProvider.notifier).updateMember(updatedMember);
+    }
+
+    await reload();
+  }
+
+  Future<void> cancelCheckIn({
+    required PassRecord record,
+    Member? member,
+  }) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.deletePassRecord(record.id);
+
+    // Restore deducted session if applicable
+    final deduction = record.sessionDeduction ?? 0;
+    if (member != null && member.billingType == BillingType.sessionBased && deduction > 0) {
+      final restored = member.copyWith(
+        remainingSessions: member.remainingSessions + deduction,
+      );
+      await ref.read(membersProvider.notifier).updateMember(restored);
     }
 
     await reload();
@@ -147,6 +166,18 @@ class InvoicesNotifier extends AsyncNotifier<List<Invoice>> {
     await reload();
   }
 
+  Future<void> updateInvoice(Invoice invoice) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.updateInvoice(invoice);
+    await reload();
+  }
+
+  Future<void> deleteInvoice(String invoiceId) async {
+    final db = ref.read(databaseServiceProvider);
+    await db.deleteInvoice(invoiceId);
+    await reload();
+  }
+
   Future<void> markAsPaid({
     required String invoiceId,
     required String paymentMethod,
@@ -158,6 +189,29 @@ class InvoicesNotifier extends AsyncNotifier<List<Invoice>> {
         status: PaymentStatus.paid,
         paymentMethod: paymentMethod,
         paidAt: DateTime.now(),
+      );
+      final db = ref.read(databaseServiceProvider);
+      await db.updateInvoice(updated);
+      await reload();
+    }
+  }
+
+  Future<void> markAsUnpaid(String invoiceId) async {
+    final currentInvoices = state.value ?? [];
+    final idx = currentInvoices.indexWhere((inv) => inv.id == invoiceId);
+    if (idx != -1) {
+      final current = currentInvoices[idx];
+      final updated = Invoice(
+        id: current.id,
+        memberIds: current.memberIds,
+        recipientPhone: current.recipientPhone,
+        title: current.title,
+        amount: current.amount,
+        dueDate: current.dueDate,
+        status: PaymentStatus.unpaid,
+        paymentMethod: null,
+        paidAt: null,
+        externalOrderId: current.externalOrderId,
       );
       final db = ref.read(databaseServiceProvider);
       await db.updateInvoice(updated);

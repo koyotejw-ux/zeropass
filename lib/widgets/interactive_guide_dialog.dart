@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
+import '../services/monetization_service.dart';
+import '../services/schedule_service.dart';
 import '../theme/app_theme.dart';
 import 'mascot_avatar.dart';
 import 'design_system.dart';
@@ -313,9 +315,15 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                   if (confirm == true && mounted) {
                     final db = ref.read(databaseServiceProvider);
                     await db.clearAllData();
+                    await ScheduleService.clearSchedules();
+                    await MonetizationService.instance.resetMetricsForRealUsage();
                     await ref.read(membersProvider.notifier).reload();
                     await ref.read(passRecordsProvider.notifier).reload();
                     await ref.read(invoicesProvider.notifier).reload();
+                    await ref.read(vendorsProvider.notifier).reload();
+                    await ref.read(expensesProvider.notifier).reload();
+                    await ref.read(notificationLogsProvider.notifier).reload();
+                    await ref.read(schedulesProvider.notifier).reload();
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(

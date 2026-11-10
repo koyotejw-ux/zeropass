@@ -15,12 +15,14 @@ import '../services/data_vault_service.dart';
 import '../services/database_service.dart';
 import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
+import '../services/schedule_service.dart';
 import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/coach_mark_dialog.dart';
 import '../widgets/design_system.dart';
+import '../widgets/full_usage_guide_modal.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
 import '../widgets/senior_easy_guide_modal.dart';
@@ -270,6 +272,21 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
+  void _openFullUsageGuide(BuildContext context) {
+    FullUsageGuideModal.show(
+      context,
+      onNavigateToTab: (tabIdx) {
+        HomeNavigationScreen.of(context)?.switchToTab(tabIdx);
+      },
+      onOpenProStore: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+        );
+      },
+    );
+  }
+
   void _openInteractiveGuide(BuildContext context) {
     StepByStepPracticeGuideDialog.show(
       context,
@@ -399,6 +416,50 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ],
             ),
             const SizedBox(height: 16),
+
+            // Item 0: 탭별·기능별 전체 사용 가이드 (출결·청구·지출·회원·설정·프로샵)
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue, size: 22),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '탭별 · 기능별 전체 사용 가이드',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '출결 체크 · 청구/수납 · 지출/세무 · 회원 명부 · 키오스크/프로샵의 등록·수정·삭제 방법과 더미 데이터 비우기 절차를 한눈에 안내합니다.',
+                    style: TextStyle(fontSize: 12.5, color: Color(0xFF1E3A8A), height: 1.45),
+                  ),
+                  const SizedBox(height: 12),
+                  ZeroButton.primary(
+                    label: '메뉴별 전체 사용 가이드 열기',
+                    icon: Icons.auto_stories_rounded,
+                    fullWidth: true,
+                    size: ZeroButtonSize.medium,
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openFullUsageGuide(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
 
             // Item 1: 스텝바이스텝 실전 연습 가이드 (Interactive Guide)
             Container(
@@ -868,9 +929,18 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               // [그룹 4: 가이드 & 규정 준수]
               _buildGroupHeader('가이드 & 규정 준수'),
               _buildRepresentativeTile(
-                icon: Icons.auto_stories_rounded,
+                icon: Icons.menu_book_rounded,
                 iconColor: const Color(0xFF2563EB),
                 iconBgColor: const Color(0xFFEFF6FF),
+                title: '탭별 · 기능별 전체 사용 가이드',
+                subtitle: '출결·청구·지출·회원·설정·프로샵 메뉴별 등록/수정/삭제 안내',
+                onTap: () => _openFullUsageGuide(context),
+              ),
+              const SizedBox(height: 8),
+              _buildRepresentativeTile(
+                icon: Icons.auto_stories_rounded,
+                iconColor: const Color(0xFF059669),
+                iconBgColor: const Color(0xFFECFDF5),
                 title: '원장님 실전 가이드 센터 & 튜토리얼',
                 subtitle: '4단계 실전 연습 코칭 · 업종 프리셋 · 셋업 마법사 · FAQ',
                 onTap: () => _openGuideCenterSheet(context, profile),
@@ -2328,13 +2398,19 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     if (confirm == true && context.mounted) {
       final db = ref.read(databaseServiceProvider);
       await db.clearAllData();
+      await ScheduleService.clearSchedules();
+      await MonetizationService.instance.resetMetricsForRealUsage();
       await ref.read(membersProvider.notifier).reload();
       await ref.read(passRecordsProvider.notifier).reload();
       await ref.read(invoicesProvider.notifier).reload();
+      await ref.read(vendorsProvider.notifier).reload();
+      await ref.read(expensesProvider.notifier).reload();
+      await ref.read(notificationLogsProvider.notifier).reload();
+      await ref.read(schedulesProvider.notifier).reload();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('체험용 데이터가 비워졌습니다. 이제 실제 회원을 등록해 보세요!'),
+            content: Text('체험용 데이터가 모두 비워졌습니다. 이제 실제 회원과 장부를 등록해 보세요!'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -3609,6 +3685,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       await ref.read(passRecordsProvider.notifier).reload();
                       await ref.read(invoicesProvider.notifier).reload();
                       await ref.read(studioProfileProvider.notifier).reload();
+                      await ref.read(vendorsProvider.notifier).reload();
+                      await ref.read(expensesProvider.notifier).reload();
+                      await ref.read(notificationLogsProvider.notifier).reload();
+                      await ref.read(schedulesProvider.notifier).reload();
 
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

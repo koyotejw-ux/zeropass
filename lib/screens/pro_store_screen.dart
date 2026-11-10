@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +16,18 @@ class ProStoreScreen extends StatefulWidget {
 }
 
 class _ProStoreScreenState extends State<ProStoreScreen> {
+  Future<void> _startPurchase(String productId) async {
+    final result = await MonetizationService.instance.buyProduct(productId);
+    if (!result.started && mounted && result.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Future<void> _openPlaySubscriptions() async {
     final uri = Uri.parse('https://play.google.com/store/account/subscriptions');
     if (await canLaunchUrl(uri)) {
@@ -496,13 +509,13 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
                     );
                   } else {
-                    MonetizationService.instance.buyProduct(MonetizationService.productIdAllInOneMonthly);
+                    _startPurchase(MonetizationService.productIdAllInOneMonthly);
                   }
                 },
                 onSecondaryAction: isSubAllInOne
                     ? null
                     : () {
-                        MonetizationService.instance.buyProduct(MonetizationService.productIdAllInOneYearly);
+                        _startPurchase(MonetizationService.productIdAllInOneYearly);
                       },
               ),
               const SizedBox(height: 18),
@@ -551,7 +564,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
                     );
                   } else {
-                    MonetizationService.instance.buyProduct(MonetizationService.productIdKioskMonthly);
+                    _startPurchase(MonetizationService.productIdKioskMonthly);
                   }
                 },
               ),
@@ -594,7 +607,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                 actionIcon: Icons.block_flipped,
                 onAction: () {
                   if (!isSubNoAds) {
-                    MonetizationService.instance.buyProduct(MonetizationService.productIdRemoveAdsMonthly);
+                    _startPurchase(MonetizationService.productIdRemoveAdsMonthly);
                   }
                 },
               ),
@@ -648,56 +661,58 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
+              if (kDebugMode) ...[
+                const SizedBox(height: 18),
 
-              // Developer Testing Unlock & Reset Row (50%:50% Even Split for 100% Width)
-              Row(
-                children: [
-                  Expanded(
-                    child: ZeroButton.tint(
-                      label: isDomestic ? '[테스트] 전체 언락' : '[Test] Unlock All',
-                      icon: Icons.flash_on_rounded,
-                      size: ZeroButtonSize.medium,
-                      fullWidth: true,
-                      onPressed: () {
-                        MonetizationService.instance.debugUnlockAll();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isDomestic
-                                  ? '[테스트용] 모든 PRO 구독 기능이 활성화되었습니다.'
-                                  : '[Test] All PRO features unlocked.',
+                // Developer Testing Unlock & Reset Row (Debug mode only)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ZeroButton.tint(
+                        label: isDomestic ? '[테스트] 전체 언락' : '[Test] Unlock All',
+                        icon: Icons.flash_on_rounded,
+                        size: ZeroButtonSize.medium,
+                        fullWidth: true,
+                        onPressed: () {
+                          MonetizationService.instance.debugUnlockAll();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isDomestic
+                                    ? '[테스트용] 모든 PRO 구독 기능이 활성화되었습니다.'
+                                    : '[Test] All PRO features unlocked.',
+                              ),
+                              behavior: SnackBarBehavior.floating,
                             ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ZeroButton.tint(
-                      label: isDomestic ? '[테스트] 초기화' : '[Test] Reset All',
-                      icon: Icons.refresh_rounded,
-                      size: ZeroButtonSize.medium,
-                      fullWidth: true,
-                      onPressed: () {
-                        MonetizationService.instance.debugResetAll();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isDomestic
-                                  ? '[테스트용] 모든 구독과 체험권이 초기화되었습니다 (무료 모드).'
-                                  : '[Test] All subscriptions and trial passes reset.',
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ZeroButton.tint(
+                        label: isDomestic ? '[테스트] 초기화' : '[Test] Reset All',
+                        icon: Icons.refresh_rounded,
+                        size: ZeroButtonSize.medium,
+                        fullWidth: true,
+                        onPressed: () {
+                          MonetizationService.instance.debugResetAll();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isDomestic
+                                    ? '[테스트용] 모든 구독과 체험권이 초기화되었습니다 (무료 모드).'
+                                    : '[Test] All subscriptions and trial passes reset.',
+                              ),
+                              behavior: SnackBarBehavior.floating,
                             ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           );
         },

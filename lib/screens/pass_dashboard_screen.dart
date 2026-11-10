@@ -1451,6 +1451,34 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   ),
                 ],
               ),
+            if (todayPass != null) ...[
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: () => _confirmCancelTodayCheckIn(context, member, todayPass),
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.undo_rounded, size: 14, color: AppTheme.textSecondary),
+                        SizedBox(width: 4),
+                        Text(
+                          '오늘 출석 취소 (회차 복구)',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
 
           // 4. 장기 미출석 (최근 7일+ 결석) 골든타임 안부 톡 케어 슬림 바
@@ -1467,6 +1495,62 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmCancelTodayCheckIn(
+    BuildContext context,
+    Member member,
+    PassRecord passRecord,
+  ) async {
+    final deduction = passRecord.sessionDeduction ?? 0;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Row(
+          children: [
+            Icon(Icons.undo_rounded, color: AppTheme.danger, size: 22),
+            SizedBox(width: 8),
+            Text('오늘 출석 취소', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Text(
+          '${member.primaryName} 회원의 오늘 출석 체크를 취소하시겠습니까?'
+          '${deduction > 0 ? '\n차감되었던 $deduction회가 자동으로 복구됩니다.' : ''}',
+          style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('닫기', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            child: const Text('출석 취소하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(passRecordsProvider.notifier).cancelCheckIn(
+            record: passRecord,
+            member: member,
+          );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              deduction > 0
+                  ? '${member.primaryName} 출석이 취소되고 잔여 $deduction회가 복구되었습니다.'
+                  : '${member.primaryName} 오늘 출석이 취소되었습니다.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _handleOneTouchCheckIn(Member member) async {

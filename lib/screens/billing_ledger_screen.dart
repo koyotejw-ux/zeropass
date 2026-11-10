@@ -926,13 +926,70 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '$dateLabel $dateValue',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.textTertiary,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$dateLabel $dateValue',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.more_vert_rounded, size: 18, color: AppTheme.textSecondary),
+                      tooltip: '청구서 관리',
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showEditInvoiceDialog(context, invoice);
+                        } else if (value == 'unpaid') {
+                          _confirmRevertInvoiceToUnpaid(context, invoice);
+                        } else if (value == 'delete') {
+                          _confirmDeleteInvoice(context, invoice);
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryBlue),
+                              SizedBox(width: 8),
+                              Text('청구서 수정'),
+                            ],
+                          ),
+                        ),
+                        if (isPaid)
+                          const PopupMenuItem(
+                            value: 'unpaid',
+                            child: Row(
+                              children: [
+                                Icon(Icons.undo_rounded, size: 18, color: Color(0xFFD97706)),
+                                SizedBox(width: 8),
+                                Text('수납 취소 (미납 전환)'),
+                              ],
+                            ),
+                          ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
+                              SizedBox(width: 8),
+                              Text('청구서 삭제', style: TextStyle(color: AppTheme.danger)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1194,6 +1251,174 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _showEditInvoiceDialog(BuildContext context, Invoice invoice) async {
+    final titleCtrl = TextEditingController(text: invoice.title);
+    final amountCtrl = TextEditingController(text: invoice.amount.toString());
+    final phoneCtrl = TextEditingController(text: invoice.recipientPhone);
+    DateTime dueDate = invoice.dueDate;
+
+    await showDialog(
+      context: context,
+      builder: (dlgCtx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Text('청구서 정보 수정', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTextField(
+                  controller: titleCtrl,
+                  label: '청구 항목명',
+                  prefixIcon: Icons.receipt_long_outlined,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: amountCtrl,
+                  label: '청구 금액 (원)',
+                  prefixIcon: Icons.payments_outlined,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: phoneCtrl,
+                  label: '수신 연락처',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: dlgCtx,
+                      initialDate: dueDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2035),
+                    );
+                    if (picked != null) {
+                      setDlgState(() => dueDate = picked);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: '납부 기한',
+                      prefixIcon: Icon(Icons.event_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    child: Text(DateFormat('yyyy.MM.dd').format(dueDate)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dlgCtx),
+              child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final title = titleCtrl.text.trim();
+                final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim());
+                if (title.isEmpty || amount == null || amount <= 0) return;
+
+                final updated = invoice.copyWith(
+                  title: title,
+                  amount: amount,
+                  recipientPhone: phoneCtrl.text.trim(),
+                  dueDate: dueDate,
+                );
+                await ref.read(invoicesProvider.notifier).updateInvoice(updated);
+                if (dlgCtx.mounted) Navigator.pop(dlgCtx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('청구서 정보가 수정되었습니다.'), behavior: SnackBarBehavior.floating),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmRevertInvoiceToUnpaid(BuildContext context, Invoice invoice) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('수납 취소 (미납 전환)', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        content: Text(
+          '\'${invoice.title}\' 건의 수납 완료 처리를 취소하고 미납 상태로 되돌리시겠습니까?',
+          style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx, false),
+            child: const Text('닫기', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dlgCtx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD97706)),
+            child: const Text('미납으로 되돌리기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(invoicesProvider.notifier).markAsUnpaid(invoice.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('해당 청구서가 미납 상태로 전환되었습니다.'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteInvoice(BuildContext context, Invoice invoice) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 22),
+            SizedBox(width: 8),
+            Text('청구서 삭제', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Text(
+          '\'${invoice.title}\' 청구서를 삭제하시겠습니까?\n삭제된 청구 내역은 복구할 수 없습니다.',
+          style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx, false),
+            child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dlgCtx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            child: const Text('삭제하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(invoicesProvider.notifier).deleteInvoice(invoice.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('청구서가 삭제되었습니다.'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
   }
 
   void _sendSmsInvoice(

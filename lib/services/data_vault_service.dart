@@ -7,12 +7,15 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/expense_item.dart';
 import '../models/member.dart';
+import '../models/notification_log.dart';
 import '../models/pass_record.dart';
 import '../models/invoice.dart';
+import '../models/schedule_item.dart';
 import '../models/studio_profile.dart';
 import '../models/vendor.dart';
 import 'database_service.dart';
 import 'monetization_service.dart';
+import 'schedule_service.dart';
 
 class DataVaultService {
   /// Exports all local database records as an encrypted/formatted JSON string file.
@@ -24,9 +27,14 @@ class DataVaultService {
     final profile = await db.getStudioProfile();
     final vendors = await db.getVendors();
     final expenses = await db.getExpenses();
+    final notificationLogs = await db.getNotificationLogs(limit: 500);
+    List<ScheduleItem> schedules = [];
+    try {
+      schedules = await ScheduleService.loadSchedules();
+    } catch (_) {}
 
     final backupPayload = {
-      'version': '1.0.0',
+      'version': '1.1.0',
       'exportedAt': DateTime.now().toIso8601String(),
       'disclaimer': 'ZeroPass Local-Only Vault Encrypted Backup. Zero server transmission guaranteed.',
       'profile': profile.toMap(),
@@ -35,6 +43,8 @@ class DataVaultService {
       'invoices': invoices.map((i) => i.toMap()).toList(),
       'vendors': vendors.map((v) => v.toMap()).toList(),
       'expenses': expenses.map((e) => e.toMap()).toList(),
+      'notificationLogs': notificationLogs.map((n) => n.toMap()).toList(),
+      'schedules': schedules.map((s) => s.toMap()).toList(),
     };
 
     final jsonString = const JsonEncoder.withIndent('  ').convert(backupPayload);
@@ -103,6 +113,21 @@ class DataVaultService {
         for (final e in expList) {
           await db.insertExpense(ExpenseItem.fromMap(e));
         }
+      }
+
+      if (data.containsKey('notificationLogs')) {
+        final logList = data['notificationLogs'] as List;
+        for (final n in logList) {
+          await db.insertNotificationLog(NotificationLog.fromMap(n));
+        }
+      }
+
+      if (data.containsKey('schedules')) {
+        try {
+          final schList = data['schedules'] as List;
+          final items = schList.map((s) => ScheduleItem.fromMap(s as Map<String, dynamic>)).toList();
+          await ScheduleService.saveSchedules(items);
+        } catch (_) {}
       }
 
       return true;

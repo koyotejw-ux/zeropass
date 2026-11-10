@@ -441,11 +441,11 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
     );
   }
 
-  void _openAddMemberDialog(BuildContext context) {
+  void _openAddMemberDialog(BuildContext context, {Member? editMember}) {
     AppBottomSheet.show(
       context: context,
       maxHeightRatio: 0.90,
-      builder: (ctx) => const _AddMemberModal(),
+      builder: (ctx) => _AddMemberModal(editMember: editMember),
     );
   }
 }
@@ -612,9 +612,33 @@ class _MemberDetailModal extends ConsumerWidget {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 20, color: AppTheme.primaryBlue),
+                    tooltip: '회원 정보 수정',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      AppBottomSheet.show(
+                        context: context,
+                        maxHeightRatio: 0.90,
+                        builder: (ctx) => _AddMemberModal(editMember: member),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppTheme.danger),
+                    tooltip: '회원 삭제',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _confirmDeleteMember(context, ref, member),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             ],
           ),
@@ -811,6 +835,52 @@ class _MemberDetailModal extends ConsumerWidget {
                                               style: TextStyle(fontSize: 11.5, color: Color(0xFFDC2626), fontWeight: FontWeight.w700),
                                             ),
                                           ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          icon: const Icon(Icons.undo_rounded, size: 17, color: AppTheme.textSecondary),
+                                          tooltip: '출석 기록 취소',
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                          onPressed: () async {
+                                            final confirm = await showDialog<bool>(
+                                              context: context,
+                                              builder: (dlgCtx) => AlertDialog(
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                                title: const Text('출석 기록 취소', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                                                content: Text(
+                                                  '${DateFormat('MM.dd HH:mm').format(p.timestamp)} 출석 기록을 취소하시겠습니까?'
+                                                  '${(p.sessionDeduction ?? 0) > 0 ? '\n차감된 ${p.sessionDeduction}회가 자동으로 복구됩니다.' : ''}',
+                                                  style: const TextStyle(fontSize: 13.5, height: 1.45),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(dlgCtx, false),
+                                                    child: Text(LocalizationService.tr('btn_cancel')),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () => Navigator.pop(dlgCtx, true),
+                                                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+                                                    child: const Text('출석 취소', style: TextStyle(color: Colors.white)),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                            if (confirm == true) {
+                                              await ref.read(passRecordsProvider.notifier).cancelCheckIn(
+                                                    record: p,
+                                                    member: member,
+                                                  );
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('출석 기록이 취소되고 회차가 복구되었습니다.'),
+                                                    behavior: SnackBarBehavior.floating,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          },
+                                        ),
                                       ],
                                     ),
                                   );
@@ -882,6 +952,51 @@ class _MemberDetailModal extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteMember(BuildContext context, WidgetRef ref, Member member) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 22),
+            SizedBox(width: 8),
+            Text('회원 삭제', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Text(
+          '\'${member.name}\' 회원을 명부에서 삭제하시겠습니까?\n\n해당 회원의 출석 기록도 함께 삭제되며 되돌릴 수 없습니다.',
+          style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx, false),
+            child: Text(LocalizationService.tr('btn_cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dlgCtx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            child: const Text('삭제하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ref.read(membersProvider.notifier).deleteMember(member.id);
+      await ref.read(passRecordsProvider.notifier).reload();
+      if (context.mounted) {
+        Navigator.pop(context); // Close detail modal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('\'${member.name}\' 회원이 삭제되었습니다.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _updatePhoto(BuildContext context, WidgetRef ref, Member member) async {
@@ -982,7 +1097,8 @@ class _MemberDetailModal extends ConsumerWidget {
 }
 
 class _AddMemberModal extends ConsumerStatefulWidget {
-  const _AddMemberModal();
+  final Member? editMember;
+  const _AddMemberModal({this.editMember});
 
   @override
   ConsumerState<_AddMemberModal> createState() => _AddMemberModalState();
@@ -990,16 +1106,48 @@ class _AddMemberModal extends ConsumerStatefulWidget {
 
 class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _payerNameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _groupController = TextEditingController(text: '일반 클래스');
-  final _feeController = TextEditingController(text: '300000');
-  final _sessionsController = TextEditingController(text: '10');
-  final _memoController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _payerNameController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _groupController;
+  late final TextEditingController _feeController;
+  late final TextEditingController _sessionsController;
+  late final TextEditingController _remainingSessionsController;
+  late final TextEditingController _memoController;
 
-  BillingType _billingType = BillingType.sessionBased;
+  late BillingType _billingType;
   String? _photoPath;
+
+  bool get _isEdit => widget.editMember != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final m = widget.editMember;
+    _nameController = TextEditingController(text: m?.name ?? '');
+    _payerNameController = TextEditingController(text: m?.payerName ?? '');
+    _phoneController = TextEditingController(text: m?.phone ?? '');
+    _groupController = TextEditingController(text: m?.groupName ?? '일반 클래스');
+    _feeController = TextEditingController(text: (m?.defaultFee ?? 300000).toString());
+    _sessionsController = TextEditingController(text: (m != null && m.totalSessions > 0 ? m.totalSessions : 10).toString());
+    _remainingSessionsController = TextEditingController(text: (m?.remainingSessions ?? 10).toString());
+    _memoController = TextEditingController(text: m?.memo ?? '');
+    _billingType = m?.billingType ?? BillingType.sessionBased;
+    _photoPath = m?.photoPath;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _payerNameController.dispose();
+    _phoneController.dispose();
+    _groupController.dispose();
+    _feeController.dispose();
+    _sessionsController.dispose();
+    _remainingSessionsController.dispose();
+    _memoController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickPhoto(ImageSource source) async {
     try {
@@ -1124,8 +1272,8 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    LocalizationService.tr('add_member_btn'),
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    _isEdit ? '회원 정보 수정' : LocalizationService.tr('add_member_btn'),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -1411,6 +1559,17 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                   );
                 },
               ),
+              // Remaining sessions field when editing session-based member
+              if (_isEdit && _billingType == BillingType.sessionBased) ...[
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: _remainingSessionsController,
+                  label: '현재 잔여 회차',
+                  hint: '0',
+                  prefixIcon: Icons.timelapse_outlined,
+                  keyboardType: TextInputType.number,
+                ),
+              ],
               const SizedBox(height: 14),
 
               // Memo
@@ -1426,42 +1585,74 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       final fee = int.tryParse(_feeController.text.replaceAll(',', '')) ?? 0;
                       final totalSessions = int.tryParse(_sessionsController.text) ?? 10;
+                      final remainingSessions = _isEdit
+                          ? (int.tryParse(_remainingSessionsController.text) ?? totalSessions)
+                          : totalSessions;
 
-                      final newMember = Member(
-                        id: 'mem_${const Uuid().v4().substring(0, 8)}',
-                        name: _nameController.text.trim(),
-                        phone: _phoneController.text.trim(),
-                        groupName: _groupController.text.trim(),
-                        billingType: _billingType,
-                        defaultFee: fee,
-                        totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
-                        remainingSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
-                        memo: _memoController.text.trim(),
-                        payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : null,
-                        registeredAt: DateTime.now(),
-                        photoPath: _photoPath,
-                      );
+                      if (_isEdit) {
+                        final updatedMember = widget.editMember!.copyWith(
+                          name: _nameController.text.trim(),
+                          phone: _phoneController.text.trim(),
+                          groupName: _groupController.text.trim(),
+                          billingType: _billingType,
+                          defaultFee: fee,
+                          totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
+                          remainingSessions: _billingType == BillingType.sessionBased ? remainingSessions : 0,
+                          memo: _memoController.text.trim(),
+                          payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : '',
+                          photoPath: _photoPath,
+                        );
+                        await ref.read(membersProvider.notifier).updateMember(updatedMember);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${updatedMember.name} 회원 정보가 수정되었습니다.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } else {
+                        final newMember = Member(
+                          id: 'mem_${const Uuid().v4().substring(0, 8)}',
+                          name: _nameController.text.trim(),
+                          phone: _phoneController.text.trim(),
+                          groupName: _groupController.text.trim(),
+                          billingType: _billingType,
+                          defaultFee: fee,
+                          totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
+                          remainingSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
+                          memo: _memoController.text.trim(),
+                          payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : null,
+                          registeredAt: DateTime.now(),
+                          photoPath: _photoPath,
+                        );
 
-                      ref.read(membersProvider.notifier).addMember(newMember);
-                      Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${newMember.name} 회원이 등록되었습니다.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                        await ref.read(membersProvider.notifier).addMember(newMember);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${newMember.name} 회원이 등록되었습니다.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryDark,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('회원 등록 완료', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    _isEdit ? '회원 정보 수정 완료' : '회원 등록 완료',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ],

@@ -229,6 +229,20 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  /// 실사용 모드 전환 시 연습용 시드 ROI 지표를 0으로 초기화합니다.
+  Future<void> resetMetricsForRealUsage() async {
+    _cumulativeSavedSmsCount = 0;
+    _cumulativeCheckInCount = 0;
+    _cumulativeTaxLedgerCount = 0;
+    _activeStreakDays = 1;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('bm_saved_sms_count', 0);
+    await prefs.setInt('bm_checkin_count', 0);
+    await prefs.setInt('bm_tax_count', 0);
+    await prefs.setInt('bm_active_streak_days', 1);
+    notifyListeners();
+  }
+
   /// 출결/안심문자/청구서/세무정산 실행 시 원장님 누적 ROI 절감액 기록 (Retention Flywheel)
   Future<void> recordValueAction({
     int smsCount = 0,
@@ -563,13 +577,29 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   // ==========================================
   // 4. 인앱 결제 (IAP) 처리
   // ==========================================
+  String? _lastPurchaseMessage;
+  String? get lastPurchaseMessage => _lastPurchaseMessage;
+
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
     for (final purchaseDetails in purchaseDetailsList) {
       if (purchaseDetails.status == PurchaseStatus.purchased || purchaseDetails.status == PurchaseStatus.restored) {
+        _lastPurchaseMessage = null;
         _handleSuccessfulPurchase(purchaseDetails.productID);
         if (purchaseDetails.pendingCompletePurchase) {
           InAppPurchase.instance.completePurchase(purchaseDetails);
         }
+      } else if (purchaseDetails.status == PurchaseStatus.error) {
+        _lastPurchaseMessage = purchaseDetails.error?.message ?? '결제 처리 중 오류가 발생했습니다.';
+        if (purchaseDetails.pendingCompletePurchase) {
+          InAppPurchase.instance.completePurchase(purchaseDetails);
+        }
+        notifyListeners();
+      } else if (purchaseDetails.status == PurchaseStatus.canceled) {
+        _lastPurchaseMessage = '결제가 취소되었습니다.';
+        if (purchaseDetails.pendingCompletePurchase) {
+          InAppPurchase.instance.completePurchase(purchaseDetails);
+        }
+        notifyListeners();
       }
     }
   }
@@ -601,19 +631,35 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     return response.productDetails;
   }
 
-  Future<void> buyProduct(String productId) async {
+  Future<({bool started, String? errorMessage})> buyProduct(String productId) async {
     try {
+      if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
+        return (started: false, errorMessage: '인앱 결제는 모바일 기기(Google Play / App Store)에서만 지원됩니다.');
+      }
+
       final available = await InAppPurchase.instance.isAvailable();
-      if (!available) return;
+      if (!available) {
+        return (started: false, errorMessage: 'Google Play 스토어에 연결할 수 없습니다. 로그인 및 네트워크 상태를 확인해 주세요.');
+      }
 
       final response = await InAppPurchase.instance.queryProductDetails({productId});
-      if (response.productDetails.isNotEmpty) {
-        final product = response.productDetails.first;
-        final purchaseParam = PurchaseParam(productDetails: product);
-        await InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+      if (response.error != null) {
+        return (started: false, errorMessage: '스토어 상품 조회 오류: ${response.error!.message}');
       }
+      if (response.productDetails.isEmpty) {
+        return (
+          started: false,
+          errorMessage: '스토어에 구독 상품($productId)이 아직 등록되지 않았거나 심사 중입니다.',
+        );
+      }
+
+      final product = response.productDetails.first;
+      final purchaseParam = PurchaseParam(productDetails: product);
+      final started = await InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+      return (started: started, errorMessage: started ? null : '결제 창을 열지 못했습니다.');
     } catch (e) {
       debugPrint('buyProduct error: $e');
+      return (started: false, errorMessage: '결제 요청 중 오류가 발생했습니다: $e');
     }
   }
 

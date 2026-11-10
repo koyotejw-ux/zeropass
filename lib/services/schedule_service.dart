@@ -85,5 +85,9 @@ class ScheduleService {
       await saveSchedules(current);
     }
   }
+
+  static Future<void> clearSchedules() async {
+    await saveSchedules([]);
+  }
 }
 

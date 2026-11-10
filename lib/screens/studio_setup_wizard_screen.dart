@@ -6,6 +6,8 @@ import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/database_service.dart';
 import '../services/localization_service.dart';
+import '../services/monetization_service.dart';
+import '../services/schedule_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/mascot_avatar.dart';
@@ -109,6 +111,8 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
       // 1. Clear any dummy demo data so the user starts totally fresh with their own data
       await db.clearAllData();
+      await ScheduleService.clearSchedules();
+      await MonetizationService.instance.resetMetricsForRealUsage();
 
       // 2. Save Studio Profile
       final defaultProfile = StudioProfile.defaultProfile();
@@ -150,6 +154,10 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
       await ref.read(membersProvider.notifier).reload();
       await ref.read(passRecordsProvider.notifier).reload();
       await ref.read(invoicesProvider.notifier).reload();
+      await ref.read(vendorsProvider.notifier).reload();
+      await ref.read(expensesProvider.notifier).reload();
+      await ref.read(notificationLogsProvider.notifier).reload();
+      await ref.read(schedulesProvider.notifier).reload();
 
       widget.onFinish();
     } catch (e) {
