@@ -386,8 +386,8 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                         fullWidth: true,
                         size: ZeroButtonSize.large,
                         onPressed: () {
-                          if (bm.isRewardedAdAvailable) {
-                            bm.showRewardedAd(
+                          if (bm.isAnyRewardedAdAvailable) {
+                            bm.showBestRewardedAd(
                               onRewarded: () async {
                                 await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                                 if (context.mounted) {

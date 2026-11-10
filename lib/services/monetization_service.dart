@@ -153,6 +153,9 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   RewardedAd? _rewardedAd;
   bool _isRewardedAdLoaded = false;
 
+  RewardedInterstitialAd? _rewardedInterstitialAd;
+  bool _isRewardedInterstitialAdLoaded = false;
+
   final ValueNotifier<bool> premiumStatusNotifier = ValueNotifier<bool>(false);
 
   // 단위 ID Getter (릴리즈/디버그 자동 분기)
@@ -331,7 +334,10 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
         if (!isAdsRemoved) {
           _loadAppOpenAd();
           _loadInterstitialAd();
+        }
+        if (!isPermanentVip) {
           _loadRewardedAd();
+          _loadRewardedInterstitialAd();
         }
       } catch (e) {
         debugPrint('AdMob initialize error: $e');
@@ -533,6 +539,9 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   bool get isRewardedAdAvailable => _isRewardedAdLoaded && _rewardedAd != null;
+  bool get isRewardedInterstitialAdAvailable =>
+      _isRewardedInterstitialAdLoaded && _rewardedInterstitialAd != null;
+  bool get isAnyRewardedAdAvailable => isRewardedAdAvailable || isRewardedInterstitialAdAvailable;
 
   /// 보상형 광고 재생 (성공 시 onRewarded 콜백 실행)
   void showRewardedAd({
@@ -570,6 +579,117 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       );
     } else {
       _loadRewardedAd();
+      onFailed?.call();
+    }
+  }
+
+  // ==========================================
+  // 3-B. 보상형 전면 광고 (Rewarded Interstitial Ad)
+  // ==========================================
+  void _loadRewardedInterstitialAd() {
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+
+    RewardedInterstitialAd.load(
+      adUnitId: rewardedInterstitialAdUnitId,
+      request: const AdRequest(),
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedInterstitialAd = ad;
+          _isRewardedInterstitialAdLoaded = true;
+          debugPrint('RewardedInterstitialAd loaded successfully');
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('RewardedInterstitialAd failed to load: $error');
+          _isRewardedInterstitialAdLoaded = false;
+          _rewardedInterstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  /// 보상형 전면 광고 재생 (성공 시 onRewarded 콜백 실행)
+  void showRewardedInterstitialAd({
+    required VoidCallback onRewarded,
+    VoidCallback? onDismissed,
+    VoidCallback? onFailed,
+  }) {
+    if (_isRewardedInterstitialAdLoaded && _rewardedInterstitialAd != null) {
+      bool earned = false;
+      _rewardedInterstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _rewardedInterstitialAd = null;
+          _isRewardedInterstitialAdLoaded = false;
+          _loadRewardedInterstitialAd();
+          if (earned) {
+            onRewarded();
+          } else {
+            onDismissed?.call();
+          }
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _rewardedInterstitialAd = null;
+          _isRewardedInterstitialAdLoaded = false;
+          _loadRewardedInterstitialAd();
+          onFailed?.call();
+        },
+      );
+
+      _rewardedInterstitialAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+          earned = true;
+        },
+      );
+    } else {
+      _loadRewardedInterstitialAd();
+      onFailed?.call();
+    }
+  }
+
+  /// 일반 보상형 광고 → 보상형 전면 광고 순서로 자동 풀(Fill) 보장 재생
+  void showBestRewardedAd({
+    required VoidCallback onRewarded,
+    VoidCallback? onDismissed,
+    VoidCallback? onFailed,
+    bool preferRewardedInterstitial = false,
+  }) {
+    if (preferRewardedInterstitial && isRewardedInterstitialAdAvailable) {
+      showRewardedInterstitialAd(
+        onRewarded: onRewarded,
+        onDismissed: onDismissed,
+        onFailed: () {
+          if (isRewardedAdAvailable) {
+            showRewardedAd(onRewarded: onRewarded, onDismissed: onDismissed, onFailed: onFailed);
+          } else {
+            onFailed?.call();
+          }
+        },
+      );
+      return;
+    }
+
+    if (isRewardedAdAvailable) {
+      showRewardedAd(
+        onRewarded: onRewarded,
+        onDismissed: onDismissed,
+        onFailed: () {
+          if (isRewardedInterstitialAdAvailable) {
+            showRewardedInterstitialAd(onRewarded: onRewarded, onDismissed: onDismissed, onFailed: onFailed);
+          } else {
+            onFailed?.call();
+          }
+        },
+      );
+    } else if (isRewardedInterstitialAdAvailable) {
+      showRewardedInterstitialAd(
+        onRewarded: onRewarded,
+        onDismissed: onDismissed,
+        onFailed: onFailed,
+      );
+    } else {
+      _loadRewardedAd();
+      _loadRewardedInterstitialAd();
       onFailed?.call();
     }
   }
@@ -673,6 +793,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     _interstitialAd?.dispose();
     _appOpenAd?.dispose();
     _rewardedAd?.dispose();
+    _rewardedInterstitialAd?.dispose();
     super.dispose();
   }
 }

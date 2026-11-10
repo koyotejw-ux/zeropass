@@ -368,8 +368,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   fullWidth: true,
                   onPressed: () {
                     final bm = MonetizationService.instance;
-                    if (bm.isRewardedAdAvailable) {
-                      bm.showRewardedAd(
+                    if (bm.isAnyRewardedAdAvailable) {
+                      bm.showBestRewardedAd(
+                        preferRewardedInterstitial: true,
                         onRewarded: () async {
                           await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                           if (ctx.mounted) Navigator.pop(ctx);

@@ -13,8 +13,9 @@ import '../providers/app_providers.dart';
 import '../services/chosung_search_service.dart';
 import '../services/coach_mark_service.dart';
 import '../services/data_vault_service.dart';
-import '../services/sms_template_service.dart';
 import '../services/localization_service.dart';
+import '../services/monetization_service.dart';
+import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_text_field.dart';
@@ -1633,6 +1634,10 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                         );
 
                         await ref.read(membersProvider.notifier).addMember(newMember);
+                        MonetizationService.instance.triggerSmartInterstitialAd(
+                          cooldownSeconds: 75,
+                          actionThreshold: 2,
+                        );
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(

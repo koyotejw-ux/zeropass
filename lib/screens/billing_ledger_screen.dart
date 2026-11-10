@@ -1732,6 +1732,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
         );
 
     if (mounted) {
+      MonetizationService.instance.triggerSmartInterstitialAd(
+        cooldownSeconds: 75,
+        actionThreshold: 2,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${invoice.title} 수납 처리가 완료되었습니다.'),
@@ -2722,6 +2726,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
 
                       if (editExpense == null) {
                         await ref.read(expensesProvider.notifier).addExpense(item);
+                        MonetizationService.instance.triggerSmartInterstitialAd(
+                          cooldownSeconds: 75,
+                          actionThreshold: 2,
+                        );
                       } else {
                         await ref.read(expensesProvider.notifier).updateExpense(item);
                       }
@@ -4056,6 +4064,13 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                       if (!context.mounted) return;
                       Navigator.pop(context);
 
+                      if (!_sendSmsRightNow) {
+                        MonetizationService.instance.triggerSmartInterstitialAd(
+                          cooldownSeconds: 75,
+                          actionThreshold: 2,
+                        );
+                      }
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('${newInvoice.title} (${LocalizationService.formatAmount(amount)}) 청구서가 등록되었습니다.'),
@@ -4090,6 +4105,13 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                       await ref.read(invoicesProvider.notifier).addInvoice(newInvoice);
                       if (!context.mounted) return;
                       Navigator.pop(context);
+
+                      if (!_sendSmsRightNow) {
+                        MonetizationService.instance.triggerSmartInterstitialAd(
+                          cooldownSeconds: 75,
+                          actionThreshold: 2,
+                        );
+                      }
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

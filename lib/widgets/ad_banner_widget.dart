@@ -52,6 +52,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
         _isBannerLoaded = false;
       });
     } else {
+      if (_bannerAd == null && _lastWidth != null && _lastWidth! > 0) {
+        _loadAdaptiveBanner(_lastWidth!);
+      }
       setState(() {});
     }
   }
@@ -183,8 +186,8 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
       children: [
         ZeroAdUtilityBar(
           onFreeAdDismiss: () {
-            if (bm.isRewardedAdAvailable) {
-              bm.showRewardedAd(
+            if (bm.isAnyRewardedAdAvailable) {
+              bm.showBestRewardedAd(
                 onRewarded: () async {
                   await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                   if (context.mounted) {

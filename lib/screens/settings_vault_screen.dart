@@ -25,6 +25,7 @@ import '../widgets/design_system.dart';
 import '../widgets/full_usage_guide_modal.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
+import '../widgets/native_inline_ad_card.dart';
 import '../widgets/senior_easy_guide_modal.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/tax_guide_modal.dart';
@@ -954,6 +955,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 subtitle: '개인정보 처리방침 · 이용약관 · 로컬 암호화 보안 확약',
                 onTap: () => _showComplianceBottomSheet(context),
               ),
+              const SizedBox(height: 16),
+              const NativeInlineAdCard(placementTag: 'settings_vault'),
             ],
           );
         },
@@ -2660,8 +2663,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          if (bm.isRewardedAdAvailable) {
-                            bm.showRewardedAd(
+                          if (bm.isAnyRewardedAdAvailable) {
+                            bm.showBestRewardedAd(
                               onRewarded: () async {
                                 await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                                 if (context.mounted) {

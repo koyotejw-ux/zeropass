@@ -49,6 +49,9 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
         _isNativeAdLoaded = false;
       });
     } else {
+      if (_nativeAd == null) {
+        _loadNativeAd();
+      }
       setState(() {});
     }
   }
@@ -256,8 +259,8 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                     height: 36,
                     child: OutlinedButton(
                       onPressed: () {
-                        if (bm.isRewardedAdAvailable) {
-                          bm.showRewardedAd(
+                        if (bm.isAnyRewardedAdAvailable) {
+                          bm.showBestRewardedAd(
                             onRewarded: () async {
                               await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
                               if (context.mounted) {
