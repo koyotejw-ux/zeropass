@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../models/custom_category_template.dart';
 import '../models/invoice.dart';
 import '../models/member.dart';
 import '../models/notification_log.dart';
 import '../models/studio_profile.dart';
+import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
 import '../services/kakao_share_service.dart';
 import '../services/sequential_dispatch_service.dart';
@@ -83,6 +85,8 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
   _WizardPhase _phase = _WizardPhase.config;
   late _TargetFilterMode _filterMode;
   late DispatchTemplateType _selectedTemplateType;
+  String? _selectedCustomTemplateId;
+  List<CustomMessageTemplate> _customMessageTemplates = [];
 
   final TextEditingController _templateController = TextEditingController();
   final Set<String> _selectedMemberIds = {};
@@ -99,6 +103,7 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
 
     _selectedTemplateType = widget.initialTemplateType ?? DispatchTemplateType.billing;
     _templateController.text = SequentialDispatchService.getDefaultTemplate(_selectedTemplateType);
+    _loadCustomMessageTemplates();
 
     if (widget.initialSelectedMemberIds != null && widget.initialSelectedMemberIds!.isNotEmpty) {
       _filterMode = _TargetFilterMode.customSelect;
@@ -118,6 +123,76 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
     _templateController.dispose();
     _currentMessageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCustomMessageTemplates() async {
+    final catState = await CustomCategoryService.instance.loadCategories(
+      industryCategory: widget.studio.category,
+    );
+    if (!mounted) return;
+    setState(() {
+      _customMessageTemplates = catState.messageTemplates;
+    });
+  }
+
+  Future<void> _saveCurrentBodyAsCustomTemplate() async {
+    final body = _templateController.text.trim();
+    if (body.isEmpty) return;
+
+    final titleCtrl = TextEditingController();
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('내 맞춤 서식으로 저장', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        content: AppTextField(
+          controller: titleCtrl,
+          label: '서식 제목',
+          hint: '예: 특강 모집 안내, 휴강 공지',
+          prefixIcon: Icons.bookmark_add_outlined,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          ResponsiveDialogActions(
+            secondary: TextButton(
+              onPressed: () => Navigator.pop(dlgCtx, false),
+              child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            primary: ElevatedButton(
+              onPressed: () async {
+                final title = titleCtrl.text.trim();
+                if (title.isEmpty) return;
+                final newTpl = CustomMessageTemplate(
+                  id: 'msg_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                  title: title,
+                  body: body,
+                  categoryTag: '일괄발송',
+                );
+                final updated = await CustomCategoryService.instance.saveMessageTemplate(
+                  newTpl,
+                  industryCategory: widget.studio.category,
+                );
+                if (mounted) {
+                  setState(() {
+                    _customMessageTemplates = updated.messageTemplates;
+                    _selectedCustomTemplateId = newTpl.id;
+                  });
+                }
+                if (dlgCtx.mounted) Navigator.pop(dlgCtx, true);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+              child: const Text('서식 저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
+    titleCtrl.dispose();
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('현재 문구가 내 맞춤 서식에 저장되었습니다.')),
+      );
+    }
   }
 
   List<Member> get _filteredMembers {
@@ -441,38 +516,89 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
           const SizedBox(height: 16),
 
           // 2. 템플릿 선택
-          const Text('2. 메시지 양식(템플릿) 선택', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Expanded(
+                child: Text('2. 메시지 양식(템플릿) 선택', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+              ),
+              TextButton.icon(
+                onPressed: _saveCurrentBodyAsCustomTemplate,
+                icon: const Icon(Icons.bookmark_add_outlined, size: 15, color: AppTheme.primaryBlue),
+                label: const Text('내 서식으로 저장', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: DispatchTemplateType.values.map((t) {
-                final isSel = _selectedTemplateType == t;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    label: Text(
-                      SequentialDispatchService.getTemplateName(t),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                        color: isSel ? Colors.white : AppTheme.textPrimary,
+              children: [
+                ...DispatchTemplateType.values.map((t) {
+                  final isSel = _selectedCustomTemplateId == null && _selectedTemplateType == t;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(
+                        SequentialDispatchService.getTemplateName(t),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                          color: isSel ? Colors.white : AppTheme.textPrimary,
+                        ),
                       ),
+                      selected: isSel,
+                      selectedColor: AppTheme.primaryBlue,
+                      backgroundColor: Colors.white,
+                      onSelected: (val) {
+                        if (val) {
+                          setState(() {
+                            _selectedCustomTemplateId = null;
+                            _selectedTemplateType = t;
+                            _templateController.text = SequentialDispatchService.getDefaultTemplate(t);
+                          });
+                        }
+                      },
                     ),
-                    selected: isSel,
-                    selectedColor: AppTheme.primaryBlue,
-                    backgroundColor: Colors.white,
-                    onSelected: (val) {
-                      if (val) {
-                        setState(() {
-                          _selectedTemplateType = t;
-                          _templateController.text = SequentialDispatchService.getDefaultTemplate(t);
-                        });
-                      }
-                    },
-                  ),
-                );
-              }).toList(),
+                  );
+                }),
+                ..._customMessageTemplates.map((ct) {
+                  final isSel = _selectedCustomTemplateId == ct.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      avatar: Icon(
+                        Icons.bookmark_rounded,
+                        size: 14,
+                        color: isSel ? Colors.white : const Color(0xFF4F46E5),
+                      ),
+                      label: Text(
+                        ct.title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                          color: isSel ? Colors.white : AppTheme.textPrimary,
+                        ),
+                      ),
+                      selected: isSel,
+                      selectedColor: const Color(0xFF4F46E5),
+                      backgroundColor: const Color(0xFFF5F3FF),
+                      onSelected: (val) {
+                        if (val) {
+                          setState(() {
+                            _selectedCustomTemplateId = ct.id;
+                            _selectedTemplateType = DispatchTemplateType.custom;
+                            _templateController.text = ct.body;
+                          });
+                        }
+                      },
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -488,6 +614,10 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
                   child: Row(
                     children: [
                       _buildVariableChip('#{회원명}'),
+                      _buildVariableChip('#{고객호칭}'),
+                      _buildVariableChip('#{상호명}'),
+                      _buildVariableChip('#{담당자}'),
+                      _buildVariableChip('#{직함}'),
                       _buildVariableChip('#{그룹명}'),
                       _buildVariableChip('#{금액}'),
                       _buildVariableChip('#{계좌정보}'),

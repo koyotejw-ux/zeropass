@@ -150,6 +150,50 @@ void main() {
       final removed = await service.removeInvoiceTemplate('inv_grip_socks');
       expect(removed.invoiceTemplates.any((t) => t.id == 'inv_grip_socks'), isFalse);
     });
+
+    test('renameGroupCategory and CustomMessageTemplate full CRUD work seamlessly', () async {
+      final service = CustomCategoryService.instance;
+      final loaded = await service.resetToIndustry('피트니스 / PT');
+      expect(loaded.messageTemplates.isNotEmpty, isTrue);
+
+      // Rename group and check member template propagation
+      await service.saveMemberTemplate(const MemberCategoryTemplate(
+        id: 'pt_grp_tpl',
+        label: 'PT 테스트',
+        groupName: '1:1 개인 PT',
+        billingType: BillingType.sessionBased,
+        defaultFee: 700000,
+        defaultSessions: 10,
+      ));
+      final renamed = await service.renameGroupCategory('1:1 개인 PT', '1:1 프리미엄 PT');
+      expect(renamed.groupCategories.contains('1:1 프리미엄 PT'), isTrue);
+      expect(renamed.groupCategories.contains('1:1 개인 PT'), isFalse);
+      expect(
+        renamed.memberTemplates.firstWhere((t) => t.id == 'pt_grp_tpl').groupName,
+        equals('1:1 프리미엄 PT'),
+      );
+
+      // Create custom message template
+      const msgTpl = CustomMessageTemplate(
+        id: 'msg_custom_holiday',
+        title: '추석 연휴 휴무 안내',
+        body: '[#{상호명}] #{회원명} #{고객호칭}님, 연휴 휴무 안내드립니다.',
+        categoryTag: '공지',
+      );
+      final afterCreateMsg = await service.saveMessageTemplate(msgTpl);
+      expect(afterCreateMsg.messageTemplates.any((m) => m.id == 'msg_custom_holiday'), isTrue);
+
+      // Update custom message template
+      final updatedMsg = msgTpl.copyWith(title: '설날 연휴 휴무 안내', body: '변경된 본문');
+      final afterEditMsg = await service.saveMessageTemplate(updatedMsg);
+      final foundMsg = afterEditMsg.messageTemplates.firstWhere((m) => m.id == 'msg_custom_holiday');
+      expect(foundMsg.title, equals('설날 연휴 휴무 안내'));
+      expect(foundMsg.body, equals('변경된 본문'));
+
+      // Delete custom message template
+      final afterDeleteMsg = await service.removeMessageTemplate('msg_custom_holiday');
+      expect(afterDeleteMsg.messageTemplates.any((m) => m.id == 'msg_custom_holiday'), isFalse);
+    });
   });
 
   group('UI Integration & Settings Rendering Tests', () {
@@ -231,6 +275,54 @@ void main() {
       await notifier.resetToIndustry('태권도 / 무술');
       state = container.read(customCategoryProvider).value!;
       expect(state.groupCategories.any((g) => g.contains('품새') || g.contains('수련')), isTrue);
+
+      await notifier.saveMessageTemplate(const CustomMessageTemplate(
+        id: 'tkd_custom_1',
+        title: '심사 준비물 안내',
+        body: '도복과 띠를 지참해 주세요.',
+        categoryTag: '준비물',
+      ));
+      state = container.read(customCategoryProvider).value!;
+      expect(state.messageTemplates.any((m) => m.id == 'tkd_custom_1'), isTrue);
+
+      await notifier.removeMessageTemplate('tkd_custom_1');
+      state = container.read(customCategoryProvider).value!;
+      expect(state.messageTemplates.any((m) => m.id == 'tkd_custom_1'), isFalse);
+    });
+
+    testWidgets('SettingsVaultScreen exposes Edit & Create & Delete for member/invoice/custom SMS templates', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.75;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            studioProfileProvider.overrideWith(() => _MockStudioProfileNotifier()),
+          ],
+          child: const MaterialApp(
+            home: SettingsVaultScreen(enableAutoCoachMark: false),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Open SMS templates & custom formats sheet
+      await tester.scrollUntilVisible(
+        find.text('문자 알림 및 청구 서식 관리'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('문자 알림 및 청구 서식 관리'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('문자 알림 및 청구 서식 관리'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('나만의 맞춤 문자 · 공지 서식'), findsOneWidget);
+      expect(find.text('새 맞춤 문자 서식 만들기'), findsOneWidget);
+      expect(find.byIcon(Icons.edit_outlined), findsWidgets);
+      expect(find.byIcon(Icons.delete_outline), findsWidgets);
     });
   });
 }

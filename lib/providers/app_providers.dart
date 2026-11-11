@@ -288,6 +288,12 @@ class CustomCategoryNotifier extends AsyncNotifier<CustomCategoryState> {
     state = AsyncValue.data(updated);
   }
 
+  Future<void> renameGroupCategory(String oldName, String newName) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.renameGroupCategory(oldName, newName);
+    state = AsyncValue.data(updated);
+  }
+
   Future<void> removeGroupCategory(String group) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.removeGroupCategory(group);
@@ -315,6 +321,18 @@ class CustomCategoryNotifier extends AsyncNotifier<CustomCategoryState> {
   Future<void> removeInvoiceTemplate(String id) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.removeInvoiceTemplate(id);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> saveMessageTemplate(CustomMessageTemplate template) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.saveMessageTemplate(template);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> removeMessageTemplate(String id) async {
+    final service = ref.read(customCategoryServiceProvider);
+    final updated = await service.removeMessageTemplate(id);
     state = AsyncValue.data(updated);
   }
 

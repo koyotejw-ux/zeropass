@@ -117,27 +117,82 @@ class InvoiceItemTemplate {
       InvoiceItemTemplate.fromMap(jsonDecode(source) as Map<String, dynamic>);
 }
 
+/// 업종별 사용자 정의 문자 / 공지 / 일괄 발송 서식 템플릿
+class CustomMessageTemplate {
+  final String id;
+  final String title; // 서식 이름 (예: '방학 특강 안내', '1:1 피티 재등록 혜택')
+  final String body; // 치환 태그를 포함한 본문
+  final String? categoryTag; // 분류 태그 (예: '특강/이벤트', '공지사항', '재등록')
+
+  const CustomMessageTemplate({
+    required this.id,
+    required this.title,
+    required this.body,
+    this.categoryTag,
+  });
+
+  CustomMessageTemplate copyWith({
+    String? id,
+    String? title,
+    String? body,
+    String? categoryTag,
+  }) {
+    return CustomMessageTemplate(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      categoryTag: categoryTag ?? this.categoryTag,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'body': body,
+      'categoryTag': categoryTag,
+    };
+  }
+
+  factory CustomMessageTemplate.fromMap(Map<String, dynamic> map) {
+    return CustomMessageTemplate(
+      id: map['id'] as String? ?? 'msg_tpl_${DateTime.now().millisecondsSinceEpoch}',
+      title: map['title'] as String? ?? '맞춤 안내 문구',
+      body: map['body'] as String? ?? '',
+      categoryTag: map['categoryTag'] as String?,
+    );
+  }
+
+  String toJson() => jsonEncode(toMap());
+  factory CustomMessageTemplate.fromJson(String source) =>
+      CustomMessageTemplate.fromMap(jsonDecode(source) as Map<String, dynamic>);
+}
+
 /// 전체 업종별 맞춤 카테고리 상태 모델
 class CustomCategoryState {
   final List<String> groupCategories;
   final List<MemberCategoryTemplate> memberTemplates;
   final List<InvoiceItemTemplate> invoiceTemplates;
+  final List<CustomMessageTemplate> messageTemplates;
 
   const CustomCategoryState({
     required this.groupCategories,
     required this.memberTemplates,
     required this.invoiceTemplates,
+    this.messageTemplates = const [],
   });
 
   CustomCategoryState copyWith({
     List<String>? groupCategories,
     List<MemberCategoryTemplate>? memberTemplates,
     List<InvoiceItemTemplate>? invoiceTemplates,
+    List<CustomMessageTemplate>? messageTemplates,
   }) {
     return CustomCategoryState(
       groupCategories: groupCategories ?? this.groupCategories,
       memberTemplates: memberTemplates ?? this.memberTemplates,
       invoiceTemplates: invoiceTemplates ?? this.invoiceTemplates,
+      messageTemplates: messageTemplates ?? this.messageTemplates,
     );
   }
 
@@ -146,6 +201,7 @@ class CustomCategoryState {
       'groupCategories': groupCategories,
       'memberTemplates': memberTemplates.map((e) => e.toMap()).toList(),
       'invoiceTemplates': invoiceTemplates.map((e) => e.toMap()).toList(),
+      'messageTemplates': messageTemplates.map((e) => e.toMap()).toList(),
     };
   }
 
@@ -153,6 +209,7 @@ class CustomCategoryState {
     final rawGroups = map['groupCategories'] as List<dynamic>? ?? [];
     final rawMembers = map['memberTemplates'] as List<dynamic>? ?? [];
     final rawInvoices = map['invoiceTemplates'] as List<dynamic>? ?? [];
+    final rawMessages = map['messageTemplates'] as List<dynamic>? ?? [];
 
     return CustomCategoryState(
       groupCategories: rawGroups.map((e) => e.toString()).toList(),
@@ -162,7 +219,44 @@ class CustomCategoryState {
       invoiceTemplates: rawInvoices
           .map((e) => InvoiceItemTemplate.fromMap(Map<String, dynamic>.from(e as Map)))
           .toList(),
+      messageTemplates: rawMessages
+          .map((e) => CustomMessageTemplate.fromMap(Map<String, dynamic>.from(e as Map)))
+          .toList(),
     );
+  }
+
+  /// 업종별 기본 사용자 정의 문자·공지 서식 생성
+  static List<CustomMessageTemplate> getDefaultMessageTemplatesForIndustry(String category) {
+    if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스') || category.contains('요가')) {
+      return const [
+        CustomMessageTemplate(
+          id: 'msg_tpl_fit_renew',
+          title: '회차 재등록 혜택 안내',
+          categoryTag: '재등록',
+          body: '[#{상호명}] #{회원명} #{고객호칭}님, 현재 #{잔여회차}가 얼마 남지 않았습니다.\n연속적인 운동 루틴 유지를 위해 이번 주 내 재등록 시 우선 스케줄 예약을 도와드릴게요!\n문의: #{담당자} #{직함}',
+        ),
+        CustomMessageTemplate(
+          id: 'msg_tpl_fit_notice',
+          title: '센터 운영시간 / 휴무 공지',
+          categoryTag: '공지사항',
+          body: '[#{상호명}] #{회원명} #{고객호칭}님 안녕하세요.\n이번 주 #{장소호칭} 운영 일정 안내드립니다. 예약 변경은 편하신 시간에 답장 주세요!\n감사합니다. (#{담당자} #{직함})',
+        ),
+      ];
+    }
+    return const [
+      CustomMessageTemplate(
+        id: 'msg_tpl_gen_notice',
+        title: '일정 변경 / 휴강 공지',
+        categoryTag: '공지사항',
+        body: '[#{상호명}] 안녕하세요, #{회원명} #{고객호칭}님.\n#{장소호칭} 일정 변경 및 보강 안내드립니다. 확인 후 문의사항 있으시면 연락 부탁드립니다.\n감사합니다. (#{담당자} #{직함})',
+      ),
+      CustomMessageTemplate(
+        id: 'msg_tpl_gen_special',
+        title: '특강 · 프로그램 · 이벤트 안내',
+        categoryTag: '안내',
+        body: '[#{상호명}] #{회원명} #{고객호칭}님께 특별 프로그램 소식을 전해드립니다!\n참여를 원하시면 #{비용호칭}(#{금액}원) 입금 또는 아래 링크로 편하게 신청해 주세요.\n#{토스송금링크}\n#{카드결제링크}',
+      ),
+    ];
   }
 
   /// 각 업종별 최적화된 초기 프리셋 생성기

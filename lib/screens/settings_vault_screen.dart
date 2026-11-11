@@ -1937,101 +1937,422 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
   void _showSmsTemplatesBottomSheet(BuildContext context, StudioProfile profile) {
     AppBottomSheet.show(
       context: context,
-      maxHeightRatio: 0.85,
-      builder: (sheetCtx) => SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSheetHeader(sheetCtx, '문자 알림 및 청구 서식 관리', Icons.edit_note_rounded, const Color(0xFFD97706)),
-            Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-                boxShadow: AppTheme.cardShadow,
-              ),
+      maxHeightRatio: 0.90,
+      builder: (sheetCtx) => Consumer(
+        builder: (ctx, ref, _) {
+          final latestProfile = ref.watch(studioProfileProvider).value ?? profile;
+          final catState = ref.watch(customCategoryProvider).value ??
+              CustomCategoryState.getDefaultsForIndustry(latestProfile.category).copyWith(
+                messageTemplates: CustomCategoryState.getDefaultMessageTemplatesForIndustry(latestProfile.category),
+              );
+
+          return SingleChildScrollView(
+            padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSheetHeader(sheetCtx, '문자 알림 및 맞춤 서식 관리', Icons.edit_note_rounded, const Color(0xFFD97706)),
+                const Text(
+                  '자동 발송 기본 3종 서식 편집',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                ),
+                const SizedBox(height: 8),
+                Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                      boxShadow: AppTheme.cardShadow,
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const CircleAvatar(
+                            backgroundColor: Color(0xFFEFF6FF),
+                            child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
+                          ),
+                          title: Text('${latestProfile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                          subtitle: Text('${latestProfile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.', style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                          onTap: () => _openTemplateEditorDialog(
+                            context: context,
+                            title: '${latestProfile.feeTitle} 청구서 문자 서식 편집',
+                            initialText: latestProfile.invoiceTemplate,
+                            defaultText: StudioProfile.defaultInvoiceTemplate,
+                            placeholders: '#{상호명}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}, #{비용호칭}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
+                            profile: latestProfile,
+                            onSave: (newTemplate, updatedProfile) {
+                              final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
+                              ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                            },
+                          ),
+                        ),
+                        const Divider(height: 16, color: AppTheme.borderSubtle),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const CircleAvatar(
+                            backgroundColor: Color(0xFFECFDF5),
+                            child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
+                          ),
+                          title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                          subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                          onTap: () => _openTemplateEditorDialog(
+                            context: context,
+                            title: '출석 / 입실 문자 서식 편집',
+                            initialText: latestProfile.attendanceTemplate,
+                            defaultText: StudioProfile.defaultAttendanceTemplate,
+                            placeholders: '#{상호명}, #{장소호칭}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}, #{출석시간}, #{잔여회차}',
+                            profile: latestProfile,
+                            onSave: (newTemplate, updatedProfile) {
+                              final updated = updatedProfile.copyWith(attendanceTemplate: newTemplate);
+                              ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                            },
+                          ),
+                        ),
+                        const Divider(height: 16, color: AppTheme.borderSubtle),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const CircleAvatar(
+                            backgroundColor: Color(0xFFFFFBEB),
+                            child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
+                          ),
+                          title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
+                          subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                          onTap: () => _openTemplateEditorDialog(
+                            context: context,
+                            title: '퇴실 / 일정종료 문자 서식 편집',
+                            initialText: latestProfile.departureTemplate,
+                            defaultText: StudioProfile.defaultDepartureTemplate,
+                            placeholders: '#{상호명}, #{장소호칭}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}',
+                            profile: latestProfile,
+                            onSave: (newTemplate, updatedProfile) {
+                              final updated = updatedProfile.copyWith(departureTemplate: newTemplate);
+                              ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 나만의 맞춤 문자 · 공지 서식 (추가/수정/삭제)
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '나만의 맞춤 문자 · 공지 서식',
+                            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            '업종에 맞춰 안내·공지·재등록 서식을 직접 만들고 순차 발송에 불러올 수 있습니다.',
+                            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ZeroButton.primary(
+                  label: '새 맞춤 문자 서식 만들기',
+                  icon: Icons.add_comment_rounded,
+                  size: ZeroButtonSize.medium,
+                  fullWidth: true,
+                  onPressed: () => _openCustomMessageTemplateFormDialog(context, latestProfile),
+                ),
+                const SizedBox(height: 12),
+
+                if (catState.messageTemplates.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: const Text(
+                      '등록된 맞춤 서식이 없습니다. 상단 버튼으로 우리 매장만의 안내 문구를 만들어 보세요.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                    ),
+                  )
+                else
+                  ...catState.messageTemplates.map((tpl) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => _openCustomMessageTemplateFormDialog(context, latestProfile, existing: tpl),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(9),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.mark_email_read_outlined, color: AppTheme.primaryBlue, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Text(
+                                          tpl.title,
+                                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary),
+                                        ),
+                                        if (tpl.categoryTag != null && tpl.categoryTag!.isNotEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE0E7FF),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              tpl.categoryTag!,
+                                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA)),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      tpl.body,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryBlue, size: 20),
+                                tooltip: '서식 수정',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => _openCustomMessageTemplateFormDialog(context, latestProfile, existing: tpl),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
+                                tooltip: '서식 삭제',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () async {
+                                  await ref.read(customCategoryProvider.notifier).removeMessageTemplate(tpl.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('\'${tpl.title}\' 서식이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openCustomMessageTemplateFormDialog(
+    BuildContext context,
+    StudioProfile profile, {
+    CustomMessageTemplate? existing,
+  }) {
+    final isEdit = existing != null;
+    final titleCtrl = TextEditingController(text: existing?.title ?? '');
+    final tagCtrl = TextEditingController(text: existing?.categoryTag ?? '공지/안내');
+    final bodyCtrl = TextEditingController(
+      text: existing?.body ??
+          '[#{상호명}] 안녕하세요, #{회원명} #{고객호칭}님.\n안내 말씀 전달드립니다.\n문의: #{담당자} #{직함}',
+    );
+    const availableTags = [
+      '#{상호명}',
+      '#{담당자}',
+      '#{직함}',
+      '#{고객호칭}',
+      '#{비용호칭}',
+      '#{장소호칭}',
+      '#{회원명}',
+      '#{그룹명}',
+      '#{금액}',
+      '#{계좌정보}',
+      '#{토스송금링크}',
+      '#{카드결제링크}',
+      '#{잔여회차}',
+      '#{납부기한}',
+    ];
+
+    AppBottomSheet.show(
+      context: context,
+      maxHeightRatio: 0.92,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final previewBody = bodyCtrl.text
+                .replaceAll('#{상호명}', profile.studioName)
+                .replaceAll('#{담당자}', profile.instructorName)
+                .replaceAll('#{직함}', profile.roleTitle)
+                .replaceAll('#{고객호칭}', profile.memberWord)
+                .replaceAll('#{비용호칭}', profile.feeWord)
+                .replaceAll('#{장소호칭}', profile.placeTitle)
+                .replaceAll('#{회원명}', '김민준')
+                .replaceAll('#{그룹명}', '정규반')
+                .replaceAll('#{금액}', '200,000')
+                .replaceAll('#{계좌정보}', '${profile.bankName} ${profile.accountNumber} (${profile.accountHolder})')
+                .replaceAll('#{토스송금링크}', 'https://toss.me/sample')
+                .replaceAll('#{카드결제링크}', profile.cardPaymentUrl.isNotEmpty ? profile.cardPaymentUrl : 'https://pay.toss.im/_m/sample')
+                .replaceAll('#{잔여회차}', '2회')
+                .replaceAll('#{납부기한}', '이번 달 25일');
+
+            return SingleChildScrollView(
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFEFF6FF),
-                      child: Icon(Icons.receipt_long_outlined, color: AppTheme.primaryBlue),
+                  _buildSheetHeader(
+                    ctx,
+                    isEdit ? '맞춤 문자 서식 수정' : '새 맞춤 문자 서식 만들기',
+                    Icons.mark_chat_read_outlined,
+                    AppTheme.primaryBlue,
+                  ),
+                  AppTextField(
+                    controller: titleCtrl,
+                    label: '서식 제목',
+                    hint: '예: 방학 특강 안내, 홀리데이 휴무 공지, 10회 재등록 혜택',
+                    prefixIcon: Icons.title_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: tagCtrl,
+                    label: '분류 태그 (선택)',
+                    hint: '예: 공지사항, 이벤트, 재등록, 준비물',
+                    prefixIcon: Icons.label_outline_rounded,
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    '터치하여 치환 변수 넣기 (발송 시 자동 변환)',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: availableTags.map((tag) {
+                      return ActionChip(
+                        backgroundColor: const Color(0xFFEFF6FF),
+                        label: Text(tag, style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryBlue, fontWeight: FontWeight.w700)),
+                        onPressed: () {
+                          final currentText = bodyCtrl.text;
+                          final selection = bodyCtrl.selection;
+                          bodyCtrl.text = selection.isValid && selection.start >= 0
+                              ? currentText.replaceRange(selection.start, selection.end, tag)
+                              : '$currentText $tag';
+                          setModalState(() {});
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    controller: bodyCtrl,
+                    label: '서식 본문',
+                    maxLines: 6,
+                    keyboardType: TextInputType.multiline,
+                    onChanged: (_) => setModalState(() {}),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: const Border(left: BorderSide(color: AppTheme.softMint, width: 3.5)),
                     ),
-                    title: Text('${profile.feeTitle} 청구서 문자 서식 편집', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                    subtitle: Text('${profile.feeTitle} 청구 시 발송되는 기본 문자 내용을 변경합니다.', style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                    onTap: () => _openTemplateEditorDialog(
-                      context: context,
-                      title: '${profile.feeTitle} 청구서 문자 서식 편집',
-                      initialText: profile.invoiceTemplate,
-                      defaultText: StudioProfile.defaultInvoiceTemplate,
-                      placeholders: '#{상호명}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}, #{비용호칭}, #{청구제목}, #{금액}, #{계좌정보}, #{계좌복사용}, #{토스송금링크}, #{카드결제링크}, #{납부기한}',
-                      profile: profile,
-                      onSave: (newTemplate, updatedProfile) {
-                        final updated = updatedProfile.copyWith(invoiceTemplate: newTemplate);
-                        ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                      },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '미리보기',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF334155)),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(previewBody, style: const TextStyle(fontSize: 12.5, color: Color(0xFF1E293B), height: 1.45)),
+                      ],
                     ),
                   ),
-                  const Divider(height: 16, color: AppTheme.borderSubtle),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFECFDF5),
-                      child: Icon(Icons.mark_chat_read_outlined, color: AppTheme.softMint),
-                    ),
-                    title: const Text('출석 / 입실 안심 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                    subtitle: const Text('체크인 시 보호자/회원에게 전송되는 안심 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                    onTap: () => _openTemplateEditorDialog(
-                      context: context,
-                      title: '출석 / 입실 문자 서식 편집',
-                      initialText: profile.attendanceTemplate,
-                      defaultText: StudioProfile.defaultAttendanceTemplate,
-                      placeholders: '#{상호명}, #{장소호칭}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}, #{출석시간}, #{잔여회차}',
-                      profile: profile,
-                      onSave: (newTemplate, updatedProfile) {
-                        final updated = updatedProfile.copyWith(attendanceTemplate: newTemplate);
-                        ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                      },
-                    ),
-                  ),
-                  const Divider(height: 16, color: AppTheme.borderSubtle),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFFFFBEB),
-                      child: Icon(Icons.exit_to_app_rounded, color: AppTheme.warning),
-                    ),
-                    title: const Text('퇴실 / 일정종료 문자 서식 편집', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textPrimary)),
-                    subtitle: const Text('귀가/퇴실 시 발송되는 완료 안내 문자를 변경합니다.', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary, height: 1.35)),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                    onTap: () => _openTemplateEditorDialog(
-                      context: context,
-                      title: '퇴실 / 일정종료 문자 서식 편집',
-                      initialText: profile.departureTemplate,
-                      defaultText: StudioProfile.defaultDepartureTemplate,
-                      placeholders: '#{상호명}, #{장소호칭}, #{담당자}, #{직함}, #{회원명}, #{고객호칭}',
-                      profile: profile,
-                      onSave: (newTemplate, updatedProfile) {
-                        final updated = updatedProfile.copyWith(departureTemplate: newTemplate);
-                        ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                      },
-                    ),
+                  const SizedBox(height: 18),
+                  ZeroButton.primary(
+                    label: isEdit ? '수정 내용 저장하기' : '새 서식 저장하기',
+                    icon: Icons.check_rounded,
+                    size: ZeroButtonSize.large,
+                    fullWidth: true,
+                    onPressed: () async {
+                      final title = titleCtrl.text.trim();
+                      final body = bodyCtrl.text.trim();
+                      final tag = tagCtrl.text.trim();
+                      if (title.isEmpty || body.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('서식 제목과 본문을 모두 입력해주세요.')),
+                        );
+                        return;
+                      }
+                      final tpl = CustomMessageTemplate(
+                        id: existing?.id ?? 'msg_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                        title: title,
+                        body: body,
+                        categoryTag: tag.isEmpty ? null : tag,
+                      );
+                      await ref.read(customCategoryProvider.notifier).saveMessageTemplate(tpl);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('\'$title\' 서식이 저장되었습니다.')),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
-            ),
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -4421,11 +4742,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('수업 / 반 그룹 카테고리 관리', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
-                  const Text('학생 등록 시 선택할 수 있는 수업 그룹 목록입니다. 불필요한 항목은 삭제하고 새로운 그룹을 자유롭게 추가하세요.',
+                  _buildSheetHeader(ctx, '수업 / 반 그룹 카테고리 관리', Icons.groups_outlined, AppTheme.primaryBlue),
+                  const Text('매장/업종에 맞게 그룹을 새로 추가하거나, 그룹을 눌러 이름 수정 및 삭제를 할 수 있습니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
 
                   // Add new group row
                   Row(
@@ -4467,8 +4787,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  Text('현재 등록된 그룹 (${catState.groupCategories.length}개)',
-                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                  Text('현재 등록된 그룹 (${catState.groupCategories.length}개 · 터치하면 이름 수정)',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
                   const SizedBox(height: 10),
 
                   if (catState.groupCategories.isEmpty)
@@ -4482,9 +4802,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: catState.groupCategories.map((group) {
-                        return Chip(
+                        return InputChip(
                           backgroundColor: const Color(0xFFF1F5F9),
+                          avatar: const Icon(Icons.edit_outlined, size: 15, color: AppTheme.primaryBlue),
                           label: Text(group, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                          onPressed: () => _openRenameGroupDialog(context, group),
                           deleteIcon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF94A3B8)),
                           onDeleted: () async {
                             await ref.read(customCategoryProvider.notifier).removeGroupCategory(group);
@@ -4508,6 +4830,54 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
+  void _openRenameGroupDialog(BuildContext context, String oldName) {
+    final renameCtrl = TextEditingController(text: oldName);
+    showDialog(
+      context: context,
+      builder: (dlgContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('그룹 이름 수정', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        content: AppTextField(
+          controller: renameCtrl,
+          label: '변경할 그룹 이름',
+          hint: '예: 심화 클래스',
+          prefixIcon: Icons.edit_outlined,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          ResponsiveDialogActions(
+            secondary: ZeroButton(
+              label: LocalizationService.tr('btn_cancel'),
+              variant: ZeroButtonVariant.neutral,
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => Navigator.pop(dlgContext),
+            ),
+            primary: ZeroButton.primary(
+              label: '수정 저장',
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () async {
+                final newName = renameCtrl.text.trim();
+                if (newName.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('그룹 이름을 입력해주세요.')));
+                  return;
+                }
+                await ref.read(customCategoryProvider.notifier).renameGroupCategory(oldName, newName);
+                if (dlgContext.mounted) Navigator.pop(dlgContext);
+                if (context.mounted && newName != oldName) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('\'$oldName\' → \'$newName\' 변경되었습니다.'), duration: const Duration(seconds: 1)),
+                  );
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openMemberTemplateManager(BuildContext context) {
     final currencyFormat = NumberFormat('#,###');
 
@@ -4526,13 +4896,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('학생 등록 간편 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
-                  const Text('회원 등록 시 탭 한 번으로 그룹명, 수강유형, 기본 수강료를 자동 입력해 주는 편리한 템플릿입니다.',
+                  _buildSheetHeader(ctx, '회원 등록 간편 템플릿', Icons.playlist_add_check_rounded, AppTheme.softMint),
+                  const Text('업종에 맞게 회원 등록 템플릿을 새로 만들거나 기존 템플릿을 눌러 금액·회차·유형을 수정·삭제할 수 있습니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
                   const SizedBox(height: 14),
                   ZeroButton.primary(
-                    label: '새 학생 등록 템플릿 추가하기',
+                    label: '새 등록 템플릿 추가하기',
                     icon: Icons.add_rounded,
                     size: ZeroButtonSize.medium,
                     fullWidth: true,
@@ -4544,56 +4913,70 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     Container(
                       padding: const EdgeInsets.all(32),
                       alignment: Alignment.center,
-                      child: const Text('등록된 템플릿이 없습니다. 우측 상단에서 새 템플릿을 만들어보세요.', style: TextStyle(color: AppTheme.textSecondary)),
+                      child: const Text('등록된 템플릿이 없습니다. 상단 버튼으로 새 템플릿을 만들어보세요.', style: TextStyle(color: AppTheme.textSecondary)),
                     )
                   else
                     ...catState.memberTemplates.map((template) {
                       final isSession = template.billingType == BillingType.sessionBased;
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: isSession ? const Color(0xFFEFF6FF) : const Color(0xFFECFDF5),
-                              radius: 18,
-                              child: Icon(
-                                isSession ? Icons.confirmation_number_outlined : Icons.calendar_month_outlined,
-                                color: isSession ? AppTheme.primaryBlue : AppTheme.softMint,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(template.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${template.groupName} · ${isSession ? '회차형 (${template.defaultSessions}회)' : '정기월납'} · ${currencyFormat.format(template.defaultFee)}원',
-                                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => _openAddMemberTemplateDialog(context, catState, existing: template),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: isSession ? const Color(0xFFEFF6FF) : const Color(0xFFECFDF5),
+                                  radius: 18,
+                                  child: Icon(
+                                    isSession ? Icons.confirmation_number_outlined : Icons.calendar_month_outlined,
+                                    color: isSession ? AppTheme.primaryBlue : AppTheme.softMint,
+                                    size: 18,
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(template.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${template.groupName} · ${isSession ? '회차형 (${template.defaultSessions}회)' : '정기월납'} · ${currencyFormat.format(template.defaultFee)}원',
+                                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryBlue, size: 20),
+                                  tooltip: '템플릿 수정',
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () => _openAddMemberTemplateDialog(context, catState, existing: template),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
+                                  tooltip: '템플릿 삭제',
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () async {
+                                    await ref.read(customCategoryProvider.notifier).removeMemberTemplate(template.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('\'${template.label}\' 템플릿이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
-                              onPressed: () async {
-                                await ref.read(customCategoryProvider.notifier).removeMemberTemplate(template.id);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('\'${template.label}\' 템플릿이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     }),
@@ -4607,12 +4990,21 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
-  void _openAddMemberTemplateDialog(BuildContext context, CustomCategoryState catState) {
-    final labelCtrl = TextEditingController();
-    final groupCtrl = TextEditingController(text: catState.groupCategories.isNotEmpty ? catState.groupCategories.first : '일반');
-    final feeCtrl = TextEditingController(text: '300000');
-    final sessionsCtrl = TextEditingController(text: '10');
-    BillingType billingType = BillingType.monthlyRecurring;
+  void _openAddMemberTemplateDialog(
+    BuildContext context,
+    CustomCategoryState catState, {
+    MemberCategoryTemplate? existing,
+  }) {
+    final isEdit = existing != null;
+    final labelCtrl = TextEditingController(text: existing?.label ?? '');
+    final groupCtrl = TextEditingController(
+      text: existing?.groupName ?? (catState.groupCategories.isNotEmpty ? catState.groupCategories.first : '일반'),
+    );
+    final feeCtrl = TextEditingController(text: (existing?.defaultFee ?? 300000).toString());
+    final sessionsCtrl = TextEditingController(
+      text: ((existing?.defaultSessions ?? 0) > 0 ? existing!.defaultSessions : 10).toString(),
+    );
+    BillingType billingType = existing?.billingType ?? BillingType.monthlyRecurring;
 
     showDialog(
       context: context,
@@ -4621,7 +5013,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           builder: (context, setDlgState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('새 학생 등록 템플릿', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+              title: Text(isEdit ? '등록 템플릿 수정' : '새 회원 등록 템플릿', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -4641,7 +5033,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       prefixIcon: Icons.group_outlined,
                     ),
                     const SizedBox(height: 12),
-                    const Text('수강 유형', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                    const Text('수강 / 이용 유형', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
                     const SizedBox(height: 6),
                     SegmentedButton<BillingType>(
                       segments: const [
@@ -4654,7 +5046,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     const SizedBox(height: 12),
                     AppTextField(
                       controller: feeCtrl,
-                      label: '기본 수강료 (원)',
+                      label: '기본 금액 (원)',
                       hint: '300000',
                       prefixIcon: Icons.payments_outlined,
                       keyboardType: TextInputType.number,
@@ -4683,7 +5075,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     onPressed: () => Navigator.pop(dlgContext),
                   ),
                   primary: ZeroButton.primary(
-                    label: '저장',
+                    label: isEdit ? '수정 저장' : '저장',
                     size: ZeroButtonSize.medium,
                     fullWidth: true,
                     onPressed: () async {
@@ -4698,7 +5090,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       }
 
                       final newTemplate = MemberCategoryTemplate(
-                        id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
+                        id: existing?.id ?? 'tpl_${DateTime.now().millisecondsSinceEpoch}',
                         label: label,
                         groupName: group,
                         billingType: billingType,
@@ -4737,9 +5129,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('청구 항목 및 금액 템플릿', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
-                  const Text('청구서 작성 시 자주 사용하는 수납 항목과 권장 금액을 등록해 두면 터치 한 번으로 빠르게 청구서를 작성할 수 있습니다.',
+                  _buildSheetHeader(ctx, '청구 항목 및 금액 템플릿', Icons.receipt_long_rounded, const Color(0xFF8B5CF6)),
+                  const Text('업종별 수납 항목과 금액을 새로 추가하거나 기존 항목을 눌러 수정·삭제할 수 있습니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
                   const SizedBox(height: 14),
                   ZeroButton.primary(
@@ -4755,65 +5146,79 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     Container(
                       padding: const EdgeInsets.all(32),
                       alignment: Alignment.center,
-                      child: const Text('등록된 청구 항목이 없습니다. 우측 상단에서 새 항목을 등록해보세요.', style: TextStyle(color: AppTheme.textSecondary)),
+                      child: const Text('등록된 청구 항목이 없습니다. 상단 버튼으로 새 항목을 등록해보세요.', style: TextStyle(color: AppTheme.textSecondary)),
                     )
                   else
                     ...catState.invoiceTemplates.map((template) {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
-                        child: Row(
-                          children: [
-                            const CircleAvatar(
-                              backgroundColor: Color(0xFFF3E8FF),
-                              radius: 18,
-                              child: Icon(Icons.receipt_long_rounded, color: Color(0xFF8B5CF6), size: 18),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 4,
-                                    crossAxisAlignment: WrapCrossAlignment.center,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => _openAddInvoiceTemplateDialog(context, existing: template),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+                            child: Row(
+                              children: [
+                                const CircleAvatar(
+                                  backgroundColor: Color(0xFFF3E8FF),
+                                  radius: 18,
+                                  child: Icon(Icons.receipt_long_rounded, color: Color(0xFF8B5CF6), size: 18),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(template.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                                      if (template.category != null && template.category!.isNotEmpty)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFE0E7FF),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(template.category!, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA))),
-                                        ),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        children: [
+                                          Text(template.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                                          if (template.category != null && template.category!.isNotEmpty)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE0E7FF),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(template.category!, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA))),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text('기본 청구 금액 : ₩${currencyFormat.format(template.defaultAmount)}',
+                                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text('기본 청구 금액 : ₩${currencyFormat.format(template.defaultAmount)}',
-                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                                ],
-                              ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryBlue, size: 20),
+                                  tooltip: '항목 수정',
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () => _openAddInvoiceTemplateDialog(context, existing: template),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
+                                  tooltip: '항목 삭제',
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () async {
+                                    await ref.read(customCategoryProvider.notifier).removeInvoiceTemplate(template.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('\'${template.title}\' 항목이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8), size: 20),
-                              onPressed: () async {
-                                await ref.read(customCategoryProvider.notifier).removeInvoiceTemplate(template.id);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('\'${template.title}\' 항목이 삭제되었습니다.'), duration: const Duration(seconds: 1)),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     }),
@@ -4827,17 +5232,21 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
-  void _openAddInvoiceTemplateDialog(BuildContext context) {
-    final titleCtrl = TextEditingController();
-    final amountCtrl = TextEditingController(text: '100000');
-    final tagCtrl = TextEditingController(text: '정기수납');
+  void _openAddInvoiceTemplateDialog(
+    BuildContext context, {
+    InvoiceItemTemplate? existing,
+  }) {
+    final isEdit = existing != null;
+    final titleCtrl = TextEditingController(text: existing?.title ?? '');
+    final amountCtrl = TextEditingController(text: (existing?.defaultAmount ?? 100000).toString());
+    final tagCtrl = TextEditingController(text: existing?.category ?? '정기수납');
 
     showDialog(
       context: context,
       builder: (dlgContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('새 청구 항목 추가', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+          title: Text(isEdit ? '청구 항목 수정' : '새 청구 항목 추가', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -4878,7 +5287,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 onPressed: () => Navigator.pop(dlgContext),
               ),
               primary: ZeroButton.primary(
-                label: '저장',
+                label: isEdit ? '수정 저장' : '저장',
                 size: ZeroButtonSize.medium,
                 fullWidth: true,
                 onPressed: () async {
@@ -4892,7 +5301,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   }
 
                   final newTemplate = InvoiceItemTemplate(
-                    id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                    id: existing?.id ?? 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
                     title: title,
                     defaultAmount: amount,
                     category: tag.isEmpty ? null : tag,
@@ -4924,12 +5333,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       maxHeightRatio: 0.85,
       builder: (ctx) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('원터치 업종별 프리셋 불러오기', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              _buildSheetHeader(ctx, '원터치 업종별 프리셋 불러오기', Icons.auto_fix_high_rounded, AppTheme.warning),
               const SizedBox(height: 6),
               const Text('선택하신 업종에 가장 최적화된 그룹 및 청구 서식으로 일괄 재구성합니다. 기존 서식은 해당 업종의 기본 템플릿으로 교체됩니다.',
                   style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
