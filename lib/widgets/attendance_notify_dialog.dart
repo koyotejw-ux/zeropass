@@ -6,6 +6,7 @@ import '../models/notification_log.dart';
 import '../models/studio_profile.dart';
 import '../services/database_service.dart';
 import '../services/kakao_share_service.dart';
+import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 
@@ -89,7 +90,7 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
   Future<void> _sendViaKakao() async {
     setState(() => _isSending = true);
     final msg = _messageController.text.trim();
-    final subject = '[${widget.studio.studioName}] ${widget.type == AttendanceNotifyType.checkIn ? "등원 알림" : "하원 알림"}';
+    final subject = '[${widget.studio.studioName}] ${widget.type == AttendanceNotifyType.checkIn ? LocalizationService.pick(ko: "등원 알림", en: "Check-in Alert", ja: "入室通知", zh: "签到通知", vi: "Thông báo điểm danh", es: "Aviso de entrada") : LocalizationService.pick(ko: "하원 알림", en: "Check-out Alert", ja: "退室通知", zh: "签退通知", vi: "Thông báo ra về", es: "Aviso de salida")}';
 
     bool success = false;
     if (widget.onShareKakao != null) {
@@ -105,7 +106,16 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.member.name} 보호자 카카오톡 안심 알림 전송 완료'),
+          content: Text(
+            LocalizationService.pick(
+              ko: '${widget.member.name} 보호자 카카오톡 안심 알림 전송 완료',
+              en: 'Messenger check-in notice sent for ${widget.member.name}',
+              ja: '${widget.member.name} 様のメッセージ通知を送信しました',
+              zh: '已发送 ${widget.member.name} 的微信/社交软件通知',
+              vi: 'Đã chia sẻ thông báo cho ${widget.member.name}',
+              es: 'Aviso enviado para ${widget.member.name}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -133,7 +143,16 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.member.name} 보호자 문자(SMS) 안심 알림 전송 완료'),
+          content: Text(
+            LocalizationService.pick(
+              ko: '${widget.member.name} 보호자 문자(SMS) 안심 알림 전송 완료',
+              en: 'SMS notice sent for ${widget.member.name}',
+              ja: '${widget.member.name} 様のSMS通知を送信しました',
+              zh: '已发送 ${widget.member.name} 的短信通知',
+              vi: 'Đã gửi SMS thông báo cho ${widget.member.name}',
+              es: 'SMS enviado para ${widget.member.name}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -169,7 +188,9 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
   @override
   Widget build(BuildContext context) {
     final isCheckIn = widget.type == AttendanceNotifyType.checkIn;
-    final timeStr = DateFormat('a h시 mm분', 'ko_KR').format(widget.time);
+    final timeStr = LocalizationService.isDomestic
+        ? DateFormat('a h시 mm분', 'ko_KR').format(widget.time)
+        : DateFormat.jm(LocalizationService.currentLanguage.code).format(widget.time);
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -242,7 +263,23 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isCheckIn ? '안심 등원 알림장 발송' : '안심 하원 알림장 발송',
+                          isCheckIn
+                              ? LocalizationService.pick(
+                                  ko: '안심 등원 알림장 발송',
+                                  en: 'Send Check-in Notice',
+                                  ja: '入室安心通知を送信',
+                                  zh: '发送到校签到通知',
+                                  vi: 'Gửi thông báo đã đến',
+                                  es: 'Enviar aviso de llegada',
+                                )
+                              : LocalizationService.pick(
+                                  ko: '안심 하원 알림장 발송',
+                                  en: 'Send Check-out Notice',
+                                  ja: '退室安心通知を送信',
+                                  zh: '发送离校签退通知',
+                                  vi: 'Gửi thông báo ra về',
+                                  es: 'Enviar aviso de salida',
+                                ),
                           style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontSize: 16.5,
@@ -281,9 +318,16 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '보호자 전송 문구 (발송 전 수정 가능)',
-                      style: TextStyle(
+                    Text(
+                      LocalizationService.pick(
+                        ko: '보호자 전송 문구 (발송 전 수정 가능)',
+                        en: 'Message Preview (Editable)',
+                        ja: '送信メッセージ内容（編集可能）',
+                        zh: '通知内容预览（发送前可修改）',
+                        vi: 'Nội dung tin nhắn (Có thể sửa)',
+                        es: 'Mensaje a enviar (Editable)',
+                      ),
+                      style: const TextStyle(
                         fontFamily: 'Pretendard',
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -321,7 +365,7 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '카톡 0원 전송',
+                        LocalizationService.isDomestic ? '카톡 0원 전송' : LocalizationService.shareMessengerLabel,
                         style: TextStyle(
                           fontFamily: 'Pretendard',
                           fontSize: isSenior ? 15.5 : 13.5,
@@ -345,7 +389,14 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '문자(SMS) 전송',
+                        LocalizationService.pick(
+                          ko: '문자(SMS) 전송',
+                          en: 'Send SMS',
+                          ja: 'SMS送信',
+                          zh: '发送短信',
+                          vi: 'Gửi SMS',
+                          es: 'Enviar SMS',
+                        ),
                         style: TextStyle(
                           fontFamily: 'Pretendard',
                           fontSize: isSenior ? 15.5 : 13.5,
@@ -387,9 +438,16 @@ class _AttendanceNotifyDialogState extends State<AttendanceNotifyDialog> {
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    '나중에 전송 / 닫기',
-                    style: TextStyle(
+                  child: Text(
+                    LocalizationService.pick(
+                      ko: '나중에 전송 / 닫기',
+                      en: 'Send Later / Close',
+                      ja: 'あとで送信 / 閉じる',
+                      zh: '稍后发送 / 关闭',
+                      vi: 'Để sau / Đóng',
+                      es: 'Enviar después / Cerrar',
+                    ),
+                    style: const TextStyle(
                       fontFamily: 'Pretendard',
                       color: AppTheme.textSecondary,
                       fontSize: 13,

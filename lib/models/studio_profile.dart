@@ -1,3 +1,6 @@
+import '../services/localization_service.dart';
+import '../services/region_workflow_service.dart';
+
 class StudioProfile {
   final String studioName;
   final String instructorName;
@@ -107,28 +110,35 @@ class StudioProfile {
     return url;
   }
 
-  /// 운영자 직함 호칭 (커스텀 설정 우선, 미설정 시 업종별 기본값)
+  /// 운영자 직함 호칭 (커스텀 설정 우선, 미설정 시 업종 및 언어별 기본값)
   String get roleTitle {
     if (customRoleTerm != null && customRoleTerm!.trim().isNotEmpty) {
       return customRoleTerm!.trim();
     }
+    String koDefault = '대표';
     if (category.contains('피트니스') || category.contains('PT') || category.contains('스포츠') || category.contains('수영')) {
-      return '코치';
+      koDefault = '코치';
     } else if (category.contains('공방') || category.contains('도예') || category.contains('미술')) {
-      return '대표';
+      koDefault = '대표';
     } else if (category.contains('필라테스') || category.contains('요가') || category.contains('무용') || category.contains('댄스')) {
-      return '실장';
+      koDefault = '실장';
     } else if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('코딩')) {
-      return '원장';
+      koDefault = '원장';
     }
-    return '대표';
+    return RegionWorkflowService.localizedRoleTitle(
+      category,
+      koDefault,
+      LocalizationService.currentLanguage,
+    );
   }
 
-  /// 고객/회원 호칭 (커스텀 설정 우선, 미설정 시 업종별 스마트 기본값)
+  /// 고객/회원 호칭 (커스텀 설정 우선, 미설정 시 업종 및 언어별 스마트 기본값)
   String get memberTitle {
     if (customMemberTerm != null && customMemberTerm!.trim().isNotEmpty) {
       return customMemberTerm!.trim();
     }
+    final lang = LocalizationService.currentLanguage;
+    if (lang != AppLanguage.korean) return memberWord;
     if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('태권도')) {
       return '학생 / 수강생';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스') || category.contains('요가')) {
@@ -144,21 +154,27 @@ class StudioProfile {
     if (customMemberTerm != null && customMemberTerm!.trim().isNotEmpty) {
       return customMemberTerm!.trim();
     }
+    String koDefault = '회원';
     if (category.contains('학원') || category.contains('입시') || category.contains('어학') || category.contains('태권도')) {
-      return '수강생';
+      koDefault = '수강생';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스') || category.contains('요가')) {
-      return '회원';
+      koDefault = '회원';
     } else if (category.contains('공방') || category.contains('공간대여')) {
-      return '고객';
+      koDefault = '고객';
     }
-    return '회원';
+    return RegionWorkflowService.localizedMemberWord(
+      koDefault,
+      LocalizationService.currentLanguage,
+    );
   }
 
-  /// 수강료/이용료/회비 호칭 (커스텀 설정 우선, 미설정 시 업종별 스마트 기본값)
+  /// 수강료/이용료/회비 호칭 (커스텀 설정 우선, 미설정 시 업종 및 언어별 스마트 기본값)
   String get feeTitle {
     if (customFeeTerm != null && customFeeTerm!.trim().isNotEmpty) {
       return customFeeTerm!.trim();
     }
+    final lang = LocalizationService.currentLanguage;
+    if (lang != AppLanguage.korean) return feeWord;
     if (category.contains('학원') || category.contains('음악') || category.contains('어학')) {
       return '수강료';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스')) {
@@ -174,32 +190,58 @@ class StudioProfile {
     if (customFeeTerm != null && customFeeTerm!.trim().isNotEmpty) {
       return customFeeTerm!.trim();
     }
+    String koDefault = '회비';
     if (category.contains('학원') || category.contains('음악') || category.contains('어학')) {
-      return '수강료';
+      koDefault = '수강료';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('필라테스')) {
-      return '회비';
+      koDefault = '회비';
     } else if (category.contains('공방') || category.contains('공간대여')) {
-      return '이용료';
+      koDefault = '이용료';
     }
-    return '회비';
+    return RegionWorkflowService.localizedFeeWord(
+      koDefault,
+      LocalizationService.currentLanguage,
+    );
   }
 
-  /// 사업장 성격 호칭 (커스텀 설정 우선, 미설정 시 업종별 기본값)
+  /// 사업장 성격 호칭 (커스텀 설정 우선, 미설정 시 업종 및 언어별 기본값)
   String get placeTitle {
     if (customPlaceTerm != null && customPlaceTerm!.trim().isNotEmpty) {
       return customPlaceTerm!.trim();
     }
+    String koDefault = '매장';
     if (category.contains('학원') || category.contains('입시') || category.contains('어학')) {
-      return '학원';
+      koDefault = '학원';
     } else if (category.contains('피트니스') || category.contains('PT') || category.contains('스포츠')) {
-      return '센터';
+      koDefault = '센터';
     } else if (category.contains('필라테스') || category.contains('요가') || category.contains('댄스')) {
-      return '스튜디오';
+      koDefault = '스튜디오';
     } else if (category.contains('공방') || category.contains('도예')) {
-      return '공방';
+      koDefault = '공방';
     }
-    return '매장';
+    return RegionWorkflowService.localizedPlaceTitle(
+      koDefault,
+      LocalizationService.currentLanguage,
+    );
   }
+
+  String get localizedCategoryLabel =>
+      LocalizationService.industryCategoryLabel(category);
+
+  int get defaultMonthlyFee => LocalizationService.currentCurrency.defaultFeeBase;
+
+  String get localizedDefaultInvoiceTemplate => RegionWorkflowService.defaultInvoiceTemplate(
+        LocalizationService.currentLanguage,
+        LocalizationService.currentCurrency,
+      );
+
+  String get localizedDefaultAttendanceTemplate => RegionWorkflowService.defaultAttendanceTemplate(
+        LocalizationService.currentLanguage,
+      );
+
+  String get localizedDefaultDepartureTemplate => RegionWorkflowService.defaultDepartureTemplate(
+        LocalizationService.currentLanguage,
+      );
 
   StudioProfile copyWith({
     String? studioName,
@@ -332,17 +374,34 @@ class StudioProfile {
 오늘 하루도 수고 많으셨습니다. 감사합니다.''';
 
   static StudioProfile defaultProfile() {
-    return const StudioProfile(
-      studioName: '마인드핏 아카데미 & 스튜디오',
-      instructorName: '김서연',
-      bankName: '토스뱅크',
-      accountNumber: '1000-2026-8899',
-      accountHolder: '김서연',
+    final lang = LocalizationService.currentLanguage;
+    final currency = LocalizationService.currentCurrency;
+    if (lang == AppLanguage.korean && currency == AppCurrency.krw) {
+      return const StudioProfile(
+        studioName: '마인드핏 아카데미 & 스튜디오',
+        instructorName: '김서연',
+        bankName: '토스뱅크',
+        accountNumber: '1000-2026-8899',
+        accountHolder: '김서연',
+        category: '피트니스 / PT',
+        autoBankDetectEnabled: true,
+        invoiceTemplate: defaultInvoiceTemplate,
+        attendanceTemplate: defaultAttendanceTemplate,
+        departureTemplate: defaultDepartureTemplate,
+      );
+    }
+    final meta = RegionWorkflowService.defaultStudioMetadata(lang, currency);
+    return StudioProfile(
+      studioName: meta['studioName']!,
+      instructorName: meta['instructorName']!,
+      bankName: meta['bankName']!,
+      accountNumber: meta['accountNumber']!,
+      accountHolder: meta['accountHolder']!,
       category: '피트니스 / PT',
-      autoBankDetectEnabled: true,
-      invoiceTemplate: defaultInvoiceTemplate,
-      attendanceTemplate: defaultAttendanceTemplate,
-      departureTemplate: defaultDepartureTemplate,
+      autoBankDetectEnabled: currency == AppCurrency.krw,
+      invoiceTemplate: RegionWorkflowService.defaultInvoiceTemplate(lang, currency),
+      attendanceTemplate: RegionWorkflowService.defaultAttendanceTemplate(lang),
+      departureTemplate: RegionWorkflowService.defaultDepartureTemplate(lang),
     );
   }
 }

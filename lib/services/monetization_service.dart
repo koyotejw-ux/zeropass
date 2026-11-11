@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/pro_store_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_dialog_actions.dart';
+import 'localization_service.dart';
 
 /// 개별 스토어 상품 및 기간제 이용권의 현재 상태
 enum ProductPurchaseState {
@@ -162,15 +163,50 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   String productDisplayName(String productId) {
     switch (productId) {
       case productSubRemoveAdsMonthly:
-        return '광고 제거 단독 (월간)';
+        return LocalizationService.pick(
+          ko: '광고 제거 단독 (월간)',
+          en: 'Ad-Free Only (Monthly)',
+          ja: '広告非表示プラン (月額)',
+          zh: '去广告单享版 (按月)',
+          vi: 'Gói Xóa Quảng Cáo (Tháng)',
+          es: 'Sin Anuncios (Mensual)',
+        );
       case productSubKioskMonthly:
-        return '태블릿 키오스크 (월간)';
+        return LocalizationService.pick(
+          ko: '태블릿 키오스크 (월간)',
+          en: 'Tablet Kiosk (Monthly)',
+          ja: 'キオスク専用 (月額)',
+          zh: '平板考勤机版 (按月)',
+          vi: 'Gói Kiosk Tablet (Tháng)',
+          es: 'Quiosco Tablet (Mensual)',
+        );
       case productSubAllInOneMonthly:
-        return '올인원 VIP (월간)';
+        return LocalizationService.pick(
+          ko: '올인원 VIP (월간)',
+          en: 'All-in-One VIP (Monthly)',
+          ja: 'オールインワン VIP (月額)',
+          zh: '全能 VIP 会员 (按月)',
+          vi: 'VIP Toàn Diện (Tháng)',
+          es: 'VIP Todo-en-Uno (Mensual)',
+        );
       case productSubAllInOneYearly:
-        return '올인원 VIP (연간)';
+        return LocalizationService.pick(
+          ko: '올인원 VIP (연간)',
+          en: 'All-in-One VIP (Yearly)',
+          ja: 'オールインワン VIP (年額)',
+          zh: '全能 VIP 会员 (按年)',
+          vi: 'VIP Toàn Diện (Năm)',
+          es: 'VIP Todo-en-Uno (Anual)',
+        );
       case productPassTemporaryVip1h:
-        return '1시간 무료 VIP 체험';
+        return LocalizationService.pick(
+          ko: '1시간 무료 VIP 체험',
+          en: '1-Hour Free VIP Trial',
+          ja: '1時間無料 VIP体験',
+          zh: '1小时免费 VIP 体验',
+          vi: 'Dùng thử VIP 1 giờ',
+          es: 'Prueba VIP 1 hora gratis',
+        );
       default:
         return productId;
     }
@@ -181,6 +217,10 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   PurchasedEntitlement? getEntitlement(String productId) => _entitlements[productId];
+
+  String getDisplayPrice(String productId, {required String fallback}) {
+    return _storeProducts[productId]?.price ?? fallback;
+  }
 
   bool _hasActiveVipBundle(DateTime now) {
     final monthly = _entitlements[productSubAllInOneMonthly];
@@ -320,11 +360,54 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   bool get isStandalonePaidPlan => !isUnlimitedVip && (isAdsRemoved || isKioskProUnlocked);
 
   String get membershipPlanLabel {
-    if (isPermanentVip) return '올인원 VIP 멤버십 (무제한)';
-    if (isTemporaryPassActive) return '1시간 VIP 무료 체험 (무제한)';
-    if (isSubscriptionAdsRemoved) return '광고 제거 단독 (제한형)';
-    if (isSubscriptionKioskPro) return '키오스크 단독 (제한형)';
-    return '무료 플랜 (체험 한도)';
+    if (isPermanentVip) {
+      return LocalizationService.pick(
+        ko: '올인원 VIP 멤버십 (무제한)',
+        en: 'All-in-One VIP (Unlimited)',
+        ja: 'VIP メンバーシップ (無制限)',
+        zh: '全能 VIP 会员 (无限制)',
+        vi: 'Thành viên VIP (Không giới hạn)',
+        es: 'Membresía VIP (Ilimitada)',
+      );
+    }
+    if (isTemporaryPassActive) {
+      return LocalizationService.pick(
+        ko: '1시간 VIP 무료 체험 (무제한)',
+        en: '1h VIP Trial Pass (Unlimited)',
+        ja: '1時間無料 VIP体験 (無制限)',
+        zh: '1小时免费 VIP 体验 (无限制)',
+        vi: 'Dùng thử VIP 1 giờ (Không giới hạn)',
+        es: 'Prueba VIP 1h (Ilimitada)',
+      );
+    }
+    if (isSubscriptionAdsRemoved) {
+      return LocalizationService.pick(
+        ko: '광고 제거 단독 (제한형)',
+        en: 'Ad-Free Standalone (Standard Limits)',
+        ja: '広告非表示プラン (上限あり)',
+        zh: '去广告单享版 (含数量上限)',
+        vi: 'Gói Xóa Quảng Cáo (Giới hạn)',
+        es: 'Plan Sin Anuncios (Con límites)',
+      );
+    }
+    if (isSubscriptionKioskPro) {
+      return LocalizationService.pick(
+        ko: '키오스크 단독 (제한형)',
+        en: 'Kiosk Standalone (Standard Limits)',
+        ja: 'キオスク単体プラン (上限あり)',
+        zh: '考勤机单享版 (含数量上限)',
+        vi: 'Gói Kiosk (Giới hạn)',
+        es: 'Plan Quiosco (Con límites)',
+      );
+    }
+    return LocalizationService.pick(
+      ko: '무료 플랜 (체험 한도)',
+      en: 'Free Plan (Starter Limits)',
+      ja: '無料プラン (基本枠)',
+      zh: '免费版 (基础额度)',
+      vi: 'Gói Miễn Phí (Giới hạn)',
+      es: 'Plan Gratuito (Límites básicos)',
+    );
   }
 
   // 비-VIP 등록 개수 & 월 수정 횟수 한도 (-1 = 무제한)
@@ -429,10 +512,24 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     final d = remainingTemporaryPassDuration;
     if (d.inHours >= 1) {
       final mins = d.inMinutes % 60;
-      return mins > 0 ? '${d.inHours}시간 $mins분 남음' : '${d.inHours}시간 남음';
+      return LocalizationService.pick(
+        ko: mins > 0 ? '${d.inHours}시간 $mins분 남음' : '${d.inHours}시간 남음',
+        en: mins > 0 ? '${d.inHours}h ${mins}m left' : '${d.inHours}h left',
+        ja: mins > 0 ? '残り${d.inHours}時間$mins分' : '残り${d.inHours}時間',
+        zh: mins > 0 ? '剩余${d.inHours}小时$mins分' : '剩余${d.inHours}小时',
+        vi: mins > 0 ? 'Còn ${d.inHours}g ${mins}p' : 'Còn ${d.inHours} giờ',
+        es: mins > 0 ? '${d.inHours}h ${mins}m rest.' : '${d.inHours}h rest.',
+      );
     }
     final mins = d.inMinutes.clamp(1, 60);
-    return '$mins분 남음';
+    return LocalizationService.pick(
+      ko: '$mins분 남음',
+      en: '${mins}m left',
+      ja: '残り$mins分',
+      zh: '剩余$mins分钟',
+      vi: 'Còn $mins phút',
+      es: '${mins}m rest.',
+    );
   }
 
   int get activeStreakDays => _activeStreakDays;
@@ -447,10 +544,44 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
   /// 매장 운영 등급 (습관화 리텐션 배지)
   String get retentionTierTitle {
-    if (isPermanentVip) return '로열 VIP 마스터';
-    if (_activeStreakDays >= 14) return '골든 마스터';
-    if (_activeStreakDays >= 3) return '스마트 케어 파트너';
-    return '스타트업 파트너';
+    if (isPermanentVip) {
+      return LocalizationService.pick(
+        ko: '로열 VIP 마스터',
+        en: 'Royal VIP Master',
+        ja: 'ロイヤルVIPマスター',
+        zh: '尊享 VIP 大师',
+        vi: 'Bậc thầy Royal VIP',
+        es: 'Maestro Royal VIP',
+      );
+    }
+    if (_activeStreakDays >= 14) {
+      return LocalizationService.pick(
+        ko: '골든 마스터',
+        en: 'Golden Master',
+        ja: 'ゴールデンマスター',
+        zh: '黄金运营大师',
+        vi: 'Bậc thầy Vàng',
+        es: 'Maestro Dorado',
+      );
+    }
+    if (_activeStreakDays >= 3) {
+      return LocalizationService.pick(
+        ko: '스마트 케어 파트너',
+        en: 'Smart Care Partner',
+        ja: 'スマートケアパートナー',
+        zh: '智能管理伙伴',
+        vi: 'Đối tác Thông minh',
+        es: 'Socio Smart Care',
+      );
+    }
+    return LocalizationService.pick(
+      ko: '스타트업 파트너',
+      en: 'Startup Partner',
+      ja: 'スタートアップパートナー',
+      zh: '创业起步伙伴',
+      vi: 'Đối tác Khởi nghiệp',
+      es: 'Socio Inicial',
+    );
   }
 
   // 루트 네비게이터 키 (전역 CRUD 광고 종료 후 구독 전환 팝업 노출용)
@@ -633,7 +764,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     if (expiredProductIds.isNotEmpty) {
       final firstTitle = productDisplayName(expiredProductIds.first);
       _lastStoreEventType = StoreEventType.expired;
-      _lastStoreNotice = '$firstTitle 이용 기간이 만료되었습니다. 필요 시 다시 구매/구독할 수 있습니다.';
+      _lastStoreNotice = LocalizationService.pick(
+        ko: '$firstTitle 이용 기간이 만료되었습니다. 필요 시 다시 구매/구독할 수 있습니다.',
+        en: '$firstTitle has expired. You can re-subscribe or renew anytime.',
+        ja: '$firstTitle の有効期間が終了しました。必要に応じて再購入できます。',
+        zh: '$firstTitle 有效期已结束，如需使用可随时重新订阅。',
+        vi: 'Gói $firstTitle đã hết hạn. Bạn có thể đăng ký lại bất cứ lúc nào.',
+        es: '$firstTitle ha caducado. Puedes volver a suscribirte cuando quieras.',
+      );
       notifyListeners();
     }
     return expiredProductIds;
@@ -761,13 +899,27 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     if (isPermanentVip) {
       return (
         granted: false,
-        message: '이미 올인원 VIP 구독을 이용 중입니다.',
+        message: LocalizationService.pick(
+          ko: '이미 올인원 VIP 구독을 이용 중입니다.',
+          en: 'All-in-One VIP subscription is already active.',
+          ja: 'すでにオールインワンVIPをご利用中です。',
+          zh: '您当前已是全能 VIP 订阅会员。',
+          vi: 'Gói VIP Toàn Diện đã đang hoạt động.',
+          es: 'Tu suscripción VIP Todo-en-Uno ya está activa.',
+        ),
       );
     }
     if (isTemporaryPassActive) {
       return (
         granted: false,
-        message: '이미 1시간 무료 VIP 체험 중($remainingTemporaryPassFormatted)입니다. 기간 만료 후 다시 이용할 수 있습니다.',
+        message: LocalizationService.pick(
+          ko: '이미 1시간 무료 VIP 체험 중($remainingTemporaryPassFormatted)입니다. 기간 만료 후 다시 이용할 수 있습니다.',
+          en: '1-hour VIP trial is already active ($remainingTemporaryPassFormatted). Available again after expiration.',
+          ja: 'すでに1時間無料VIP体験中です（$remainingTemporaryPassFormatted）。終了後に再利用できます。',
+          zh: '1小时VIP免费体验正在生效（$remainingTemporaryPassFormatted），到期后可再次领取。',
+          vi: 'Gói dùng thử VIP 1 giờ đang chạy ($remainingTemporaryPassFormatted). Có thể nhận lại sau khi hết hạn.',
+          es: 'Tu prueba VIP de 1 hora ya está activa ($remainingTemporaryPassFormatted).',
+        ),
       );
     }
     await grantTemporaryAdFreeHours(hours, includeKiosk: true, now: checkNow);
@@ -775,7 +927,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     final expiryTime = '${expiry.hour.toString().padLeft(2, '0')}:${expiry.minute.toString().padLeft(2, '0')}';
     return (
       granted: true,
-      message: '$hours시간 무료 VIP 체험이 시작되었습니다! ($expiryTime까지 이용 가능)',
+      message: LocalizationService.pick(
+        ko: '$hours시간 무료 VIP 체험이 시작되었습니다! ($expiryTime까지 이용 가능)',
+        en: '${hours}h free VIP pass started! Active until $expiryTime.',
+        ja: '$hours時間無料VIP体験を開始しました！（$expiryTimeまで有効）',
+        zh: '已开启${hours}小时免费 VIP 体验！（有效期至 $expiryTime）',
+        vi: 'Đã kích hoạt dùng thử VIP $hours giờ! (Đến $expiryTime)',
+        es: '¡Pase VIP gratuito de ${hours}h activado! (Hasta las $expiryTime)',
+      ),
     );
   }
 
@@ -844,7 +1003,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     );
     _expiredNotifiedProductIds.remove(productPassTemporaryVip1h);
     _lastStoreEventType = StoreEventType.purchased;
-    _lastStoreNotice = '$hours시간 무료 VIP 체험이 활성화되었습니다. 이용 기간 종료 후 다시 이용하실 수 있습니다.';
+    _lastStoreNotice = LocalizationService.pick(
+      ko: '$hours시간 무료 VIP 체험이 활성화되었습니다. 이용 기간 종료 후 다시 이용하실 수 있습니다.',
+      en: '${hours}h free VIP pass activated. Re-claimable after expiration.',
+      ja: '$hours時間無料VIP体験が有効になりました。期限終了後に再利用できます。',
+      zh: '已激活${hours}小时免费VIP体验，到期后可再次开启。',
+      vi: 'Đã kích hoạt gói VIP $hours giờ miễn phí. Có thể dùng lại sau khi hết hạn.',
+      es: 'Pase VIP gratis de ${hours}h activado. Podrás renovarlo al caducar.',
+    );
     await _persistEntitlements(prefs);
     await _recomputeAccessFlags(prefs, now: start);
     notifyListeners();
@@ -1134,7 +1300,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
     if (shouldShow && _isInterstitialAdLoaded && _interstitialAd != null) {
       _showLoadedInterstitial(
-        actionLabel: '업무 저장',
+        actionLabel: LocalizationService.pick(
+          ko: '업무 저장',
+          en: 'Save record',
+          ja: 'データ保存',
+          zh: '保存数据',
+          vi: 'Lưu dữ liệu',
+          es: 'Guardar registro',
+        ),
         onDismissed: onDismissed,
       );
     } else {
@@ -1148,7 +1321,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   /// 모든 메뉴(회원/출결/청구/지출/거래처/일정/템플릿/설정)의 CRUD(등록·수정·삭제) 완료 시
   /// [probability] 확률로 전면 광고를 띄우고, 광고 종료 후 자연스럽게 광고 제거 구독(결제)을 유도합니다.
   bool triggerCrudInterstitialAd({
-    String actionLabel = '데이터 등록·수정·삭제',
+    String? actionLabel,
     double probability = defaultCrudAdProbability,
     int cooldownSeconds = defaultCrudCooldownSeconds,
     Random? random,
@@ -1187,20 +1360,30 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       return false;
     }
 
+    final effectiveLabel = actionLabel ??
+        LocalizationService.pick(
+          ko: '데이터 등록·수정·삭제',
+          en: 'Save or update data',
+          ja: 'データ登録・編集',
+          zh: '数据新增与编辑',
+          vi: 'Lưu / sửa dữ liệu',
+          es: 'Guardar cambios',
+        );
+
     _crudAdExposureCount++;
 
     if (allowCrudAdInTests) {
       _lastInterstitialShownTime = DateTime.now();
       _actionCounter = 0;
-      onTestInterstitialTriggered?.call(actionLabel);
-      _maybeShowAdRemovalUpsell(actionLabel: actionLabel);
+      onTestInterstitialTriggered?.call(effectiveLabel);
+      _maybeShowAdRemovalUpsell(actionLabel: effectiveLabel);
       onDismissed?.call();
       return true;
     }
 
     if (_isInterstitialAdLoaded && _interstitialAd != null) {
       _showLoadedInterstitial(
-        actionLabel: actionLabel,
+        actionLabel: effectiveLabel,
         onDismissed: onDismissed,
       );
       return true;
@@ -1208,7 +1391,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
     // 전면 광고가 아직 로드되지 않았을 때는 즉시 프리로드 + 일정 간격으로 구독 유도 다이얼로그 노출
     _loadInterstitialAd();
-    _maybeShowAdRemovalUpsell(actionLabel: actionLabel, cooldownSeconds: 60);
+    _maybeShowAdRemovalUpsell(actionLabel: effectiveLabel, cooldownSeconds: 60);
     onDismissed?.call();
     return false;
   }
@@ -1270,8 +1453,17 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   /// 전면 광고 직후 또는 반복 CRUD 시 자연스럽게 광고 제거 구독 결제를 유도하는 다이얼로그
   Future<void> showAdRemovalUpsellDialog(
     BuildContext context, {
-    String actionLabel = '데이터 등록·수정·삭제',
+    String? actionLabel,
   }) async {
+    final effectiveAction = actionLabel ??
+        LocalizationService.pick(
+          ko: '데이터 등록·수정·삭제',
+          en: 'creating, editing, or deleting records',
+          ja: 'データの登録・編集・削除',
+          zh: '新增、修改或删除数据',
+          vi: 'thêm, sửa hoặc xóa dữ liệu',
+          es: 'crear, editar o borrar registros',
+        );
     if (isAdsRemoved || _isShowingUpsellDialog) return;
     _isShowingUpsellDialog = true;
     try {
@@ -1292,10 +1484,17 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                 child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 22),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '광고 없이 바로 저장할까요?',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+                  LocalizationService.pick(
+                    ko: '광고 없이 바로 저장할까요?',
+                    en: 'Skip Ads & Save Faster?',
+                    ja: '広告なしで快適に操作しませんか？',
+                    zh: '想免除广告极速保存吗？',
+                    vi: 'Bỏ quảng cáo để lưu nhanh hơn?',
+                    es: '¿Prefieres trabajar sin anuncios?',
+                  ),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
                 ),
               ),
             ],
@@ -1307,7 +1506,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '무료 버전에서는 \'$actionLabel\' 등 주요 작업마다 일정 확률로 전면 광고가 표시됩니다.',
+                  LocalizationService.pick(
+                    ko: '무료 버전에서는 \'$effectiveAction\' 등 주요 작업마다 일정 확률로 전면 광고가 표시됩니다.',
+                    en: 'In the free tier, full-screen ads appear occasionally after actions like "$effectiveAction".',
+                    ja: '無料版では「$effectiveAction」などの操作後に一定確率で広告が表示されます。',
+                    zh: '免费版在执行「$effectiveAction」等操作时会有一定概率展示全屏广告。',
+                    vi: 'Ở gói miễn phí, quảng cáo sẽ xuất hiện định kỳ sau thao tác "$effectiveAction".',
+                    es: 'En el plan gratuito aparecen anuncios ocasionales tras acciones como "$effectiveAction".',
+                  ),
                   style: const TextStyle(fontSize: 13.5, color: AppTheme.textPrimary, height: 1.45, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 10),
@@ -1318,12 +1524,42 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('• 등록·수정·삭제 전면 광고 100% 영구 제거', style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45)),
-                      Text('• 하단 배너 / 오프닝 / 리스트 내 광고 완전 차단', style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45)),
-                      Text('• 언제든 Google Play에서 위약금 없이 해지 가능', style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45)),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '• 등록·수정·삭제 전면 광고 100% 영구 제거',
+                          en: '• 100% remove all interstitial ads on save & edit',
+                          ja: '• 登録・編集時の全画面広告を100%非表示',
+                          zh: '• 彻底移除增删改操作后的全屏弹窗广告',
+                          vi: '• Xóa 100% quảng cáo khi thêm, sửa, xóa dữ liệu',
+                          es: '• Elimina al 100% los anuncios al guardar o editar',
+                        ),
+                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45),
+                      ),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '• 하단 배너 / 오프닝 / 리스트 내 광고 완전 차단',
+                          en: '• Block banner, app-open, and inline feed ads',
+                          ja: '• バナー・起動時・リスト内広告を完全ブロック',
+                          zh: '• 全面屏蔽底部横幅、开屏及列表内嵌广告',
+                          vi: '• Chặn hoàn toàn quảng cáo banner và mở ứng dụng',
+                          es: '• Sin banners, anuncios de apertura ni en listas',
+                        ),
+                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45),
+                      ),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '• 언제든 Google Play에서 위약금 없이 해지 가능',
+                          en: '• Cancel anytime via Google Play Store with zero fees',
+                          ja: '• Google Playからいつでも違約金なしで解約可能',
+                          zh: '• 可随时在 Google Play 一键取消，无任何违约金',
+                          vi: '• Hủy bất cứ lúc nào trên Google Play không mất phí',
+                          es: '• Cancela cuando quieras en Google Play sin penalización',
+                        ),
+                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45),
+                      ),
                     ],
                   ),
                 ),
@@ -1347,9 +1583,19 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                       );
                     },
                     icon: const Icon(Icons.bolt_rounded, size: 18),
-                    label: const FittedBox(
+                    label: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text('월 1,900원 광고 완전 제거', style: TextStyle(fontWeight: FontWeight.w800)),
+                      child: Text(
+                        LocalizationService.pick(
+                          ko: '월 1,900원 광고 완전 제거',
+                          en: 'Remove Ads (${getDisplayPrice(productSubRemoveAdsMonthly, fallback: r"$1.99")})',
+                          ja: '広告を完全に消す (${getDisplayPrice(productSubRemoveAdsMonthly, fallback: "¥190")})',
+                          zh: '移除全部广告 (${getDisplayPrice(productSubRemoveAdsMonthly, fallback: "¥12")})',
+                          vi: 'Tắt quảng cáo (${getDisplayPrice(productSubRemoveAdsMonthly, fallback: "39k")})',
+                          es: 'Quitar anuncios (${getDisplayPrice(productSubRemoveAdsMonthly, fallback: "€1.99")})',
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
@@ -1365,9 +1611,19 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                             launchTemporaryPassFlow(context);
                           },
                           icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: Color(0xFFD97706)),
-                          label: const FittedBox(
+                          label: FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Text('1시간 무료 체험', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
+                            child: Text(
+                              LocalizationService.pick(
+                                ko: '1시간 무료 체험',
+                                en: '1h Free Trial',
+                                ja: '1時間無料体験',
+                                zh: '1小时免费试用',
+                                vi: 'Dùng thử 1 giờ',
+                                es: 'Prueba gratis 1h',
+                              ),
+                              style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB45309)),
+                            ),
                           ),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFFFCD34D)),
@@ -1380,9 +1636,16 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                 const SizedBox(height: 6),
                 TextButton(
                   onPressed: () => Navigator.pop(dlgCtx),
-                  child: const Text(
-                    '계속 광고 보며 이용하기',
-                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                  child: Text(
+                    LocalizationService.pick(
+                      ko: '계속 광고 보며 이용하기',
+                      en: 'Continue with Ads',
+                      ja: '広告ありで続ける',
+                      zh: '继续使用含广告版',
+                      vi: 'Tiếp tục dùng bản có quảng cáo',
+                      es: 'Seguir con anuncios',
+                    ),
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -1408,8 +1671,22 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     if (context.mounted) {
       await showVipLimitUpgradeDialog(
         context,
-        title: '$itemLabel 등록 한도에 도달했습니다',
-        reason: '$membershipPlanLabel에서는 $itemLabel 등록이 최대 $limit개(명)까지 가능합니다. (현재 $currentCount/$limit)',
+        title: LocalizationService.pick(
+          ko: '$itemLabel 등록 한도에 도달했습니다',
+          en: '$itemLabel Limit Reached',
+          ja: '$itemLabel の登録上限に達しました',
+          zh: '已达到 $itemLabel 数量上限',
+          vi: 'Đã đạt giới hạn $itemLabel',
+          es: 'Límite de $itemLabel alcanzado',
+        ),
+        reason: LocalizationService.pick(
+          ko: '$membershipPlanLabel에서는 $itemLabel 등록이 최대 $limit개(명)까지 가능합니다. (현재 $currentCount/$limit)',
+          en: '$membershipPlanLabel allows up to $limit $itemLabel entries ($currentCount/$limit used).',
+          ja: '$membershipPlanLabelでは$itemLabelの登録は最大$limit件までです（現在 $currentCount/$limit）。',
+          zh: '$membershipPlanLabel最多支持创建 $limit 条$itemLabel（当前 $currentCount/$limit）。',
+          vi: '$membershipPlanLabel chỉ cho phép tối đa $limit $itemLabel (Hiện tại $currentCount/$limit).',
+          es: '$membershipPlanLabel permite hasta $limit registros de $itemLabel ($currentCount/$limit).',
+        ),
       );
     }
     return false;
@@ -1426,8 +1703,22 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     if (context.mounted) {
       await showVipLimitUpgradeDialog(
         context,
-        title: '이번 달 수정 한도를 모두 사용했습니다',
-        reason: '$membershipPlanLabel에서는 정보 수정($itemLabel 등)을 월 $maxMonthlyEditLimit회까지 이용할 수 있습니다. ($_monthlyEditCount/$maxMonthlyEditLimit회 사용)',
+        title: LocalizationService.pick(
+          ko: '이번 달 수정 한도를 모두 사용했습니다',
+          en: 'Monthly Edit Limit Reached',
+          ja: '今月の編集回数上限に達しました',
+          zh: '本月修改次数已用完',
+          vi: 'Đã hết lượt chỉnh sửa trong tháng',
+          es: 'Límite mensual de ediciones alcanzado',
+        ),
+        reason: LocalizationService.pick(
+          ko: '$membershipPlanLabel에서는 정보 수정($itemLabel 등)을 월 $maxMonthlyEditLimit회까지 이용할 수 있습니다. ($_monthlyEditCount/$maxMonthlyEditLimit회 사용)',
+          en: '$membershipPlanLabel allows up to $maxMonthlyEditLimit edits per month ($_monthlyEditCount/$maxMonthlyEditLimit used).',
+          ja: '$membershipPlanLabelでは月$maxMonthlyEditLimit回まで編集可能です（$_monthlyEditCount/$maxMonthlyEditLimit回使用済み）。',
+          zh: '$membershipPlanLabel每月最多可编辑 $maxMonthlyEditLimit 次（已用 $_monthlyEditCount/$maxMonthlyEditLimit 次）。',
+          vi: '$membershipPlanLabel cho phép tối đa $maxMonthlyEditLimit lượt sửa/tháng (Đã dùng $_monthlyEditCount/$maxMonthlyEditLimit).',
+          es: '$membershipPlanLabel permite hasta $maxMonthlyEditLimit ediciones al mes ($_monthlyEditCount/$maxMonthlyEditLimit).',
+        ),
       );
     }
     return false;
@@ -1485,17 +1776,54 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '👑 올인원 VIP 멤버십 무제한 혜택',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: Color(0xFFFBBF24)),
+                      LocalizationService.pick(
+                        ko: '👑 올인원 VIP 멤버십 무제한 혜택',
+                        en: '👑 All-in-One VIP Unlimited Benefits',
+                        ja: '👑 オールインワンVIP 無制限特典',
+                        zh: '👑 全能 VIP 会员无限制特权',
+                        vi: '👑 Đặc quyền VIP Không Giới Hạn',
+                        es: '👑 Beneficios Ilimitados VIP Todo-en-Uno',
+                      ),
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: Color(0xFFFBBF24)),
                     ),
-                    SizedBox(height: 6),
-                    Text('• 회원 · 청구 · 지출 · 거래처 · 일정 등록 개수 무제한', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.45)),
-                    Text('• 맞춤 서식 / 템플릿 생성 및 모든 수정 횟수 무제한', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.45)),
-                    Text('• 무인 태블릿 키오스크 + 전면/배너 광고 100% 제거', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.45)),
+                    const SizedBox(height: 6),
+                    Text(
+                      LocalizationService.pick(
+                        ko: '• 회원 · 청구 · 지출 · 거래처 · 일정 등록 개수 무제한',
+                        en: '• Unlimited members, invoices, expenses & schedules',
+                        ja: '• 会員・請求・経費・スケジュール登録数が完全無制限',
+                        zh: '• 会员、账单、支出、供应商与日程创建数量无上限',
+                        vi: '• Không giới hạn học viên, hóa đơn, chi tiêu & lịch',
+                        es: '• Miembros, facturas, gastos y horarios ilimitados',
+                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.45),
+                    ),
+                    Text(
+                      LocalizationService.pick(
+                        ko: '• 맞춤 서식 / 템플릿 생성 및 모든 수정 횟수 무제한',
+                        en: '• Unlimited custom templates & edits every month',
+                        ja: '• カスタム書式作成およびすべての編集回数が無制限',
+                        zh: '• 自定义模板创建与全功能编辑次数无限畅享',
+                        vi: '• Tạo mẫu tùy chỉnh & chỉnh sửa không giới hạn',
+                        es: '• Plantillas personalizadas y ediciones ilimitadas',
+                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.45),
+                    ),
+                    Text(
+                      LocalizationService.pick(
+                        ko: '• 무인 태블릿 키오스크 + 전면/배너 광고 100% 제거',
+                        en: '• Tablet Self Check-in Kiosk + 100% Ad-Free',
+                        ja: '• 無人受付キオスク ＋ 広告100%完全非表示',
+                        zh: '• 解锁无人自助签到终端 + 100% 免除所有广告',
+                        vi: '• Mở khóa Kiosk điểm danh + Xóa 100% quảng cáo',
+                        es: '• Quiosco Tablet + Experiencia 100% sin anuncios',
+                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.45),
+                    ),
                   ],
                 ),
               ),
@@ -1519,9 +1847,19 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                     );
                   },
                   icon: const Icon(Icons.workspace_premium_rounded, size: 18),
-                  label: const FittedBox(
+                  label: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('올인원 VIP 무제한 (₩5,900)', style: TextStyle(fontWeight: FontWeight.w800)),
+                    child: Text(
+                      LocalizationService.pick(
+                        ko: '올인원 VIP 무제한 (₩5,900)',
+                        en: 'Unlimited VIP (${getDisplayPrice(productSubAllInOneMonthly, fallback: r"$4.99")})',
+                        ja: 'VIP 無制限 (${getDisplayPrice(productSubAllInOneMonthly, fallback: "¥590")})',
+                        zh: '开通 VIP 无限制 (${getDisplayPrice(productSubAllInOneMonthly, fallback: "¥38")})',
+                        vi: 'VIP Không Giới Hạn (${getDisplayPrice(productSubAllInOneMonthly, fallback: "99k")})',
+                        es: 'VIP Ilimitado (${getDisplayPrice(productSubAllInOneMonthly, fallback: "€4.99")})',
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD97706),
@@ -1537,9 +1875,19 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                           launchTemporaryPassFlow(context);
                         },
                         icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: AppTheme.primaryBlue),
-                        label: const FittedBox(
+                        label: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text('1시간 VIP 체험', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                          child: Text(
+                            LocalizationService.pick(
+                              ko: '1시간 VIP 체험',
+                              en: '1h VIP Trial',
+                              ja: '1時間VIP体験',
+                              zh: '1小时VIP试用',
+                              vi: 'Thử VIP 1 giờ',
+                              es: 'Prueba VIP 1h',
+                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF93C5FD)),
@@ -1552,9 +1900,9 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
               const SizedBox(height: 4),
               TextButton(
                 onPressed: () => Navigator.pop(dlgCtx),
-                child: const Text(
-                  '닫기',
-                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                child: Text(
+                  LocalizationService.tr('common_close'),
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -1786,7 +2134,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       if (purchaseDetails.status == PurchaseStatus.pending) {
         _pendingPurchaseProductId = productId;
         _lastStoreEventType = StoreEventType.pending;
-        _lastStoreNotice = '${productDisplayName(productId)} 결제가 승인 대기 중입니다.';
+        _lastStoreNotice = LocalizationService.pick(
+          ko: '${productDisplayName(productId)} 결제가 승인 대기 중입니다.',
+          en: '${productDisplayName(productId)} payment is pending approval.',
+          ja: '${productDisplayName(productId)} の決済承認待ちです。',
+          zh: '${productDisplayName(productId)} 付款正在等待确认。',
+          vi: 'Thanh toán ${productDisplayName(productId)} đang chờ duyệt.',
+          es: 'Pago de ${productDisplayName(productId)} pendiente de aprobación.',
+        );
         notifyListeners();
       } else if (purchaseDetails.status == PurchaseStatus.purchased) {
         if (_pendingPurchaseProductId == productId) {
@@ -1800,7 +2155,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
           isRestored: false,
         );
         _lastStoreEventType = StoreEventType.purchased;
-        _lastStoreNotice = '${productDisplayName(productId)} 이용이 시작되었습니다.';
+        _lastStoreNotice = LocalizationService.pick(
+          ko: '${productDisplayName(productId)} 이용이 시작되었습니다.',
+          en: '${productDisplayName(productId)} is now active.',
+          ja: '${productDisplayName(productId)} の利用を開始しました。',
+          zh: '${productDisplayName(productId)} 已成功生效。',
+          vi: 'Gói ${productDisplayName(productId)} đã bắt đầu hoạt động.',
+          es: '${productDisplayName(productId)} ha sido activado.',
+        );
         notifyListeners();
         if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
           await InAppPurchase.instance.completePurchase(purchaseDetails);
@@ -1819,7 +2181,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
           originalPurchaseDate: txTime,
         );
         _lastStoreEventType = StoreEventType.restored;
-        _lastStoreNotice = '${productDisplayName(productId)} 구독이 복원되었습니다.';
+        _lastStoreNotice = LocalizationService.pick(
+          ko: '${productDisplayName(productId)} 구독이 복원되었습니다.',
+          en: '${productDisplayName(productId)} subscription restored.',
+          ja: '${productDisplayName(productId)} の定期購入を復元しました。',
+          zh: '已恢复 ${productDisplayName(productId)} 订阅。',
+          vi: 'Đã khôi phục gói ${productDisplayName(productId)}.',
+          es: 'Suscripción ${productDisplayName(productId)} restaurada.',
+        );
         notifyListeners();
         if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
           await InAppPurchase.instance.completePurchase(purchaseDetails);
@@ -1829,7 +2198,15 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
           _pendingPurchaseProductId = null;
         }
         _lastStoreEventType = StoreEventType.error;
-        _lastPurchaseMessage = purchaseDetails.error?.message ?? '결제 처리 중 오류가 발생했습니다.';
+        _lastPurchaseMessage = purchaseDetails.error?.message ??
+            LocalizationService.pick(
+              ko: '결제 처리 중 오류가 발생했습니다.',
+              en: 'An error occurred during payment processing.',
+              ja: '決済処理中にエラーが発生しました。',
+              zh: '付款处理过程中发生错误。',
+              vi: 'Đã xảy ra lỗi khi xử lý thanh toán.',
+              es: 'Ocurrió un error al procesar el pago.',
+            );
         _lastStoreNotice = _lastPurchaseMessage;
         if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
           await InAppPurchase.instance.completePurchase(purchaseDetails);
@@ -1840,7 +2217,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
           _pendingPurchaseProductId = null;
         }
         _lastStoreEventType = StoreEventType.canceled;
-        _lastPurchaseMessage = '결제가 취소되었습니다.';
+        _lastPurchaseMessage = LocalizationService.pick(
+          ko: '결제가 취소되었습니다.',
+          en: 'Payment was canceled.',
+          ja: 'お支払いがキャンセルされました。',
+          zh: '已取消支付。',
+          vi: 'Giao dịch đã bị hủy.',
+          es: 'El pago fue cancelado.',
+        );
         _lastStoreNotice = _lastPurchaseMessage;
         if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
           await InAppPurchase.instance.completePurchase(purchaseDetails);
@@ -1892,7 +2276,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       final bool available = await InAppPurchase.instance.isAvailable();
       if (!available) {
         _storeProductsChecked = true;
-        _storeQueryError = 'Google Play 스토어 연결 불가';
+        _storeQueryError = LocalizationService.pick(
+          ko: 'Google Play 스토어 연결 불가',
+          en: 'Google Play Store unavailable',
+          ja: 'Google Play ストアに接続できません',
+          zh: '无法连接 Google Play 商店',
+          vi: 'Không thể kết nối Google Play Store',
+          es: 'Google Play Store no disponible',
+        );
         notifyListeners();
         return [];
       }
@@ -1922,36 +2313,80 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       if (_pendingPurchaseProductId != null) {
         return (
           started: false,
-          errorMessage: '${productDisplayName(_pendingPurchaseProductId!)} 결제가 처리 중입니다. 잠시만 기다려 주세요.',
+          errorMessage: LocalizationService.pick(
+            ko: '${productDisplayName(_pendingPurchaseProductId!)} 결제가 처리 중입니다. 잠시만 기다려 주세요.',
+            en: '${productDisplayName(_pendingPurchaseProductId!)} payment is in progress. Please wait.',
+            ja: '${productDisplayName(_pendingPurchaseProductId!)} の決済を処理中です。少々お待ちください。',
+            zh: '${productDisplayName(_pendingPurchaseProductId!)} 正在支付处理中，请稍候。',
+            vi: 'Đang xử lý thanh toán ${productDisplayName(_pendingPurchaseProductId!)}. Vui lòng đợi.',
+            es: 'El pago de ${productDisplayName(_pendingPurchaseProductId!)} está en curso.',
+          ),
         );
       }
 
       if (isProductActive(productId)) {
         final expiry = getProductExpiry(productId);
-        final expiryMsg = expiry != null ? ' (${formatShortDate(expiry)} 기간 종료 후 재구매 가능)' : '';
+        final expiryStr = expiry != null ? formatShortDate(expiry) : '';
         return (
           started: false,
-          errorMessage: '이미 이용 중인 상품입니다.$expiryMsg',
+          errorMessage: LocalizationService.pick(
+            ko: '이미 이용 중인 상품입니다.${expiry != null ? ' ($expiryStr 기간 종료 후 재구매 가능)' : ''}',
+            en: 'You already have an active pass/subscription.${expiry != null ? ' Renew after $expiryStr.' : ''}',
+            ja: 'すでにご利用中のプランです。${expiry != null ? ' ($expiryStr 終了後に再購入可能)' : ''}',
+            zh: '您已购买且正在使用该套餐。${expiry != null ? ' ($expiryStr 到期后可续购)' : ''}',
+            vi: 'Gói này hiện đang hoạt động.${expiry != null ? ' Gia hạn sau $expiryStr.' : ''}',
+            es: 'Ya tienes este plan activo.${expiry != null ? ' Disponible tras $expiryStr.' : ''}',
+          ),
         );
       }
 
       if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
-        return (started: false, errorMessage: '인앱 결제는 모바일 기기(Google Play / App Store)에서만 지원됩니다.');
+        return (
+          started: false,
+          errorMessage: LocalizationService.pick(
+            ko: '인앱 결제는 모바일 기기(Google Play / App Store)에서만 지원됩니다.',
+            en: 'In-app purchases are supported on Android & iOS mobile devices.',
+            ja: 'アプリ内課金はモバイル端末（Google Play / App Store）のみ対応しています。',
+            zh: '应用内购买仅支持在手机端（Google Play / App Store）使用。',
+            vi: 'Thanh toán trong ứng dụng chỉ hỗ trợ trên điện thoại (Google Play / App Store).',
+            es: 'Las compras dentro de la app solo están disponibles en dispositivos móviles.',
+          ),
+        );
       }
 
       final available = await InAppPurchase.instance.isAvailable();
       if (!available) {
-        return (started: false, errorMessage: 'Google Play 스토어에 연결할 수 없습니다. 로그인 및 네트워크 상태를 확인해 주세요.');
+        return (
+          started: false,
+          errorMessage: LocalizationService.pick(
+            ko: 'Google Play 스토어에 연결할 수 없습니다. 로그인 및 네트워크 상태를 확인해 주세요.',
+            en: 'Cannot connect to Google Play Store. Please check sign-in and network.',
+            ja: 'Google Play ストアに接続できません。ログインと通信環境をご確認ください。',
+            zh: '无法连接 Google Play 商店，请检查账号登录与网络状态。',
+            vi: 'Không thể kết nối Google Play Store. Vui lòng kiểm tra tài khoản & mạng.',
+            es: 'No se puede conectar con Google Play Store. Revisa tu conexión y cuenta.',
+          ),
+        );
       }
 
       final response = await InAppPurchase.instance.queryProductDetails({productId});
       if (response.error != null) {
-        return (started: false, errorMessage: '스토어 상품 조회 오류: ${response.error!.message}');
+        return (
+          started: false,
+          errorMessage: '${LocalizationService.tr('pro_title')}: ${response.error!.message}',
+        );
       }
       if (response.productDetails.isEmpty) {
         return (
           started: false,
-          errorMessage: '스토어에 구독 상품($productId)이 아직 등록되지 않았거나 심사 중입니다.',
+          errorMessage: LocalizationService.pick(
+            ko: '스토어에 구독 상품($productId)이 아직 등록되지 않았거나 심사 중입니다.',
+            en: 'Store product ($productId) is not yet published or pending review.',
+            ja: 'ストア商品（$productId）がまだ公開されていないか審査中です。',
+            zh: '商店商品（$productId）尚未发布或正在审核中。',
+            vi: 'Sản phẩm ($productId) chưa được phát hành hoặc đang chờ duyệt.',
+            es: 'El producto ($productId) aún no está disponible o está en revisión.',
+          ),
         );
       }
 
@@ -1965,14 +2400,26 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
         _pendingPurchaseProductId = null;
         notifyListeners();
       }
-      return (started: started, errorMessage: started ? null : '결제 창을 열지 못했습니다.');
+      return (
+        started: started,
+        errorMessage: started
+            ? null
+            : LocalizationService.pick(
+                ko: '결제 창을 열지 못했습니다.',
+                en: 'Unable to open checkout sheet.',
+                ja: '決済画面を開けませんでした。',
+                zh: '无法打开支付窗口。',
+                vi: 'Không thể mở cửa sổ thanh toán.',
+                es: 'No se pudo abrir la pasarela de pago.',
+              ),
+      );
     } catch (e) {
       if (_pendingPurchaseProductId == productId) {
         _pendingPurchaseProductId = null;
         notifyListeners();
       }
       debugPrint('buyProduct error: $e');
-      return (started: false, errorMessage: '결제 요청 중 오류가 발생했습니다: $e');
+      return (started: false, errorMessage: '$e');
     }
   }
 
@@ -1995,7 +2442,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
           return (
             restoredCount: 0,
             hadError: true,
-            message: '구독 복원은 모바일 기기(Google Play / App Store)에서 이용할 수 있습니다.',
+            message: LocalizationService.pick(
+              ko: '구독 복원은 모바일 기기(Google Play / App Store)에서 이용할 수 있습니다.',
+              en: 'Restore purchases is available on Android & iOS mobile devices.',
+              ja: '購入の復元はモバイル端末（Google Play / App Store）でご利用いただけます。',
+              zh: '恢复购买功能仅支持在手机端（Google Play / App Store）使用。',
+              vi: 'Khôi phục giao dịch chỉ khả dụng trên điện thoại (Google Play / App Store).',
+              es: 'Restaurar compras solo está disponible en Android e iOS.',
+            ),
           );
         }
         final available = await InAppPurchase.instance.isAvailable();
@@ -2004,7 +2458,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
           return (
             restoredCount: 0,
             hadError: true,
-            message: 'Google Play 스토어에 연결할 수 없어 로컬 이용 상태만 확인했습니다.',
+            message: LocalizationService.pick(
+              ko: 'Google Play 스토어에 연결할 수 없어 로컬 이용 상태만 확인했습니다.',
+              en: 'Cannot reach Google Play Store; checked local status only.',
+              ja: 'Google Play ストアに接続できないため、端末内の状態のみ確認しました。',
+              zh: '无法连接 Google Play 商店，仅核对了本地状态。',
+              vi: 'Không thể kết nối Google Play Store; chỉ kiểm tra trạng thái cục bộ.',
+              es: 'Sin conexión a Google Play; solo se verificó el estado local.',
+            ),
           );
         }
       }
@@ -2056,22 +2517,43 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
       if (restoredIds.isNotEmpty) {
         final names = restoredIds.map(productDisplayName).join(', ');
-        final msg = '구독 ${restoredIds.length}건($names)이 정상 복원되었습니다.';
+        final msg = LocalizationService.pick(
+          ko: '구독 ${restoredIds.length}건($names)이 정상 복원되었습니다.',
+          en: 'Restored ${restoredIds.length} subscription(s): $names',
+          ja: '${restoredIds.length}件の定期購入を復元しました（$names）。',
+          zh: '已成功恢复 ${restoredIds.length} 项订阅（$names）。',
+          vi: 'Đã khôi phục ${restoredIds.length} gói đăng ký ($names).',
+          es: 'Se restauraron ${restoredIds.length} suscripción(es): $names.',
+        );
         _lastStoreEventType = StoreEventType.restored;
         _lastStoreNotice = msg;
         return (restoredCount: restoredIds.length, hadError: false, message: msg);
       }
 
       final msg = expiredStaleLocal
-          ? '스토어에 유효한 활성 구독이 없어 만료 상태로 동기화되었습니다.'
-          : '복원할 활성 구독 내역이 없습니다.';
+          ? LocalizationService.pick(
+              ko: '스토어에 유효한 활성 구독이 없어 만료 상태로 동기화되었습니다.',
+              en: 'No active store subscription found; synced local status to expired.',
+              ja: 'ストアに有効な定期購入がないため、期限切れとして同期しました。',
+              zh: '未检测到商店有效订阅，已将本地状态同步为已过期。',
+              vi: 'Không tìm thấy gói đăng ký còn hiệu lực trên cửa hàng; đã đồng bộ hết hạn.',
+              es: 'No hay suscripciones activas en la tienda; estado sincronizado como caducado.',
+            )
+          : LocalizationService.pick(
+              ko: '복원할 활성 구독 내역이 없습니다.',
+              en: 'No active subscriptions found to restore.',
+              ja: '復元できる有効な定期購入履歴はありません。',
+              zh: '没有可恢复的有效订阅记录。',
+              vi: 'Không có gói đăng ký nào đang hoạt động để khôi phục.',
+              es: 'No hay suscripciones activas para restaurar.',
+            );
       _lastStoreEventType =
           expiredStaleLocal ? StoreEventType.expired : StoreEventType.none;
       _lastStoreNotice = msg;
       return (restoredCount: 0, hadError: false, message: msg);
     } catch (e) {
       debugPrint('restorePurchases error: $e');
-      final msg = '구독 복원 중 오류가 발생했습니다: $e';
+      final msg = '$e';
       _lastStoreEventType = StoreEventType.error;
       _lastStoreNotice = msg;
       return (restoredCount: 0, hadError: true, message: msg);

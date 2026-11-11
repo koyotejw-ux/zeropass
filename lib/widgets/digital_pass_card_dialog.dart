@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/member.dart';
 import '../models/pass_record.dart';
 import '../models/studio_profile.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import 'member_name_badge.dart';
 
@@ -44,40 +45,39 @@ class DigitalPassCardDialog extends StatelessWidget {
 
   void _sharePass(BuildContext context) async {
     final statusText = latestRecord != null
-        ? '오늘 출석 완료 (${DateFormat('HH:mm').format(latestRecord!.timestamp)})'
-        : '수업 대기 중';
+        ? '${LocalizationService.tr('checked_in')} (${DateFormat('HH:mm').format(latestRecord!.timestamp)})'
+        : LocalizationService.tr('waiting_checkin');
 
     final sessionInfo = member.billingType == BillingType.sessionBased
-        ? '남은 횟수: ${member.remainingSessions}회 / 총 ${member.totalSessions}회'
-        : '이용 구분: 월 정기권';
+        ? '${member.remainingSessions} / ${member.totalSessions}'
+        : LocalizationService.tr('common_monthly_pass');
 
     final text = '''
-[${studio.studioName}] 모바일 스마트 출결패스
+[${studio.studioName}] ${LocalizationService.tr('kiosk_mode_pin')} / Pass
 ━━━━━━━━━━━━━━━━
-• 회원명: ${member.primaryName}${member.secondaryTag != null ? ' (${member.secondaryTag})' : ''}
-• 등록반: ${member.groupName}
-• 상태: $statusText
+• ${member.primaryName}${member.secondaryTag != null ? ' (${member.secondaryTag})' : ''}
+• ${LocalizationService.localizeBuiltInLabel(member.groupName)}
+• $statusText
 • $sessionInfo
-• 담당: ${studio.instructorName} ${studio.roleTitle}
+• ${studio.instructorName} ${studio.roleTitle}
 ━━━━━━━━━━━━━━━━
-안전하고 편리한 스마트 출결 제로패스
 ''';
 
     await SharePlus.instance.share(
       ShareParams(
         text: text,
-        subject: '[${studio.studioName}] ${member.primaryName}님의 모바일 출결패스',
+        subject: '[${studio.studioName}] ${member.primaryName}',
       ),
     );
   }
 
   void _copyToClipboard(BuildContext context) {
-    final text = '[${studio.studioName}] ${member.primaryName} 모바일 패스 확인되었습니다.';
+    final text = '[${studio.studioName}] ${member.primaryName}';
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('출결패스 정보가 클립보드에 복사되었습니다.'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(LocalizationService.tr('common_copied')),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -292,7 +292,9 @@ class DigitalPassCardDialog extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
-                                      hasAttendedToday ? '출석 완료' : '수업 대기',
+                                      hasAttendedToday
+                                          ? LocalizationService.tr('checked_in')
+                                          : LocalizationService.tr('waiting_checkin'),
                                       style: TextStyle(
                                         fontFamily: 'Pretendard',
                                         color: hasAttendedToday
@@ -379,9 +381,16 @@ class DigitalPassCardDialog extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  const Text(
-                                    '키오스크 스캐너 또는 카메라에 비춰주세요',
-                                    style: TextStyle(
+                                  Text(
+                                    LocalizationService.pick(
+                                      ko: '키오스크 스캐너 또는 카메라에 비춰주세요',
+                                      en: 'Present pass or PIN at the kiosk scanner',
+                                      ja: 'キオスクまたは受付で提示してください',
+                                      zh: '请向前台考勤终端出示此电子凭证',
+                                      vi: 'Quét mã hoặc nhập PIN tại quầy Kiosk',
+                                      es: 'Presenta tu pase en el quiosco',
+                                    ),
+                                    style: const TextStyle(
                                       fontFamily: 'Pretendard',
                                       color: Color(0xFF475569),
                                       fontSize: 11.5,
@@ -390,7 +399,7 @@ class DigitalPassCardDialog extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '회원코드: ${member.id} · 인증키 [뒷자리 $phoneTail]',
+                                    'ID: ${member.id} · PIN [$phoneTail]',
                                     style: const TextStyle(
                                       fontFamily: 'Pretendard',
                                       color: Color(0xFF94A3B8),
@@ -428,7 +437,7 @@ class DigitalPassCardDialog extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  '잔여 회차',
+                                  LocalizationService.tr('kiosk_success_pass_label'),
                                   style: TextStyle(
                                     fontFamily: 'Pretendard',
                                     color: Colors.white.withAlpha((255 * 0.7).round()),
@@ -451,7 +460,9 @@ class DigitalPassCardDialog extends StatelessWidget {
                                         ),
                                       ),
                                       TextSpan(
-                                        text: ' / ${member.totalSessions}회',
+                                        text: LocalizationService.isDomestic
+                                            ? ' / ${member.totalSessions}회'
+                                            : ' / ${member.totalSessions}',
                                         style: TextStyle(
                                           fontFamily: 'Pretendard',
                                           color: Colors.white.withAlpha((255 * 0.6).round()),
@@ -483,7 +494,7 @@ class DigitalPassCardDialog extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  '수강 구분',
+                                  LocalizationService.tr('billing_type_monthly'),
                                   style: TextStyle(
                                     fontFamily: 'Pretendard',
                                     color: Colors.white.withAlpha((255 * 0.7).round()),
@@ -491,9 +502,9 @@ class DigitalPassCardDialog extends StatelessWidget {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                const Text(
-                                  '매월 정기 수강권',
-                                  style: TextStyle(
+                                Text(
+                                  LocalizationService.tr('common_monthly_pass'),
+                                  style: const TextStyle(
                                     fontFamily: 'Pretendard',
                                     color: Color(0xFF38BDF8),
                                     fontSize: 13.5,
@@ -521,7 +532,14 @@ class DigitalPassCardDialog extends StatelessWidget {
                                     const Icon(Icons.touch_app_rounded, color: Color(0xFF94A3B8), size: 14),
                                     const SizedBox(width: 5),
                                     Text(
-                                      '마지막 출석',
+                                      LocalizationService.pick(
+                                        ko: '마지막 출석',
+                                        en: 'Last Check-in',
+                                        ja: '最終出席',
+                                        zh: '最近签到',
+                                        vi: 'Lần cuối',
+                                        es: 'Última visita',
+                                      ),
                                       style: TextStyle(
                                         fontFamily: 'Pretendard',
                                         color: Colors.white.withAlpha((255 * 0.6).round()),
@@ -533,7 +551,7 @@ class DigitalPassCardDialog extends StatelessWidget {
                                 Text(
                                   latestRecord != null
                                       ? DateFormat('yyyy.MM.dd HH:mm').format(latestRecord!.timestamp)
-                                      : '최근 출석 기록 없음',
+                                      : '-',
                                   style: const TextStyle(
                                     fontFamily: 'Pretendard',
                                     color: Color(0xFFCBD5E1),
@@ -562,9 +580,16 @@ class DigitalPassCardDialog extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => _sharePass(context),
                         icon: const Icon(Icons.share_rounded, size: 17, color: Colors.white),
-                        label: const Text(
-                          '카톡 / 문자 공유',
-                          style: TextStyle(
+                        label: Text(
+                          LocalizationService.pick(
+                            ko: '카톡 / 문자 공유',
+                            en: 'Share / Send Pass',
+                            ja: '共有・メッセージ送信',
+                            zh: '分享 / 发送电子卡',
+                            vi: 'Chia sẻ / Gửi thẻ',
+                            es: 'Compartir / Enviar',
+                          ),
+                          style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
@@ -589,7 +614,14 @@ class DigitalPassCardDialog extends StatelessWidget {
                         backgroundColor: Colors.white.withAlpha((255 * 0.16).round()),
                         padding: const EdgeInsets.all(13),
                       ),
-                      tooltip: '출결패스 복사',
+                      tooltip: LocalizationService.pick(
+                        ko: '출결패스 복사',
+                        en: 'Copy Pass',
+                        ja: 'パスをコピー',
+                        zh: '复制通行证',
+                        vi: 'Sao chép thẻ',
+                        es: 'Copiar pase',
+                      ),
                     ),
                     const SizedBox(width: 6),
                     IconButton.filledTonal(

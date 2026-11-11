@@ -62,11 +62,53 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
     });
   }
 
+  String _formatMonthTitle(DateTime d) {
+    if (LocalizationService.currentLanguage == AppLanguage.korean) {
+      return DateFormat('yyyy년 M월', 'ko_KR').format(d);
+    }
+    const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const esMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return LocalizationService.pick(
+      ko: '${d.year}년 ${d.month}월',
+      en: '${enMonths[d.month - 1]} ${d.year}',
+      ja: '${d.year}年${d.month}月',
+      zh: '${d.year}年${d.month}月',
+      vi: 'Th${d.month}/${d.year}',
+      es: '${esMonths[d.month - 1]} ${d.year}',
+    );
+  }
+
+  String _formatSelectedDayHeader(DateTime d) {
+    if (LocalizationService.currentLanguage == AppLanguage.korean) {
+      return DateFormat('M월 d일 (E) 현황', 'ko_KR').format(d);
+    }
+    final weekdays = LocalizationService.pickList(
+      ko: const ['월', '화', '수', '목', '금', '토', '일'],
+      en: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      ja: const ['月', '火', '水', '木', '金', '土', '日'],
+      zh: const ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+      vi: const ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+      es: const ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+    );
+    final wd = weekdays[(d.weekday - 1).clamp(0, 6)];
+    return LocalizationService.pick(
+      ko: '${d.month}월 ${d.day}일 ($wd) 현황',
+      en: '${LocalizationService.formatDate(d)} ($wd)',
+      ja: '${d.month}月${d.day}日 ($wd)',
+      zh: '${d.month}月${d.day}日 ($wd)',
+      vi: '${LocalizationService.formatDate(d)} ($wd)',
+      es: '${LocalizationService.formatDate(d)} ($wd)',
+    );
+  }
+
   void _openAddScheduleDialog(BuildContext context, DateTime targetDate, {ScheduleItem? editItem}) {
     final isEdit = editItem != null;
     final titleController = TextEditingController(text: editItem?.title ?? '');
     final memoController = TextEditingController(text: editItem?.memo ?? '');
     var selectedCat = editItem?.category ?? ScheduleCategory.academy;
+    final targetDateStr = LocalizationService.currentLanguage == AppLanguage.korean
+        ? DateFormat('M월 d일', 'ko_KR').format(targetDate)
+        : LocalizationService.formatDate(targetDate);
 
     showDialog(
       context: context,
@@ -87,8 +129,22 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               Expanded(
                 child: Text(
                   isEdit
-                      ? '${DateFormat('M월 d일', 'ko_KR').format(targetDate)} 일정 수정'
-                      : '${DateFormat('M월 d일', 'ko_KR').format(targetDate)} 새 일정 등록',
+                      ? LocalizationService.pick(
+                          ko: '$targetDateStr 일정 수정',
+                          en: 'Edit Event ($targetDateStr)',
+                          ja: '$targetDateStr 予定を編集',
+                          zh: '编辑日程 ($targetDateStr)',
+                          vi: 'Sửa lịch ($targetDateStr)',
+                          es: 'Editar evento ($targetDateStr)',
+                        )
+                      : LocalizationService.pick(
+                          ko: '$targetDateStr 새 일정 등록',
+                          en: 'New Event ($targetDateStr)',
+                          ja: '$targetDateStr 新しい予定を追加',
+                          zh: '新建日程 ($targetDateStr)',
+                          vi: 'Thêm lịch mới ($targetDateStr)',
+                          es: 'Nuevo evento ($targetDateStr)',
+                        ),
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -100,9 +156,19 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(2, 4, 2, 8),
-                  child: Text('일정 분류', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(2, 4, 2, 8),
+                  child: Text(
+                    LocalizationService.pick(
+                      ko: '일정 분류',
+                      en: 'Category',
+                      ja: 'カテゴリ',
+                      zh: '日程分类',
+                      vi: 'Phân loại',
+                      es: 'Categoría',
+                    ),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
@@ -113,7 +179,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       final isSel = cat == selectedCat;
                       return ChoiceChip(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        label: Text(cat.label, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.w800 : FontWeight.w600, color: isSel ? Colors.white : AppTheme.textPrimary)),
+                        label: Text(cat.localizedLabel, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.w800 : FontWeight.w600, color: isSel ? Colors.white : AppTheme.textPrimary)),
                         selected: isSel,
                         selectedColor: Color(cat.colorValue),
                         backgroundColor: const Color(0xFFF1F5F9),
@@ -128,9 +194,19 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(2, 6, 2, 8),
-                  child: Text('일정 명칭', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(2, 6, 2, 8),
+                  child: Text(
+                    LocalizationService.pick(
+                      ko: '일정 명칭',
+                      en: 'Event Title',
+                      ja: '予定タイトル',
+                      zh: '日程标题',
+                      vi: 'Tên lịch trình',
+                      es: 'Título del evento',
+                    ),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
@@ -138,7 +214,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     controller: titleController,
                     autofocus: true,
                     decoration: InputDecoration(
-                      hintText: '예: 겨울방학 특강 개강, 정기 모의고사',
+                      hintText: LocalizationService.pick(
+                        ko: '예: 겨울방학 특강 개강, 정기 모의고사',
+                        en: 'e.g. Winter Workshop, Belt Test, Tax Filing',
+                        ja: '例：特別講座スタート、昇級審査',
+                        zh: '例：寒假特训开课、阶段测评',
+                        vi: 'VD: Khai giảng khóa mới, Thi đánh giá',
+                        es: 'Ej. Taller especial, Examen de nivel',
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.borderSubtle)),
@@ -147,9 +230,19 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(2, 6, 2, 8),
-                  child: Text('상세 메모 (선택)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(2, 6, 2, 8),
+                  child: Text(
+                    LocalizationService.pick(
+                      ko: '상세 메모 (선택)',
+                      en: 'Memo (Optional)',
+                      ja: 'メモ（任意）',
+                      zh: '详细备注（可选）',
+                      vi: 'Ghi chú (Tùy chọn)',
+                      es: 'Notas (Opcional)',
+                    ),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
@@ -157,7 +250,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     controller: memoController,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      hintText: '일정에 대한 간단한 안내나 준비사항을 입력하세요.',
+                      hintText: LocalizationService.pick(
+                        ko: '일정에 대한 간단한 안내나 준비사항을 입력하세요.',
+                        en: 'Add preparation notes or reminders.',
+                        ja: '案内事項や持ち物などを入力してください。',
+                        zh: '输入说明或准备事项。',
+                        vi: 'Nhập ghi chú hoặc lưu ý chuẩn bị.',
+                        es: 'Añade detalles o recordatorios.',
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.borderSubtle)),
@@ -184,7 +284,9 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ZeroButton.primary(
-                    label: isEdit ? '수정하기' : '등록하기',
+                    label: isEdit
+                        ? LocalizationService.pick(ko: '수정하기', en: 'Save', ja: '更新する', zh: '保存修改', vi: 'Cập nhật', es: 'Guardar')
+                        : LocalizationService.pick(ko: '등록하기', en: 'Add', ja: '登録する', zh: '添加日程', vi: 'Thêm', es: 'Añadir'),
                     size: ZeroButtonSize.medium,
                     fullWidth: true,
                     onPressed: () async {
@@ -192,8 +294,9 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       if (title.isEmpty) return;
                       final memo = memoController.text.trim().isEmpty ? null : memoController.text.trim();
                       final bm = MonetizationService.instance;
+                      final itemLabel = LocalizationService.pick(ko: '일정', en: 'Schedule', ja: '予定', zh: '日程', vi: 'Lịch', es: 'Evento');
                       if (isEdit) {
-                        if (!await bm.ensureEditAllowed(dialogCtx, itemLabel: '일정')) return;
+                        if (!await bm.ensureEditAllowed(dialogCtx, itemLabel: itemLabel)) return;
                         final updated = editItem.copyWith(
                           title: title,
                           category: selectedCat,
@@ -205,7 +308,16 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('\'$title\' 일정이 수정되었습니다.'),
+                              content: Text(
+                                LocalizationService.pick(
+                                  ko: '\'$title\' 일정이 수정되었습니다.',
+                                  en: 'Updated schedule "$title".',
+                                  ja: '「$title」の予定を更新しました。',
+                                  zh: '已修改日程“$title”。',
+                                  vi: 'Đã cập nhật lịch "$title".',
+                                  es: 'Evento "$title" actualizado.',
+                                ),
+                              ),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -214,7 +326,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                         final curCount = ref.read(schedulesProvider).value?.length ?? 0;
                         if (!await bm.ensureCreateAllowed(
                           dialogCtx,
-                          itemLabel: '일정',
+                          itemLabel: itemLabel,
                           currentCount: curCount,
                           limit: bm.maxScheduleLimit,
                         )) {
@@ -233,7 +345,16 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('\'$title\' 일정이 등록되었습니다.'),
+                              content: Text(
+                                LocalizationService.pick(
+                                  ko: '\'$title\' 일정이 등록되었습니다.',
+                                  en: 'Added schedule "$title".',
+                                  ja: '「$title」の予定を登録しました。',
+                                  zh: '已添加日程“$title”。',
+                                  vi: 'Đã thêm lịch "$title".',
+                                  es: 'Evento "$title" añadido.',
+                                ),
+                              ),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -311,12 +432,19 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       child: const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryBlue, size: 20),
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        '출결 & 일정 스케줄 달력',
+                        LocalizationService.pick(
+                          ko: '출결 & 일정 스케줄 달력',
+                          en: 'Attendance & Schedule Calendar',
+                          ja: '出席＆スケジュールカレンダー',
+                          zh: '考勤与日程日历',
+                          vi: 'Lịch Điểm danh & Hoạt động',
+                          es: 'Calendario de Asistencia y Eventos',
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textPrimary,
@@ -352,7 +480,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    DateFormat('yyyy년 M월', 'ko_KR').format(_focusedMonth),
+                    _formatMonthTitle(_focusedMonth),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -371,9 +499,16 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                         border: Border.all(color: AppTheme.borderSubtle),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        '오늘',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                      child: Text(
+                        LocalizationService.pick(
+                          ko: '오늘',
+                          en: 'Today',
+                          ja: '今日',
+                          zh: '今天',
+                          vi: 'Hôm nay',
+                          es: 'Hoy',
+                        ),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
                       ),
                     ),
                   ),
@@ -388,7 +523,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     onPressed: _prevMonth,
-                    tooltip: '이전 달',
+                    tooltip: LocalizationService.pick(ko: '이전 달', en: 'Previous Month', ja: '前月', zh: '上个月', vi: 'Tháng trước', es: 'Mes anterior'),
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right_rounded, size: 20),
@@ -396,7 +531,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     onPressed: _nextMonth,
-                    tooltip: '다음 달',
+                    tooltip: LocalizationService.pick(ko: '다음 달', en: 'Next Month', ja: '翌月', zh: '下个月', vi: 'Tháng sau', es: 'Mes siguiente'),
                   ),
                   const SizedBox(width: 4),
                   Material(
@@ -405,14 +540,17 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     child: InkWell(
                       onTap: () => _openAddScheduleDialog(context, _selectedDate),
                       borderRadius: BorderRadius.circular(7),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.add, size: 13, color: Colors.white),
-                            SizedBox(width: 2),
-                            Text('일정 추가', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                            const Icon(Icons.add, size: 13, color: Colors.white),
+                            const SizedBox(width: 2),
+                            Text(
+                              LocalizationService.pick(ko: '일정 추가', en: 'Add', ja: '追加', zh: '添加', vi: 'Thêm', es: 'Añadir'),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
                           ],
                         ),
                       ),
@@ -428,16 +566,29 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
         Container(
           color: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: const [
-              Expanded(child: Center(child: Text('일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFEF4444))))),
-              Expanded(child: Center(child: Text('월', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)))),
-              Expanded(child: Center(child: Text('화', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)))),
-              Expanded(child: Center(child: Text('수', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)))),
-              Expanded(child: Center(child: Text('목', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)))),
-              Expanded(child: Center(child: Text('금', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)))),
-              Expanded(child: Center(child: Text('토', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF3B82F6))))),
-            ],
+          child: Builder(
+            builder: (_) {
+              final dayLabels = LocalizationService.pickList(
+                ko: const ['일', '월', '화', '수', '목', '금', '토'],
+                en: const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                ja: const ['日', '月', '火', '水', '木', '金', '土'],
+                zh: const ['日', '一', '二', '三', '四', '五', '六'],
+                vi: const ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+                es: const ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+              );
+              return Row(
+                children: List.generate(7, (i) {
+                  final color = i == 0
+                      ? const Color(0xFFEF4444)
+                      : (i == 6 ? const Color(0xFF3B82F6) : AppTheme.textSecondary);
+                  return Expanded(
+                    child: Center(
+                      child: Text(dayLabels[i], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+                    ),
+                  );
+                }),
+              );
+            },
           ),
         ),
 
@@ -485,7 +636,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          DateFormat('M월 d일 (E) 현황', 'ko_KR').format(_selectedDate),
+                          _formatSelectedDayHeader(_selectedDate),
                           style: const TextStyle(
                             fontSize: 15.5,
                             fontWeight: FontWeight.w800,
@@ -498,10 +649,43 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       spacing: 5,
                       runSpacing: 4,
                       children: [
-                        _buildCountBadge('출석 ${selectedDayRecords.length}명', const Color(0xFF059669), const Color(0xFFECFDF5)),
-                        _buildCountBadge('일정 ${selectedDaySchedules.length}건', const Color(0xFF6366F1), const Color(0xFFEEF2FF)),
+                        _buildCountBadge(
+                          LocalizationService.pick(
+                            ko: '출석 ${selectedDayRecords.length}명',
+                            en: 'Attended ${selectedDayRecords.length}',
+                            ja: '出席 ${selectedDayRecords.length}名',
+                            zh: '签到 ${selectedDayRecords.length} 人',
+                            vi: 'Điểm danh ${selectedDayRecords.length}',
+                            es: 'Asist. ${selectedDayRecords.length}',
+                          ),
+                          const Color(0xFF059669),
+                          const Color(0xFFECFDF5),
+                        ),
+                        _buildCountBadge(
+                          LocalizationService.pick(
+                            ko: '일정 ${selectedDaySchedules.length}건',
+                            en: 'Events ${selectedDaySchedules.length}',
+                            ja: '予定 ${selectedDaySchedules.length}件',
+                            zh: '日程 ${selectedDaySchedules.length} 条',
+                            vi: 'Lịch ${selectedDaySchedules.length}',
+                            es: 'Eventos ${selectedDaySchedules.length}',
+                          ),
+                          const Color(0xFF6366F1),
+                          const Color(0xFFEEF2FF),
+                        ),
                         if (selectedDayInvoices.isNotEmpty)
-                          _buildCountBadge('청구 ${selectedDayInvoices.length}건', const Color(0xFFD97706), const Color(0xFFFFFBEB)),
+                          _buildCountBadge(
+                            LocalizationService.pick(
+                              ko: '청구 ${selectedDayInvoices.length}건',
+                              en: 'Due ${selectedDayInvoices.length}',
+                              ja: '請求 ${selectedDayInvoices.length}件',
+                              zh: '账单 ${selectedDayInvoices.length} 笔',
+                              vi: 'Hóa đơn ${selectedDayInvoices.length}',
+                              es: 'Fact. ${selectedDayInvoices.length}',
+                            ),
+                            const Color(0xFFD97706),
+                            const Color(0xFFFFFBEB),
+                          ),
                       ],
                     ),
                   ],
@@ -665,7 +849,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 if (dayPassCount > 0) ...[
                   const SizedBox(height: 1),
                   Text(
-                    '$dayPassCount명',
+                    LocalizationService.pick(
+                      ko: '$dayPassCount명',
+                      en: '$dayPassCount',
+                      ja: '$dayPassCount名',
+                      zh: '$dayPassCount人',
+                      vi: '$dayPassCount',
+                      es: '$dayPassCount',
+                    ),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -704,7 +895,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '${studio.memberTitle} 출결 내역 (${records.length}건)',
+                    LocalizationService.pick(
+                      ko: '${studio.memberTitle} 출결 내역 (${records.length}건)',
+                      en: '${studio.memberTitle} Attendance (${records.length})',
+                      ja: '${studio.memberTitle} 出席履歴 (${records.length}件)',
+                      zh: '${studio.memberTitle} 考勤记录 (${records.length})',
+                      vi: 'Điểm danh ${studio.memberTitle} (${records.length})',
+                      es: 'Asistencia (${records.length})',
+                    ),
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -723,7 +921,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     Icon(Icons.event_busy_rounded, size: 32, color: Colors.grey.shade400),
                     const SizedBox(height: 6),
                     Text(
-                      '해당 일자에 기록된 ${studio.memberTitle} 출결 내역이 없습니다.',
+                      LocalizationService.pick(
+                        ko: '해당 일자에 기록된 ${studio.memberTitle} 출결 내역이 없습니다.',
+                        en: 'No attendance records logged for this date.',
+                        ja: 'この日の出席記録はありません。',
+                        zh: '该日期暂无考勤记录。',
+                        vi: 'Chưa có lượt điểm danh nào vào ngày này.',
+                        es: 'Sin registros de asistencia para esta fecha.',
+                      ),
                       style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
                     ),
                   ],
@@ -739,8 +944,10 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               itemBuilder: (context, idx) {
                 final rec = records[idx];
                 final member = memberMap[rec.memberId];
-                final name = member?.primaryName ?? '회원';
-                final group = member?.groupName ?? '일반';
+                final name = member?.primaryName ?? studio.memberWord;
+                final group = LocalizationService.localizeBuiltInLabel(
+                  member?.groupName ?? LocalizationService.pick(ko: '일반', en: 'General', ja: '一般', zh: '常规', vi: 'Chung', es: 'General'),
+                );
                 final timeStr = DateFormat('HH:mm').format(rec.timestamp);
 
                 return ListTile(
@@ -750,7 +957,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     radius: 16,
                     backgroundColor: const Color(0xFFECFDF5),
                     child: Text(
-                      name.isNotEmpty ? name[0] : '회',
+                      name.isNotEmpty ? name[0] : '?',
                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF059669)),
                     ),
                   ),
@@ -768,14 +975,34 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       ),
                     ],
                   ),
-                  subtitle: Text('$timeStr 체크인 완료', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  subtitle: Text(
+                    LocalizationService.pick(
+                      ko: '$timeStr 체크인 완료',
+                      en: 'Checked in at $timeStr',
+                      ja: '$timeStr チェックイン済み',
+                      zh: '$timeStr 已完成签到',
+                      vi: 'Đã điểm danh lúc $timeStr',
+                      es: 'Check-in a las $timeStr',
+                    ),
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  ),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('정상 출석', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                    child: Text(
+                      LocalizationService.pick(
+                        ko: '정상 출석',
+                        en: 'Attended',
+                        ja: '出席',
+                        zh: '正常出勤',
+                        vi: 'Có mặt',
+                        es: 'Asistió',
+                      ),
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF059669)),
+                    ),
                   ),
                 );
               },
@@ -808,7 +1035,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          '스튜디오 주요 일정 (${schedules.length}건)',
+                          LocalizationService.pick(
+                            ko: '스튜디오 주요 일정 (${schedules.length}건)',
+                            en: 'Studio Events (${schedules.length})',
+                            ja: 'スタジオ予定 (${schedules.length}件)',
+                            zh: '机构重要日程 (${schedules.length})',
+                            vi: 'Sự kiện cơ sở (${schedules.length})',
+                            es: 'Eventos del centro (${schedules.length})',
+                          ),
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -820,11 +1054,18 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 const SizedBox(width: 6),
                 InkWell(
                   onTap: () => _openAddScheduleDialog(context, _selectedDate),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     child: Text(
-                      '+ 일정 추가',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                      LocalizationService.pick(
+                        ko: '+ 일정 추가',
+                        en: '+ Add Event',
+                        ja: '+ 予定追加',
+                        zh: '+ 添加日程',
+                        vi: '+ Thêm lịch',
+                        es: '+ Añadir',
+                      ),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
                     ),
                   ),
                 ),
@@ -837,7 +1078,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               child: Center(
                 child: Text(
-                  '등록된 주요 일정이 없습니다. [+ 일정 추가]로 등록해 보세요.',
+                  LocalizationService.pick(
+                    ko: '등록된 주요 일정이 없습니다. [+ 일정 추가]로 등록해 보세요.',
+                    en: 'No events scheduled. Tap [+ Add Event] to create one.',
+                    ja: '登録された予定はありません。[+ 予定追加]から登録できます。',
+                    zh: '暂无重要日程，点击 [+ 添加日程] 即可创建。',
+                    vi: 'Chưa có lịch nào. Nhấn [+ Thêm lịch] để thêm mới.',
+                    es: 'Sin eventos programados. Pulsa [+ Añadir] para crear uno.',
+                  ),
                   style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
                 ),
               ),
@@ -880,7 +1128,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                               style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
                             )
                           : Text(
-                              sch.category.label,
+                              sch.category.localizedLabel,
                               style: TextStyle(fontSize: 11.5, color: Color(sch.category.colorValue), fontWeight: FontWeight.w600),
                             ),
                     ),
@@ -889,7 +1137,7 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                       onPressed: () {
                         ref.read(schedulesProvider.notifier).deleteSchedule(sch.id);
                       },
-                      tooltip: '일정 삭제',
+                      tooltip: LocalizationService.pick(ko: '일정 삭제', en: 'Delete Event', ja: '予定を削除', zh: '删除日程', vi: 'Xóa lịch', es: 'Eliminar evento'),
                     ),
                   ),
                 );
@@ -923,7 +1171,14 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '${studio.feeTitle} 납부 마감 청구서 (${invoices.length}건)',
+                    LocalizationService.pick(
+                      ko: '${studio.feeTitle} 납부 마감 청구서 (${invoices.length}건)',
+                      en: '${studio.feeTitle} Due Invoices (${invoices.length})',
+                      ja: '${studio.feeTitle} 支払期限の請求書 (${invoices.length}件)',
+                      zh: '${studio.feeTitle} 到期账单 (${invoices.length})',
+                      vi: 'Hóa đơn ${studio.feeTitle} đến hạn (${invoices.length})',
+                      es: 'Facturas por vencer (${invoices.length})',
+                    ),
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -947,11 +1202,18 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                 dense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 title: Text(
-                  '${member?.primaryName ?? '회원'} - ${inv.title}',
+                  '${member?.primaryName ?? studio.memberWord} - ${inv.title}',
                   style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
-                  '${NumberFormat('#,###').format(inv.amount)}원 · 기한: ${DateFormat('M/d').format(inv.dueDate)}',
+                  LocalizationService.pick(
+                    ko: '${LocalizationService.formatAmount(inv.amount)} · 기한: ${DateFormat('M/d').format(inv.dueDate)}',
+                    en: '${LocalizationService.formatAmount(inv.amount)} · Due: ${LocalizationService.formatDate(inv.dueDate)}',
+                    ja: '${LocalizationService.formatAmount(inv.amount)} · 期限: ${DateFormat('M/d').format(inv.dueDate)}',
+                    zh: '${LocalizationService.formatAmount(inv.amount)} · 截止: ${DateFormat('M/d').format(inv.dueDate)}',
+                    vi: '${LocalizationService.formatAmount(inv.amount)} · Hạn: ${LocalizationService.formatDate(inv.dueDate)}',
+                    es: '${LocalizationService.formatAmount(inv.amount)} · Vence: ${LocalizationService.formatDate(inv.dueDate)}',
+                  ),
                   style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 trailing: Container(
@@ -961,7 +1223,9 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isPaid ? '수납완료' : '미납',
+                    isPaid
+                        ? LocalizationService.pick(ko: '수납완료', en: 'Paid', ja: '領収済', zh: '已收款', vi: 'Đã thu', es: 'Pagado')
+                        : LocalizationService.pick(ko: '미납', en: 'Unpaid', ja: '未納', zh: '未付', vi: 'Chưa thu', es: 'Impago'),
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'localization_strings_extra.dart';
+import 'region_workflow_service.dart';
 
 enum AppLanguage {
   korean('ko', '한국어', 'Korean', '🇰🇷'),
@@ -199,6 +201,108 @@ enum AppCurrency {
     }
   }
 
+  String get paymentChannelsSummary => paymentChannels.join(', ');
+
+  int get defaultFeeBase {
+    switch (this) {
+      case AppCurrency.krw:
+        return 160000;
+      case AppCurrency.usd:
+        return 150;
+      case AppCurrency.jpy:
+        return 15000;
+      case AppCurrency.cny:
+        return 880;
+      case AppCurrency.vnd:
+        return 2500000;
+      case AppCurrency.eur:
+        return 120;
+      case AppCurrency.gbp:
+        return 110;
+      case AppCurrency.sgd:
+        return 180;
+      case AppCurrency.aud:
+        return 175;
+      case AppCurrency.cad:
+        return 165;
+    }
+  }
+
+  String get defaultBankName {
+    switch (this) {
+      case AppCurrency.krw:
+        return '카카오뱅크';
+      case AppCurrency.usd:
+        return 'Chase Bank';
+      case AppCurrency.jpy:
+        return '楽天銀行';
+      case AppCurrency.cny:
+        return '招商银行';
+      case AppCurrency.vnd:
+        return 'Vietcombank';
+      case AppCurrency.eur:
+        return 'Deutsche Bank';
+      case AppCurrency.gbp:
+        return 'Barclays';
+      case AppCurrency.sgd:
+        return 'DBS Bank';
+      case AppCurrency.aud:
+        return 'CommBank';
+      case AppCurrency.cad:
+        return 'RBC Royal Bank';
+    }
+  }
+
+  String get bankHint {
+    switch (this) {
+      case AppCurrency.krw:
+        return '예: 카카오뱅크, 국민은행';
+      case AppCurrency.usd:
+        return 'e.g. Chase, Bank of America, Zelle';
+      case AppCurrency.jpy:
+        return '例：楽天銀行、三菱UFJ銀行';
+      case AppCurrency.cny:
+        return '例：招商银行、工商银行';
+      case AppCurrency.vnd:
+        return 'VD: Vietcombank, Techcombank';
+      case AppCurrency.eur:
+        return 'e.g. Deutsche Bank, ING, N26';
+      case AppCurrency.gbp:
+        return 'e.g. Barclays, HSBC, Monzo';
+      case AppCurrency.sgd:
+        return 'e.g. DBS, OCBC, UOB';
+      case AppCurrency.aud:
+        return 'e.g. CommBank, NAB, Westpac';
+      case AppCurrency.cad:
+        return 'e.g. RBC, TD Bank, Scotiabank';
+    }
+  }
+
+  String get phoneHint {
+    switch (this) {
+      case AppCurrency.krw:
+        return '예: 010-1234-5678';
+      case AppCurrency.usd:
+        return 'e.g. (555) 123-4567';
+      case AppCurrency.jpy:
+        return '例：090-1234-5678';
+      case AppCurrency.cny:
+        return '例：138-0000-1234';
+      case AppCurrency.vnd:
+        return 'VD: 090 123 4567';
+      case AppCurrency.eur:
+        return 'e.g. +34 600 123 456';
+      case AppCurrency.gbp:
+        return 'e.g. 07700 900123';
+      case AppCurrency.sgd:
+        return 'e.g. +65 9123 4567';
+      case AppCurrency.aud:
+        return 'e.g. 0412 345 678';
+      case AppCurrency.cad:
+        return 'e.g. (416) 555-0123';
+    }
+  }
+
   String get taxPolicy {
     switch (this) {
       case AppCurrency.krw:
@@ -223,6 +327,9 @@ enum AppCurrency {
         return 'CRA GST/HST Return / Small Business T2125 Statement';
     }
   }
+
+  /// Whether South Korea Toss (`supertoss://`) instant transfer deep-link applies.
+  bool get supportsTossLink => this == AppCurrency.krw;
 
   static AppCurrency defaultForLanguage(AppLanguage lang) {
     switch (lang) {
@@ -327,18 +434,56 @@ class LocalizationService {
   }
 
   /// 프로샵 타이틀
-  static String get proStoreTitle => isDomestic ? '프로샵' : 'PRO Shop';
+  static String get proStoreTitle => tr('pro_title');
 
   /// 구독 복원 라벨
-  static String get proStoreRestore => isDomestic ? '구독 복원' : 'Restore';
+  static String get proStoreRestore => tr('pro_restore');
 
   /// 타사 출결 ERP 비교 라벨
-  static String get proStoreComparisonOld =>
-      isDomestic ? '타사 월 49,000원' : 'Others \$39.99/mo';
+  static String get proStoreComparisonOld => tr('pro_comp_old');
 
   /// 체크앤페이 VIP 절감 라벨
-  static String get proStoreComparisonNew =>
-      isDomestic ? 'VIP 월 5,900원 (88% 절감)' : 'VIP \$4.99/mo (88% Off)';
+  static String get proStoreComparisonNew => tr('pro_comp_new');
+
+  static bool get supportsTossTransfer =>
+      RegionWorkflowService.supportsTossTransfer(_currentCurrency);
+
+  static double get defaultWithholdingRate =>
+      RegionWorkflowService.defaultWithholdingRate(_currentCurrency);
+
+  static String paymentMethodLabel(String method) =>
+      RegionWorkflowService.paymentMethodLabel(
+        method,
+        _currentLanguage,
+        currency: _currentCurrency,
+      );
+
+  static String taxEvidenceLabel(String koEvidence) =>
+      RegionWorkflowService.taxEvidenceLabel(koEvidence, _currentLanguage);
+
+  static String get withholdingDescription =>
+      RegionWorkflowService.withholdingDescription(
+        _currentLanguage,
+        _currentCurrency,
+      );
+
+  static String industryCategoryLabel(String canonicalCategory) =>
+      RegionWorkflowService.industryCategoryLabel(
+        canonicalCategory,
+        _currentLanguage,
+      );
+
+  static String termOptionLabel(String koTerm) =>
+      RegionWorkflowService.termOptionLabel(koTerm, _currentLanguage);
+
+  static String localizeBuiltInLabel(String label) =>
+      RegionWorkflowService.localizeBuiltInLabel(label, _currentLanguage);
+
+  static List<int> quickIncrementAmounts({bool expense = false}) =>
+      RegionWorkflowService.quickIncrementAmounts(_currentCurrency, expense: expense);
+
+  static int get fixedDiscountPreset =>
+      RegionWorkflowService.fixedDiscountPreset(_currentCurrency);
 
   static Future<void> initialize() async {
     try {
@@ -1361,11 +1506,70 @@ class LocalizationService {
   /// Translate key with fallback
   static String tr(String key) {
     final langCode = _currentLanguage.code;
-    final dict = _strings[key];
+    final dict = _strings[key] ?? kExtraLocalizedStrings[key];
     if (dict != null) {
       return dict[langCode] ?? dict['en'] ?? dict['ko'] ?? key;
     }
     return key;
+  }
+
+  /// Translate key with `{param}` substitutions
+  static String trParams(String key, Map<String, String> params) {
+    String result = tr(key);
+    params.forEach((k, v) {
+      result = result.replaceAll('{$k}', v);
+    });
+    return result;
+  }
+
+  /// Translate inline across all 6 supported languages with compile-time enforcement.
+  static String pick({
+    required String ko,
+    required String en,
+    required String ja,
+    required String zh,
+    required String vi,
+    required String es,
+  }) {
+    switch (_currentLanguage) {
+      case AppLanguage.korean:
+        return ko;
+      case AppLanguage.english:
+        return en;
+      case AppLanguage.japanese:
+        return ja;
+      case AppLanguage.chinese:
+        return zh;
+      case AppLanguage.vietnamese:
+        return vi;
+      case AppLanguage.spanish:
+        return es;
+    }
+  }
+
+  /// Translate inline list across all 6 supported languages.
+  static List<String> pickList({
+    required List<String> ko,
+    required List<String> en,
+    required List<String> ja,
+    required List<String> zh,
+    required List<String> vi,
+    required List<String> es,
+  }) {
+    switch (_currentLanguage) {
+      case AppLanguage.korean:
+        return ko;
+      case AppLanguage.english:
+        return en;
+      case AppLanguage.japanese:
+        return ja;
+      case AppLanguage.chinese:
+        return zh;
+      case AppLanguage.vietnamese:
+        return vi;
+      case AppLanguage.spanish:
+        return es;
+    }
   }
 
   /// Format money using active currency

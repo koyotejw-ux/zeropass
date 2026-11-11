@@ -7,10 +7,12 @@ import '../providers/app_providers.dart';
 import '../services/database_service.dart';
 import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
+import '../services/region_workflow_service.dart';
 import '../services/schedule_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/mascot_avatar.dart';
+import '../widgets/region_language_picker.dart';
 
 class StudioSetupWizardScreen extends ConsumerStatefulWidget {
   final VoidCallback onFinish;
@@ -29,18 +31,71 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
   final TextEditingController _studioNameCtrl = TextEditingController();
   String _selectedCategory = '음악 / 피아노';
   final TextEditingController _customCategoryCtrl = TextEditingController();
-  final List<String> _studioPresets = [
-    '피아노 음악학원',
-    '멘토스 수학학원',
-    '필라테스 스튜디오',
-    '1:1 바디 PT샵',
-    '도예 공방',
-    '태권도장',
-    '발레 / 댄스스쿨',
-    '어린이 미술학원',
-    '보컬 / 실용음악',
-    '코딩 / 컴퓨터학원',
-  ];
+
+  List<String> _getLocalizedStudioPresets(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.korean:
+        return [
+          '피아노 음악학원',
+          '멘토스 수학학원',
+          '필라테스 스튜디오',
+          '1:1 바디 PT샵',
+          '도예 공방',
+          '태권도장',
+          '발레 / 댄스스쿨',
+          '어린이 미술학원',
+          '보컬 / 실용음악',
+          '코딩 / 컴퓨터학원',
+        ];
+      case AppLanguage.english:
+        return [
+          'Harmony Piano Academy',
+          'Apex Math Tutoring',
+          'Luna Pilates Studio',
+          'Prime 1:1 Fitness PT',
+          'Clay & Craft Workshop',
+          'Tiger Taekwondo Dojo',
+          'Urban Dance Collective',
+          'CodeLab Academy',
+        ];
+      case AppLanguage.japanese:
+        return [
+          'さくらピアノ教室',
+          '進研ゼミ・個別学習塾',
+          'ルナ ピラティススタジオ',
+          'プライベートPTジム',
+          '陶芸アトリエ',
+          '正道空手・テコンドー道場',
+        ];
+      case AppLanguage.chinese:
+        return [
+          '星光钢琴艺术中心',
+          '思源数学培优班',
+          '悦心普拉提工作室',
+          '极速1对1私教馆',
+          '泥塑陶艺工坊',
+          '尚武跆拳道馆',
+        ];
+      case AppLanguage.vietnamese:
+        return [
+          'Học viện Piano Harmony',
+          'Trung tâm Toán Tư Duy',
+          'Luna Pilates Studio',
+          'Phòng tập PT Cá Nhân',
+          'Xưởng Gốm Nghệ Thuật',
+          'Võ đường Taekwondo',
+        ];
+      case AppLanguage.spanish:
+        return [
+          'Academia de Piano Sol',
+          'Centro de Matemáticas',
+          'Estudio Pilates Luna',
+          'Gimnasio Entrenamiento 1:1',
+          'Taller de Cerámica',
+          'Escuela de Taekwondo',
+        ];
+    }
+  }
 
   // STEP 2: Bank Account
   late String _selectedBank = LocalizationService.getBankPresets().first;
@@ -51,12 +106,27 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
   // STEP 3: First Member
   final TextEditingController _memberNameCtrl = TextEditingController();
   final TextEditingController _memberPhoneCtrl = TextEditingController();
-  final TextEditingController _memberGroupCtrl = TextEditingController(text: '기초 입문반');
-  final TextEditingController _memberFeeCtrl = TextEditingController(text: '250000');
+  final TextEditingController _memberGroupCtrl = TextEditingController(
+    text: LocalizationService.localizeBuiltInLabel('정규반'),
+  );
+  final TextEditingController _memberFeeCtrl = TextEditingController(
+    text: LocalizationService.currentCurrency.defaultFeeBase.toString(),
+  );
   final TextEditingController _memberSessionsCtrl = TextEditingController(text: '10');
   BillingType _billingType = BillingType.sessionBased;
 
   bool _isSubmitting = false;
+
+  void _syncRegionalDefaultsOnChange() {
+    setState(() {
+      final presets = LocalizationService.getBankPresets();
+      if (!presets.contains(_selectedBank)) {
+        _selectedBank = presets.first;
+      }
+      _memberFeeCtrl.text = LocalizationService.currentCurrency.defaultFeeBase.toString();
+      _memberGroupCtrl.text = LocalizationService.localizeBuiltInLabel('정규반');
+    });
+  }
 
   @override
   void dispose() {
@@ -119,12 +189,24 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
       final finalCategory = _selectedCategory == '기타 / 맞춤업종' && _customCategoryCtrl.text.trim().isNotEmpty
           ? _customCategoryCtrl.text.trim()
           : _selectedCategory;
+      final meta = RegionWorkflowService.defaultStudioMetadata(
+        LocalizationService.currentLanguage,
+        LocalizationService.currentCurrency,
+      );
       final studio = StudioProfile(
-        studioName: _studioNameCtrl.text.trim().isEmpty ? '나의 프라이빗 스튜디오' : _studioNameCtrl.text.trim(),
-        instructorName: _accountHolderCtrl.text.trim().isEmpty ? '담당자' : _accountHolderCtrl.text.trim(),
+        studioName: _studioNameCtrl.text.trim().isEmpty
+            ? meta['studioName']!
+            : _studioNameCtrl.text.trim(),
+        instructorName: _accountHolderCtrl.text.trim().isEmpty
+            ? meta['instructorName']!
+            : _accountHolderCtrl.text.trim(),
         bankName: _selectedBank,
-        accountNumber: _accountNumberCtrl.text.trim().isEmpty ? '3333-01-2345678' : _accountNumberCtrl.text.trim(),
-        accountHolder: _accountHolderCtrl.text.trim().isEmpty ? '홍길동' : _accountHolderCtrl.text.trim(),
+        accountNumber: _accountNumberCtrl.text.trim().isEmpty
+            ? meta['accountNumber']!
+            : _accountNumberCtrl.text.trim(),
+        accountHolder: _accountHolderCtrl.text.trim().isEmpty
+            ? meta['accountHolder']!
+            : _accountHolderCtrl.text.trim(),
         category: finalCategory,
         autoBankDetectEnabled: false,
         invoiceTemplate: defaultProfile.invoiceTemplate,
@@ -135,13 +217,18 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
       // 3. Register the very first real student/member if name is given
       if (_memberNameCtrl.text.trim().isNotEmpty) {
-        final fee = int.tryParse(_memberFeeCtrl.text.replaceAll(',', '').trim()) ?? 250000;
+        final fee = int.tryParse(_memberFeeCtrl.text.replaceAll(',', '').trim()) ??
+            LocalizationService.currentCurrency.defaultFeeBase;
         final sessions = int.tryParse(_memberSessionsCtrl.text.trim()) ?? 10;
         final member = Member(
           id: const Uuid().v4(),
           name: _memberNameCtrl.text.trim(),
-          phone: _memberPhoneCtrl.text.trim().isEmpty ? '010-0000-0000' : _memberPhoneCtrl.text.trim(),
-          groupName: _memberGroupCtrl.text.trim().isEmpty ? '기초 입문반' : _memberGroupCtrl.text.trim(),
+          phone: _memberPhoneCtrl.text.trim().isEmpty
+              ? (LocalizationService.isDomestic ? '010-0000-0000' : '555-010-0000')
+              : _memberPhoneCtrl.text.trim(),
+          groupName: _memberGroupCtrl.text.trim().isEmpty
+              ? LocalizationService.localizeBuiltInLabel('정규반')
+              : _memberGroupCtrl.text.trim(),
           billingType: _billingType,
           defaultFee: fee,
           totalSessions: _billingType == BillingType.sessionBased ? sessions : 0,
@@ -163,7 +250,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('설정 저장 중 오류가 발생했습니다: $e')),
+          SnackBar(content: Text('${LocalizationService.tr('wiz_err_required')} ($e)')),
         );
       }
     } finally {
@@ -177,6 +264,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+    ref.watch(currencyProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -208,9 +298,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         actions: [
           TextButton(
             onPressed: widget.onFinish,
-            child: const Text(
-              '건너뛰기',
-              style: TextStyle(
+            child: Text(
+              LocalizationService.tr('onb_skip'),
+              style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
@@ -228,7 +318,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildStep1StudioName(),
+                  _buildStep1StudioName(lang),
                   _buildStep2BankAccount(),
                   _buildStep3FirstMember(),
                 ],
@@ -267,7 +357,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              _currentStep == 2 ? '설정 완료하고 시작하기' : '다음 단계로',
+                              _currentStep == 2
+                                  ? LocalizationService.tr('wiz_finish')
+                                  : LocalizationService.tr('wiz_next'),
                               style: const TextStyle(
                                 fontSize: 15.5,
                                 fontWeight: FontWeight.w700,
@@ -292,17 +384,22 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
   }
 
   // STEP 1: Studio Name
-  Widget _buildStep1StudioName() {
+  Widget _buildStep1StudioName(AppLanguage lang) {
+    final presets = _getLocalizedStudioPresets(lang);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          // Luxury Obsidian Badge Emblem
-          const ZeroPassMascotAvatar(
-            size: 46,
-            icon: Icons.storefront_rounded,
+          Row(
+            children: [
+              const ZeroPassMascotAvatar(
+                size: 46,
+                icon: Icons.storefront_rounded,
+              ),
+              const Spacer(),
+              RegionLanguageChip(onChanged: _syncRegionalDefaultsOnChange),
+            ],
           ),
           const SizedBox(height: 18),
           Container(
@@ -324,9 +421,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  'STEP 01 · 기본 정보',
-                  style: TextStyle(
+                Text(
+                  LocalizationService.trParams('wiz_header_badge', {'step': '1'}),
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryDark,
@@ -337,9 +434,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            '사업장 프로필 설정',
-            style: TextStyle(
+          Text(
+            LocalizationService.tr('wiz_step1_title'),
+            style: const TextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w800,
               color: AppTheme.primaryDark,
@@ -348,33 +445,28 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            '모바일 출결부와 수강료 청구서에 표기될 대표 상호입니다.',
-            style: TextStyle(
+          Text(
+            LocalizationService.tr('wiz_step1_desc'),
+            style: const TextStyle(
               fontSize: 13.5,
               color: AppTheme.textSecondary,
               letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 22),
 
           AppTextField(
             controller: _studioNameCtrl,
-            label: '상호명 / 스튜디오명',
-            hint: '예: 아르떼 피아노 스튜디오',
+            label: LocalizationService.tr('wiz_label_studio_name'),
+            hint: LocalizationService.tr('wiz_hint_studio_name'),
             prefixIcon: Icons.storefront_outlined,
             autofocus: true,
           ),
           const SizedBox(height: 20),
 
-          const Text(
-            '업종 카테고리',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            '선택한 업종에 맞추어 맞춤 출결·수납 서식이 자동 적용됩니다.',
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+          Text(
+            LocalizationService.tr('wiz_label_category'),
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -382,12 +474,13 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             runSpacing: 8,
             children: StudioProfile.businessCategories.map((cat) {
               final isSelected = _selectedCategory == cat;
+              final displayCat = LocalizationService.industryCategoryLabel(cat);
               return InkWell(
                 onTap: () {
                   setState(() {
                     _selectedCategory = cat;
                     if (cat != '기타 / 맞춤업종' && _studioNameCtrl.text.isEmpty) {
-                      _studioNameCtrl.text = '나의 $cat';
+                      _studioNameCtrl.text = displayCat;
                     }
                   });
                 },
@@ -404,7 +497,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                     ),
                   ),
                   child: Text(
-                    cat,
+                    displayCat,
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
@@ -420,22 +513,22 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             const SizedBox(height: 14),
             AppTextField(
               controller: _customCategoryCtrl,
-              label: '직접 입력 카테고리',
-              hint: '예: 바리스타 학원, 가죽 공방, 보컬 레슨',
+              label: LocalizationService.tr('wiz_label_category'),
+              hint: LocalizationService.tr('wiz_hint_studio_name'),
               prefixIcon: Icons.category_outlined,
             ),
           ],
           const SizedBox(height: 20),
 
-          const Text(
-            '추천 상호 프리셋 (터치 시 자동 입력)',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+          Text(
+            LocalizationService.tr('wiz_hint_studio_name'),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 7,
             runSpacing: 7,
-            children: _studioPresets.map((preset) {
+            children: presets.map((preset) {
               return InkWell(
                 onTap: () {
                   setState(() {
@@ -499,9 +592,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  'STEP 02 · 정산 계좌',
-                  style: TextStyle(
+                Text(
+                  LocalizationService.trParams('wiz_header_badge', {'step': '2'}),
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryDark,
@@ -512,9 +605,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            '수납 정산 계좌 연동',
-            style: TextStyle(
+          Text(
+            LocalizationService.tr('wiz_step2_title'),
+            style: const TextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w800,
               color: AppTheme.primaryDark,
@@ -523,9 +616,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            '수강료 청구서 발행 시 송금 링크와 함께 1초 자동 첨부됩니다.',
-            style: TextStyle(
+          Text(
+            LocalizationService.tr('wiz_step2_desc'),
+            style: const TextStyle(
               fontSize: 13.5,
               color: AppTheme.textSecondary,
               letterSpacing: -0.2,
@@ -533,9 +626,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           ),
           const SizedBox(height: 24),
 
-          const Text(
-            '입금 은행 선택',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+          Text(
+            LocalizationService.tr('wiz_label_bank'),
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -578,17 +671,16 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _accountNumberCtrl,
-            label: '계좌번호',
-            hint: '예: 3333-01-2345678',
+            label: LocalizationService.tr('wiz_label_account_num'),
+            hint: LocalizationService.tr('wiz_hint_account_num'),
             prefixIcon: Icons.account_balance_wallet_outlined,
-            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
 
           AppTextField(
             controller: _accountHolderCtrl,
-            label: '예금주 성함',
-            hint: '예: 홍길동',
+            label: LocalizationService.tr('wiz_label_holder'),
+            hint: LocalizationService.tr('wiz_hint_instructor_name'),
             prefixIcon: Icons.person_outline,
           ),
         ],
@@ -598,6 +690,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
   // STEP 3: First Member
   Widget _buildStep3FirstMember() {
+    final currency = LocalizationService.currentCurrency;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
@@ -628,9 +721,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  'STEP 03 · 첫 수강생',
-                  style: TextStyle(
+                Text(
+                  LocalizationService.trParams('wiz_header_badge', {'step': '3'}),
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryDark,
@@ -641,9 +734,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            '첫 번째 회원 등록',
-            style: TextStyle(
+          Text(
+            LocalizationService.tr('wiz_step3_title'),
+            style: const TextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w800,
               color: AppTheme.primaryDark,
@@ -652,9 +745,9 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            '등록 즉시 원터치 출결 체크와 잔여 회차 관리를 바로 시작할 수 있습니다.',
-            style: TextStyle(
+          Text(
+            LocalizationService.tr('wiz_step3_desc'),
+            style: const TextStyle(
               fontSize: 13.5,
               color: AppTheme.textSecondary,
               letterSpacing: -0.2,
@@ -664,8 +757,8 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _memberNameCtrl,
-            label: '회원 이름',
-            hint: '예: 김민준',
+            label: LocalizationService.tr('wiz_hint_instructor_name').replaceFirst('e.g. ', ''),
+            hint: LocalizationService.tr('kiosk_demo_member_name'),
             prefixIcon: Icons.badge_outlined,
             autofocus: true,
           ),
@@ -673,8 +766,8 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _memberPhoneCtrl,
-            label: '연락처 (안심 알림 및 청구 문자용)',
-            hint: '예: 010-1234-5678',
+            label: 'Phone / SMS',
+            hint: LocalizationService.isDomestic ? '010-1234-5678' : '+1 555-010-1234',
             prefixIcon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
           ),
@@ -682,15 +775,15 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _memberGroupCtrl,
-            label: '소속 클래스 / 그룹',
-            hint: '예: 기초 입문반, 월수금 저녁반',
+            label: LocalizationService.localizeBuiltInLabel('정규반'),
+            hint: LocalizationService.localizeBuiltInLabel('일반반'),
             prefixIcon: Icons.group_outlined,
           ),
           const SizedBox(height: 16),
 
-          const Text(
-            '패스 결제 방식',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+          Text(
+            '${LocalizationService.tr('billing_type_session')} / ${LocalizationService.tr('billing_type_monthly')}',
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
           ),
           const SizedBox(height: 8),
           Container(
@@ -723,7 +816,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                       ),
                       child: Center(
                         child: Text(
-                          '회차 차감형 (10회 등)',
+                          LocalizationService.tr('billing_type_session'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: _billingType == BillingType.sessionBased ? FontWeight.w700 : FontWeight.w500,
@@ -755,7 +848,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
                       ),
                       child: Center(
                         child: Text(
-                          '월 정기권 (정액제)',
+                          LocalizationService.tr('billing_type_monthly'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: _billingType == BillingType.monthlyRecurring ? FontWeight.w700 : FontWeight.w500,
@@ -774,7 +867,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           if (_billingType == BillingType.sessionBased) ...[
             AppTextField(
               controller: _memberSessionsCtrl,
-              label: '기본 등록 회차',
+              label: LocalizationService.trParams('common_sessions_unit', {'n': '10'}),
               hint: '10',
               prefixIcon: Icons.confirmation_number_outlined,
               keyboardType: TextInputType.number,
@@ -784,8 +877,8 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
 
           AppTextField(
             controller: _memberFeeCtrl,
-            label: '기본 수강료 (원)',
-            hint: '250000',
+            label: '${LocalizationService.tr('sms_default_order_title')} (${currency.code} ${currency.symbol})',
+            hint: '${currency.defaultFeeBase}',
             prefixIcon: Icons.payments_outlined,
             keyboardType: TextInputType.number,
           ),

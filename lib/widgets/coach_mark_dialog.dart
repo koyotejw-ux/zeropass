@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/coach_mark_service.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import 'mascot_avatar.dart';
 
@@ -7,7 +8,7 @@ class CoachMarkDialog extends StatelessWidget {
   final String title;
   final String message;
   final String? tip;
-  final String buttonText;
+  final String? buttonText;
   final VoidCallback? onConfirm;
 
   const CoachMarkDialog({
@@ -15,7 +16,7 @@ class CoachMarkDialog extends StatelessWidget {
     required this.title,
     required this.message,
     this.tip,
-    this.buttonText = '확인했습니다',
+    this.buttonText,
     this.onConfirm,
   });
 
@@ -25,7 +26,7 @@ class CoachMarkDialog extends StatelessWidget {
     required String title,
     required String message,
     String? tip,
-    String buttonText = '확인했습니다',
+    String? buttonText,
     VoidCallback? onConfirm,
   }) async {
     final should = await CoachMarkService.shouldShow(coachKey);
@@ -41,7 +42,7 @@ class CoachMarkDialog extends StatelessWidget {
         title: title,
         message: message,
         tip: tip,
-        buttonText: buttonText,
+        buttonText: buttonText ?? LocalizationService.tr('common_confirm'),
         onConfirm: onConfirm,
       ),
     );
@@ -81,9 +82,16 @@ class CoachMarkDialog extends StatelessWidget {
                 color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                '패시의 꿀팁 코칭',
-                style: TextStyle(
+              child: Text(
+                LocalizationService.pick(
+                  ko: '패시의 꿀팁 코칭',
+                  en: "Passy's Pro Tip",
+                  ja: 'パッシーの運用ヒント',
+                  zh: '小助手运营小贴士',
+                  vi: 'Mẹo vận hành từ Passy',
+                  es: 'Consejo de Passy',
+                ),
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.primaryBlue,
@@ -164,7 +172,7 @@ class CoachMarkDialog extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: Text(
-                  buttonText,
+                  buttonText ?? LocalizationService.tr('common_confirm'),
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                 ),
               ),

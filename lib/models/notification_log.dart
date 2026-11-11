@@ -1,3 +1,5 @@
+import '../services/localization_service.dart';
+
 enum NotificationType {
   attendance, // 등원 / 출석 확인
   departure, // 하원 / 귀가 안심
@@ -34,19 +36,68 @@ class NotificationLog {
   String get typeLabel {
     switch (type) {
       case NotificationType.attendance:
-        return '등원 안심 알림';
+        return LocalizationService.pick(
+          ko: '등원 안심 알림',
+          en: 'Check-In Alert',
+          ja: '出席安心通知',
+          zh: '到店签到通知',
+          vi: 'Thông báo đến lớp',
+          es: 'Aviso de llegada',
+        );
       case NotificationType.departure:
-        return '하원 귀가 알림';
+        return LocalizationService.pick(
+          ko: '하원 귀가 알림',
+          en: 'Check-Out Alert',
+          ja: '帰宅安心通知',
+          zh: '离店安心通知',
+          vi: 'Thông báo ra về',
+          es: 'Aviso de salida',
+        );
       case NotificationType.billing:
-        return '수강료 청구';
+        return LocalizationService.pick(
+          ko: '수강료 청구',
+          en: 'Tuition Invoice',
+          ja: '授業料請求',
+          zh: '账单缴费通知',
+          vi: 'Hóa đơn học phí',
+          es: 'Factura de cuota',
+        );
       case NotificationType.reminder:
-        return '미납 리마인드';
+        return LocalizationService.pick(
+          ko: '미납 리마인드',
+          en: 'Overdue Reminder',
+          ja: '未納リマインド',
+          zh: '欠费催缴提醒',
+          vi: 'Nhắc thanh toán',
+          es: 'Recordatorio de pago',
+        );
       case NotificationType.receipt:
-        return '수납 영수증';
+        return LocalizationService.pick(
+          ko: '수납 영수증',
+          en: 'Payment Receipt',
+          ja: '領収証',
+          zh: '收款电子收据',
+          vi: 'Biên nhận thanh toán',
+          es: 'Recibo de pago',
+        );
       case NotificationType.sessionExpiry:
-        return '수강권 재등록 안내';
+        return LocalizationService.pick(
+          ko: '수강권 재등록 안내',
+          en: 'Pass Renewal',
+          ja: '回数券更新案内',
+          zh: '续课到期提醒',
+          vi: 'Nhắc gia hạn gói',
+          es: 'Aviso de renovación',
+        );
       case NotificationType.notice:
-        return '공지 및 휴원 안내';
+        return LocalizationService.pick(
+          ko: '공지 및 휴원 안내',
+          en: 'General Notice',
+          ja: 'お知らせ・休講案内',
+          zh: '公告与停课通知',
+          vi: 'Thông báo chung',
+          es: 'Aviso general',
+        );
     }
   }
 
@@ -72,7 +123,15 @@ class NotificationLog {
         orElse: () => NotificationType.notice,
       ),
       memberId: map['memberId'] as String?,
-      memberName: map['memberName'] as String? ?? '회원',
+      memberName: map['memberName'] as String? ??
+          LocalizationService.pick(
+            ko: '회원',
+            en: 'Member',
+            ja: '会員',
+            zh: '会员',
+            vi: 'Hội viên',
+            es: 'Miembro',
+          ),
       recipientPhone: map['recipientPhone'] as String? ?? '',
       channel: map['channel'] as String? ?? 'SMS',
       message: map['message'] as String? ?? '',

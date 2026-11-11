@@ -3,6 +3,8 @@ import '../models/member.dart';
 import '../models/invoice.dart';
 import 'custom_category_service.dart';
 import 'database_service.dart';
+import 'localization_service.dart';
+import 'region_workflow_service.dart';
 
 enum IndustryPreset {
   academy('학원 · 공부방 · 교습소', '입시 / 보습학원', '멘토스 수학학원', '김멘토', 350000),
@@ -84,6 +86,83 @@ enum IndustryPreset {
         return '공방';
     }
   }
+
+  String get localizedLabel {
+    final lang = LocalizationService.currentLanguage;
+    if (lang == AppLanguage.korean) return label;
+    switch (this) {
+      case IndustryPreset.academy:
+        return {
+              'en': 'Academy · Tutoring · Prep',
+              'ja': '学習塾・予備校・受験指導',
+              'zh': '辅导班 · 培优机构',
+              'vi': 'Trung tâm học tập · Gia sư',
+              'es': 'Academia · Clases particulares',
+            }[lang.code] ??
+            'Academy & Tutoring';
+      case IndustryPreset.fitness:
+        return {
+              'en': 'Fitness · Personal Training · Gym',
+              'ja': 'フィットネス・パーソナルジム',
+              'zh': '健身房 · 私教工作室',
+              'vi': 'Thể hình · Gym · PT',
+              'es': 'Fitness · Entrenamiento personal',
+            }[lang.code] ??
+            'Fitness & PT';
+      case IndustryPreset.pilates:
+        return {
+              'en': 'Pilates · Yoga · Dance Studio',
+              'ja': 'ピラティス・ヨガ・ダンス',
+              'zh': '普拉提 · 瑜伽 · 舞蹈',
+              'vi': 'Pilates · Yoga · Nhảy',
+              'es': 'Pilates · Yoga · Danza',
+            }[lang.code] ??
+            'Pilates & Yoga';
+      case IndustryPreset.taekwondo:
+        return {
+              'en': 'Martial Arts · Taekwondo · Dojo',
+              'ja': 'テコンドー・武道・道場',
+              'zh': '跆拳道 · 武术道馆',
+              'vi': 'Võ thuật · Taekwondo',
+              'es': 'Artes marciales · Taekwondo',
+            }[lang.code] ??
+            'Martial Arts';
+      case IndustryPreset.artMusic:
+        return {
+              'en': 'Music · Piano · Art Workshop',
+              'ja': '音楽・ピアノ・美術アトリエ',
+              'zh': '音乐 · 钢琴 · 艺术工坊',
+              'vi': 'Âm nhạc · Piano · Mỹ thuật',
+              'es': 'Música · Piano · Taller de arte',
+            }[lang.code] ??
+            'Music & Art';
+    }
+  }
+
+  String get localizedMemberTerm =>
+      RegionWorkflowService.termOptionLabel(memberTerm, LocalizationService.currentLanguage);
+
+  String get localizedFeeTerm =>
+      RegionWorkflowService.termOptionLabel(feeTerm, LocalizationService.currentLanguage);
+
+  String get localizedRoleTerm =>
+      RegionWorkflowService.termOptionLabel(roleTerm, LocalizationService.currentLanguage);
+
+  String get localizedPlaceTerm =>
+      RegionWorkflowService.termOptionLabel(placeTerm, LocalizationService.currentLanguage);
+
+  String get localizedSampleStudioName {
+    final lang = LocalizationService.currentLanguage;
+    if (lang == AppLanguage.korean) return sampleStudioName;
+    return localizedLabel.split('·').first.trim();
+  }
+
+  String get localizedSampleInstructorName {
+    final lang = LocalizationService.currentLanguage;
+    if (lang == AppLanguage.korean) return sampleInstructorName;
+    return RegionWorkflowService.defaultStudioMetadata(lang, LocalizationService.currentCurrency)['instructorName'] ??
+        'Admin';
+  }
 }
 
 class StarterPresetService {
@@ -95,17 +174,24 @@ class StarterPresetService {
     final db = await DatabaseService.instance.database;
     final now = DateTime.now();
 
+    final lang = LocalizationService.currentLanguage;
+    final currency = LocalizationService.currentCurrency;
+    final isKo = lang == AppLanguage.korean;
+
     // 1. Update Studio Profile
     await db.update(
       'studio_profile',
       {
-        'studioName': preset.sampleStudioName,
-        'instructorName': preset.sampleInstructorName,
+        'studioName': preset.localizedSampleStudioName,
+        'instructorName': preset.localizedSampleInstructorName,
         'category': preset.category,
-        'customMemberTerm': preset.memberTerm,
-        'customFeeTerm': preset.feeTerm,
-        'customRoleTerm': preset.roleTerm,
-        'customPlaceTerm': preset.placeTerm,
+        'customMemberTerm': isKo ? preset.memberTerm : preset.localizedMemberTerm,
+        'customFeeTerm': isKo ? preset.feeTerm : preset.localizedFeeTerm,
+        'customRoleTerm': isKo ? preset.roleTerm : preset.localizedRoleTerm,
+        'customPlaceTerm': isKo ? preset.placeTerm : preset.localizedPlaceTerm,
+        if (!isKo) 'invoiceTemplate': RegionWorkflowService.defaultInvoiceTemplate(lang, currency),
+        if (!isKo) 'attendanceTemplate': RegionWorkflowService.defaultAttendanceTemplate(lang),
+        if (!isKo) 'departureTemplate': RegionWorkflowService.defaultDepartureTemplate(lang),
       },
       where: 'id = ?',
       whereArgs: [1],
@@ -126,11 +212,14 @@ class StarterPresetService {
 
     // 3. Seed sample invoice for the first member
     if (members.isNotEmpty) {
+      final invTitle = isKo
+          ? '${now.month}월 ${preset.label.split(' ')[0]} 수납 안내'
+          : '${LocalizationService.formatHeaderDate(now).split(' ').first} ${preset.localizedFeeTerm}';
       final sampleInvoice = Invoice(
         id: const Uuid().v4(),
         memberIds: [members[0].id],
         recipientPhone: members[0].phone,
-        title: '${now.month}월 ${preset.label.split(' ')[0]} 수납 안내',
+        title: invTitle,
         amount: members[0].defaultFee,
         dueDate: now.add(const Duration(days: 5)),
         status: PaymentStatus.unpaid,
@@ -140,6 +229,45 @@ class StarterPresetService {
   }
 
   static List<Member> _generateIndustryMembers(IndustryPreset preset, DateTime now) {
+    final lang = LocalizationService.currentLanguage;
+    if (lang != AppLanguage.korean) {
+      final fee = LocalizationService.currentCurrency.defaultFeeBase;
+      final group = RegionWorkflowService.industryCategoryLabel(preset.category, lang);
+      switch (lang) {
+        case AppLanguage.english:
+          return [
+            Member(id: 'mem_${preset.name}_1', name: 'Olivia Carter', phone: '5550101101', groupName: group, billingType: BillingType.monthlyRecurring, defaultFee: fee, totalSessions: 0, remainingSessions: 0, registeredAt: now.subtract(const Duration(days: 35))),
+            Member(id: 'mem_${preset.name}_2', name: 'Liam Bennett', phone: '5550101102', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 10, remainingSessions: 2, registeredAt: now.subtract(const Duration(days: 20))),
+            Member(id: 'mem_${preset.name}_3', name: 'Emma Brooks', phone: '5550101103', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 12, remainingSessions: 9, registeredAt: now.subtract(const Duration(days: 7))),
+          ];
+        case AppLanguage.japanese:
+          return [
+            Member(id: 'mem_${preset.name}_1', name: '田中 陽菜', phone: '09011111101', groupName: group, billingType: BillingType.monthlyRecurring, defaultFee: fee, totalSessions: 0, remainingSessions: 0, registeredAt: now.subtract(const Duration(days: 35))),
+            Member(id: 'mem_${preset.name}_2', name: '鈴木 悠真', phone: '09011111102', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 10, remainingSessions: 2, registeredAt: now.subtract(const Duration(days: 20))),
+            Member(id: 'mem_${preset.name}_3', name: '高橋 結衣', phone: '09011111103', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 12, remainingSessions: 9, registeredAt: now.subtract(const Duration(days: 7))),
+          ];
+        case AppLanguage.chinese:
+          return [
+            Member(id: 'mem_${preset.name}_1', name: '张思琪', phone: '13800001101', groupName: group, billingType: BillingType.monthlyRecurring, defaultFee: fee, totalSessions: 0, remainingSessions: 0, registeredAt: now.subtract(const Duration(days: 35))),
+            Member(id: 'mem_${preset.name}_2', name: '王浩然', phone: '13800001102', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 10, remainingSessions: 2, registeredAt: now.subtract(const Duration(days: 20))),
+            Member(id: 'mem_${preset.name}_3', name: '陈语桐', phone: '13800001103', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 12, remainingSessions: 9, registeredAt: now.subtract(const Duration(days: 7))),
+          ];
+        case AppLanguage.vietnamese:
+          return [
+            Member(id: 'mem_${preset.name}_1', name: 'Trần Bảo Ngọc', phone: '0901111101', groupName: group, billingType: BillingType.monthlyRecurring, defaultFee: fee, totalSessions: 0, remainingSessions: 0, registeredAt: now.subtract(const Duration(days: 35))),
+            Member(id: 'mem_${preset.name}_2', name: 'Lê Minh Khôi', phone: '0901111102', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 10, remainingSessions: 2, registeredAt: now.subtract(const Duration(days: 20))),
+            Member(id: 'mem_${preset.name}_3', name: 'Phạm Gia Hân', phone: '0901111103', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 12, remainingSessions: 9, registeredAt: now.subtract(const Duration(days: 7))),
+          ];
+        case AppLanguage.spanish:
+          return [
+            Member(id: 'mem_${preset.name}_1', name: 'Sofía Martínez', phone: '600111101', groupName: group, billingType: BillingType.monthlyRecurring, defaultFee: fee, totalSessions: 0, remainingSessions: 0, registeredAt: now.subtract(const Duration(days: 35))),
+            Member(id: 'mem_${preset.name}_2', name: 'Mateo López', phone: '600111102', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 10, remainingSessions: 2, registeredAt: now.subtract(const Duration(days: 20))),
+            Member(id: 'mem_${preset.name}_3', name: 'Lucía Fernández', phone: '600111103', groupName: group, billingType: BillingType.sessionBased, defaultFee: fee, totalSessions: 12, remainingSessions: 9, registeredAt: now.subtract(const Duration(days: 7))),
+          ];
+        case AppLanguage.korean:
+          break;
+      }
+    }
     switch (preset) {
       case IndustryPreset.academy:
         return [

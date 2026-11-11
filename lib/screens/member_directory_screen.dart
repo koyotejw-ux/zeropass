@@ -63,10 +63,24 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
         CoachMarkDialog.showIfFirstTime(
           context: context,
           coachKey: CoachMarkService.keyMemberTab,
-          title: '수강생(회원) 명부 관리',
-          message: '등록된 회원들의 남은 회차와 수업 그룹, 출결 이력을 한눈에 볼 수 있는 공간이에요.\n\n새로운 학생이나 회원이 등록하면 언제든 우측 하단 [+ 회원 등록]으로 10초 만에 추가하세요!',
-          tip: '회원 카드를 터치하면 출결 타임라인 확인, 회차 충전(+10회), 청구서 즉시 발송이 가능해요.',
-          buttonText: '회원 명부 둘러보기',
+          title: LocalizationService.tr('tab_members'),
+          message: LocalizationService.pick(
+            ko: '등록된 회원들의 남은 회차와 수업 그룹, 출결 이력을 한눈에 볼 수 있는 공간이에요.\n\n새로운 학생이나 회원이 등록하면 언제든 우측 하단 [+ 회원 등록]으로 10초 만에 추가하세요!',
+            en: 'View remaining sessions, classes, and attendance history for all members.\n\nTap the bottom-right button to register a new member anytime!',
+            ja: '登録会員の残回数・クラス・出席履歴を一覧で確認できます。\n\n右下の追加ボタンから10秒で新規登録できます！',
+            zh: '在这里可一站查看会员剩余课时、班级及考勤记录。\n\n点击右下角按钮即可10秒快速添加新会员！',
+            vi: 'Xem số buổi còn lại, nhóm lớp và lịch sử điểm danh.\n\nNhấn nút góc dưới bên phải để thêm học viên mới!',
+            es: 'Consulta sesiones restantes, grupos e historial de asistencia.\n\nPulsa el botón inferior derecho para registrar nuevos miembros.',
+          ),
+          tip: LocalizationService.pick(
+            ko: '회원 카드를 터치하면 출결 타임라인 확인, 회차 충전(+10회), 청구서 즉시 발송이 가능해요.',
+            en: 'Tap any member card for timeline history, +10 top-ups, and instant invoicing.',
+            ja: '会員カードをタップすると出席履歴や回数追加、請求書送信が行えます。',
+            zh: '点击会员卡片即可查看考勤时间轴、快速充次或立即开单。',
+            vi: 'Chạm thẻ học viên để xem lịch sử, nạp thêm buổi và gửi hóa đơn.',
+            es: 'Toca cualquier tarjeta para ver el historial, recargar sesiones o facturar.',
+          ),
+          buttonText: LocalizationService.tr('common_confirm'),
         );
       });
     }
@@ -95,7 +109,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             height: 40,
             child: IconButton(
               icon: const Icon(Icons.mark_chat_unread_outlined, size: 21, color: AppTheme.textPrimary),
-              tooltip: '순차 릴레이 발송',
+              tooltip: LocalizationService.tr('sequential_dispatch_btn'),
               splashRadius: 20,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -104,7 +118,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 final members = membersAsync.value ?? [];
                 if (members.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('등록된 회원이 없습니다.')),
+                    SnackBar(content: Text(LocalizationService.tr('kiosk_empty_title'))),
                   );
                   return;
                 }
@@ -124,7 +138,14 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
             height: 40,
             child: IconButton(
               icon: const Icon(Icons.file_download_outlined, size: 21, color: AppTheme.textPrimary),
-              tooltip: '명부 엑셀 내보내기',
+              tooltip: LocalizationService.pick(
+                ko: '명부 엑셀 내보내기',
+                en: 'Export Roster CSV',
+                ja: '名簿CSV出力',
+                zh: '导出会员名单 CSV',
+                vi: 'Xuất danh sách CSV',
+                es: 'Exportar listado CSV',
+              ),
               splashRadius: 20,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -133,7 +154,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 final members = membersAsync.value ?? [];
                 if (members.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('내보낼 등록 회원이 없습니다.')),
+                    SnackBar(content: Text(LocalizationService.tr('kiosk_empty_title'))),
                   );
                   return;
                 }
@@ -143,7 +164,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('CSV 내보내기 오류: $e')),
+                      SnackBar(content: Text('CSV Export Error: $e')),
                     );
                   }
                 }
@@ -159,7 +180,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                 size: 21,
                 color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
               ),
-              tooltip: '큰글씨 모드',
+              tooltip: LocalizationService.tr('senior_easy_mode'),
               splashRadius: 20,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -171,7 +192,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
       ),
       body: membersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('회원 로딩 오류: $err')),
+        error: (err, _) => Center(child: Text('Error: $err')),
         data: (members) {
           final allGroups = ['전체', ...members.map((m) => m.groupName).where((g) => g.trim().isNotEmpty).toSet()];
           final filtered = members.where((m) {
@@ -224,9 +245,9 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       children: [
                         Icon(Icons.person_search_outlined, size: 48, color: AppTheme.textTertiary),
                         const SizedBox(height: 12),
-                        const Text(
-                          '검색 결과와 일치하는 회원이 없습니다',
-                          style: TextStyle(
+                        Text(
+                          LocalizationService.tr('kiosk_name_empty'),
+                          style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontSize: 15,
                             color: AppTheme.textSecondary,
@@ -338,8 +359,9 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                     child: Text(
                       [
                         if (member.secondaryTag != null && member.secondaryTag!.isNotEmpty) member.secondaryTag!,
-                        if (member.groupName.isNotEmpty) member.groupName,
-                        if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty) '일반 회원',
+                        if (member.groupName.isNotEmpty) LocalizationService.localizeBuiltInLabel(member.groupName),
+                        if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty)
+                          LocalizationService.localizeBuiltInLabel('일반'),
                       ].join(' · '),
                       softWrap: true,
                       style: const TextStyle(
@@ -353,8 +375,8 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                   ),
                   isSession
                       ? (isExpiring
-                          ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small)
-                          : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회', size: ZeroBadgeSize.small))
+                          ? ZeroBadge.danger('${member.remainingSessions}/${member.totalSessions}', size: ZeroBadgeSize.small)
+                          : ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}', size: ZeroBadgeSize.small))
                       : ZeroBadge.neutral(LocalizationService.tr('monthly_pass'), size: ZeroBadgeSize.small),
                 ],
               ),
@@ -384,7 +406,14 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                     if (member.payerName != null && member.payerName!.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(
-                        '입금자(보호자): ${member.payerName}',
+                        LocalizationService.pick(
+                          ko: '입금자(보호자): ${member.payerName}',
+                          en: 'Payer / Guardian: ${member.payerName}',
+                          ja: '振込名義 / 保護者: ${member.payerName}',
+                          zh: '付款人 / 家长: ${member.payerName}',
+                          vi: 'Người nộp / Phụ huynh: ${member.payerName}',
+                          es: 'Pagador / Tutor: ${member.payerName}',
+                        ),
                         softWrap: true,
                         style: const TextStyle(
                           fontFamily: 'Pretendard',
@@ -414,7 +443,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '· 입금자: ${member.payerName}',
+                          '· ${member.payerName}',
                           softWrap: true,
                           style: const TextStyle(
                             fontFamily: 'Pretendard',
@@ -469,7 +498,6 @@ class _MemberDetailModal extends ConsumerWidget {
     final memberPasses = passRecords.where((p) => p.memberId == member.id).toList();
     final memberInvoices = invoices.where((i) => i.memberIds.contains(member.id)).toList();
     final isSeniorMode = ref.watch(seniorModeProvider);
-    final currency = NumberFormat('#,###');
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -562,7 +590,9 @@ class _MemberDetailModal extends ConsumerWidget {
                                   border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                                 ),
                                 child: Text(
-                                  member.groupName.isNotEmpty ? member.groupName : '일반 회원',
+                                  member.groupName.isNotEmpty
+                                      ? LocalizationService.localizeBuiltInLabel(member.groupName)
+                                      : LocalizationService.localizeBuiltInLabel('일반'),
                                   style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
                                 ),
                               ),
@@ -580,7 +610,7 @@ class _MemberDetailModal extends ConsumerWidget {
                                   ),
                                 ),
                               if (member.billingType == BillingType.sessionBased)
-                                ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}회 잔여', size: ZeroBadgeSize.small)
+                                ZeroBadge.primary('${member.remainingSessions}/${member.totalSessions}', size: ZeroBadgeSize.small)
                               else
                                 ZeroBadge.neutral(LocalizationService.tr('monthly_pass'), size: ZeroBadgeSize.small),
                             ],
@@ -599,7 +629,7 @@ class _MemberDetailModal extends ConsumerWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    '· 입금자: ${member.payerName}',
+                                    '· ${member.payerName}',
                                     softWrap: true,
                                     style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
                                   ),
@@ -618,7 +648,7 @@ class _MemberDetailModal extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 20, color: AppTheme.primaryBlue),
-                    tooltip: '회원 정보 수정',
+                    tooltip: LocalizationService.tr('common_edit'),
                     visualDensity: VisualDensity.compact,
                     onPressed: () {
                       AppBottomSheet.show(
@@ -630,7 +660,7 @@ class _MemberDetailModal extends ConsumerWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppTheme.danger),
-                    tooltip: '회원 삭제',
+                    tooltip: LocalizationService.tr('common_delete'),
                     visualDensity: VisualDensity.compact,
                     onPressed: () => _confirmDeleteMember(context, ref, member),
                   ),
@@ -649,7 +679,14 @@ class _MemberDetailModal extends ConsumerWidget {
           if (isSeniorMode) ...[
             if (member.billingType == BillingType.sessionBased) ...[
               ZeroButton.primary(
-                label: '+10회 충전',
+                label: LocalizationService.pick(
+                  ko: '+10회 충전',
+                  en: '+10 Top Up',
+                  ja: '+10回追加',
+                  zh: '+10次续充',
+                  vi: '+10 buổi',
+                  es: '+10 Sesiones',
+                ),
                 icon: Icons.add,
                 fullWidth: true,
                 size: ZeroButtonSize.large,
@@ -657,7 +694,7 @@ class _MemberDetailModal extends ConsumerWidget {
                   ref.read(membersProvider.notifier).addSessions(member.id, 10);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${member.primaryName} 잔여 회차 10회가 추가되었습니다.'),
+                      content: Text('${member.primaryName} +10'),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -666,7 +703,14 @@ class _MemberDetailModal extends ConsumerWidget {
               const SizedBox(height: 8),
             ],
             ZeroButton.secondary(
-              label: '청구서 즉시 발송',
+              label: LocalizationService.pick(
+                ko: '청구서 즉시 발송',
+                en: 'Send Invoice Now',
+                ja: '請求書を今すぐ送信',
+                zh: '立即开单发送',
+                vi: 'Gửi hóa đơn ngay',
+                es: 'Enviar factura ahora',
+              ),
               icon: Icons.send_outlined,
               fullWidth: true,
               size: ZeroButtonSize.large,
@@ -675,7 +719,7 @@ class _MemberDetailModal extends ConsumerWidget {
                 final curInvCount = ref.read(invoicesProvider).value?.length ?? 0;
                 if (!await bm.ensureCreateAllowed(
                   context,
-                  itemLabel: '청구서',
+                  itemLabel: LocalizationService.tr('tab_billing'),
                   currentCount: curInvCount,
                   limit: bm.maxInvoiceLimit,
                 )) {
@@ -686,7 +730,7 @@ class _MemberDetailModal extends ConsumerWidget {
                   id: 'inv_${const Uuid().v4().substring(0, 8)}',
                   memberIds: [member.id],
                   recipientPhone: member.phone,
-                  title: '${member.primaryName} 수강 패스 재등록 안내',
+                  title: '${member.primaryName} · ${studio.feeWord}',
                   amount: member.defaultFee,
                   dueDate: DateTime.now().add(const Duration(days: 5)),
                   status: PaymentStatus.unpaid,
@@ -709,7 +753,14 @@ class _MemberDetailModal extends ConsumerWidget {
                 if (member.billingType == BillingType.sessionBased)
                   Expanded(
                     child: ZeroButton.primary(
-                      label: '+10회 충전',
+                      label: LocalizationService.pick(
+                        ko: '+10회 충전',
+                        en: '+10 Top Up',
+                        ja: '+10回追加',
+                        zh: '+10次续充',
+                        vi: '+10 buổi',
+                        es: '+10 Sesiones',
+                      ),
                       icon: Icons.add,
                       fullWidth: true,
                       size: ZeroButtonSize.large,
@@ -717,7 +768,7 @@ class _MemberDetailModal extends ConsumerWidget {
                         ref.read(membersProvider.notifier).addSessions(member.id, 10);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('${member.primaryName} 잔여 회차 10회가 추가되었습니다.'),
+                            content: Text('${member.primaryName} +10'),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -727,7 +778,14 @@ class _MemberDetailModal extends ConsumerWidget {
                 if (member.billingType == BillingType.sessionBased) const SizedBox(width: 8),
                 Expanded(
                   child: ZeroButton.secondary(
-                    label: '청구서 즉시 발송',
+                    label: LocalizationService.pick(
+                      ko: '청구서 즉시 발송',
+                      en: 'Send Invoice Now',
+                      ja: '請求書を今すぐ送信',
+                      zh: '立即开单发送',
+                      vi: 'Gửi hóa đơn ngay',
+                      es: 'Enviar factura ahora',
+                    ),
                     icon: Icons.send_outlined,
                     fullWidth: true,
                     size: ZeroButtonSize.large,
@@ -737,7 +795,7 @@ class _MemberDetailModal extends ConsumerWidget {
                       final curInvCount = ref.read(invoicesProvider).value?.length ?? 0;
                       if (!await bm.ensureCreateAllowed(
                         context,
-                        itemLabel: '청구서',
+                        itemLabel: LocalizationService.tr('tab_billing'),
                         currentCount: curInvCount,
                         limit: bm.maxInvoiceLimit,
                       )) {
@@ -747,7 +805,7 @@ class _MemberDetailModal extends ConsumerWidget {
                         id: 'inv_${const Uuid().v4().substring(0, 8)}',
                         memberIds: [member.id],
                         recipientPhone: member.phone,
-                        title: '${member.primaryName} 수강 패스 재등록 안내',
+                        title: '${member.primaryName} · ${studio.feeWord}',
                         amount: member.defaultFee,
                         dueDate: DateTime.now().add(const Duration(days: 5)),
                         status: PaymentStatus.unpaid,
@@ -775,26 +833,44 @@ class _MemberDetailModal extends ConsumerWidget {
               length: 2,
               child: Column(
                 children: [
-                  const TabBar(
+                  TabBar(
                     labelColor: AppTheme.primaryBlue,
                     unselectedLabelColor: AppTheme.textSecondary,
                     indicatorColor: AppTheme.primaryBlue,
                     indicatorWeight: 2.5,
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
                     ),
-                    unselectedLabelStyle: TextStyle(
+                    unselectedLabelStyle: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontSize: 13.5,
                       fontWeight: FontWeight.w500,
                     ),
                     tabs: [
-                      Tab(text: '출석 기록 타임라인'),
-                      Tab(text: '수납 내역 로그'),
+                      Tab(
+                        text: LocalizationService.pick(
+                          ko: '출석 기록 타임라인',
+                          en: 'Attendance History',
+                          ja: '出席履歴タイムライン',
+                          zh: '考勤签到记录',
+                          vi: 'Lịch sử điểm danh',
+                          es: 'Historial de asistencia',
+                        ),
+                      ),
+                      Tab(
+                        text: LocalizationService.pick(
+                          ko: '수납 내역 로그',
+                          en: 'Billing & Payment Log',
+                          ja: '請求・入金履歴',
+                          zh: '收费与付款记录',
+                          vi: 'Lịch sử hóa đơn & thu phí',
+                          es: 'Registro de cobros',
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -803,7 +879,7 @@ class _MemberDetailModal extends ConsumerWidget {
                       children: [
                         // Attendance List
                         memberPasses.isEmpty
-                            ? const Center(child: Text('출석 기록이 없습니다.'))
+                            ? Center(child: Text(LocalizationService.tr('kiosk_name_empty')))
                             : ListView.builder(
                                 itemCount: memberPasses.length,
                                 itemBuilder: (ctx, i) {
@@ -838,7 +914,9 @@ class _MemberDetailModal extends ConsumerWidget {
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                p.status == AttendanceStatus.attended ? '정상 출석 완료' : '지각/보강',
+                                                p.status == AttendanceStatus.attended
+                                                    ? LocalizationService.tr('checked_in')
+                                                    : LocalizationService.pick(ko: '지각/보강', en: 'Late / Make-up', ja: '遅刻・振替', zh: '迟到/补课', vi: 'Muộn / Học bù', es: 'Tarde / Recuperación'),
                                                 style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                                               ),
                                             ],
@@ -852,14 +930,14 @@ class _MemberDetailModal extends ConsumerWidget {
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: const Text(
-                                              '-1회 차감',
+                                              '-1',
                                               style: TextStyle(fontSize: 11.5, color: Color(0xFFDC2626), fontWeight: FontWeight.w700),
                                             ),
                                           ),
                                         const SizedBox(width: 4),
                                         IconButton(
                                           icon: const Icon(Icons.undo_rounded, size: 17, color: AppTheme.textSecondary),
-                                          tooltip: '출석 기록 취소',
+                                          tooltip: LocalizationService.tr('common_cancel'),
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                                           onPressed: () async {
@@ -867,10 +945,19 @@ class _MemberDetailModal extends ConsumerWidget {
                                               context: context,
                                               builder: (dlgCtx) => AlertDialog(
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                                title: const Text('출석 기록 취소', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                                                title: Text(
+                                                  LocalizationService.pick(
+                                                    ko: '출석 기록 취소',
+                                                    en: 'Undo Check-in Record',
+                                                    ja: '出席記録を取り消す',
+                                                    zh: '撤销签到记录',
+                                                    vi: 'Hủy bản ghi điểm danh',
+                                                    es: 'Anular asistencia',
+                                                  ),
+                                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                                                ),
                                                 content: Text(
-                                                  '${DateFormat('MM.dd HH:mm').format(p.timestamp)} 출석 기록을 취소하시겠습니까?'
-                                                  '${(p.sessionDeduction ?? 0) > 0 ? '\n차감된 ${p.sessionDeduction}회가 자동으로 복구됩니다.' : ''}',
+                                                  '${DateFormat('MM.dd HH:mm').format(p.timestamp)} — ${LocalizationService.tr('common_confirm')}?',
                                                   style: const TextStyle(fontSize: 13.5, height: 1.45),
                                                 ),
                                                 actions: [
@@ -881,7 +968,7 @@ class _MemberDetailModal extends ConsumerWidget {
                                                   ElevatedButton(
                                                     onPressed: () => Navigator.pop(dlgCtx, true),
                                                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-                                                    child: const Text('출석 취소', style: TextStyle(color: Colors.white)),
+                                                    child: Text(LocalizationService.tr('common_confirm'), style: const TextStyle(color: Colors.white)),
                                                   ),
                                                 ],
                                               ),
@@ -893,8 +980,8 @@ class _MemberDetailModal extends ConsumerWidget {
                                                   );
                                               if (context.mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text('출석 기록이 취소되고 회차가 복구되었습니다.'),
+                                                  SnackBar(
+                                                    content: Text(LocalizationService.tr('common_confirm')),
                                                     behavior: SnackBarBehavior.floating,
                                                   ),
                                                 );
@@ -910,7 +997,7 @@ class _MemberDetailModal extends ConsumerWidget {
 
                         // Invoices List
                         memberInvoices.isEmpty
-                            ? const Center(child: Text('청구 내역이 없습니다.'))
+                            ? Center(child: Text(LocalizationService.tr('kiosk_name_empty')))
                             : ListView.builder(
                                 itemCount: memberInvoices.length,
                                 itemBuilder: (ctx, i) {
@@ -949,15 +1036,15 @@ class _MemberDetailModal extends ConsumerWidget {
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                '${currency.format(inv.amount)}원 · ${DateFormat('yyyy.MM.dd').format(inv.dueDate)}',
+                                                '${LocalizationService.formatAmount(inv.amount)} · ${LocalizationService.formatDate(inv.dueDate)}',
                                                 style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                                               ),
                                             ],
                                           ),
                                         ),
                                         isPaid
-                                            ? ZeroBadge.success('완납', size: ZeroBadgeSize.small)
-                                            : ZeroBadge.danger('미납', size: ZeroBadgeSize.small),
+                                            ? ZeroBadge.success(LocalizationService.tr('paid_status'), size: ZeroBadgeSize.small)
+                                            : ZeroBadge.danger(LocalizationService.tr('unpaid_status'), size: ZeroBadgeSize.small),
                                       ],
                                     ),
                                   );
@@ -980,15 +1067,22 @@ class _MemberDetailModal extends ConsumerWidget {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 22),
-            SizedBox(width: 8),
-            Text('회원 삭제', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 22),
+            const SizedBox(width: 8),
+            Text(LocalizationService.tr('common_delete'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
           ],
         ),
         content: Text(
-          '\'${member.name}\' 회원을 명부에서 삭제하시겠습니까?\n\n해당 회원의 출석 기록도 함께 삭제되며 되돌릴 수 없습니다.',
+          LocalizationService.pick(
+            ko: '\'${member.name}\' 회원을 명부에서 삭제하시겠습니까?\n\n해당 회원의 출석 기록도 함께 삭제되며 되돌릴 수 없습니다.',
+            en: 'Delete "${member.name}" from the directory?\n\nAttendance records for this member will also be removed permanently.',
+            ja: '「${member.name}」様を削除しますか？\n\nこの会員の出席履歴もあわせて削除されます。',
+            zh: '确定要删除会员「${member.name}」吗？\n\n该会员的考勤历史也将一并删除且无法恢复。',
+            vi: 'Xóa "${member.name}" khỏi danh sách?\n\nLịch sử điểm danh của học viên này cũng sẽ bị xóa.',
+            es: '¿Eliminar a "${member.name}"?\n\nSu historial de asistencia también se borrará.',
+          ),
           style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
         ),
         actions: [
@@ -999,7 +1093,7 @@ class _MemberDetailModal extends ConsumerWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(dlgCtx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-            child: const Text('삭제하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            child: Text(LocalizationService.tr('common_delete'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -1012,7 +1106,7 @@ class _MemberDetailModal extends ConsumerWidget {
         Navigator.pop(context); // Close detail modal
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('\'${member.name}\' 회원이 삭제되었습니다.'),
+            content: Text('${member.name} · ${LocalizationService.tr('common_delete')}'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1047,7 +1141,7 @@ class _MemberDetailModal extends ConsumerWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          '${member.name} 사진 관리',
+                          member.name,
                           style: const TextStyle(
                             fontSize: 16.5,
                             fontWeight: FontWeight.w800,
@@ -1072,7 +1166,16 @@ class _MemberDetailModal extends ConsumerWidget {
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
-              title: const Text('카메라로 직접 촬영'),
+              title: Text(
+                LocalizationService.pick(
+                  ko: '카메라로 직접 촬영',
+                  en: 'Take Photo with Camera',
+                  ja: 'カメラで撮影',
+                  zh: '拍照上传',
+                  vi: 'Chụp ảnh bằng camera',
+                  es: 'Tomar foto con cámara',
+                ),
+              ),
               onTap: () async {
                 Navigator.pop(ctx);
                 final picker = ImagePicker();
@@ -1087,7 +1190,16 @@ class _MemberDetailModal extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
-              title: const Text('갤러리에서 사진 선택'),
+              title: Text(
+                LocalizationService.pick(
+                  ko: '갤러리에서 사진 선택',
+                  en: 'Choose from Gallery',
+                  ja: 'アルバムから選択',
+                  zh: '从相册选择',
+                  vi: 'Chọn từ thư viện',
+                  es: 'Elegir de la galería',
+                ),
+              ),
               onTap: () async {
                 Navigator.pop(ctx);
                 final picker = ImagePicker();
@@ -1103,7 +1215,7 @@ class _MemberDetailModal extends ConsumerWidget {
             if (member.photoPath != null && member.photoPath!.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
-                title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                title: Text(LocalizationService.tr('common_delete'), style: const TextStyle(color: AppTheme.danger)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   await ref.read(membersProvider.notifier).updateMember(member.copyWith(photoPath: ''));
@@ -1148,8 +1260,12 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
     _nameController = TextEditingController(text: m?.name ?? '');
     _payerNameController = TextEditingController(text: m?.payerName ?? '');
     _phoneController = TextEditingController(text: m?.phone ?? '');
-    _groupController = TextEditingController(text: m?.groupName ?? '일반 클래스');
-    _feeController = TextEditingController(text: (m?.defaultFee ?? 300000).toString());
+    _groupController = TextEditingController(
+      text: m?.groupName ?? LocalizationService.localizeBuiltInLabel('정규반'),
+    );
+    _feeController = TextEditingController(
+      text: (m?.defaultFee ?? LocalizationService.currentCurrency.defaultFeeBase).toString(),
+    );
     _sessionsController = TextEditingController(text: (m != null && m.totalSessions > 0 ? m.totalSessions : 10).toString());
     _remainingSessionsController = TextEditingController(text: (m?.remainingSessions ?? 10).toString());
     _memoController = TextEditingController(text: m?.memo ?? '');
@@ -1186,7 +1302,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('사진 등록 실패: $e')),
+          SnackBar(content: Text('Photo error: $e')),
         );
       }
     }
@@ -1217,10 +1333,17 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                         child: const Icon(Icons.add_a_photo_rounded, color: AppTheme.primaryBlue, size: 20),
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          '회원 사진 등록',
-                          style: TextStyle(
+                          LocalizationService.pick(
+                            ko: '회원 사진 등록',
+                            en: 'Add Member Photo',
+                            ja: '会員写真の登録',
+                            zh: '上传会员照片',
+                            vi: 'Thêm ảnh hội viên',
+                            es: 'Añadir foto del miembro',
+                          ),
+                          style: const TextStyle(
                             fontSize: 16.5,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.textPrimary,
@@ -1244,7 +1367,16 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryBlue),
-              title: const Text('카메라로 직접 촬영'),
+              title: Text(
+                LocalizationService.pick(
+                  ko: '카메라로 직접 촬영',
+                  en: 'Take Photo with Camera',
+                  ja: 'カメラで撮影',
+                  zh: '拍照上传',
+                  vi: 'Chụp ảnh bằng camera',
+                  es: 'Tomar foto con cámara',
+                ),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickPhoto(ImageSource.camera);
@@ -1252,7 +1384,16 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: AppTheme.softMint),
-              title: const Text('갤러리에서 사진 선택'),
+              title: Text(
+                LocalizationService.pick(
+                  ko: '갤러리에서 사진 선택',
+                  en: 'Choose from Gallery',
+                  ja: 'アルバムから選択',
+                  zh: '从相册选择',
+                  vi: 'Chọn từ thư viện',
+                  es: 'Elegir de la galería',
+                ),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickPhoto(ImageSource.gallery);
@@ -1261,7 +1402,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
             if (_photoPath != null)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: AppTheme.danger),
-                title: const Text('등록된 사진 삭제', style: TextStyle(color: AppTheme.danger)),
+                title: Text(LocalizationService.tr('common_delete'), style: const TextStyle(color: AppTheme.danger)),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() => _photoPath = null);
@@ -1289,7 +1430,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isEdit ? '회원 정보 수정' : LocalizationService.tr('add_member_btn'),
+                _isEdit ? LocalizationService.tr('common_edit') : LocalizationService.tr('add_member_btn'),
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               IconButton(
@@ -1327,14 +1468,14 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                                   height: 82,
                                   fit: BoxFit.cover,
                                 )
-                              : const Column(
+                              : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.add_a_photo_rounded, size: 28, color: AppTheme.primaryBlue),
-                                    SizedBox(height: 2),
+                                    const Icon(Icons.add_a_photo_rounded, size: 28, color: AppTheme.primaryBlue),
+                                    const SizedBox(height: 2),
                                     Text(
-                                      '사진 등록',
-                                      style: TextStyle(
+                                      LocalizationService.tr('common_add'),
+                                      style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         color: AppTheme.primaryBlue,
@@ -1365,10 +1506,17 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Center(
+              Center(
                 child: Text(
-                  '등록된 사진은 키오스크 출석 체크 시 전면에 표시됩니다',
-                  style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+                  LocalizationService.pick(
+                    ko: '등록된 사진은 키오스크 출석 체크 시 전면에 표시됩니다',
+                    en: 'Registered photo appears on the kiosk check-in screen',
+                    ja: '登録した写真はキオスクの出席完了画面に表示されます',
+                    zh: '上传的头像将在考勤终端签到成功时显示',
+                    vi: 'Ảnh sẽ hiển thị trên màn hình điểm danh Kiosk',
+                    es: 'La foto aparecerá en la pantalla del quiosco',
+                  ),
+                  style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1376,31 +1524,58 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               // Name
               AppTextField(
                 controller: _nameController,
-                label: '회원/학생 이름',
-                hint: '예: 김하늘',
+                label: LocalizationService.pick(
+                  ko: '회원/학생 이름',
+                  en: 'Member / Student Name',
+                  ja: '会員・生徒名',
+                  zh: '会员/学员姓名',
+                  vi: 'Họ tên học viên / hội viên',
+                  es: 'Nombre del miembro / alumno',
+                ),
+                hint: LocalizationService.tr('kiosk_demo_member_name'),
                 prefixIcon: Icons.badge_outlined,
-                validator: (v) => (v == null || v.trim().isEmpty) ? '이름을 입력하세요' : null,
+                validator: (v) => (v == null || v.trim().isEmpty) ? LocalizationService.tr('wiz_err_required') : null,
               ),
               const SizedBox(height: 12),
 
-              // Payer Name (Parent / Actual Depositor for 100% Bank Auto Matching)
+              // Payer Name (Parent / Actual Depositor)
               AppTextField(
                 controller: _payerNameController,
-                label: '입금자 성함 (학부모 / 보호자명)',
-                hint: '학생명과 다를 경우 입력 (예: 이영희)',
+                label: LocalizationService.pick(
+                  ko: '입금자 성함 (학부모 / 보호자명)',
+                  en: 'Payer / Guardian Name (Optional)',
+                  ja: '振込名義 / 保護者名（任意）',
+                  zh: '付款人 / 家长姓名（选填）',
+                  vi: 'Tên người nộp tiền / Phụ huynh',
+                  es: 'Nombre del pagador / tutor (Opcional)',
+                ),
+                hint: LocalizationService.pick(
+                  ko: '학생명과 다를 경우 입력 (예: 이영희)',
+                  en: 'If different from member name',
+                  ja: '会員名と異なる場合に入力',
+                  zh: '如与学员姓名不同可在此填写',
+                  vi: 'Nhập nếu khác tên học viên',
+                  es: 'Si es distinto al nombre del miembro',
+                ),
                 prefixIcon: Icons.family_restroom_outlined,
-                helperText: '은행 푸시 알림 수신 시 100% 자동 매칭됩니다',
               ),
               const SizedBox(height: 12),
 
               // Phone
               AppTextField(
                 controller: _phoneController,
-                label: '연락처 (안심 알림·청구 문자용)',
-                hint: '예: 010-1234-5678',
+                label: LocalizationService.pick(
+                  ko: '연락처 (안심 알림·청구 문자용)',
+                  en: 'Phone Number (For Alerts & Invoices)',
+                  ja: '電話番号（通知・請求SMS用）',
+                  zh: '联系电话（用于考勤通知与账单）',
+                  vi: 'Số điện thoại (Thông báo & Hóa đơn)',
+                  es: 'Teléfono (Para avisos y facturas)',
+                ),
+                hint: LocalizationService.isDomestic ? '예: 010-1234-5678' : '+1 555-010-1234',
                 prefixIcon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
-                validator: (v) => (v == null || v.trim().length < 10) ? '유효한 번호를 입력하세요' : null,
+                validator: (v) => (v == null || v.trim().length < 6) ? LocalizationService.tr('wiz_err_required') : null,
               ),
               const SizedBox(height: 14),
 
@@ -1408,9 +1583,18 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('업종별 간편 템플릿 (원터치 자동 입력)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
-                  Text('${customCatState.memberTemplates.length}개 서식',
+                  Text(
+                    LocalizationService.pick(
+                      ko: '업종별 간편 템플릿 (원터치 자동 입력)',
+                      en: 'Quick Plan Templates',
+                      ja: '簡単テンプレート（ワンタップ入力）',
+                      zh: '快捷课程套餐模板（一键填入）',
+                      vi: 'Mẫu gói nhanh (Chạm để điền)',
+                      es: 'Plantillas rápidas de tarifa',
+                    ),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                  ),
+                  Text('${customCatState.memberTemplates.length}',
                       style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                 ],
               ),
@@ -1421,6 +1605,9 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                   children: customCatState.memberTemplates.map((template) {
                     final isSelected = _groupController.text == template.groupName &&
                         _billingType == template.billingType;
+                    final displayPrice = LocalizationService.isDomestic && LocalizationService.currentCurrency == AppCurrency.krw
+                        ? (template.label.contains('만') ? template.label : '${template.label} (${template.defaultFee ~/ 10000}만)')
+                        : '${LocalizationService.localizeBuiltInLabel(template.groupName)} (${LocalizationService.formatAmount(template.defaultFee)})';
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -1431,11 +1618,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                           size: 14,
                           color: isSelected ? Colors.white : AppTheme.primaryBlue,
                         ),
-                        label: Text(
-                          template.label.contains('만')
-                              ? template.label
-                              : '${template.label} (${template.defaultFee ~/ 10000}만)',
-                        ),
+                        label: Text(displayPrice),
                         selected: isSelected,
                         selectedColor: AppTheme.primaryDark,
                         labelStyle: TextStyle(
@@ -1464,8 +1647,15 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               // Group
               AppTextField(
                 controller: _groupController,
-                label: '수업 / 클래스 그룹',
-                hint: '예: 중등수학, 기구필라테스, 도예반',
+                label: LocalizationService.pick(
+                  ko: '수업 / 클래스 그룹',
+                  en: 'Class / Group Name',
+                  ja: 'クラス / グループ',
+                  zh: '课程班级 / 分组',
+                  vi: 'Lớp / Nhóm',
+                  es: 'Clase / Grupo',
+                ),
+                hint: LocalizationService.localizeBuiltInLabel('정규반'),
                 prefixIcon: Icons.group_outlined,
               ),
               const SizedBox(height: 6),
@@ -1478,7 +1668,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: ChoiceChip(
-                          label: Text(group),
+                          label: Text(LocalizationService.localizeBuiltInLabel(group)),
                           selected: isSelected,
                           selectedColor: AppTheme.primaryDark,
                           labelStyle: TextStyle(
@@ -1495,8 +1685,17 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                     }),
                     ActionChip(
                       avatar: const Icon(Icons.add, size: 14, color: AppTheme.primaryBlue),
-                      label: const Text('새 그룹 추가',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                      label: Text(
+                        LocalizationService.pick(
+                          ko: '새 그룹 추가',
+                          en: 'Add Group',
+                          ja: 'グループ追加',
+                          zh: '新增分组',
+                          vi: 'Thêm nhóm',
+                          es: 'Nuevo grupo',
+                        ),
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                      ),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       backgroundColor: const Color(0xFFEFF6FF),
                       side: const BorderSide(color: Color(0xFFBFDBFE)),
@@ -1508,17 +1707,20 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               const SizedBox(height: 14),
 
               // Billing Type Segmented
-              const Text('패스 수강 유형', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              Text(
+                '${LocalizationService.tr('billing_type_session')} / ${LocalizationService.tr('billing_type_monthly')}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 6),
               SegmentedButton<BillingType>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: BillingType.sessionBased,
-                    label: Text('회차 차감형 (PT/레슨)'),
+                    label: Text(LocalizationService.tr('billing_type_session')),
                   ),
                   ButtonSegment(
                     value: BillingType.monthlyRecurring,
-                    label: Text('정기 결제형 (학원/월정액)'),
+                    label: Text(LocalizationService.tr('billing_type_monthly')),
                   ),
                 ],
                 selected: {_billingType},
@@ -1528,25 +1730,27 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               ),
               const SizedBox(height: 14),
 
-              // Default Fee & Sessions (1 Column Stack in Senior Mode or Narrow Screens)
+              // Default Fee & Sessions
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isSenior = ref.watch(seniorModeProvider);
                   final isCompact = constraints.maxWidth < 320;
+                  final feeLabel = '${LocalizationService.tr('sms_default_order_title')} (${LocalizationService.currentCurrency.symbol})';
+                  final totalSessLabel = LocalizationService.trParams('common_sessions_unit', {'n': '10'});
                   if ((isSenior || isCompact) && _billingType == BillingType.sessionBased) {
                     return Column(
                       children: [
                         AppTextField(
                           controller: _feeController,
-                          label: '수강료 (원)',
-                          hint: '300000',
+                          label: feeLabel,
+                          hint: '${LocalizationService.currentCurrency.defaultFeeBase}',
                           prefixIcon: Icons.payments_outlined,
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
                         AppTextField(
                           controller: _sessionsController,
-                          label: '총 등록 회차',
+                          label: totalSessLabel,
                           hint: '10',
                           prefixIcon: Icons.confirmation_number_outlined,
                           keyboardType: TextInputType.number,
@@ -1559,8 +1763,8 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                       Expanded(
                         child: AppTextField(
                           controller: _feeController,
-                          label: '수강료 (원)',
-                          hint: '300000',
+                          label: feeLabel,
+                          hint: '${LocalizationService.currentCurrency.defaultFeeBase}',
                           prefixIcon: Icons.payments_outlined,
                           keyboardType: TextInputType.number,
                         ),
@@ -1570,7 +1774,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                         Expanded(
                           child: AppTextField(
                             controller: _sessionsController,
-                            label: '총 등록 회차',
+                            label: totalSessLabel,
                             hint: '10',
                             prefixIcon: Icons.confirmation_number_outlined,
                             keyboardType: TextInputType.number,
@@ -1586,7 +1790,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                 const SizedBox(height: 12),
                 AppTextField(
                   controller: _remainingSessionsController,
-                  label: '현재 잔여 회차',
+                  label: LocalizationService.tr('kiosk_success_pass_label'),
                   hint: '0',
                   prefixIcon: Icons.timelapse_outlined,
                   keyboardType: TextInputType.number,
@@ -1597,8 +1801,15 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               // Memo
               AppTextField(
                 controller: _memoController,
-                label: '운영자 메모 (비공개 로컬 보관)',
-                hint: '회원 특이사항, 목표 등',
+                label: LocalizationService.pick(
+                  ko: '운영자 메모 (비공개 로컬 보관)',
+                  en: 'Private Staff Notes (Stored Locally)',
+                  ja: 'スタッフメモ（端末内保存）',
+                  zh: '老师内部备注（仅存本地）',
+                  vi: 'Ghi chú nội bộ (Lưu trên máy)',
+                  es: 'Notas internas (Solo en dispositivo)',
+                ),
+                hint: '...',
                 prefixIcon: Icons.note_alt_outlined,
               ),
             ],
@@ -1618,7 +1829,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                 if (_isEdit) {
                   if (!await MonetizationService.instance.ensureEditAllowed(
                     context,
-                    itemLabel: '회원 정보',
+                    itemLabel: LocalizationService.tr('common_edit'),
                   )) {
                     return;
                   }
@@ -1640,7 +1851,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${updatedMember.name} 회원 정보가 수정되었습니다.'),
+                        content: Text('${updatedMember.name} · ${LocalizationService.tr('common_save')}'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -1650,7 +1861,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                   final currentMemberCount = ref.read(membersProvider).value?.length ?? 0;
                   if (!await bm.ensureCreateAllowed(
                     context,
-                    itemLabel: '회원',
+                    itemLabel: LocalizationService.tr('tab_members'),
                     currentCount: currentMemberCount,
                     limit: bm.maxMemberLimit,
                   )) {
@@ -1680,7 +1891,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${newMember.name} 회원이 등록되었습니다.'),
+                        content: Text('${newMember.name} · ${LocalizationService.tr('common_save')}'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -1693,7 +1904,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: Text(
-              _isEdit ? '회원 정보 수정 완료' : '회원 등록 완료',
+              _isEdit ? LocalizationService.tr('common_save') : LocalizationService.tr('add_member_btn'),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
@@ -1708,11 +1919,21 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('새 수업/그룹 등록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: Text(
+          LocalizationService.pick(
+            ko: '새 수업/그룹 등록',
+            en: 'Create New Group',
+            ja: '新しいグループを追加',
+            zh: '创建新班级分组',
+            vi: 'Thêm nhóm mới',
+            es: 'Crear nuevo grupo',
+          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         content: AppTextField(
           controller: groupInputCtrl,
-          label: '그룹 이름',
-          hint: '예: 고등 내신반, 1:1 기구필라',
+          label: LocalizationService.tr('wiz_label_category'),
+          hint: LocalizationService.localizeBuiltInLabel('정규반'),
           prefixIcon: Icons.group_add_outlined,
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1731,7 +1952,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
               const SizedBox(width: 8),
               Expanded(
                 child: ZeroButton.primary(
-                  label: '추가 및 선택',
+                  label: LocalizationService.tr('common_add'),
                   size: ZeroButtonSize.medium,
                   fullWidth: true,
                   onPressed: () async {
@@ -1811,7 +2032,14 @@ class _StickyMemberSearchAndFilterDelegate extends SliverPersistentHeaderDelegat
                     onChanged: onSearchChanged,
                     decoration: InputDecoration(
                       isDense: true,
-                      hintText: '이름, 초성(ㄱㄷㅎ), 연락처, 그룹명 검색',
+                      hintText: LocalizationService.pick(
+                        ko: '이름, 초성(ㄱㄷㅎ), 연락처, 그룹명 검색',
+                        en: 'Search name, phone, or group',
+                        ja: '名前・電話番号・グループで検索',
+                        zh: '搜索姓名、电话或班级分组',
+                        vi: 'Tìm tên, SĐT hoặc nhóm',
+                        es: 'Buscar nombre, teléfono o grupo',
+                      ),
                       hintStyle: const TextStyle(
                         fontFamily: 'Pretendard',
                         fontSize: 13,
@@ -1847,7 +2075,9 @@ class _StickyMemberSearchAndFilterDelegate extends SliverPersistentHeaderDelegat
                     final grp = allGroups[idx];
                     final isSelected = selectedGroupFilter == grp;
                     return ZeroFilterChip(
-                      label: grp,
+                      label: grp == '전체'
+                          ? LocalizationService.tr('common_all')
+                          : LocalizationService.localizeBuiltInLabel(grp),
                       isSelected: isSelected,
                       onTap: () => onGroupSelected(grp),
                     );

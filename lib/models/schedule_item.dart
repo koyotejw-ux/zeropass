@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../services/localization_service.dart';
 
 enum ScheduleCategory {
   academy('학원/스튜디오 일정', 0xFF2563EB),
@@ -12,6 +13,65 @@ enum ScheduleCategory {
   final int colorValue;
 
   const ScheduleCategory(this.label, this.colorValue);
+
+  String get localizedLabel {
+    switch (this) {
+      case ScheduleCategory.academy:
+        return LocalizationService.pick(
+          ko: label,
+          en: 'Studio Schedule',
+          ja: 'スタジオ予定',
+          zh: '机构日程',
+          vi: 'Lịch cơ sở',
+          es: 'Horario del centro',
+        );
+      case ScheduleCategory.holiday:
+        return LocalizationService.pick(
+          ko: label,
+          en: 'Holiday / Closed',
+          ja: '休講・休業日',
+          zh: '休假/停课日',
+          vi: 'Nghỉ lễ / Đóng cửa',
+          es: 'Festivo / Cerrado',
+        );
+      case ScheduleCategory.examOrTest:
+        return LocalizationService.pick(
+          ko: label,
+          en: 'Exam / Evaluation',
+          ja: 'テスト・審査',
+          zh: '考核/测验',
+          vi: 'Kiểm tra / Đánh giá',
+          es: 'Examen / Evaluación',
+        );
+      case ScheduleCategory.billingTax:
+        return LocalizationService.pick(
+          ko: label,
+          en: 'Billing / Tax Schedule',
+          ja: '集金・税務予定',
+          zh: '收款/税务日程',
+          vi: 'Lịch thu phí / Thuế',
+          es: 'Cobros / Impuestos',
+        );
+      case ScheduleCategory.specialLesson:
+        return LocalizationService.pick(
+          ko: label,
+          en: 'Workshop / Event',
+          ja: '特別講座・イベント',
+          zh: '特训/活动',
+          vi: 'Chuyên đề / Sự kiện',
+          es: 'Taller / Evento',
+        );
+      case ScheduleCategory.custom:
+        return LocalizationService.pick(
+          ko: label,
+          en: 'Other Memo',
+          ja: 'その他メモ',
+          zh: '其他备注',
+          vi: 'Ghi chú khác',
+          es: 'Otras notas',
+        );
+    }
+  }
 }
 
 class ScheduleItem {

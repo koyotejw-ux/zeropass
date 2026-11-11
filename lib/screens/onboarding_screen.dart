@@ -1,58 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/app_providers.dart';
+import '../services/localization_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mascot_avatar.dart';
+import '../widgets/region_language_picker.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback onFinish;
   const OnboardingScreen({super.key, required this.onFinish});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
-  final List<OnboardingPageData> _pages = [
-    const OnboardingPageData(
-      icon: Icons.domain_verification_rounded,
-      tag: '프리미엄 비즈니스 솔루션',
-      title: '서버비 0원 스마트 출결·장부\n체크앤페이 비즈니스 솔루션',
-      subtitle: '학원, 공방, PT샵, 필라테스, 스터디룸 등\n1인·소규모 매장을 위한 100% 독립형 모바일 비서입니다.\n월 고정비 없이 스마트폰 하나로 시작하세요.',
-      highlightText: '기본 기능 0원 무료 이용 · 100% 독립 로컬 보안',
-    ),
-    const OnboardingPageData(
-      icon: Icons.touch_app_rounded,
-      tag: '1초 출결 & 자동 차감',
-      title: '회원 터치 한 번으로\n출석 체크와 잔여 횟수 차감!',
-      subtitle: '수강생이나 회원이 오면 [체크인]만 누르세요.\n출석 일시 기록과 잔여 회차가 1초 만에 깔끔하게 정리돼요.',
-      highlightText: '정기권(무제한) · 횟수권(자동 차감) 완벽 지원',
-    ),
-    const OnboardingPageData(
-      icon: Icons.chat_bubble_outline_rounded,
-      tag: '비용 0원 무제한 문자',
-      title: '내 폰 기본 문자로 전송!\n통신비 0원으로 안심 알림',
-      subtitle: '등·하원 알림, 수업 완료 안내, 수강료 청구서까지!\n유료 문자 서버를 거치지 않고 내 스마트폰 문자 앱으로 무제한 발송해요.',
-      highlightText: '80자 제한 없는 장문(LMS) · 박스 서식 온전 전송',
-    ),
-    const OnboardingPageData(
-      icon: Icons.receipt_long_rounded,
-      tag: '청구 & 은행 입금 자동화',
-      title: '스마트 수납 장부와\n은행 입금 자동 감지 비서',
-      subtitle: '계좌번호 복사링크와 토스 송금링크가 담긴 청구서를 보내고,\n은행 앱 입금 알림으로 미납과 완납을 자동 정리하세요.',
-      highlightText: '엑셀(CSV) 내보내기 · 1초 리마인드 재청구',
-    ),
-    const OnboardingPageData(
-      icon: Icons.security_rounded,
-      tag: '100% 안심 로컬 금고',
-      title: '외부 서버 전송 0%!\n오직 사장님 기기에만 암호화',
-      subtitle: '회원 정보와 장부 데이터가 외부 서버로 절대 새어 나가지 않아요.\n원할 땐 언제든 카톡이나 드라이브로 백업·복원할 수 있어요.',
-      highlightText: '서버 유출 원천 차단 · 오프라인 완벽 작동',
-    ),
-  ];
+  List<OnboardingPageData> _buildPages() {
+    return [
+      OnboardingPageData(
+        icon: Icons.domain_verification_rounded,
+        tag: LocalizationService.tr('onb_slide1_badge'),
+        title: LocalizationService.tr('onb_slide1_title'),
+        subtitle: LocalizationService.tr('onb_slide1_desc'),
+        highlightText: LocalizationService.isDomestic
+            ? '기본 기능 0원 무료 이용 · 100% 독립 로컬 보안'
+            : 'Free Starter Plan · 100% Private Local DB',
+      ),
+      OnboardingPageData(
+        icon: Icons.touch_app_rounded,
+        tag: LocalizationService.tr('onb_slide2_badge'),
+        title: LocalizationService.tr('onb_slide2_title'),
+        subtitle: LocalizationService.tr('onb_slide2_desc'),
+        highlightText:
+            '${LocalizationService.tr('billing_type_monthly')} · ${LocalizationService.tr('billing_type_session')}',
+      ),
+      OnboardingPageData(
+        icon: Icons.chat_bubble_outline_rounded,
+        tag: LocalizationService.tr('onb_slide3_badge'),
+        title: LocalizationService.tr('onb_slide3_title'),
+        subtitle: LocalizationService.tr('onb_slide3_desc'),
+        highlightText: LocalizationService.currentCurrency.paymentChannelsSummary,
+      ),
+      OnboardingPageData(
+        icon: Icons.receipt_long_rounded,
+        tag: LocalizationService.tr('onb_slide4_badge'),
+        title: LocalizationService.tr('onb_slide4_title'),
+        subtitle: LocalizationService.tr('onb_slide4_desc'),
+        highlightText: LocalizationService.currentCurrency.taxPolicy,
+      ),
+      OnboardingPageData(
+        icon: Icons.security_rounded,
+        tag: LocalizationService.tr('onb_slide5_badge'),
+        title: LocalizationService.tr('onb_slide5_title'),
+        subtitle: LocalizationService.tr('onb_slide5_desc'),
+        highlightText: LocalizationService.tr('kiosk_mode_name'),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    ref.watch(currencyProvider);
+    final pages = _buildPages();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -60,23 +73,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           builder: (context, constraints) {
             final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
-            return isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout();
+            return isLandscape ? _buildLandscapeLayout(pages) : _buildPortraitLayout(pages);
           },
         ),
       ),
     );
   }
 
-  Widget _buildPortraitLayout() {
-    final page = _pages[_currentPage];
+  Widget _buildPortraitLayout(List<OnboardingPageData> pages) {
+    final page = pages[_currentPage];
 
     return Column(
       children: [
-        // Top App Bar Area: Indicator & Skip
+        // Top App Bar Area: Indicator, Region Picker & Skip
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Page step badge
               Container(
@@ -86,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${_currentPage + 1} / ${_pages.length}',
+                  '${_currentPage + 1} / ${pages.length}',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -94,12 +106,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              const Flexible(child: RegionLanguageChip()),
+              const Spacer(),
               // Skip Button
               TextButton(
                 onPressed: widget.onFinish,
-                child: const Text(
-                  '건너뛰기',
-                  style: TextStyle(
+                child: Text(
+                  LocalizationService.tr('onb_skip'),
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
@@ -230,49 +245,51 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             children: [
-              // Page Indicators
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _pages.length,
-                  (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentPage == index ? 22 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index ? AppTheme.primaryDark : AppTheme.borderSubtle,
-                      borderRadius: BorderRadius.circular(3),
+                // Page Indicators
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    pages.length,
+                    (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 22 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _currentPage == index ? AppTheme.primaryDark : AppTheme.borderSubtle,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              // Action Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_currentPage < _pages.length - 1) {
-                      setState(() => _currentPage++);
-                    } else {
-                      widget.onFinish();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryDark,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text(
-                    _currentPage == _pages.length - 1 ? '체크앤페이 시작하기' : '다음으로',
-                    style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+                // Action Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_currentPage < pages.length - 1) {
+                        setState(() => _currentPage++);
+                      } else {
+                        widget.onFinish();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryDark,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Text(
+                      _currentPage == pages.length - 1
+                          ? LocalizationService.tr('onb_start')
+                          : LocalizationService.tr('onb_next'),
+                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -280,8 +297,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildLandscapeLayout() {
-    final page = _pages[_currentPage];
+  Widget _buildLandscapeLayout(List<OnboardingPageData> pages) {
+    final page = pages[_currentPage];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -290,30 +307,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // Left: Mascot Character
           Expanded(
             flex: 1,
-            child: Center(
-              child: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  ZeroPassMascotAvatar(
-                    size: 170,
-                    isLightMode: true,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.25),
-                        blurRadius: 20,
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.softMint,
-                      shape: BoxShape.circle,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const RegionLanguageChip(),
+                const SizedBox(height: 12),
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    ZeroPassMascotAvatar(
+                      size: 155,
+                      isLightMode: true,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.25),
+                          blurRadius: 20,
+                        ),
+                      ],
                     ),
-                    child: Icon(page.icon, size: 20, color: Colors.white),
-                  ),
-                ],
-              ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.softMint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(page.icon, size: 20, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 24),
@@ -362,7 +384,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       // Indicators
                       Row(
                         children: List.generate(
-                          _pages.length,
+                          pages.length,
                           (index) => AnimatedContainer(
                             duration: const Duration(milliseconds: 250),
                             margin: const EdgeInsets.only(right: 6),
@@ -378,7 +400,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const Spacer(),
                       ElevatedButton(
                         onPressed: () {
-                          if (_currentPage < _pages.length - 1) {
+                          if (_currentPage < pages.length - 1) {
                             setState(() => _currentPage++);
                           } else {
                             widget.onFinish();
@@ -391,7 +413,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
-                          _currentPage == _pages.length - 1 ? '시작하기' : '다음',
+                          _currentPage == pages.length - 1
+                              ? LocalizationService.tr('onb_start')
+                              : LocalizationService.tr('onb_next'),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),

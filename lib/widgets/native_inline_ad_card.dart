@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
 import '../screens/pro_store_screen.dart';
 import '../theme/app_theme.dart';
@@ -151,19 +152,33 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
                         ),
-                        child: const Text(
-                          'AD · 추천',
-                          style: TextStyle(
+                        child: Text(
+                          LocalizationService.pick(
+                            ko: 'AD · 추천',
+                            en: 'AD · Tip',
+                            ja: 'AD · おすすめ',
+                            zh: 'AD · 推荐',
+                            vi: 'AD · Gợi ý',
+                            es: 'AD · Recomendado',
+                          ),
+                          style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF475569),
                           ),
                         ),
                       ),
-                      const Text(
-                        '매장 운영 추천 파트너',
+                      Text(
+                        LocalizationService.pick(
+                          ko: '매장 운영 추천 파트너',
+                          en: 'Studio Operations Partner',
+                          ja: 'スタジオ運営パートナー',
+                          zh: '工作室智能运营助手',
+                          vi: 'Trợ lý vận hành trung tâm',
+                          es: 'Aliado para tu centro',
+                        ),
                         softWrap: true,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textSecondary,
@@ -181,11 +196,18 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                     );
                   },
                   borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     child: Text(
-                      '광고 끄기 >',
-                      style: TextStyle(
+                      LocalizationService.pick(
+                        ko: '광고 끄기 >',
+                        en: 'Hide Ads >',
+                        ja: '広告オフ >',
+                        zh: '关闭广告 >',
+                        vi: 'Tắt QC >',
+                        es: 'Sin anuncios >',
+                      ),
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFFD97706),
@@ -230,22 +252,36 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          '안 쓰는 공기계를 무인 출결 키오스크로!',
+                          LocalizationService.pick(
+                            ko: '안 쓰는 공기계를 무인 출결 키오스크로!',
+                            en: 'Turn Any Tablet into a Check-in Kiosk!',
+                            ja: '手持ちタブレットを無人受付キオスクに！',
+                            zh: '闲置平板秒变自助扫码签到终端！',
+                            vi: 'Biến máy tính bảng thành Kiosk điểm danh!',
+                            es: '¡Convierte tu tablet en un quiosco!',
+                          ),
                           softWrap: true,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.textPrimary,
                             letterSpacing: -0.3,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          '타사 월 49,000원 기기 대신 광고 없는 올인원 VIP 패스로 1시간 무료 체험해 보세요.',
+                          LocalizationService.pick(
+                            ko: '타사 월 49,000원 기기 대신 광고 없는 올인원 VIP 패스로 1시간 무료 체험해 보세요.',
+                            en: 'Try the ad-free All-in-One VIP Kiosk pass free for 1 hour.',
+                            ja: '広告なしVIPパスでキオスク機能を1時間無料でお試しください。',
+                            zh: '立即免费体验 1 小时免广告全能 VIP 与自助考勤终端。',
+                            vi: 'Dùng thử miễn phí 1 giờ gói VIP Kiosk không quảng cáo.',
+                            es: 'Prueba 1 hora gratis del pase VIP Quiosco sin anuncios.',
+                          ),
                           softWrap: true,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
                             height: 1.35,
@@ -267,8 +303,15 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 11),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text(
-                        '무료 체험',
+                      child: Text(
+                        LocalizationService.pick(
+                          ko: '무료 체험',
+                          en: 'Try Free',
+                          ja: '無料体験',
+                          zh: '免费试用',
+                          vi: 'Dùng thử',
+                          es: 'Probar',
+                        ),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,

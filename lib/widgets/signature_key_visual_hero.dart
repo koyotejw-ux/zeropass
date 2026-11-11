@@ -184,7 +184,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  studio?.studioName ?? '체크앤페이 스튜디오',
+                                  studio?.studioName ?? LocalizationService.tr('kiosk_brand_title'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -231,14 +231,20 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                       color: Color(0xFF7DD3FC),
                                     ),
                                     const SizedBox(width: 3.5),
-                                    Text(
-                                      studio?.category ?? '피트니스 / PT',
-                                      style: const TextStyle(
-                                        fontFamily: 'Pretendard',
-                                        color: Color(0xFFE0F2FE),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.2,
+                                    Flexible(
+                                      child: Text(
+                                        studio != null
+                                            ? studio!.localizedCategoryLabel
+                                            : LocalizationService.industryCategoryLabel('피트니스 / PT'),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Pretendard',
+                                          color: Color(0xFFE0F2FE),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.2,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -260,14 +266,18 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                   children: [
                                     Icon(expression.vectorIcon, size: 12, color: auraBorder),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      '${LocalizationService.tr("attendance_rate")} $attendanceRate% (${expression.label})',
-                                      style: TextStyle(
-                                        fontFamily: 'Pretendard',
-                                        color: statusBadgeTextColor,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.2,
+                                    Flexible(
+                                      child: Text(
+                                        '${LocalizationService.tr("attendance_rate")} $attendanceRate% (${expression.label})',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Pretendard',
+                                          color: statusBadgeTextColor,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.2,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -275,7 +285,14 @@ class SignatureKeyVisualHero extends StatelessWidget {
                               ),
                               // 실시간 인원 요약 (0/6명)
                               Text(
-                                '실시간 ($checkedCount/$totalCount명)',
+                                LocalizationService.pick(
+                                  ko: '실시간 ($checkedCount/$totalCount명)',
+                                  en: 'Live ($checkedCount/$totalCount)',
+                                  ja: 'リアルタイム ($checkedCount/$totalCount名)',
+                                  zh: '实时 ($checkedCount/$totalCount人)',
+                                  vi: 'Trực tiếp ($checkedCount/$totalCount)',
+                                  es: 'En vivo ($checkedCount/$totalCount)',
+                                ),
                                 style: const TextStyle(
                                   fontFamily: 'Pretendard',
                                   color: Color(0xFF94A3B8),
@@ -341,7 +358,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                   children: [
                     _buildKpiCell(
                       label: LocalizationService.tr('checked_in'),
-                      value: '$checkedCount명',
+                      value: LocalizationService.isDomestic ? '$checkedCount명' : '$checkedCount',
                       accentColor: const Color(0xFF34D399),
                       valueColor: Colors.white,
                       isSelected: activeFilter == '체크 완료',
@@ -350,7 +367,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                     _buildVerticalDivider(),
                     _buildKpiCell(
                       label: LocalizationService.tr('waiting_checkin'),
-                      value: '$waitingCount명',
+                      value: LocalizationService.isDomestic ? '$waitingCount명' : '$waitingCount',
                       accentColor: const Color(0xFF38BDF8),
                       valueColor: Colors.white,
                       isSelected: activeFilter == '출결 대기',
@@ -359,7 +376,7 @@ class SignatureKeyVisualHero extends StatelessWidget {
                     _buildVerticalDivider(),
                     _buildKpiCell(
                       label: LocalizationService.tr('expiring_soon'),
-                      value: '$expiringCount명',
+                      value: LocalizationService.isDomestic ? '$expiringCount명' : '$expiringCount',
                       accentColor: const Color(0xFFFBBF24),
                       valueColor: expiringCount > 0 ? const Color(0xFFFDE68A) : Colors.white,
                       isSelected: activeFilter == '만료 임박',

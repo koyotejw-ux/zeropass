@@ -1,11 +1,14 @@
+import 'localization_service.dart';
+
 /// ZeroPass Bank & Financial Notification Auto-Parser
 /// Legal & Compliance Safeguard:
 /// Strictly filters incoming notifications by verified banking and telecom financial apps.
 /// Immediately drops and ignores personal messengers (KakaoTalk, Instagram, general SMS)
 /// without reading or logging content.
 class BankNotificationFilter {
-  // Verified South Korean Bank & Fintech Package Names
+  // Verified Korean & Global Bank / Fintech Package Names
   static const Set<String> verifiedBankPackages = {
+    // Korea
     'com.kbstar.kbbank', // KB국민은행 Star뱅킹
     'com.shinhan.sbanking', // 신한 쏠(SOL)
     'com.ibk.neobanking', // IBK기업은행
@@ -19,6 +22,21 @@ class BankNotificationFilter {
     'com.epost.pser.damo', // 우체국스마트뱅킹
     'com.suhyup.smart', // 수협 파트너뱅크
     'com.kfcc.mobilebank', // 새마을금고 MG더뱅킹
+    // Global (US / JP / EU / UK / VN / ES)
+    'com.chase.sig.android', // Chase (US)
+    'com.infonow.bofa', // Bank of America (US)
+    'com.wf.wellsfargomobile', // Wells Fargo (US)
+    'com.venmo', // Venmo (US)
+    'com.paypal.android.p2pmobile', // PayPal
+    'com.squareup.cash', // Cash App
+    'com.revolut.revolut', // Revolut
+    'com.transferwise.android', // Wise
+    'jp.co.rakuten_bank.rakutenbank', // Rakuten Bank (JP)
+    'jp.co.bk.mufg.mb', // MUFG (JP)
+    'com.mbmobile', // MB Bank (VN)
+    'com.VCB', // Vietcombank (VN)
+    'com.bbva.bbvacontigo', // BBVA (ES)
+    'es.bancosantander.apps', // Santander (ES)
   };
 
   /// Evaluates whether an incoming notification origin is legitimate.
@@ -113,7 +131,18 @@ class BankNotificationFilter {
 
       if (event.senderName == null || event.senderName!.isEmpty) {
         // Fallback: match by amount if there's only 1 exact amount match
-        return InvoiceMatchResult(invoice: inv, matchedMemberName: null, matchType: '금액 일치');
+        return InvoiceMatchResult(
+          invoice: inv,
+          matchedMemberName: null,
+          matchType: LocalizationService.pick(
+            ko: '금액 일치',
+            en: 'Amount Match',
+            ja: '金額一致',
+            zh: '金额匹配',
+            vi: 'Khớp số tiền',
+            es: 'Coincidencia de importe',
+          ),
+        );
       }
 
       final cleanSender = event.senderName!.replaceAll(' ', '');
@@ -127,7 +156,14 @@ class BankNotificationFilter {
           return InvoiceMatchResult(
             invoice: inv,
             matchedMemberName: member.name,
-            matchType: '회원명 일치',
+            matchType: LocalizationService.pick(
+              ko: '회원명 일치',
+              en: 'Member Match',
+              ja: '会員名一致',
+              zh: '会员姓名匹配',
+              vi: 'Khớp tên hội viên',
+              es: 'Coincidencia de nombre',
+            ),
           );
         }
 
@@ -136,8 +172,22 @@ class BankNotificationFilter {
             (cleanSender.contains(cleanPayerName) || cleanPayerName.contains(cleanSender))) {
           return InvoiceMatchResult(
             invoice: inv,
-            matchedMemberName: '${member.name} (입금자: ${member.payerName})',
-            matchType: '학부모(입금자명) 일치',
+            matchedMemberName: LocalizationService.pick(
+              ko: '${member.name} (입금자: ${member.payerName})',
+              en: '${member.name} (Payer: ${member.payerName})',
+              ja: '${member.name} (振込人: ${member.payerName})',
+              zh: '${member.name} (付款人: ${member.payerName})',
+              vi: '${member.name} (Người gửi: ${member.payerName})',
+              es: '${member.name} (Pagador: ${member.payerName})',
+            ),
+            matchType: LocalizationService.pick(
+              ko: '학부모(입금자명) 일치',
+              en: 'Payer / Guardian Match',
+              ja: '保護者・振込名義一致',
+              zh: '家长/付款人匹配',
+              vi: 'Khớp tên người gửi',
+              es: 'Coincidencia de pagador',
+            ),
           );
         }
       }

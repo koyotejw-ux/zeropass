@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
 import '../screens/pro_store_screen.dart';
 import 'design_system.dart';
@@ -141,7 +142,14 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          '광고 없는 VIP 쾌적 모드 체험 중 (${bm.remainingTemporaryPassFormatted})',
+                          LocalizationService.pick(
+                            ko: '광고 없는 VIP 쾌적 모드 체험 중 (${bm.remainingTemporaryPassFormatted})',
+                            en: 'Ad-Free VIP Active (${bm.remainingTemporaryPassFormatted})',
+                            ja: '広告なしVIP体験中 (${bm.remainingTemporaryPassFormatted})',
+                            zh: '免广告 VIP 生效中 (${bm.remainingTemporaryPassFormatted})',
+                            vi: 'VIP không quảng cáo (${bm.remainingTemporaryPassFormatted})',
+                            es: 'Modo VIP sin anuncios (${bm.remainingTemporaryPassFormatted})',
+                          ),
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
@@ -160,9 +168,16 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                     color: const Color(0xFFF59E0B),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    '광고 제거 월 1,900원 (한 달) >',
-                    style: TextStyle(
+                  child: Text(
+                    LocalizationService.pick(
+                      ko: '광고 제거 월 1,900원 (한 달) >',
+                      en: 'Remove Ads >',
+                      ja: '広告完全削除 >',
+                      zh: '永久去广告 >',
+                      vi: 'Xóa quảng cáo >',
+                      es: 'Quitar anuncios >',
+                    ),
+                    style: const TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),

@@ -9,6 +9,7 @@ import '../models/notification_log.dart';
 import '../models/studio_profile.dart';
 import '../services/database_service.dart';
 import '../services/kakao_share_service.dart';
+import '../services/localization_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
 
@@ -77,7 +78,7 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
   Future<void> _sendViaKakao() async {
     setState(() => _isSending = true);
     final msg = _messageController.text.trim();
-    final subject = '[${widget.studio.studioName}] 수납 영수증';
+    final subject = '[${widget.studio.studioName}] ${LocalizationService.pick(ko: '수납 영수증', en: 'Payment Receipt', ja: '領収書', zh: '收款凭据', vi: 'Biên lai thanh toán', es: 'Recibo de pago')}';
 
     bool success = false;
     if (widget.onShareKakao != null) {
@@ -93,7 +94,16 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.member.name} 보호자 카카오톡 영수증 전송 완료'),
+          content: Text(
+            LocalizationService.pick(
+              ko: '${widget.member.name} 보호자 카카오톡 영수증 전송 완료',
+              en: 'Receipt shared for ${widget.member.name}',
+              ja: '${widget.member.name} 様の領収書を共有しました',
+              zh: '已发送 ${widget.member.name} 的收款凭据',
+              vi: 'Đã chia sẻ biên lai cho ${widget.member.name}',
+              es: 'Recibo compartido para ${widget.member.name}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -121,7 +131,16 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.member.name} 보호자 문자(SMS) 영수증 전송 완료'),
+          content: Text(
+            LocalizationService.pick(
+              ko: '${widget.member.name} 보호자 문자(SMS) 영수증 전송 완료',
+              en: 'SMS receipt sent for ${widget.member.name}',
+              ja: '${widget.member.name} 様のSMS領収書を送信しました',
+              zh: '已发送 ${widget.member.name} 的短信凭据',
+              vi: 'Đã gửi SMS biên lai cho ${widget.member.name}',
+              es: 'Recibo SMS enviado para ${widget.member.name}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -152,7 +171,9 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final amountStr = _currencyFormat.format(widget.invoice.amount);
+    final amountStr = (LocalizationService.currentCurrency == AppCurrency.krw && LocalizationService.isDomestic)
+        ? '${_currencyFormat.format(widget.invoice.amount)}원'
+        : LocalizationService.formatAmount(widget.invoice.amount);
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -212,13 +233,20 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '수납 완료 영수증 알림장',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                        Text(
+                          LocalizationService.pick(
+                            ko: '수납 완료 영수증 알림장',
+                            en: 'Payment Receipt Notice',
+                            ja: '領収書・ご入金確認',
+                            zh: '收款确认电子凭证',
+                            vi: 'Gửi biên lai xác nhận',
+                            es: 'Enviar recibo de pago',
+                          ),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${widget.member.name} • ${widget.invoice.title} ($amountStr원)',
+                          '${widget.member.name} • ${widget.invoice.title} ($amountStr)',
                           style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
                         ),
                       ],
@@ -243,9 +271,16 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '영수증 안내 문구 (발송 전 수정 가능)',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                    Text(
+                      LocalizationService.pick(
+                        ko: '영수증 안내 문구 (발송 전 수정 가능)',
+                        en: 'Receipt Message (Editable)',
+                        ja: '領収書メッセージ（編集可能）',
+                        zh: '凭据内容预览（可修改）',
+                        vi: 'Nội dung biên lai (Có thể sửa)',
+                        es: 'Texto del recibo (Editable)',
+                      ),
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -263,100 +298,123 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
               ),
               const SizedBox(height: 14),
 
-              // 현금영수증 및 홈택스 빠른 편의 바
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.receipt_long_outlined, size: 15, color: Color(0xFF475569)),
-                            SizedBox(width: 5),
-                            Text(
-                              '현금영수증 발급 지원',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Clipboard.setData(ClipboardData(text: widget.member.phone.replaceAll('-', '')));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('현금영수증 발급용 휴대폰 번호(${widget.member.phone})가 복사되었습니다.'),
-                                    behavior: SnackBarBehavior.floating,
+              // 국가별 세무/현금영수증 지원 바
+              if (LocalizationService.supportsTossTransfer)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.receipt_long_outlined, size: 15, color: Color(0xFF475569)),
+                              SizedBox(width: 5),
+                              Text(
+                                '현금영수증 발급 지원',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: widget.member.phone.replaceAll('-', '')));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('현금영수증 발급용 휴대폰 번호(${widget.member.phone})가 복사되었습니다.'),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFCBD5E1)),
                                   ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.copy_rounded, size: 12, color: AppTheme.primaryBlue),
-                                    SizedBox(width: 3),
-                                    Text('번호 복사', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
-                                  ],
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.copy_rounded, size: 12, color: AppTheme.primaryBlue),
+                                      SizedBox(width: 3),
+                                      Text('번호 복사', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () async {
-                                final uri = Uri.parse('https://www.hometax.go.kr');
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.open_in_new_rounded, size: 12, color: Color(0xFF059669)),
-                                    SizedBox(width: 3),
-                                    Text('홈택스 열기', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
-                                  ],
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () async {
+                                  final uri = Uri.parse('https://www.hometax.go.kr');
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.open_in_new_rounded, size: 12, color: Color(0xFF059669)),
+                                      SizedBox(width: 3),
+                                      Text('홈택스 열기', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        '💡 홈택스 접속 후 [전자세금계산서·현금영수증 > 현금영수증 발급]에서 1분 만에 발행 가능합니다.',
+                        style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B), height: 1.3),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_outlined, size: 15, color: Color(0xFF475569)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${LocalizationService.tr('tax_policy_badge')}: ${LocalizationService.currentCurrency.taxPolicy}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      '💡 홈택스 접속 후 [전자세금계산서·현금영수증 > 현금영수증 발급]에서 1분 만에 발행 가능합니다.',
-                      style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B), height: 1.3),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               const SizedBox(height: 14),
 
               // Action Buttons (1 Column Full-Width in Senior Mode)
@@ -369,7 +427,7 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '카톡 영수증 0원 전송',
+                        LocalizationService.isDomestic ? '카톡 영수증 0원 전송' : LocalizationService.shareMessengerLabel,
                         style: TextStyle(
                           fontSize: isSenior ? 15 : 13,
                           fontWeight: FontWeight.w800,
@@ -392,7 +450,7 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '문자(SMS) 전송',
+                        LocalizationService.tr('common_send_sms'),
                         style: TextStyle(
                           fontSize: isSenior ? 15 : 13,
                           fontWeight: FontWeight.w800,
@@ -433,7 +491,10 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('건너뛰기 / 닫기', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  child: Text(
+                    LocalizationService.tr('common_close'),
+                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  ),
                 ),
               ),
             ],

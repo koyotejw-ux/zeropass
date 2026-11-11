@@ -60,6 +60,9 @@ class TabletKioskScreen extends ConsumerStatefulWidget {
 
 class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   late bool _localTestMode;
+  bool _isNameSearchMode = false;
+  final TextEditingController _nameSearchCtrl = TextEditingController();
+  String _nameQuery = '';
   String _digits = '';
   String? _statusMessage;
   bool _isSuccess = false;
@@ -87,6 +90,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   void dispose() {
     _clockTimer?.cancel();
     _celebrationTimer?.cancel();
+    _nameSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -161,13 +165,13 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
       final celebration = AttendanceCelebration(
         digits: enteredCode,
-        memberName: '김패시 학생',
-        programTag: '기능 테스트 시뮬레이션',
-        passStatus: '10회권 (잔여 9회)',
+        memberName: LocalizationService.tr('kiosk_demo_member_name'),
+        programTag: LocalizationService.tr('kiosk_demo_group'),
+        passStatus: LocalizationService.tr('kiosk_demo_pass_info'),
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: true,
         isSuccess: true,
-        smsMessage: '[테스트 알림] 김패시 학생이 학원에 정상 출석하였습니다.',
+        smsMessage: LocalizationService.tr('kiosk_success_headline'),
       );
 
       _celebrationTimer?.cancel();
@@ -189,15 +193,25 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       setState(() {
         _isProcessing = false;
         _isSuccess = false;
-        _statusMessage = '등록되지 않은 번호($enteredCode)입니다.\n선생님께 확인을 요청해 주세요.';
+        _statusMessage = LocalizationService.trParams('kiosk_pin_not_found', {'code': enteredCode});
         _digits = '';
       });
       return;
     }
 
     // 4. 실제 회원 정상 출결 처리
-    final member = matchedMembers.first;
+    await _checkInMatchedMember(matchedMembers.first, enteredCode, studio);
+  }
 
+  Future<void> _checkInMatchedMember(
+    Member member,
+    String enteredCode,
+    StudioProfile studio,
+  ) async {
+    setState(() {
+      _isProcessing = true;
+      _statusMessage = null;
+    });
     try {
       await ref.read(passRecordsProvider.notifier).checkInMember(member: member);
       await ref.read(membersProvider.notifier).reload();
@@ -210,8 +224,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       );
 
       final remaining = member.billingType == BillingType.sessionBased
-          ? '${member.remainingSessions - 1}회 남음'
-          : '정기권 패스';
+          ? LocalizationService.trParams('common_sessions_left', {'n': '${member.remainingSessions - 1}'})
+          : LocalizationService.tr('common_monthly_pass');
 
       final celebration = AttendanceCelebration(
         digits: enteredCode,
@@ -233,6 +247,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         _isProcessing = false;
         _isSuccess = true;
         _celebration = celebration;
+        _nameSearchCtrl.clear();
+        _nameQuery = '';
         _statusMessage = null;
         _digits = '';
       });
@@ -240,7 +256,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       setState(() {
         _isProcessing = false;
         _isSuccess = false;
-        _statusMessage = '출결 처리 중 오류가 발생했습니다: $e';
+        _statusMessage = '${LocalizationService.tr('kiosk_pin_not_found')} ($e)';
         _digits = '';
       });
     }
@@ -279,24 +295,26 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         actionsOverflowButtonSpacing: 8,
         actionsOverflowDirection: VerticalDirection.down,
         actionsAlignment: MainAxisAlignment.end,
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF38BDF8), size: 28),
-            SizedBox(width: 10),
-            Text(
-              '관리자 키오스크 종료',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+            const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF38BDF8), size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                LocalizationService.tr('kiosk_master_exit_title'),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
             ),
           ],
         ),
-        content: const Text(
-          '관리자 마스터 비밀번호(0000)가 정상 확인되었습니다.\n태블릿 키오스크 모드를 종료하고 관리자 대시보드로 복귀하시겠습니까?',
-          style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.5),
+        content: Text(
+          LocalizationService.tr('kiosk_master_exit_desc'),
+          style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('계속 키오스크 유지', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: Text(LocalizationService.tr('common_cancel'), style: const TextStyle(color: Color(0xFF94A3B8))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -308,7 +326,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             ),
-            child: const Text('장부 대시보드로 복귀', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(
+              LocalizationService.tr('kiosk_empty_back_btn'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -326,13 +347,15 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.lock_rounded, color: Color(0xFFFBBF24), size: 26),
-              SizedBox(width: 10),
-              Text(
-                '관리자 모드 복귀',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+              const Icon(Icons.lock_rounded, color: Color(0xFFFBBF24), size: 26),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  LocalizationService.tr('kiosk_exit_title'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                ),
               ),
             ],
           ),
@@ -340,9 +363,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '학생의 무단 화면 조작을 방지하는 안전 잠금장치입니다.\n관리자 비밀번호 4자리를 입력해 주세요. (기본값: 0000)',
-                style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13.5, height: 1.5),
+              Text(
+                LocalizationService.tr('kiosk_exit_desc'),
+                style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13.5, height: 1.5),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -374,7 +397,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('닫기', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: Text(LocalizationService.tr('common_close'), style: const TextStyle(color: Color(0xFF94A3B8))),
             ),
             ElevatedButton(
               onPressed: () {
@@ -383,7 +406,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                   _exitToDashboard();
                 } else {
                   setDialogState(() {
-                    errorMessage = '비밀번호가 일치하지 않습니다.';
+                    errorMessage = LocalizationService.tr('kiosk_pin_mismatch');
                   });
                 }
               },
@@ -392,7 +415,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
-              child: const Text('확인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(LocalizationService.tr('common_confirm'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -484,9 +507,16 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                               color: const Color(0xFFF59E0B).withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
-                              '학생 데이터 없음',
-                              style: TextStyle(
+                            child: Text(
+                              LocalizationService.pick(
+                                ko: '운영 데이터 안내',
+                                en: 'Setup Needed',
+                                ja: '登録案内',
+                                zh: '数据提示',
+                                vi: 'Thông báo dữ liệu',
+                                es: 'Aviso de configuración',
+                              ),
+                              style: const TextStyle(
                                 color: Color(0xFFFBBF24),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -494,10 +524,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            '등록된 학생 데이터가 없어\n키오스크 모드를 실행할 수 없습니다',
+                          Text(
+                            LocalizationService.tr('kiosk_empty_title'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
@@ -505,10 +535,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          const Text(
-                            '키오스크는 등록된 학생의 전화번호 뒷자리로 확인됩니다.\n샘플 학생을 등록하거나 기능 테스트 모드로 체험해 보세요.',
+                          Text(
+                            LocalizationService.tr('kiosk_empty_desc'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Color(0xFF94A3B8),
                               fontSize: 13,
                               height: 1.45,
@@ -529,7 +559,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                         await ref.read(membersProvider.notifier).reload();
                                         if (mounted) {
                                           messenger.showSnackBar(
-                                            const SnackBar(content: Text('샘플 학생 5명이 등록되었습니다. 키오스크를 시작합니다.')),
+                                            SnackBar(content: Text(LocalizationService.tr('kiosk_empty_seed_btn'))),
                                           );
                                         }
                                       } finally {
@@ -546,7 +576,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                     )
                                   : const Icon(Icons.group_add_rounded, size: 20),
                               label: Text(
-                                _isProcessing ? '샘플 학생 생성 중...' : '샘플 학생 5명 바로 등록하기',
+                                LocalizationService.tr('kiosk_empty_seed_btn'),
                                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -567,9 +597,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                 });
                               },
                               icon: const Icon(Icons.science_rounded, size: 18, color: Color(0xFFA5B4FC)),
-                              label: const Text(
-                                '기능 테스트 모드로 체험하기',
-                                style: TextStyle(color: Color(0xFFA5B4FC), fontWeight: FontWeight.w700, fontSize: 13.5),
+                              label: Text(
+                                LocalizationService.tr('kiosk_empty_demo_btn'),
+                                style: const TextStyle(color: Color(0xFFA5B4FC), fontWeight: FontWeight.w700, fontSize: 13.5),
                               ),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: const Color(0xFF6366F1).withValues(alpha: 0.5)),
@@ -581,9 +611,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                           TextButton.icon(
                             onPressed: _exitToDashboard,
                             icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Color(0xFF94A3B8)),
-                            label: const Text(
-                              '관리자 대시보드로 복귀',
-                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
+                            label: Text(
+                              LocalizationService.tr('kiosk_empty_back_btn'),
+                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
                             ),
                           ),
                         ],
@@ -601,6 +631,23 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildPortraitKiosk(StudioProfile studio, List<Member> members, String dateStr, String timeStr) {
+    if (_isNameSearchMode) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Column(
+          children: [
+            _buildTopHeader(studio, dateStr, timeStr),
+            const SizedBox(height: 12),
+            _buildQuickTestChips(members),
+            const SizedBox(height: 16),
+            _buildPromptAndMascot(),
+            const SizedBox(height: 16),
+            Expanded(child: _buildNameLookupPanel(members, studio)),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: ConstrainedBox(
@@ -618,7 +665,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
               _buildQuickTestChips(members),
               const SizedBox(height: 16),
 
-              // Center: Prompt & Mascot
+              // Center: Prompt & Mode Toggle
               _buildPromptAndMascot(),
               const SizedBox(height: 16),
 
@@ -652,48 +699,43 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   Widget _buildLandscapeKiosk(StudioProfile studio, List<Member> members, String dateStr, String timeStr) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (constraints.maxHeight - 20).clamp(0.0, double.infinity),
-            ),
-            child: IntrinsicHeight(
-              child: Column(
+        final content = Column(
+          children: [
+            // Top Header
+            _buildTopHeader(studio, dateStr, timeStr),
+            const SizedBox(height: 8),
+
+            // Main 2-Column Split
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Top Header
-                  _buildTopHeader(studio, dateStr, timeStr),
-                  const SizedBox(height: 8),
-
-                  // Main 2-Column Split
+                  // Left Column: Mascot, Info, Digit Display, Status
                   Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    flex: 5,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Left Column: Mascot, Info, Digit Display, Status
-                        Expanded(
-                          flex: 5,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildQuickTestChips(members),
-                              const SizedBox(height: 10),
-                              _buildPromptAndMascot(),
-                              const SizedBox(height: 14),
-                              _buildDigitBoxes(),
-                              if (_statusMessage != null) ...[
-                                const SizedBox(height: 10),
-                                _buildStatusCard(),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
+                        _buildQuickTestChips(members),
+                        const SizedBox(height: 10),
+                        _buildPromptAndMascot(),
+                        const SizedBox(height: 14),
+                        _buildDigitBoxes(),
+                        if (_statusMessage != null) ...[
+                          const SizedBox(height: 10),
+                          _buildStatusCard(),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
 
-                        // Right Column: Keypad (FittedBox to prevent any vertical/horizontal overflow)
-                        Expanded(
-                          flex: 4,
-                          child: Center(
+                  // Right Column: Keypad OR Name Lookup
+                  Expanded(
+                    flex: 4,
+                    child: _isNameSearchMode
+                        ? _buildNameLookupPanel(members, studio)
+                        : Center(
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: ConstrainedBox(
@@ -702,13 +744,30 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
             ),
+          ],
+        );
+
+        if (_isNameSearchMode) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: SizedBox(
+              height: (constraints.maxHeight - 20).clamp(0.0, double.infinity),
+              child: content,
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 20).clamp(0.0, double.infinity),
+            ),
+            child: IntrinsicHeight(child: content),
           ),
         );
       },
@@ -771,7 +830,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            studio.studioName.isNotEmpty ? studio.studioName : '체크앤페이 무인 출결 키오스크',
+                            studio.studioName.isNotEmpty
+                                ? studio.studioName
+                                : LocalizationService.tr('kiosk_brand_title'),
                             softWrap: true,
                             style: const TextStyle(
                               fontSize: 17,
@@ -790,9 +851,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(color: const Color(0xFF818CF8), width: 0.8),
                             ),
-                            child: const Text(
-                              '테스트 모드',
-                              style: TextStyle(
+                            child: Text(
+                              LocalizationService.tr('kiosk_demo_badge'),
+                              style: const TextStyle(
                                 color: Color(0xFFA5B4FC),
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
@@ -828,7 +889,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
             ),
             child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF94A3B8), size: 20),
           ),
-          tooltip: '키오스크 종료 (관리자)',
+          tooltip: LocalizationService.tr('kiosk_exit_prompt'),
           onPressed: _showExitDialog,
         ),
       ],
@@ -855,10 +916,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         children: [
           const Icon(Icons.science_rounded, color: Color(0xFFA5B4FC), size: 18),
           const SizedBox(width: 8),
-          const Flexible(
+          Flexible(
             child: Text(
-              '관리자 테스트 모드',
-              style: TextStyle(
+              LocalizationService.tr('kiosk_demo_admin_badge'),
+              style: const TextStyle(
                 color: Color(0xFFA5B4FC),
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
@@ -867,7 +928,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           ),
           const SizedBox(width: 10),
           _buildQuickPinBadge(
-            const _QuickPinItem(pin: '1234', tag: '체험 PIN', color: Color(0xFF38BDF8)),
+            _QuickPinItem(pin: '1234', tag: LocalizationService.tr('kiosk_demo_pin_label'), color: const Color(0xFF38BDF8)),
           ),
         ],
       ),
@@ -940,22 +1001,154 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     return Column(
       children: [
         Text(
-          LocalizationService.tr('kiosk_prompt'),
+          _isNameSearchMode
+              ? LocalizationService.tr('kiosk_name_search_hint')
+              : LocalizationService.tr('kiosk_prompt'),
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: -0.4,
           ),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         Text(
-          '터치 즉시 출석이 기록되고 부모님께 안심 문자가 전송됩니다',
+          LocalizationService.tr('kiosk_sub_prompt'),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+          style: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildModePill(
+                label: LocalizationService.tr('kiosk_mode_pin'),
+                selected: !_isNameSearchMode,
+                onTap: () => setState(() => _isNameSearchMode = false),
+              ),
+              _buildModePill(
+                label: LocalizationService.tr('kiosk_mode_name'),
+                selected: _isNameSearchMode,
+                onTap: () => setState(() => _isNameSearchMode = true),
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildModePill({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(9),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF38BDF8) : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: selected ? const Color(0xFF0B0F19) : const Color(0xFF94A3B8),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNameLookupPanel(List<Member> members, StudioProfile studio) {
+    final query = _nameQuery.trim().toLowerCase();
+    final filtered = members.where((m) {
+      if (query.isEmpty) return true;
+      return m.name.toLowerCase().contains(query) || m.groupName.toLowerCase().contains(query);
+    }).toList();
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 440),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          TextField(
+            controller: _nameSearchCtrl,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            onChanged: (val) => setState(() => _nameQuery = val),
+            decoration: InputDecoration(
+              hintText: LocalizationService.tr('kiosk_name_search_hint'),
+              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF38BDF8)),
+              filled: true,
+              fillColor: const Color(0xFF0F172A),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      LocalizationService.tr('kiosk_name_empty'),
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (_, idx) {
+                      final m = filtered[idx];
+                      final clean = m.phone.replaceAll(RegExp(r'[^0-9]'), '');
+                      final last4 = clean.length >= 4 ? clean.substring(clean.length - 4) : '0000';
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          tileColor: const Color(0xFF0F172A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          title: Text(
+                            m.primaryName,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                          ),
+                          subtitle: Text(
+                            LocalizationService.localizeBuiltInLabel(m.groupName),
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                          ),
+                          trailing: ElevatedButton(
+                            onPressed: _isProcessing ? null : () => _checkInMatchedMember(m, last4, studio),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(LocalizationService.tr('kiosk_tap_checkin'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1090,11 +1283,11 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildActionKeypadButton('초기화', Icons.refresh_rounded, _onClear),
+            _buildActionKeypadButton(LocalizationService.tr('common_reset'), Icons.refresh_rounded, _onClear),
             const SizedBox(width: 12),
             _buildKeypadButton('0'),
             const SizedBox(width: 12),
-            _buildActionKeypadButton('지움', Icons.backspace_outlined, _onBackspace),
+            _buildActionKeypadButton(LocalizationService.tr('common_backspace'), Icons.backspace_outlined, _onBackspace),
           ],
         ),
       ],
@@ -1231,7 +1424,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      studio.studioName.isNotEmpty ? studio.studioName : '체크앤페이 스마트 출결 키오스크',
+                                      studio.studioName.isNotEmpty
+                                          ? studio.studioName
+                                          : LocalizationService.tr('kiosk_brand_title'),
                                       softWrap: true,
                                       style: const TextStyle(
                                         color: Colors.white,
@@ -1294,9 +1489,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
-                                '입력하신 출결 번호',
-                                style: TextStyle(
+                              Text(
+                                LocalizationService.trParams('kiosk_success_pin_label', {'code': celebration.digits}),
+                                style: const TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF94A3B8),
@@ -1386,7 +1581,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              '출석 체크가 정상 완료되었습니다!',
+                              LocalizationService.tr('kiosk_success_headline'),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: isLandscape ? 14 : 16,
@@ -1415,18 +1610,20 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Flexible(
+                                      Flexible(
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(Icons.confirmation_num_rounded, color: Color(0xFF38BDF8), size: 18),
-                                            SizedBox(width: 8),
-                                            Text(
-                                              '이용권 잔여 현황',
-                                              style: TextStyle(
-                                                color: Color(0xFF94A3B8),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
+                                            const Icon(Icons.confirmation_num_rounded, color: Color(0xFF38BDF8), size: 18),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                LocalizationService.tr('kiosk_success_pass_label'),
+                                                style: const TextStyle(
+                                                  color: Color(0xFF94A3B8),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -1457,9 +1654,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          celebration.isDemo
-                                              ? '스마트 체험 시뮬레이션: 가상 1회 차감 및 알림 발송 완료'
-                                              : '출결 기록 및 보호자 안심 알림 큐 적립 완료',
+                                          LocalizationService.tr('kiosk_success_queue_note'),
                                           style: TextStyle(
                                             color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
                                             fontSize: 12,
@@ -1494,17 +1689,19 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                   shadowColor: const Color(0xFF10B981).withValues(alpha: 0.5),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.check_circle_rounded, size: 22),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      '확인 (다음 출석하기)',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: -0.4,
+                                    const Icon(Icons.check_circle_rounded, size: 22),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        LocalizationService.tr('kiosk_success_confirm_btn'),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: -0.4,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1515,10 +1712,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
                           SizedBox(height: vGap * 0.5),
 
-                          const Text(
-                            '확인 버튼 또는 화면을 터치하면 즉시 다음 출석을 진행합니다',
+                          Text(
+                            LocalizationService.tr('kiosk_success_auto_hint'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),

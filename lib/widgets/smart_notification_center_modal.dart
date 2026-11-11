@@ -7,6 +7,7 @@ import '../models/notification_log.dart';
 import '../models/studio_profile.dart';
 import '../providers/app_providers.dart';
 import '../services/kakao_share_service.dart';
+import '../services/localization_service.dart';
 import '../services/sequential_dispatch_service.dart';
 import '../services/sms_template_service.dart';
 import '../theme/app_theme.dart';
@@ -120,18 +121,32 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                       child: const Icon(Icons.notifications_active_rounded, color: AppTheme.primaryBlue, size: 22),
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '스마트 안심 알림 센터',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+                            LocalizationService.pick(
+                              ko: '스마트 안심 알림 센터',
+                              en: 'Smart Notification Center',
+                              ja: 'スマート安心通知センター',
+                              zh: '智能安心通知中心',
+                              vi: 'Trung tâm Thông báo Thông minh',
+                              es: 'Centro de Avisos Inteligente',
+                            ),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
                             softWrap: true,
                           ),
                           Text(
-                            '등·하원 안심 알림 & 수납 독촉 릴레이 허브',
-                            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            LocalizationService.pick(
+                              ko: '등·하원 안심 알림 & 수납 독촉 릴레이 허브',
+                              en: 'Attendance alerts & overdue payment relay hub',
+                              ja: '出席安心通知・未納フォローリレーハブ',
+                              zh: '考勤安心通知与缴费催收中枢',
+                              vi: 'Trung tâm báo điểm danh & nhắc thu phí',
+                              es: 'Avisos de asistencia y recordatorios de cobro',
+                            ),
+                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                             softWrap: true,
                           ),
                         ],
@@ -163,7 +178,16 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('실시간 브리핑'),
+                    Text(
+                      LocalizationService.pick(
+                        ko: '실시간 브리핑',
+                        en: 'Live Briefing',
+                        ja: '状況ブリーフィング',
+                        zh: '实时简报',
+                        vi: 'Tổng quan',
+                        es: 'Resumen',
+                      ),
+                    ),
                     if (unsentAttendanceMembers.isNotEmpty || unpaidInvoices.isNotEmpty)
                       Container(
                         margin: const EdgeInsets.only(left: 6),
@@ -184,13 +208,31 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
             Tab(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text('발송 이력 (${logs.length})'),
+                child: Text(
+                  LocalizationService.pick(
+                    ko: '발송 이력 (${logs.length})',
+                    en: 'Sent Logs (${logs.length})',
+                    ja: '送信履歴 (${logs.length})',
+                    zh: '发送记录 (${logs.length})',
+                    vi: 'Lịch sử gửi (${logs.length})',
+                    es: 'Historial (${logs.length})',
+                  ),
+                ),
               ),
             ),
-            const Tab(
+            Tab(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text('알림 템플릿'),
+                child: Text(
+                  LocalizationService.pick(
+                    ko: '알림 템플릿',
+                    en: 'Templates',
+                    ja: '通知テンプレート',
+                    zh: '通知模板',
+                    vi: 'Mẫu tin nhắn',
+                    es: 'Plantillas',
+                  ),
+                ),
               ),
             ),
           ],
@@ -241,16 +283,44 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
       children: [
         // 1. Unsent Attendance Queue Card
         _buildQueueCard(
-          title: '오늘 등원 안심 알림 대기',
+          title: LocalizationService.pick(
+            ko: '오늘 등원 안심 알림 대기',
+            en: 'Pending Today Check-In Notices',
+            ja: '本日の出席通知（未送信）',
+            zh: '今日待发到店安心通知',
+            vi: 'Thông báo điểm danh hôm nay chờ gửi',
+            es: 'Avisos de asistencia pendientes hoy',
+          ),
           count: unsentAttendanceMembers.length,
           countColor: unsentAttendanceMembers.isEmpty ? AppTheme.softMint : const Color(0xFF3182F6),
           icon: Icons.login_rounded,
           iconBgColor: const Color(0xFFEFF6FF),
           iconColor: AppTheme.primaryBlue,
           subtitle: unsentAttendanceMembers.isEmpty
-              ? '오늘 출석한 모든 원생의 보호자에게 알림장이 정상 발송되었습니다.'
-              : '오늘 출석 체크 완료 원생 중 아직 보호자 알림장이 발송되지 않았습니다.',
-          actionLabel: '등원 알림 순차 발송 🚀',
+              ? LocalizationService.pick(
+                  ko: '오늘 출석한 모든 원생의 보호자에게 알림장이 정상 발송되었습니다.',
+                  en: 'All checked-in members today have received their attendance notice.',
+                  ja: '本日チェックインした全会員への出席通知を送信済みです。',
+                  zh: '今日已签到的全部会员均已发送安心通知。',
+                  vi: 'Tất cả hội viên điểm danh hôm nay đều đã nhận được thông báo.',
+                  es: 'Todos los alumnos registrados hoy ya recibieron su aviso.',
+                )
+              : LocalizationService.pick(
+                  ko: '오늘 출석 체크 완료 원생 중 아직 보호자 알림장이 발송되지 않았습니다.',
+                  en: 'Some members checked in today have not been sent an arrival notification yet.',
+                  ja: '本日チェックイン済みのうち、まだ通知が未送信の会員がいます。',
+                  zh: '部分今日已签到的会员尚未发送到达安心通知。',
+                  vi: 'Một số hội viên điểm danh hôm nay chưa được gửi thông báo.',
+                  es: 'Hay registros de llegada de hoy sin aviso enviado.',
+                ),
+          actionLabel: LocalizationService.pick(
+            ko: '등원 알림 순차 발송 🚀',
+            en: 'Send Check-In Alerts 🚀',
+            ja: '出席通知を順次送信 🚀',
+            zh: '逐一发送签到通知 🚀',
+            vi: 'Gửi lần lượt thông báo đến 🚀',
+            es: 'Enviar avisos de llegada 🚀',
+          ),
           actionColor: AppTheme.primaryBlue,
           isActionEnabled: unsentAttendanceMembers.isNotEmpty,
           onAction: () {
@@ -268,16 +338,44 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
 
         // 2. Unpaid Billing Queue Card
         _buildQueueCard(
-          title: '미납 수강료 수납 독촉 대기',
+          title: LocalizationService.pick(
+            ko: '미납 수강료 수납 독촉 대기',
+            en: 'Pending Overdue Reminders',
+            ja: '未納授業料フォロー待ち',
+            zh: '待催缴未付账单',
+            vi: 'Hóa đơn chờ nhắc thanh toán',
+            es: 'Recordatorios de pago pendientes',
+          ),
           count: unpaidInvoices.length,
           countColor: unpaidInvoices.isEmpty ? AppTheme.softMint : const Color(0xFFEF4444),
           icon: Icons.mark_chat_unread_outlined,
           iconBgColor: const Color(0xFFFEF2F2),
           iconColor: const Color(0xFFEF4444),
           subtitle: unpaidInvoices.isEmpty
-              ? '대기 중인 미납 청구서가 없습니다. 수납률 100%!'
-              : '납부 기한이 도래했거나 미납 상태인 청구서가 대기 중입니다.',
-          actionLabel: '미납 순차 독촉 발송 ⚡',
+              ? LocalizationService.pick(
+                  ko: '대기 중인 미납 청구서가 없습니다. 수납률 100%!',
+                  en: 'No unpaid invoices pending. 100% collected!',
+                  ja: '未納の請求書はありません。回収率100%です！',
+                  zh: '当前没有待催缴的未付账单，收款率100%！',
+                  vi: 'Không có hóa đơn quá hạn nào. Đã thu 100%!',
+                  es: 'Sin facturas pendientes. ¡100% cobrado!',
+                )
+              : LocalizationService.pick(
+                  ko: '납부 기한이 도래했거나 미납 상태인 청구서가 대기 중입니다.',
+                  en: 'There are unpaid or due invoices awaiting reminder dispatch.',
+                  ja: '支払期限が到来または未納の請求書があります。',
+                  zh: '有已到期或未结清的账单等待发送提醒。',
+                  vi: 'Có hóa đơn đến hạn hoặc chưa thanh toán đang chờ nhắc phí.',
+                  es: 'Hay facturas vencidas o pendientes listas para recordar.',
+                ),
+          actionLabel: LocalizationService.pick(
+            ko: '미납 순차 독촉 발송 ⚡',
+            en: 'Send Overdue Reminders ⚡',
+            ja: '未納案内を順次送信 ⚡',
+            zh: '逐一发送催缴提醒 ⚡',
+            vi: 'Gửi nhắc phí lần lượt ⚡',
+            es: 'Enviar recordatorios ⚡',
+          ),
           actionColor: const Color(0xFFEF4444),
           isActionEnabled: unpaidInvoices.isNotEmpty,
           onAction: () {
@@ -297,16 +395,44 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
 
         // 3. Expiring Sessions Queue Card
         _buildQueueCard(
-          title: '수강권 만료 임박 (잔여 2회 이하)',
+          title: LocalizationService.pick(
+            ko: '수강권 만료 임박 (잔여 2회 이하)',
+            en: 'Low Session Passes (≤2 left)',
+            ja: '回数券の有効期限迫る（残2回以下）',
+            zh: '次卡即将到期（剩余≤2次）',
+            vi: 'Gói sắp hết buổi (≤2 buổi)',
+            es: 'Bonos por agotar (≤2 sesiones)',
+          ),
           count: expiringMembers.length,
           countColor: expiringMembers.isEmpty ? AppTheme.softMint : const Color(0xFFF59E0B),
           icon: Icons.hourglass_bottom_rounded,
           iconBgColor: const Color(0xFFFFFBEB),
           iconColor: const Color(0xFFF59E0B),
           subtitle: expiringMembers.isEmpty
-              ? '만료 임박 회원이 없습니다.'
-              : '수업이 2회 이하로 남아 연속 지도를 위해 재등록 안내가 필요합니다.',
-          actionLabel: '재등록 안내 순차 발송 💌',
+              ? LocalizationService.pick(
+                  ko: '만료 임박 회원이 없습니다.',
+                  en: 'No members with low remaining sessions.',
+                  ja: '残り回数が少ない会員はいません。',
+                  zh: '暂无即将到期或余课不足的会员。',
+                  vi: 'Không có hội viên nào sắp hết buổi.',
+                  es: 'No hay alumnos con pocas sesiones restantes.',
+                )
+              : LocalizationService.pick(
+                  ko: '수업이 2회 이하로 남아 연속 지도를 위해 재등록 안내가 필요합니다.',
+                  en: 'These members have 2 or fewer sessions left and need renewal outreach.',
+                  ja: '残回数が2回以下のため、継続受講に向けた更新案内が必要です。',
+                  zh: '剩余课时不足2次，建议及时发送续费提醒。',
+                  vi: 'Các hội viên còn từ 2 buổi trở xuống và cần nhắc gia hạn.',
+                  es: 'Alumnos con 2 sesiones o menos que requieren aviso de renovación.',
+                ),
+          actionLabel: LocalizationService.pick(
+            ko: '재등록 안내 순차 발송 💌',
+            en: 'Send Renewal Notices 💌',
+            ja: '更新案内を順次送信 💌',
+            zh: '逐一发送续费提醒 💌',
+            vi: 'Gửi nhắc gia hạn lần lượt 💌',
+            es: 'Enviar avisos de renovación 💌',
+          ),
           actionColor: const Color(0xFFD97706),
           isActionEnabled: expiringMembers.isNotEmpty,
           onAction: () {
@@ -368,7 +494,14 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$count건',
+                  LocalizationService.pick(
+                    ko: '$count건',
+                    en: '$count',
+                    ja: '$count件',
+                    zh: '$count 条',
+                    vi: '$count',
+                    es: '$count',
+                  ),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: countColor),
                 ),
               ),
@@ -411,13 +544,41 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
             children: [
-              _buildTypeFilterChip('전체 보기 (${logs.length})', null),
-              _buildTypeFilterChip('등원 알림', NotificationType.attendance),
-              _buildTypeFilterChip('하원 알림', NotificationType.departure),
-              _buildTypeFilterChip('수납 영수증', NotificationType.receipt),
-              _buildTypeFilterChip('수강료 청구', NotificationType.billing),
-              _buildTypeFilterChip('미납 리마인드', NotificationType.reminder),
-              _buildTypeFilterChip('만료 안내', NotificationType.sessionExpiry),
+              _buildTypeFilterChip(
+                LocalizationService.pick(
+                  ko: '전체 보기 (${logs.length})',
+                  en: 'All (${logs.length})',
+                  ja: 'すべて (${logs.length})',
+                  zh: '全部 (${logs.length})',
+                  vi: 'Tất cả (${logs.length})',
+                  es: 'Todos (${logs.length})',
+                ),
+                null,
+              ),
+              _buildTypeFilterChip(
+                LocalizationService.pick(ko: '등원 알림', en: 'Check-In', ja: '出席通知', zh: '到店通知', vi: 'Điểm danh', es: 'Llegada'),
+                NotificationType.attendance,
+              ),
+              _buildTypeFilterChip(
+                LocalizationService.pick(ko: '하원 알림', en: 'Check-Out', ja: '帰宅通知', zh: '离店通知', vi: 'Ra về', es: 'Salida'),
+                NotificationType.departure,
+              ),
+              _buildTypeFilterChip(
+                LocalizationService.pick(ko: '수납 영수증', en: 'Receipt', ja: '領収証', zh: '电子收据', vi: 'Biên nhận', es: 'Recibo'),
+                NotificationType.receipt,
+              ),
+              _buildTypeFilterChip(
+                LocalizationService.pick(ko: '수강료 청구', en: 'Billing', ja: '請求書', zh: '账单通知', vi: 'Hóa đơn', es: 'Facturación'),
+                NotificationType.billing,
+              ),
+              _buildTypeFilterChip(
+                LocalizationService.pick(ko: '미납 리마인드', en: 'Reminder', ja: '未納催促', zh: '催缴提醒', vi: 'Nhắc phí', es: 'Recordatorio'),
+                NotificationType.reminder,
+              ),
+              _buildTypeFilterChip(
+                LocalizationService.pick(ko: '만료 안내', en: 'Renewal', ja: '更新案内', zh: '到期续费', vi: 'Gia hạn', es: 'Renovación'),
+                NotificationType.sessionExpiry,
+              ),
             ],
           ),
         ),
@@ -431,9 +592,16 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                     children: [
                       Icon(Icons.history_toggle_off_rounded, size: 48, color: Colors.grey.shade300),
                       const SizedBox(height: 12),
-                      const Text(
-                        '아직 발송된 알림 내역이 없습니다.',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '아직 발송된 알림 내역이 없습니다.',
+                          en: 'No notification logs yet.',
+                          ja: 'まだ送信された通知履歴がありません。',
+                          zh: '暂无已发送的通知记录。',
+                          vi: 'Chưa có lịch sử gửi thông báo nào.',
+                          es: 'Aún no hay notificaciones enviadas.',
+                        ),
+                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -476,7 +644,9 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
   }
 
   Widget _buildLogCard(NotificationLog log) {
-    final timeStr = DateFormat('M월 d일 a h:mm', 'ko_KR').format(log.sentAt);
+    final timeStr = LocalizationService.currentLanguage == AppLanguage.korean
+        ? DateFormat('M월 d일 a h:mm', 'ko_KR').format(log.sentAt)
+        : '${LocalizationService.formatDate(log.sentAt)} ${DateFormat('HH:mm').format(log.sentAt)}';
     final isKakao = log.channel == 'KAKAO';
 
     return Container(
@@ -501,7 +671,9 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      isKakao ? '카톡 0원' : '문자(SMS)',
+                      isKakao
+                          ? LocalizationService.pick(ko: '카톡 0원', en: 'Shared', ja: 'アプリ共有', zh: '分享发送', vi: 'Đã chia sẻ', es: 'Compartido')
+                          : LocalizationService.pick(ko: '문자(SMS)', en: 'SMS', ja: 'SMS', zh: '短信(SMS)', vi: 'SMS', es: 'SMS'),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -528,7 +700,14 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           ),
           const SizedBox(height: 8),
           Text(
-            '수신: ${log.memberName} (${log.recipientPhone})',
+            LocalizationService.pick(
+              ko: '수신: ${log.memberName} (${log.recipientPhone})',
+              en: 'To: ${log.memberName} (${log.recipientPhone})',
+              ja: '宛先: ${log.memberName} (${log.recipientPhone})',
+              zh: '收件人: ${log.memberName} (${log.recipientPhone})',
+              vi: 'Người nhận: ${log.memberName} (${log.recipientPhone})',
+              es: 'Para: ${log.memberName} (${log.recipientPhone})',
+            ),
             style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 6),
@@ -556,7 +735,17 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
                 }
               },
               icon: Icon(isKakao ? Icons.chat_bubble_rounded : Icons.sms_outlined, size: 14),
-              label: const Text('동일 내용 재발송', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              label: Text(
+                LocalizationService.pick(
+                  ko: '동일 내용 재발송',
+                  en: 'Resend Message',
+                  ja: '同じ内容で再送信',
+                  zh: '重新发送相同内容',
+                  vi: 'Gửi lại nội dung này',
+                  es: 'Reenviar mensaje',
+                ),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -568,26 +757,48 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
   // TAB 3: QUICK TEMPLATES
   // ==========================================
   Widget _buildTemplatesTab({required StudioProfile studio}) {
+    final supportsToss = LocalizationService.supportsTossTransfer;
     return StickyBottomSheetLayout(
       scrollBody: false,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          const Text(
-            '알림장 문구 즉시 수정',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+          Text(
+            LocalizationService.pick(
+              ko: '알림장 문구 즉시 수정',
+              en: 'Quick Edit Alert Templates',
+              ja: '通知テンプレートのクイック編集',
+              zh: '快捷编辑通知文案模板',
+              vi: 'Chỉnh sửa nhanh mẫu thông báo',
+              es: 'Editar Plantillas Rápidas',
+            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '사용 가능한 자동 치환 변수: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}, #{토스송금링크}, #{카드결제링크}',
-            style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+          Text(
+            LocalizationService.pick(
+              ko: '사용 가능한 자동 치환 변수: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}${supportsToss ? ', #{토스송금링크}' : ''}, #{카드결제링크}',
+              en: 'Available variables: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}${supportsToss ? ', #{토스송금링크}' : ''}, #{카드결제링크}',
+              ja: '使用可能な差し込み変数: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}${supportsToss ? ', #{토스송금링크}' : ''}, #{카드결제링크}',
+              zh: '可用自动替换变量: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}${supportsToss ? ', #{토스송금링크}' : ''}, #{카드결제링크}',
+              vi: 'Biến tự động: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}${supportsToss ? ', #{토스송금링크}' : ''}, #{카드결제링크}',
+              es: 'Variables disponibles: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}${supportsToss ? ', #{토스송금링크}' : ''}, #{카드결제링크}',
+            ),
+            style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 16),
 
           // Attendance Template
           AppTextField(
             controller: _attendanceTplController,
-            label: '안심 등원 알림 템플릿',
+            label: LocalizationService.pick(
+              ko: '안심 등원 알림 템플릿',
+              en: 'Check-In Notification Template',
+              ja: '安心出席通知テンプレート',
+              zh: '到店安心通知模板',
+              vi: 'Mẫu thông báo điểm danh đến',
+              es: 'Plantilla de aviso de llegada',
+            ),
             maxLines: 4,
           ),
           const SizedBox(height: 14),
@@ -595,7 +806,14 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           // Departure Template
           AppTextField(
             controller: _departureTplController,
-            label: '안심 하원 알림 템플릿',
+            label: LocalizationService.pick(
+              ko: '안심 하원 알림 템플릿',
+              en: 'Check-Out Notification Template',
+              ja: '安心帰宅通知テンプレート',
+              zh: '离店安心通知模板',
+              vi: 'Mẫu thông báo ra về an toàn',
+              es: 'Plantilla de aviso de salida',
+            ),
             maxLines: 4,
           ),
           const SizedBox(height: 14),
@@ -603,7 +821,14 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
           // Invoice Template
           AppTextField(
             controller: _invoiceTplController,
-            label: '수강료 청구/독촉 알림 템플릿',
+            label: LocalizationService.pick(
+              ko: '수강료 청구/독촉 알림 템플릿',
+              en: 'Billing / Overdue Reminder Template',
+              ja: '請求・未納リマインダーテンプレート',
+              zh: '账单与催缴提醒模板',
+              vi: 'Mẫu hóa đơn & nhắc thanh toán',
+              es: 'Plantilla de cobro y recordatorio',
+            ),
             maxLines: 5,
           ),
           const SizedBox(height: 12),
@@ -622,12 +847,33 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
             await ref.read(studioProfileProvider.notifier).updateProfile(updated);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('알림장 템플릿이 성공적으로 저장되었습니다.')),
+                SnackBar(
+                  content: Text(
+                    LocalizationService.pick(
+                      ko: '알림장 템플릿이 성공적으로 저장되었습니다.',
+                      en: 'Notification templates saved.',
+                      ja: '通知テンプレートを保存しました。',
+                      zh: '通知文案模板保存成功。',
+                      vi: 'Đã lưu mẫu thông báo thành công.',
+                      es: 'Plantillas guardadas correctamente.',
+                    ),
+                  ),
+                ),
               );
             }
           },
           icon: const Icon(Icons.save_rounded, size: 18),
-          label: const Text('알림 템플릿 변경사항 저장하기', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          label: Text(
+            LocalizationService.pick(
+              ko: '알림 템플릿 변경사항 저장하기',
+              en: 'Save Alert Templates',
+              ja: '通知テンプレートを保存する',
+              zh: '保存通知模板修改',
+              vi: 'Lưu thay đổi mẫu thông báo',
+              es: 'Guardar cambios',
+            ),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primaryBlue,
             foregroundColor: Colors.white,
