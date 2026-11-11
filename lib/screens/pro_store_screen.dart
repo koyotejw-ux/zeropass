@@ -16,6 +16,12 @@ class ProStoreScreen extends StatefulWidget {
 }
 
 class _ProStoreScreenState extends State<ProStoreScreen> {
+  @override
+  void initState() {
+    super.initState();
+    MonetizationService.instance.checkEntitlementExpirations();
+  }
+
   Future<void> _startPurchase(String productId) async {
     final result = await MonetizationService.instance.buyProduct(productId);
     if (!result.started && mounted && result.errorMessage != null) {
@@ -25,6 +31,50 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  Future<void> _claimTemporaryPass(MonetizationService bm, bool isDomestic) async {
+    if (!bm.canClaimTemporaryPass) {
+      final res = await bm.claimTemporaryVipPass(hours: 1);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.message),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    Future<void> activatePass({required bool fromAd}) async {
+      final res = await bm.claimTemporaryVipPass(hours: 1);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              res.granted
+                  ? (fromAd
+                      ? res.message
+                      : (isDomestic
+                          ? '응원 혜택으로 1시간 올인원 VIP 패스가 즉시 지급되었습니다!'
+                          : '1-Hour All-in-One VIP Pass granted!'))
+                  : res.message,
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+
+    if (bm.isAnyRewardedAdAvailable) {
+      bm.showBestRewardedAd(
+        onRewarded: () => activatePass(fromAd: true),
+        onFailed: () => activatePass(fromAd: false),
+      );
+    } else {
+      await activatePass(fromAd: true);
     }
   }
 
@@ -40,6 +90,68 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildStoreNoticeBanner(MonetizationService bm) {
+    final notice = bm.lastStoreNotice;
+    if (notice == null || notice.isEmpty) return const SizedBox.shrink();
+
+    final event = bm.lastStoreEventType;
+    final Color accent;
+    final Color bg;
+    final IconData icon;
+    switch (event) {
+      case StoreEventType.purchased:
+      case StoreEventType.restored:
+        accent = const Color(0xFF047857);
+        bg = const Color(0xFFECFDF5);
+        icon = Icons.verified_rounded;
+        break;
+      case StoreEventType.pending:
+        accent = const Color(0xFFB45309);
+        bg = const Color(0xFFFFFBEB);
+        icon = Icons.hourglass_top_rounded;
+        break;
+      case StoreEventType.expired:
+      case StoreEventType.error:
+        accent = const Color(0xFFBE123C);
+        bg = const Color(0xFFFFF1F2);
+        icon = Icons.info_outline_rounded;
+        break;
+      case StoreEventType.canceled:
+      case StoreEventType.none:
+        accent = AppTheme.textSecondary;
+        bg = const Color(0xFFF1F5F9);
+        icon = Icons.info_outline_rounded;
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              notice,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: accent,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -65,24 +177,31 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: ZeroButton.tint(
-              label: LocalizationService.proStoreRestore,
-              icon: Icons.restore_rounded,
-              size: ZeroButtonSize.medium,
-              onPressed: () async {
-                await MonetizationService.instance.restorePurchases();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isDomestic
-                            ? '구독 구매 복원 처리가 완료되었습니다.'
-                            : 'Subscription restore completed.',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
+            child: AnimatedBuilder(
+              animation: MonetizationService.instance,
+              builder: (context, _) {
+                final bm = MonetizationService.instance;
+                return ZeroButton.tint(
+                  label: bm.isRestoringPurchases
+                      ? (isDomestic ? '복원 중...' : 'Restoring...')
+                      : LocalizationService.proStoreRestore,
+                  icon: Icons.restore_rounded,
+                  size: ZeroButtonSize.medium,
+                  isLoading: bm.isRestoringPurchases,
+                  onPressed: bm.isRestoringPurchases
+                      ? null
+                      : () async {
+                          final result = await bm.restorePurchases();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result.message),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                );
               },
             ),
           ),
@@ -96,6 +215,11 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
           final isSubNoAds = bm.isSubscriptionAdsRemoved;
           final isSubKiosk = bm.isSubscriptionKioskPro;
           final isSubAllInOne = bm.isSubscriptionAllInOne;
+          final tempPassState = bm.getProductState(MonetizationService.productPassTemporaryVip1h);
+          final vipMonthlyState = bm.getProductState(MonetizationService.productSubAllInOneMonthly);
+          final vipYearlyState = bm.getProductState(MonetizationService.productSubAllInOneYearly);
+          final kioskState = bm.getProductState(MonetizationService.productSubKioskMonthly);
+          final adsState = bm.getProductState(MonetizationService.productSubRemoveAdsMonthly);
           final currencyFmt = NumberFormat('#,###');
 
           return ListView(
@@ -106,6 +230,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               isLandscape ? 36 : 90,
             ),
             children: [
+              _buildStoreNoticeBanner(bm),
               // 1. Pro Value Proposition Hero Card
               Container(
                 padding: EdgeInsets.all(isLandscape ? 16 : 20),
@@ -400,11 +525,19 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue,
+                              color: bm.isTemporaryPassActive
+                                  ? const Color(0xFF059669)
+                                  : (tempPassState == ProductPurchaseState.expired
+                                      ? const Color(0xFFD97706)
+                                      : AppTheme.primaryBlue),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              isDomestic ? '결제 전 무료 VIP 체험' : 'Free VIP Trial',
+                              bm.isTemporaryPassActive
+                                  ? (isDomestic ? '기간제 이용 중' : 'Pass Active')
+                                  : (tempPassState == ProductPurchaseState.expired
+                                      ? (isDomestic ? '기간 만료 · 재이용 가능' : 'Expired · Available')
+                                      : (isDomestic ? '결제 전 무료 VIP 체험' : 'Free VIP Trial')),
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
                             ),
                           ),
@@ -415,9 +548,13 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                                   ? (isDomestic
                                       ? '1시간 VIP 패스 이용 중 (${bm.remainingTemporaryPassFormatted})'
                                       : '1-Hour VIP Active (${bm.remainingTemporaryPassFormatted})')
-                                  : (isDomestic
-                                      ? '광고 제거 & 태블릿 키오스크 1시간 무료'
-                                      : 'Try 1-Hour Ad-Free Kiosk for Free'),
+                                  : (tempPassState == ProductPurchaseState.expired
+                                      ? (isDomestic
+                                          ? '이전 체험 기간 만료 · 다시 시작 가능'
+                                          : 'Previous Pass Expired · Start Again')
+                                      : (isDomestic
+                                          ? '광고 제거 & 태블릿 키오스크 1시간 무료'
+                                          : 'Try 1-Hour Ad-Free Kiosk for Free')),
                               style: const TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
@@ -430,67 +567,36 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        isDomestic
-                            ? '광고 1회 시청 시 1시간 동안 광고 완전 제거 및 무인 키오스크를 즉시 이용합니다.'
-                            : 'Watch one short video to unlock 1 hour of ad-free kiosk mode. Cancel or subscribe anytime.',
+                        bm.isTemporaryPassActive
+                            ? (isDomestic
+                                ? '현재 무료 VIP 기간이 활성화되어 있습니다. 이용 기간 종료(${bm.remainingTemporaryPassFormatted}) 후 다시 무료 체험을 이용하실 수 있습니다.'
+                                : 'Your 1-hour pass is currently active (${bm.remainingTemporaryPassFormatted}). Re-claim is unlocked after the period ends.')
+                            : (isDomestic
+                                ? '광고 1회 시청 시 1시간 동안 광고 완전 제거 및 무인 키오스크를 즉시 이용합니다.'
+                                : 'Watch one short video to unlock 1 hour of ad-free kiosk mode. Cancel or subscribe anytime.'),
                         style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45),
                       ),
                       const SizedBox(height: 14),
                       ZeroButton.primary(
                         label: bm.isTemporaryPassActive
-                            ? (isDomestic ? '1시간 무료 체험 연장하기' : 'Extend 1-Hour VIP Pass')
-                            : (isDomestic ? '1시간 무료 VIP 시작하기 (광고 1회)' : 'Start 1-Hour VIP Pass (1 Ad)'),
-                        icon: Icons.play_circle_fill_rounded,
+                            ? (isDomestic
+                                ? '이용 중 (${bm.remainingTemporaryPassFormatted}) · 만료 후 재이용'
+                                : 'Active (${bm.remainingTemporaryPassFormatted})')
+                            : (tempPassState == ProductPurchaseState.expired
+                                ? (isDomestic
+                                    ? '1시간 무료 VIP 다시 시작하기 (광고 1회)'
+                                    : 'Restart 1-Hour VIP Pass (1 Ad)')
+                                : (isDomestic
+                                    ? '1시간 무료 VIP 시작하기 (광고 1회)'
+                                    : 'Start 1-Hour VIP Pass (1 Ad)')),
+                        icon: bm.isTemporaryPassActive
+                            ? Icons.timer_outlined
+                            : Icons.play_circle_fill_rounded,
                         fullWidth: true,
                         size: ZeroButtonSize.large,
-                        onPressed: () {
-                          if (bm.isAnyRewardedAdAvailable) {
-                            bm.showBestRewardedAd(
-                              onRewarded: () async {
-                                await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        isDomestic
-                                            ? '1시간 올인원 VIP 패스(광고 제거 + 키오스크)가 활성화되었습니다!'
-                                            : '1-Hour All-in-One VIP Pass is active!',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              },
-                              onFailed: () async {
-                                await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        isDomestic
-                                            ? '응원 혜택으로 1시간 올인원 VIP 패스가 즉시 지급되었습니다!'
-                                            : '1-Hour All-in-One VIP Pass granted!',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              },
-                            );
-                          } else {
-                            bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isDomestic
-                                      ? '1시간 올인원 VIP 패스(광고 제거 + 키오스크)가 즉시 활성화되었습니다!'
-                                      : '1-Hour All-in-One VIP Pass is active!',
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: bm.canClaimTemporaryPass
+                            ? () => _claimTemporaryPass(bm, isDomestic)
+                            : null,
                       ),
                     ],
                   ),
@@ -519,156 +625,301 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               ),
 
               // Plan 1: [Best] 올인원 VIP 패키지 (월간 ₩5,900 / 연간 ₩59,000)
-              _buildStoreProductCard(
-                context: context,
-                badgeIcon: Icons.star_rounded,
-                badgeText: isDomestic ? '가장 인기 있는 올인원 VIP' : 'Most Popular: All-in-One VIP',
-                badgeColor: const Color(0xFFD97706),
-                badgeBgColor: const Color(0xFFFEF3C7),
-                icon: Icons.auto_awesome_rounded,
-                iconColor: const Color(0xFFD97706),
-                title: isDomestic ? '올인원 VIP 패키지 구독 (추천)' : 'All-in-One VIP Pass (Recommended)',
-                description: isDomestic
-                    ? '무인 태블릿 키오스크 + 광고 완전 제거를 하나의 정기 구독으로 모두 누리는 최고 가성비 플랜입니다.'
-                    : 'Tablet Kiosk + 100% Ad-Free experience combined into one convenient subscription.',
-                features: isDomestic
-                    ? const [
-                        '회원 · 청구 · 지출 · 맞춤 서식 등록 개수 100% 무제한',
-                        '모든 정보 수정 · 템플릿 편집 횟수 100% 무제한',
-                        '안 쓰는 태블릿/휴대폰을 거치형 무인 출결기로 즉시 변신',
-                        '앱 내 모든 배너 및 CRUD 전면 광고 완전 차단',
-                        '기기 변경 시에도 구글 계정으로 원클릭 구독 복원',
-                      ]
-                    : const [
-                        'Unlimited members, invoices, expenses, templates & edits',
-                        'Transform any tablet into an entrance attendance kiosk',
-                        'Instant 4-digit check-in and session deduction',
-                        '100% ad-free app experience',
-                        'One-click Google Play subscription restore across devices',
-                      ],
-                priceText: isDomestic ? '₩5,900 / 월' : '\$4.99 / mo',
-                priceSubtext: isDomestic
-                    ? '또는 연간 결제 시 ₩59,000 / 년 (2개월 할인)'
-                    : 'Or save 2 months with annual billing (\$49.99/year)',
-                isUnlocked: isSubAllInOne,
-                actionButtonText: isSubAllInOne
-                    ? (isDomestic ? 'VIP 이용 중 (키오스크 바로가기)' : 'VIP Active (Launch Kiosk)')
-                    : (isDomestic ? '올인원 VIP 구독 시작 (₩5,900/월)' : 'Start All-in-One VIP (\$4.99/mo)'),
-                actionIcon: isSubAllInOne ? Icons.tablet_mac_rounded : Icons.star_rounded,
-                secondaryButtonText: isSubAllInOne
-                    ? null
-                    : (isDomestic
-                        ? '연간 구독 2개월 할인 (₩59,000/년)'
-                        : 'Save 2 Months with Annual Plan (\$49.99/yr)'),
-                onAction: () {
-                  if (isSubAllInOne) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
-                    );
-                  } else {
-                    _startPurchase(MonetizationService.productIdAllInOneMonthly);
-                  }
-                },
-                onSecondaryAction: isSubAllInOne
-                    ? null
-                    : () {
-                        _startPurchase(MonetizationService.productIdAllInOneYearly);
-                      },
-              ),
+              () {
+                final bool vipPending =
+                    vipMonthlyState == ProductPurchaseState.pending ||
+                    vipYearlyState == ProductPurchaseState.pending;
+                final bool vipYearlyActive = vipYearlyState == ProductPurchaseState.active;
+                final bool vipMonthlyActive = vipMonthlyState == ProductPurchaseState.active;
+                final bool vipActive = isSubAllInOne || vipMonthlyActive || vipYearlyActive;
+                final ProductPurchaseState vipCardState = vipPending
+                    ? ProductPurchaseState.pending
+                    : (vipActive
+                        ? ProductPurchaseState.active
+                        : (vipYearlyState == ProductPurchaseState.expired ||
+                                vipMonthlyState == ProductPurchaseState.expired
+                            ? ProductPurchaseState.expired
+                            : ProductPurchaseState.notOwned));
+                final DateTime? vipExpiry =
+                    bm.getProductExpiry(MonetizationService.productSubAllInOneYearly) ??
+                    bm.getProductExpiry(MonetizationService.productSubAllInOneMonthly);
+
+                return _buildStoreProductCard(
+                  context: context,
+                  badgeIcon: Icons.star_rounded,
+                  badgeText: isDomestic ? '가장 인기 있는 올인원 VIP' : 'Most Popular: All-in-One VIP',
+                  badgeColor: const Color(0xFFD97706),
+                  badgeBgColor: const Color(0xFFFEF3C7),
+                  icon: Icons.auto_awesome_rounded,
+                  iconColor: const Color(0xFFD97706),
+                  title: isDomestic ? '올인원 VIP 패키지 구독 (추천)' : 'All-in-One VIP Pass (Recommended)',
+                  description: isDomestic
+                      ? '무인 태블릿 키오스크 + 광고 완전 제거를 하나의 정기 구독으로 모두 누리는 최고 가성비 플랜입니다.'
+                      : 'Tablet Kiosk + 100% Ad-Free experience combined into one convenient subscription.',
+                  features: isDomestic
+                      ? const [
+                          '회원 · 청구 · 지출 · 맞춤 서식 등록 개수 100% 무제한',
+                          '모든 정보 수정 · 템플릿 편집 횟수 100% 무제한',
+                          '안 쓰는 태블릿/휴대폰을 거치형 무인 출결기로 즉시 변신',
+                          '앱 내 모든 배너 및 CRUD 전면 광고 완전 차단',
+                          '기기 변경 시에도 구글 계정으로 원클릭 구독 복원',
+                        ]
+                      : const [
+                          'Unlimited members, invoices, expenses, templates & edits',
+                          'Transform any tablet into an entrance attendance kiosk',
+                          'Instant 4-digit check-in and session deduction',
+                          '100% ad-free app experience',
+                          'One-click Google Play subscription restore across devices',
+                        ],
+                  priceText: vipActive
+                      ? (vipYearlyActive
+                          ? (isDomestic ? '연간 VIP 구독 중' : 'Annual VIP Active')
+                          : (isDomestic ? '월간 VIP 구독 중' : 'Monthly VIP Active'))
+                      : (isDomestic ? '₩5,900 / 월' : '\$4.99 / mo'),
+                  priceSubtext: vipActive
+                      ? (vipExpiry != null
+                          ? (isDomestic
+                              ? '이용 만료(갱신) 예정: ${bm.formatShortDate(vipExpiry)} · 중복 구매 차단됨'
+                              : 'Active until ${bm.formatShortDate(vipExpiry)}')
+                          : (isDomestic
+                              ? '구독 중입니다 (기간 종료 전 중복 결제 차단됨)'
+                              : 'Subscription active (duplicate billing blocked)'))
+                      : (vipCardState == ProductPurchaseState.expired && vipExpiry != null
+                          ? (isDomestic
+                              ? '이전 구독 만료 (${bm.formatShortDate(vipExpiry)}) · 다시 구독 가능'
+                              : 'Expired on ${bm.formatShortDate(vipExpiry)} · Resubscribe available')
+                          : (isDomestic
+                              ? '또는 연간 결제 시 ₩59,000 / 년 (2개월 할인)'
+                              : 'Or save 2 months with annual billing (\$49.99/year)')),
+                  isUnlocked: vipActive,
+                  purchaseState: vipCardState,
+                  actionButtonText: vipPending
+                      ? (isDomestic ? '결제 승인 대기 중...' : 'Purchase Pending...')
+                      : (vipActive
+                          ? (isDomestic ? '구독 중 (올인원 VIP 이용 중)' : 'Subscribed (VIP Active)')
+                          : (vipCardState == ProductPurchaseState.expired
+                              ? (isDomestic
+                                  ? '올인원 VIP 다시 구독 (₩5,900/월)'
+                                  : 'Resubscribe VIP (\$4.99/mo)')
+                              : (isDomestic
+                                  ? '올인원 VIP 구독 시작 (₩5,900/월)'
+                                  : 'Start All-in-One VIP (\$4.99/mo)'))),
+                  actionIcon: vipActive ? Icons.check_circle_rounded : Icons.star_rounded,
+                  secondaryButtonText: vipYearlyActive
+                      ? (isDomestic ? '태블릿 키오스크 바로 열기' : 'Launch Tablet Kiosk')
+                      : (vipActive
+                          ? (isDomestic
+                              ? '연간 VIP로 업그레이드 (₩59,000/년 · 2개월 할인)'
+                              : 'Upgrade to Annual (\$49.99/yr)')
+                          : (isDomestic
+                              ? '연간 구독 2개월 할인 (₩59,000/년)'
+                              : 'Save 2 Months with Annual Plan (\$49.99/yr)')),
+                  onAction: (vipActive || vipPending)
+                      ? null
+                      : () => _startPurchase(MonetizationService.productIdAllInOneMonthly),
+                  onSecondaryAction: vipPending
+                      ? null
+                      : (vipYearlyActive
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
+                              );
+                            }
+                          : () => _startPurchase(MonetizationService.productIdAllInOneYearly)),
+                );
+              }(),
               const SizedBox(height: 18),
 
               // Plan 2: 태블릿 자율출결 키오스크 단독 구독 (월 ₩4,900)
-              _buildStoreProductCard(
-                context: context,
-                badgeIcon: Icons.tablet_mac_rounded,
-                badgeText: isDomestic ? '태블릿 무인 출결 전용' : 'Tablet Kiosk Only',
-                badgeColor: const Color(0xFF2563EB),
-                badgeBgColor: const Color(0xFFEFF6FF),
-                icon: Icons.tablet_mac_rounded,
-                iconColor: const Color(0xFF2563EB),
-                title: isDomestic ? '태블릿 키오스크 단독 구독' : 'Tablet Kiosk Standalone',
-                description: isDomestic
-                    ? '학원·공방·피트니스 센터 입구 공기계 태블릿에 거치해두고 회원들이 자율 출석 체크하는 기능만 가볍게 구독하세요.'
-                    : 'Place an extra tablet at your studio entrance for autonomous self check-ins.',
-                features: isDomestic
-                    ? const [
-                        '입구 거치형 무인 출결 키오스크 단독 무제한 이용',
-                        '회원 뒷번호 4자리 터치 출결 & 자동 회차 차감',
-                        '단독 플랜 한도: 회원 최대 30명 · 수정 월 15회 · 서식 8개',
-                        '등록·수정 100% 무제한은 [올인원 VIP]에서 제공',
-                      ]
-                    : const [
-                        'Unlimited entrance self-check-in kiosk mode',
-                        '4-digit number touch check-in & auto session deduction',
-                        'Standalone limits: up to 30 members, 15 edits/month',
-                        'Full unlimited quotas require All-in-One VIP',
-                      ],
-                priceText: isSubKiosk
-                    ? (isDomestic ? '키오스크 이용 중' : 'Kiosk Active (Subscribed)')
-                    : (isDomestic ? '₩4,900 / 월' : '\$3.99 / mo'),
-                priceSubtext: isDomestic
-                    ? '구글 플레이 매월 자동 갱신 (언제든 취소 가능)'
-                    : 'Google Play auto-renewal (Cancel anytime)',
-                isUnlocked: isSubKiosk,
-                actionButtonText: isSubKiosk
-                    ? (isDomestic ? '키오스크 바로 실행' : 'Launch Kiosk Mode')
-                    : (isDomestic ? '키오스크 구독 시작 (₩4,900/월)' : 'Start Kiosk Subscription (\$3.99/mo)'),
-                actionIcon: Icons.tablet_mac_rounded,
-                onAction: () {
-                  if (isSubKiosk) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
-                    );
-                  } else {
-                    _startPurchase(MonetizationService.productIdKioskMonthly);
-                  }
-                },
-              ),
+              () {
+                final bool kioskCovered = kioskState == ProductPurchaseState.coveredByVip;
+                final bool kioskPending = kioskState == ProductPurchaseState.pending;
+                final bool kioskActive = isSubKiosk ||
+                    kioskState == ProductPurchaseState.active ||
+                    kioskCovered;
+                final ProductPurchaseState effectiveKioskState = kioskPending
+                    ? ProductPurchaseState.pending
+                    : (kioskCovered
+                        ? ProductPurchaseState.coveredByVip
+                        : (kioskActive
+                            ? ProductPurchaseState.active
+                            : (kioskState == ProductPurchaseState.expired
+                                ? ProductPurchaseState.expired
+                                : ProductPurchaseState.notOwned)));
+                final DateTime? kioskExpiry =
+                    bm.getProductExpiry(MonetizationService.productSubKioskMonthly);
+
+                return _buildStoreProductCard(
+                  context: context,
+                  badgeIcon: Icons.tablet_mac_rounded,
+                  badgeText: isDomestic ? '태블릿 무인 출결 전용' : 'Tablet Kiosk Only',
+                  badgeColor: const Color(0xFF2563EB),
+                  badgeBgColor: const Color(0xFFEFF6FF),
+                  icon: Icons.tablet_mac_rounded,
+                  iconColor: const Color(0xFF2563EB),
+                  title: isDomestic ? '태블릿 키오스크 단독 구독' : 'Tablet Kiosk Standalone',
+                  description: isDomestic
+                      ? '학원·공방·피트니스 센터 입구 공기계 태블릿에 거치해두고 회원들이 자율 출석 체크하는 기능만 가볍게 구독하세요.'
+                      : 'Place an extra tablet at your studio entrance for autonomous self check-ins.',
+                  features: isDomestic
+                      ? const [
+                          '입구 거치형 무인 출결 키오스크 단독 무제한 이용',
+                          '회원 뒷번호 4자리 터치 출결 & 자동 회차 차감',
+                          '단독 플랜 한도: 회원 최대 30명 · 수정 월 15회 · 서식 8개',
+                          '등록·수정 100% 무제한은 [올인원 VIP]에서 제공',
+                        ]
+                      : const [
+                          'Unlimited entrance self-check-in kiosk mode',
+                          '4-digit number touch check-in & auto session deduction',
+                          'Standalone limits: up to 30 members, 15 edits/month',
+                          'Full unlimited quotas require All-in-One VIP',
+                        ],
+                  priceText: kioskCovered
+                      ? (isDomestic ? 'VIP 포함 이용 중' : 'Included in VIP')
+                      : (kioskActive
+                          ? (isDomestic ? '키오스크 구독 중' : 'Kiosk Subscribed')
+                          : (isDomestic ? '₩4,900 / 월' : '\$3.99 / mo')),
+                  priceSubtext: kioskCovered
+                      ? (isDomestic
+                          ? '올인원 VIP 구독에 포함되어 별도 결제가 필요 없습니다.'
+                          : 'Included with your All-in-One VIP subscription.')
+                      : (kioskActive
+                          ? (kioskExpiry != null
+                              ? (isDomestic
+                                  ? '이용 만료(갱신) 예정: ${bm.formatShortDate(kioskExpiry)} · 중복 구매 차단됨'
+                                  : 'Active until ${bm.formatShortDate(kioskExpiry)}')
+                              : (isDomestic
+                                  ? '구독 중입니다 (중복 결제 방지됨)'
+                                  : 'Subscription active'))
+                          : (effectiveKioskState == ProductPurchaseState.expired && kioskExpiry != null
+                              ? (isDomestic
+                                  ? '이전 구독 만료 (${bm.formatShortDate(kioskExpiry)}) · 다시 구독 가능'
+                                  : 'Expired on ${bm.formatShortDate(kioskExpiry)}')
+                              : (isDomestic
+                                  ? '구글 플레이 매월 자동 갱신 (언제든 취소 가능)'
+                                  : 'Google Play auto-renewal (Cancel anytime)'))),
+                  isUnlocked: kioskActive,
+                  purchaseState: effectiveKioskState,
+                  actionButtonText: kioskPending
+                      ? (isDomestic ? '결제 승인 대기 중...' : 'Purchase Pending...')
+                      : (kioskCovered
+                          ? (isDomestic ? 'VIP 포함 이용 중 (중복 구독 불가)' : 'Included in VIP')
+                          : (kioskActive
+                              ? (isDomestic ? '구독 중 (키오스크 이용 중)' : 'Subscribed (Kiosk Active)')
+                              : (effectiveKioskState == ProductPurchaseState.expired
+                                  ? (isDomestic
+                                      ? '키오스크 다시 구독 (₩4,900/월)'
+                                      : 'Resubscribe Kiosk (\$3.99/mo)')
+                                  : (isDomestic
+                                      ? '키오스크 구독 시작 (₩4,900/월)'
+                                      : 'Start Kiosk Subscription (\$3.99/mo)')))),
+                  actionIcon: kioskActive ? Icons.check_circle_rounded : Icons.tablet_mac_rounded,
+                  secondaryButtonText: kioskActive
+                      ? (isDomestic ? '키오스크 바로 실행' : 'Launch Kiosk Mode')
+                      : null,
+                  onAction: (kioskActive || kioskPending)
+                      ? null
+                      : () => _startPurchase(MonetizationService.productIdKioskMonthly),
+                  onSecondaryAction: kioskActive
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TabletKioskScreen()),
+                          );
+                        }
+                      : null,
+                );
+              }(),
               const SizedBox(height: 18),
 
               // Plan 3: 광고 제거 단독 구독 (월 ₩1,900 - 한 달)
-              _buildStoreProductCard(
-                context: context,
-                badgeIcon: Icons.block_flipped,
-                badgeText: isDomestic ? '광고 없는 쾌적함' : 'Ad-Free Experience',
-                badgeColor: const Color(0xFF059669),
-                badgeBgColor: const Color(0xFFECFDF5),
-                icon: Icons.block_flipped,
-                iconColor: const Color(0xFF059669),
-                title: isDomestic ? '광고 제거 단독 구독' : 'Remove Ads Standalone',
-                description: isDomestic
-                    ? '하단 배너 및 팝업 광고를 완전히 없애 화면을 널찍하고 쾌적하게 사용하고 싶을 때 추천합니다.'
-                    : 'Remove all bottom banner ads and enjoy a clean, wide workspace.',
-                features: isDomestic
-                    ? const [
-                        '하단 배너 및 CRUD 전면 광고 완전 숨김',
-                        '단독 플랜 한도: 회원 최대 30명 · 수정 월 15회 · 서식 8개',
-                        '등록·수정 100% 무제한은 [올인원 VIP]에서 제공',
-                      ]
-                    : const [
-                        'Completely hide banner and interstitial ads',
-                        'Standalone limits: up to 30 members, 15 edits/month',
-                        'Full unlimited quotas require All-in-One VIP',
-                      ],
-                priceText: isSubNoAds
-                    ? (isDomestic ? '광고 제거 이용 중' : 'Ad-Free Active (Subscribed)')
-                    : (isDomestic ? '₩1,900 / 월 (한 달)' : '\$1.49 / mo (1 Month)'),
-                priceSubtext: isDomestic
-                    ? '부담 없는 한 달 정기 구독 (언제든 구글 플레이에서 해지)'
-                    : 'Affordable monthly subscription (Cancel anytime)',
-                isUnlocked: isSubNoAds,
-                actionButtonText: isSubNoAds
-                    ? (isDomestic ? '광고 제거 이용 중' : 'Ad-Free Active')
-                    : (isDomestic ? '광고 제거 한 달 구독 (월 ₩1,900)' : 'Subscribe to Remove Ads (\$1.49/mo)'),
-                actionIcon: Icons.block_flipped,
-                onAction: () {
-                  if (!isSubNoAds) {
-                    _startPurchase(MonetizationService.productIdRemoveAdsMonthly);
-                  }
-                },
-              ),
+              () {
+                final bool adsCovered = adsState == ProductPurchaseState.coveredByVip;
+                final bool adsPending = adsState == ProductPurchaseState.pending;
+                final bool adsActive = isSubNoAds ||
+                    adsState == ProductPurchaseState.active ||
+                    adsCovered;
+                final ProductPurchaseState effectiveAdsState = adsPending
+                    ? ProductPurchaseState.pending
+                    : (adsCovered
+                        ? ProductPurchaseState.coveredByVip
+                        : (adsActive
+                            ? ProductPurchaseState.active
+                            : (adsState == ProductPurchaseState.expired
+                                ? ProductPurchaseState.expired
+                                : ProductPurchaseState.notOwned)));
+                final DateTime? adsExpiry =
+                    bm.getProductExpiry(MonetizationService.productSubRemoveAdsMonthly);
+
+                return _buildStoreProductCard(
+                  context: context,
+                  badgeIcon: Icons.block_flipped,
+                  badgeText: isDomestic ? '광고 없는 쾌적함' : 'Ad-Free Experience',
+                  badgeColor: const Color(0xFF059669),
+                  badgeBgColor: const Color(0xFFECFDF5),
+                  icon: Icons.block_flipped,
+                  iconColor: const Color(0xFF059669),
+                  title: isDomestic ? '광고 제거 단독 구독' : 'Remove Ads Standalone',
+                  description: isDomestic
+                      ? '하단 배너 및 팝업 광고를 완전히 없애 화면을 널찍하고 쾌적하게 사용하고 싶을 때 추천합니다.'
+                      : 'Remove all bottom banner ads and enjoy a clean, wide workspace.',
+                  features: isDomestic
+                      ? const [
+                          '하단 배너 및 CRUD 전면 광고 완전 숨김',
+                          '단독 플랜 한도: 회원 최대 30명 · 수정 월 15회 · 서식 8개',
+                          '등록·수정 100% 무제한은 [올인원 VIP]에서 제공',
+                        ]
+                      : const [
+                          'Completely hide banner and interstitial ads',
+                          'Standalone limits: up to 30 members, 15 edits/month',
+                          'Full unlimited quotas require All-in-One VIP',
+                        ],
+                  priceText: adsCovered
+                      ? (isDomestic ? 'VIP 포함 이용 중' : 'Included in VIP')
+                      : (adsActive
+                          ? (isDomestic ? '광고 제거 구독 중' : 'Ad-Free Subscribed')
+                          : (isDomestic ? '₩1,900 / 월 (한 달)' : '\$1.49 / mo (1 Month)')),
+                  priceSubtext: adsCovered
+                      ? (isDomestic
+                          ? '올인원 VIP 구독에 포함되어 별도 결제가 필요 없습니다.'
+                          : 'Included with your All-in-One VIP subscription.')
+                      : (adsActive
+                          ? (adsExpiry != null
+                              ? (isDomestic
+                                  ? '이용 만료(갱신) 예정: ${bm.formatShortDate(adsExpiry)} · 중복 구매 차단됨'
+                                  : 'Active until ${bm.formatShortDate(adsExpiry)}')
+                              : (isDomestic
+                                  ? '구독 중입니다 (중복 결제 방지됨)'
+                                  : 'Subscription active'))
+                          : (effectiveAdsState == ProductPurchaseState.expired && adsExpiry != null
+                              ? (isDomestic
+                                  ? '이전 구독 만료 (${bm.formatShortDate(adsExpiry)}) · 다시 구독 가능'
+                                  : 'Expired on ${bm.formatShortDate(adsExpiry)}')
+                              : (isDomestic
+                                  ? '부담 없는 한 달 정기 구독 (언제든 구글 플레이에서 해지)'
+                                  : 'Affordable monthly subscription (Cancel anytime)'))),
+                  isUnlocked: adsActive,
+                  purchaseState: effectiveAdsState,
+                  actionButtonText: adsPending
+                      ? (isDomestic ? '결제 승인 대기 중...' : 'Purchase Pending...')
+                      : (adsCovered
+                          ? (isDomestic ? 'VIP 포함 이용 중 (중복 구독 불가)' : 'Included in VIP')
+                          : (adsActive
+                              ? (isDomestic ? '구독 중 (광고 제거 이용 중)' : 'Subscribed (Ad-Free Active)')
+                              : (effectiveAdsState == ProductPurchaseState.expired
+                                  ? (isDomestic
+                                      ? '광고 제거 다시 구독 (월 ₩1,900)'
+                                      : 'Resubscribe Remove Ads (\$1.49/mo)')
+                                  : (isDomestic
+                                      ? '광고 제거 한 달 구독 (월 ₩1,900)'
+                                      : 'Subscribe to Remove Ads (\$1.49/mo)')))),
+                  actionIcon: adsActive ? Icons.check_circle_rounded : Icons.block_flipped,
+                  onAction: (adsActive || adsPending)
+                      ? null
+                      : () => _startPurchase(MonetizationService.productIdRemoveAdsMonthly),
+                );
+              }(),
               const SizedBox(height: 22),
 
               // 3. Subscription Management Notice (100% Full-Width Card & CTA Button)
@@ -824,12 +1075,45 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
     required String priceText,
     required String priceSubtext,
     required bool isUnlocked,
+    ProductPurchaseState purchaseState = ProductPurchaseState.notOwned,
     required String actionButtonText,
     IconData? actionIcon,
-    required VoidCallback onAction,
+    VoidCallback? onAction,
     String? secondaryButtonText,
     VoidCallback? onSecondaryAction,
   }) {
+    final isDomestic = LocalizationService.isDomestic;
+    final String? stateChipLabel;
+    final Color stateChipColor;
+    final Color stateChipBg;
+    switch (purchaseState) {
+      case ProductPurchaseState.active:
+        stateChipLabel = isDomestic ? '구독 중' : 'Subscribed';
+        stateChipColor = const Color(0xFF047857);
+        stateChipBg = const Color(0xFFD1FAE5);
+        break;
+      case ProductPurchaseState.coveredByVip:
+        stateChipLabel = isDomestic ? 'VIP 포함' : 'In VIP';
+        stateChipColor = const Color(0xFF0F766E);
+        stateChipBg = const Color(0xFFCCFBF1);
+        break;
+      case ProductPurchaseState.pending:
+        stateChipLabel = isDomestic ? '결제 대기' : 'Pending';
+        stateChipColor = const Color(0xFFB45309);
+        stateChipBg = const Color(0xFFFEF3C7);
+        break;
+      case ProductPurchaseState.expired:
+        stateChipLabel = isDomestic ? '기간 만료 · 재구독 가능' : 'Expired';
+        stateChipColor = const Color(0xFFBE123C);
+        stateChipBg = const Color(0xFFFFE4E6);
+        break;
+      case ProductPurchaseState.notOwned:
+        stateChipLabel = null;
+        stateChipColor = badgeColor;
+        stateChipBg = badgeBgColor;
+        break;
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -838,43 +1122,72 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
         border: Border.all(
           color: isUnlocked
               ? const Color(0xFF10B981)
-              : const Color(0xFFE2E8F0),
-          width: isUnlocked ? 1.8 : 1.0,
+              : (purchaseState == ProductPurchaseState.pending
+                  ? const Color(0xFFF59E0B)
+                  : const Color(0xFFE2E8F0)),
+          width: (isUnlocked || purchaseState == ProductPurchaseState.pending) ? 1.8 : 1.0,
         ),
         boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Badge & Icon
+          // Header: Badge & Status Pill & Icon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: badgeBgColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    if (badgeIcon != null) ...[
-                      Icon(badgeIcon, size: 14, color: badgeColor),
-                      const SizedBox(width: 5),
-                    ],
-                    Text(
-                      badgeText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: badgeColor,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: badgeBgColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (badgeIcon != null) ...[
+                            Icon(badgeIcon, size: 14, color: badgeColor),
+                            const SizedBox(width: 5),
+                          ],
+                          Text(
+                            badgeText,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: badgeColor,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    if (stateChipLabel != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: stateChipBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: stateChipColor.withValues(alpha: 0.35)),
+                        ),
+                        child: Text(
+                          stateChipLabel,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w900,
+                            color: stateChipColor,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -970,6 +1283,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
             icon: isUnlocked ? Icons.check_circle_rounded : actionIcon,
             fullWidth: true,
             size: ZeroButtonSize.large,
+            isLoading: purchaseState == ProductPurchaseState.pending,
             onPressed: onAction,
           ),
 

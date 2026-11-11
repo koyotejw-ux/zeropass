@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -9,16 +11,78 @@ import '../screens/pro_store_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_dialog_actions.dart';
 
+/// 개별 스토어 상품 및 기간제 이용권의 현재 상태
+enum ProductPurchaseState {
+  notOwned,
+  pending,
+  active,
+  coveredByVip,
+  expired,
+}
+
+/// 스토어 결제 / 복원 / 만료 이벤트 유형
+enum StoreEventType {
+  none,
+  purchased,
+  pending,
+  restored,
+  expired,
+  canceled,
+  error,
+}
+
+/// 구독 또는 기간제 일회성 상품의 이용 권한(Entitlement) 기록
+class PurchasedEntitlement {
+  final String productId;
+  final DateTime purchasedAt;
+  final DateTime expiresAt;
+  final bool isSubscription;
+  final bool isRestored;
+
+  const PurchasedEntitlement({
+    required this.productId,
+    required this.purchasedAt,
+    required this.expiresAt,
+    required this.isSubscription,
+    this.isRestored = false,
+  });
+
+  bool isActiveAt(DateTime now) => now.isBefore(expiresAt);
+
+  Duration remainingAt(DateTime now) =>
+      isActiveAt(now) ? expiresAt.difference(now) : Duration.zero;
+
+  Map<String, dynamic> toJson() => {
+        'productId': productId,
+        'purchasedAt': purchasedAt.toIso8601String(),
+        'expiresAt': expiresAt.toIso8601String(),
+        'isSubscription': isSubscription,
+        'isRestored': isRestored,
+      };
+
+  factory PurchasedEntitlement.fromJson(Map<String, dynamic> json) {
+    final now = DateTime.now();
+    return PurchasedEntitlement(
+      productId: json['productId'] as String? ?? '',
+      purchasedAt: DateTime.tryParse(json['purchasedAt'] as String? ?? '') ?? now,
+      expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '') ?? now,
+      isSubscription: json['isSubscription'] as bool? ?? true,
+      isRestored: json['isRestored'] as bool? ?? false,
+    );
+  }
+}
+
 /// 최고 수익률(High eCPM)을 위한 AdMob 전면/오프닝/보상형/배너 통합 관리 서비스
 class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   static final MonetizationService instance = MonetizationService._internal();
   MonetizationService._internal();
 
-  // In-App Product IDs (100% Recurring Subscriptions)
+  // In-App Product IDs (100% Recurring Subscriptions + Period Pass)
   static const String productSubRemoveAdsMonthly = 'zeropass_sub_ads_monthly'; // 광고 제거 월간 (₩1,900/월)
   static const String productSubKioskMonthly = 'zeropass_sub_kiosk_monthly'; // 태블릿 키오스크 월간 (₩4,900/월)
   static const String productSubAllInOneMonthly = 'zeropass_sub_vip_monthly'; // 올인원 VIP 패키지 월간 (₩5,900/월)
   static const String productSubAllInOneYearly = 'zeropass_sub_vip_yearly'; // 올인원 VIP 패키지 연간 (₩59,000/년)
+  static const String productPassTemporaryVip1h = 'zeropass_pass_temp_vip_1h'; // 1시간 기간제 무료 VIP 체험 패스
 
   static const String productIdRemoveAdsMonthly = productSubRemoveAdsMonthly;
   static const String productIdKioskMonthly = productSubKioskMonthly;
@@ -48,10 +112,21 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   static const String _testRewardedInterstitialId = 'ca-app-pub-3940256099942544/5354046379';
   static const String _testNativeId = 'ca-app-pub-3940256099942544/2247696110';
 
+  static const String _prefsEntitlementsKey = 'bm_entitlements_v2';
+
   bool _isAdsRemoved = false;
   bool _isKioskProUnlocked = false;
+  bool _isDebugUnlocked = false;
   DateTime? _rewardedAdFreeUntil;
   DateTime? _rewardedKioskPassUntil;
+
+  final Map<String, PurchasedEntitlement> _entitlements = {};
+  final Set<String> _expiredNotifiedProductIds = {};
+  final Set<String> _restoreSessionProductIds = {};
+  String? _pendingPurchaseProductId;
+  bool _isRestoringPurchases = false;
+  StoreEventType _lastStoreEventType = StoreEventType.none;
+  String? _lastStoreNotice;
 
   // 선순환 리텐션 & 누적 ROI 가치 측정 지표 (Retention Flywheel Metrics)
   int _activeStreakDays = 1;
@@ -60,8 +135,161 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   int _cumulativeCheckInCount = 342; // 누적 출결 처리 건수
   int _cumulativeTaxLedgerCount = 18; // 누적 세무/정산 자동화 건수
 
+  String? get pendingProductId => _pendingPurchaseProductId;
+  bool get isRestoringPurchases => _isRestoringPurchases;
+  StoreEventType get lastStoreEventType => _lastStoreEventType;
+  String? get lastStoreNotice => _lastStoreNotice;
+  List<PurchasedEntitlement> get activeEntitlements {
+    final now = DateTime.now();
+    return _entitlements.values.where((e) => e.isActiveAt(now)).toList();
+  }
+
+  /// 상품별 기본 이용 기간 (정기 구독 30일/365일, 기간제 체험 1시간)
+  Duration periodDurationForProduct(String productId) {
+    if (productId == productSubAllInOneYearly) return const Duration(days: 365);
+    if (productId == productPassTemporaryVip1h) return const Duration(hours: 1);
+    return const Duration(days: 30);
+  }
+
+  /// 상품 ID에 대응하는 표시 이름
+  String productDisplayName(String productId) {
+    switch (productId) {
+      case productSubRemoveAdsMonthly:
+        return '광고 제거 단독 (월간)';
+      case productSubKioskMonthly:
+        return '태블릿 키오스크 (월간)';
+      case productSubAllInOneMonthly:
+        return '올인원 VIP (월간)';
+      case productSubAllInOneYearly:
+        return '올인원 VIP (연간)';
+      case productPassTemporaryVip1h:
+        return '1시간 무료 VIP 체험';
+      default:
+        return productId;
+    }
+  }
+
+  String formatShortDate(DateTime dt) {
+    return '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')}';
+  }
+
+  PurchasedEntitlement? getEntitlement(String productId) => _entitlements[productId];
+
+  bool _hasActiveVipBundle(DateTime now) {
+    final monthly = _entitlements[productSubAllInOneMonthly];
+    final yearly = _entitlements[productSubAllInOneYearly];
+    return (monthly != null && monthly.isActiveAt(now)) ||
+        (yearly != null && yearly.isActiveAt(now));
+  }
+
+  /// 개별 상품 및 기간제 이용권의 현재 상태 조회
+  ProductPurchaseState getProductState(String productId, {DateTime? now}) {
+    final checkNow = now ?? DateTime.now();
+    if (_pendingPurchaseProductId == productId) {
+      return ProductPurchaseState.pending;
+    }
+    final ent = _entitlements[productId];
+    if (ent != null && ent.isActiveAt(checkNow)) {
+      return ProductPurchaseState.active;
+    }
+    if (productId == productSubAllInOneMonthly) {
+      final yearly = _entitlements[productSubAllInOneYearly];
+      if (yearly != null && yearly.isActiveAt(checkNow)) {
+        return ProductPurchaseState.coveredByVip;
+      }
+    }
+    if (productId == productSubRemoveAdsMonthly ||
+        productId == productSubKioskMonthly ||
+        productId == productPassTemporaryVip1h) {
+      if (_hasActiveVipBundle(checkNow)) {
+        return ProductPurchaseState.coveredByVip;
+      }
+      if (productId == productPassTemporaryVip1h && _isAdsRemoved && _isKioskProUnlocked) {
+        return ProductPurchaseState.coveredByVip;
+      }
+    }
+    if (productId == productPassTemporaryVip1h) {
+      if ((_rewardedAdFreeUntil != null && checkNow.isBefore(_rewardedAdFreeUntil!)) ||
+          (_rewardedKioskPassUntil != null && checkNow.isBefore(_rewardedKioskPassUntil!))) {
+        return ProductPurchaseState.active;
+      }
+      if (ent != null || _rewardedAdFreeUntil != null || _rewardedKioskPassUntil != null) {
+        return ProductPurchaseState.expired;
+      }
+      return ProductPurchaseState.notOwned;
+    }
+    if (ent != null && !ent.isActiveAt(checkNow)) {
+      return ProductPurchaseState.expired;
+    }
+    return ProductPurchaseState.notOwned;
+  }
+
+  /// 활성 이용 권한(또는 상위 VIP 번들)의 만료 시각 반환
+  DateTime? getProductExpiry(String productId, {DateTime? now}) {
+    final checkNow = now ?? DateTime.now();
+    final state = getProductState(productId, now: checkNow);
+    if (state == ProductPurchaseState.active) {
+      if (productId == productPassTemporaryVip1h) {
+        return _entitlements[productId]?.expiresAt ?? _rewardedAdFreeUntil ?? _rewardedKioskPassUntil;
+      }
+      return _entitlements[productId]?.expiresAt;
+    }
+    if (state == ProductPurchaseState.coveredByVip) {
+      final yearly = _entitlements[productSubAllInOneYearly];
+      if (yearly != null && yearly.isActiveAt(checkNow)) return yearly.expiresAt;
+      final monthly = _entitlements[productSubAllInOneMonthly];
+      if (monthly != null && monthly.isActiveAt(checkNow)) return monthly.expiresAt;
+    }
+    return _entitlements[productId]?.expiresAt;
+  }
+
+  bool isProductActive(String productId, {DateTime? now}) {
+    final state = getProductState(productId, now: now);
+    return state == ProductPurchaseState.active || state == ProductPurchaseState.coveredByVip;
+  }
+
+  bool canPurchaseProduct(String productId, {DateTime? now}) {
+    if (_pendingPurchaseProductId != null) return false;
+    return !isProductActive(productId, now: now);
+  }
+
+  bool get canClaimTemporaryPass {
+    if (_pendingPurchaseProductId == productPassTemporaryVip1h) return false;
+    if (isPermanentVip) return false;
+    return !isTemporaryPassActive;
+  }
+
+  bool get _hasTrackedAdsEntitlement =>
+      _entitlements.containsKey(productSubRemoveAdsMonthly) ||
+      _entitlements.containsKey(productSubAllInOneMonthly) ||
+      _entitlements.containsKey(productSubAllInOneYearly);
+
+  bool get _hasTrackedKioskEntitlement =>
+      _entitlements.containsKey(productSubKioskMonthly) ||
+      _entitlements.containsKey(productSubAllInOneMonthly) ||
+      _entitlements.containsKey(productSubAllInOneYearly);
+
+  bool get isSubscriptionAdsRemoved {
+    final now = DateTime.now();
+    if (isProductActive(productSubRemoveAdsMonthly, now: now) || _hasActiveVipBundle(now)) {
+      return true;
+    }
+    return !_hasTrackedAdsEntitlement && _isAdsRemoved;
+  }
+
+  bool get isSubscriptionKioskPro {
+    final now = DateTime.now();
+    if (isProductActive(productSubKioskMonthly, now: now) || _hasActiveVipBundle(now)) {
+      return true;
+    }
+    return !_hasTrackedKioskEntitlement && _isKioskProUnlocked;
+  }
+
+  bool get isSubscriptionAllInOne =>
+      _hasActiveVipBundle(DateTime.now()) || (isSubscriptionAdsRemoved && isSubscriptionKioskPro);
+
   bool get isAdsRemoved {
-    if (_isAdsRemoved) return true;
+    if (isSubscriptionAdsRemoved) return true;
     if (_rewardedAdFreeUntil != null && DateTime.now().isBefore(_rewardedAdFreeUntil!)) {
       return true;
     }
@@ -69,23 +297,14 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   bool get isKioskProUnlocked {
-    if (_isKioskProUnlocked) return true;
+    if (isSubscriptionKioskPro) return true;
     if (_rewardedKioskPassUntil != null && DateTime.now().isBefore(_rewardedKioskPassUntil!)) {
       return true;
     }
     return false;
   }
 
-  bool get isPermanentVip => _isAdsRemoved && _isKioskProUnlocked;
-
-  /// 실제 구글 플레이 광고 제거 정기 구독 여부 (임시 1시간 무료 패스 제외)
-  bool get isSubscriptionAdsRemoved => _isAdsRemoved;
-
-  /// 실제 구글 플레이 키오스크 정기 구독 여부 (임시 1시간 무료 패스 제외)
-  bool get isSubscriptionKioskPro => _isKioskProUnlocked;
-
-  /// 실제 구글 플레이 올인원 정기 구독 여부 (임시 1시간 무료 패스 제외)
-  bool get isSubscriptionAllInOne => _isAdsRemoved && _isKioskProUnlocked;
+  bool get isPermanentVip => isSubscriptionAdsRemoved && isSubscriptionKioskPro;
 
   /// 올인원 VIP 무제한 이용 가능 여부 (정기 구독 VIP 또는 1시간 무료 VIP 체험 패스 포함)
   bool get isUnlimitedVip => isPermanentVip || isTemporaryPassActive;
@@ -96,8 +315,8 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   String get membershipPlanLabel {
     if (isPermanentVip) return '올인원 VIP 멤버십 (무제한)';
     if (isTemporaryPassActive) return '1시간 VIP 무료 체험 (무제한)';
-    if (_isAdsRemoved) return '광고 제거 단독 (제한형)';
-    if (_isKioskProUnlocked) return '키오스크 단독 (제한형)';
+    if (isSubscriptionAdsRemoved) return '광고 제거 단독 (제한형)';
+    if (isSubscriptionKioskPro) return '키오스크 단독 (제한형)';
     return '무료 플랜 (체험 한도)';
   }
 
@@ -304,13 +523,137 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     return kReleaseMode ? _adMobNativeId : _testNativeId;
   }
 
+  Future<void> _persistEntitlements(SharedPreferences prefs) async {
+    final encoded = jsonEncode(
+      _entitlements.map((key, value) => MapEntry(key, value.toJson())),
+    );
+    await prefs.setString(_prefsEntitlementsKey, encoded);
+  }
+
+  void _loadEntitlementsFromPrefs(SharedPreferences prefs) {
+    _entitlements.clear();
+    final raw = prefs.getString(_prefsEntitlementsKey);
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
+        decoded.forEach((key, value) {
+          if (value is Map<String, dynamic>) {
+            final ent = PurchasedEntitlement.fromJson(value);
+            if (ent.productId.isNotEmpty) {
+              _entitlements[ent.productId] = ent;
+            }
+          }
+        });
+      } catch (e) {
+        debugPrint('Entitlement decode error: $e');
+      }
+    }
+  }
+
+  Future<void> _recomputeAccessFlags(
+    SharedPreferences prefs, {
+    DateTime? now,
+  }) async {
+    final checkNow = now ?? DateTime.now();
+    final adsActive = _hasTrackedAdsEntitlement
+        ? (isProductActive(productSubRemoveAdsMonthly, now: checkNow) ||
+            _hasActiveVipBundle(checkNow))
+        : _isAdsRemoved;
+    final kioskActive = _hasTrackedKioskEntitlement
+        ? (isProductActive(productSubKioskMonthly, now: checkNow) ||
+            _hasActiveVipBundle(checkNow))
+        : _isKioskProUnlocked;
+
+    _isAdsRemoved = adsActive;
+    _isKioskProUnlocked = kioskActive;
+    await prefs.setBool('is_ads_removed', _isAdsRemoved);
+    await prefs.setBool('is_kiosk_pro_unlocked', _isKioskProUnlocked);
+
+    final bool tempPassStillActive =
+        (_rewardedAdFreeUntil != null && checkNow.isBefore(_rewardedAdFreeUntil!)) ||
+            (_rewardedKioskPassUntil != null && checkNow.isBefore(_rewardedKioskPassUntil!));
+    premiumStatusNotifier.value = _isAdsRemoved || tempPassStillActive;
+  }
+
+  /// 활성 이용 기간(정기 구독 및 1시간 무료 기간권)이 만료되었는지 점검하고 권한을 회수합니다.
+  /// 만료되어 권한이 회수된 상품 ID 목록을 반환합니다.
+  Future<List<String>> checkEntitlementExpirations({DateTime? now}) async {
+    final checkNow = now ?? DateTime.now();
+    final prefs = await SharedPreferences.getInstance();
+    final expiredProductIds = <String>[];
+
+    for (final entry in _entitlements.entries) {
+      if (!entry.value.isActiveAt(checkNow) &&
+          !_expiredNotifiedProductIds.contains(entry.key)) {
+        _expiredNotifiedProductIds.add(entry.key);
+        expiredProductIds.add(entry.key);
+      }
+    }
+
+    if (_rewardedAdFreeUntil != null && !checkNow.isBefore(_rewardedAdFreeUntil!)) {
+      _rewardedAdFreeUntil = null;
+      await prefs.remove('rewarded_ad_free_until');
+      if (!_expiredNotifiedProductIds.contains(productPassTemporaryVip1h) &&
+          !expiredProductIds.contains(productPassTemporaryVip1h)) {
+        _expiredNotifiedProductIds.add(productPassTemporaryVip1h);
+        expiredProductIds.add(productPassTemporaryVip1h);
+      }
+    }
+    if (_rewardedKioskPassUntil != null && !checkNow.isBefore(_rewardedKioskPassUntil!)) {
+      _rewardedKioskPassUntil = null;
+      await prefs.remove('rewarded_kiosk_pass_until');
+    }
+
+    await _recomputeAccessFlags(prefs, now: checkNow);
+
+    if (expiredProductIds.isNotEmpty) {
+      final firstTitle = productDisplayName(expiredProductIds.first);
+      _lastStoreEventType = StoreEventType.expired;
+      _lastStoreNotice = '$firstTitle 이용 기간이 만료되었습니다. 필요 시 다시 구매/구독할 수 있습니다.';
+      notifyListeners();
+    }
+    return expiredProductIds;
+  }
+
+  @visibleForTesting
+  Future<void> seedEntitlementForTest(PurchasedEntitlement entitlement) async {
+    final prefs = await SharedPreferences.getInstance();
+    _entitlements[entitlement.productId] = entitlement;
+    if (entitlement.isActiveAt(DateTime.now())) {
+      _expiredNotifiedProductIds.remove(entitlement.productId);
+    }
+    if (entitlement.productId == productPassTemporaryVip1h) {
+      _rewardedAdFreeUntil = entitlement.expiresAt;
+      _rewardedKioskPassUntil = entitlement.expiresAt;
+      await prefs.setString(
+        'rewarded_ad_free_until',
+        entitlement.expiresAt.toIso8601String(),
+      );
+      await prefs.setString(
+        'rewarded_kiosk_pass_until',
+        entitlement.expiresAt.toIso8601String(),
+      );
+    }
+    await _persistEntitlements(prefs);
+    await _recomputeAccessFlags(prefs);
+    notifyListeners();
+  }
+
   Future<void> debugUnlockAll() async {
     await setDebugUnlock(adsRemoved: true, kioskPro: true);
   }
 
   /// 개발/검수용 모든 구독 초기화 (무료 체험 및 구독 전체 리셋)
   Future<void> debugResetAll() async {
-    await setDebugUnlock(adsRemoved: false, kioskPro: false);
+    _isDebugUnlocked = false;
+    _entitlements.clear();
+    _expiredNotifiedProductIds.clear();
+    _restoreSessionProductIds.clear();
+    _pendingPurchaseProductId = null;
+    _isRestoringPurchases = false;
+    _lastPurchaseMessage = null;
+    _lastStoreNotice = null;
+    _lastStoreEventType = StoreEventType.none;
     _rewardedAdFreeUntil = null;
     _rewardedKioskPassUntil = null;
     _lastInterstitialShownTime = null;
@@ -319,6 +662,12 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     _monthlyEditCount = 0;
     _editCountMonthKey = _currentMonthKey();
     final prefs = await SharedPreferences.getInstance();
+    _isAdsRemoved = false;
+    _isKioskProUnlocked = false;
+    premiumStatusNotifier.value = false;
+    await prefs.remove(_prefsEntitlementsKey);
+    await prefs.setBool('is_ads_removed', false);
+    await prefs.setBool('is_kiosk_pro_unlocked', false);
     await prefs.remove('rewarded_ad_free_until');
     await prefs.remove('rewarded_kiosk_pass_until');
     await prefs.setInt('bm_monthly_edit_count', 0);
@@ -328,21 +677,92 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> setDebugUnlock({bool? adsRemoved, bool? kioskPro}) async {
     final prefs = await SharedPreferences.getInstance();
-    if (adsRemoved != null) {
-      _isAdsRemoved = adsRemoved;
-      await prefs.setBool('is_ads_removed', adsRemoved);
-      premiumStatusNotifier.value = adsRemoved;
+    final now = DateTime.now();
+    if (adsRemoved == true && kioskPro == true) {
+      _isDebugUnlocked = true;
+      _entitlements[productSubAllInOneMonthly] = PurchasedEntitlement(
+        productId: productSubAllInOneMonthly,
+        purchasedAt: now,
+        expiresAt: now.add(periodDurationForProduct(productSubAllInOneMonthly)),
+        isSubscription: true,
+      );
+      _expiredNotifiedProductIds.remove(productSubAllInOneMonthly);
+    } else {
+      if (adsRemoved == true) {
+        _isDebugUnlocked = true;
+        _entitlements[productSubRemoveAdsMonthly] = PurchasedEntitlement(
+          productId: productSubRemoveAdsMonthly,
+          purchasedAt: now,
+          expiresAt: now.add(periodDurationForProduct(productSubRemoveAdsMonthly)),
+          isSubscription: true,
+        );
+        _expiredNotifiedProductIds.remove(productSubRemoveAdsMonthly);
+      } else if (adsRemoved == false) {
+        _entitlements.remove(productSubRemoveAdsMonthly);
+        _entitlements.remove(productSubAllInOneMonthly);
+        _entitlements.remove(productSubAllInOneYearly);
+      }
+
+      if (kioskPro == true) {
+        _isDebugUnlocked = true;
+        _entitlements[productSubKioskMonthly] = PurchasedEntitlement(
+          productId: productSubKioskMonthly,
+          purchasedAt: now,
+          expiresAt: now.add(periodDurationForProduct(productSubKioskMonthly)),
+          isSubscription: true,
+        );
+        _expiredNotifiedProductIds.remove(productSubKioskMonthly);
+      } else if (kioskPro == false) {
+        _entitlements.remove(productSubKioskMonthly);
+        _entitlements.remove(productSubAllInOneMonthly);
+        _entitlements.remove(productSubAllInOneYearly);
+      }
     }
-    if (kioskPro != null) {
-      _isKioskProUnlocked = kioskPro;
-      await prefs.setBool('is_kiosk_pro_unlocked', kioskPro);
+    if (adsRemoved == false && kioskPro == false) {
+      _isDebugUnlocked = false;
     }
+
+    await _persistEntitlements(prefs);
+    await _recomputeAccessFlags(prefs, now: now);
     notifyListeners();
   }
 
+  /// 기간제 1시간 무료 VIP 체험 시작 (이미 이용 중이거나 VIP 구독 중이면 재발급 차단)
+  Future<({bool granted, String message})> claimTemporaryVipPass({
+    int hours = 1,
+    DateTime? now,
+  }) async {
+    final checkNow = now ?? DateTime.now();
+    await checkEntitlementExpirations(now: checkNow);
+    if (isPermanentVip) {
+      return (
+        granted: false,
+        message: '이미 올인원 VIP 구독을 이용 중입니다.',
+      );
+    }
+    if (isTemporaryPassActive) {
+      return (
+        granted: false,
+        message: '이미 1시간 무료 VIP 체험 중($remainingTemporaryPassFormatted)입니다. 기간 만료 후 다시 이용할 수 있습니다.',
+      );
+    }
+    await grantTemporaryAdFreeHours(hours, includeKiosk: true, now: checkNow);
+    final expiry = checkNow.add(Duration(hours: hours));
+    final expiryTime = '${expiry.hour.toString().padLeft(2, '0')}:${expiry.minute.toString().padLeft(2, '0')}';
+    return (
+      granted: true,
+      message: '$hours시간 무료 VIP 체험이 시작되었습니다! ($expiryTime까지 이용 가능)',
+    );
+  }
+
   /// 보상형 광고 시청 후 N시간 동안 광고 제거 + 태블릿 키오스크 VIP 혜택 부여 (Reverse-Trial Funnel)
-  Future<void> grantTemporaryAdFreeHours(int hours, {bool includeKiosk = true}) async {
-    final expiry = DateTime.now().add(Duration(hours: hours));
+  Future<void> grantTemporaryAdFreeHours(
+    int hours, {
+    bool includeKiosk = true,
+    DateTime? now,
+  }) async {
+    final start = now ?? DateTime.now();
+    final expiry = start.add(Duration(hours: hours));
     _rewardedAdFreeUntil = expiry;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('rewarded_ad_free_until', expiry.toIso8601String());
@@ -350,7 +770,17 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       _rewardedKioskPassUntil = expiry;
       await prefs.setString('rewarded_kiosk_pass_until', expiry.toIso8601String());
     }
-    premiumStatusNotifier.value = true;
+    _entitlements[productPassTemporaryVip1h] = PurchasedEntitlement(
+      productId: productPassTemporaryVip1h,
+      purchasedAt: start,
+      expiresAt: expiry,
+      isSubscription: false,
+    );
+    _expiredNotifiedProductIds.remove(productPassTemporaryVip1h);
+    _lastStoreEventType = StoreEventType.purchased;
+    _lastStoreNotice = '$hours시간 무료 VIP 체험이 활성화되었습니다. 이용 기간 종료 후 다시 이용하실 수 있습니다.';
+    await _persistEntitlements(prefs);
+    await _recomputeAccessFlags(prefs, now: start);
     notifyListeners();
   }
 
@@ -421,8 +851,38 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     final prefs = await SharedPreferences.getInstance();
+    _loadEntitlementsFromPrefs(prefs);
     _isAdsRemoved = prefs.getBool('is_ads_removed') ?? false;
     _isKioskProUnlocked = prefs.getBool('is_kiosk_pro_unlocked') ?? false;
+
+    // 기존 버전(boolean 플래그만 저장)에서 업그레이드된 경우 기본 30일 권한 레코드로 마이그레이션
+    if (_entitlements.isEmpty && (_isAdsRemoved || _isKioskProUnlocked)) {
+      final now = DateTime.now();
+      if (_isAdsRemoved && _isKioskProUnlocked) {
+        _entitlements[productSubAllInOneMonthly] = PurchasedEntitlement(
+          productId: productSubAllInOneMonthly,
+          purchasedAt: now,
+          expiresAt: now.add(periodDurationForProduct(productSubAllInOneMonthly)),
+          isSubscription: true,
+        );
+      } else if (_isAdsRemoved) {
+        _entitlements[productSubRemoveAdsMonthly] = PurchasedEntitlement(
+          productId: productSubRemoveAdsMonthly,
+          purchasedAt: now,
+          expiresAt: now.add(periodDurationForProduct(productSubRemoveAdsMonthly)),
+          isSubscription: true,
+        );
+      } else if (_isKioskProUnlocked) {
+        _entitlements[productSubKioskMonthly] = PurchasedEntitlement(
+          productId: productSubKioskMonthly,
+          purchasedAt: now,
+          expiresAt: now.add(periodDurationForProduct(productSubKioskMonthly)),
+          isSubscription: true,
+        );
+      }
+      await _persistEntitlements(prefs);
+    }
+
     _cumulativeSavedSmsCount = prefs.getInt('bm_saved_sms_count') ?? 128;
     _cumulativeCheckInCount = prefs.getInt('bm_checkin_count') ?? 342;
     _cumulativeTaxLedgerCount = prefs.getInt('bm_tax_count') ?? 18;
@@ -433,21 +893,15 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
     final adFreeStr = prefs.getString('rewarded_ad_free_until');
     if (adFreeStr != null) {
-      final expiry = DateTime.tryParse(adFreeStr);
-      if (expiry != null && DateTime.now().isBefore(expiry)) {
-        _rewardedAdFreeUntil = expiry;
-      }
+      _rewardedAdFreeUntil = DateTime.tryParse(adFreeStr);
     }
 
     final kioskPassStr = prefs.getString('rewarded_kiosk_pass_until');
     if (kioskPassStr != null) {
-      final expiry = DateTime.tryParse(kioskPassStr);
-      if (expiry != null && DateTime.now().isBefore(expiry)) {
-        _rewardedKioskPassUntil = expiry;
-      }
+      _rewardedKioskPassUntil = DateTime.tryParse(kioskPassStr);
     }
 
-    premiumStatusNotifier.value = isAdsRemoved;
+    await checkEntitlementExpirations();
 
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       try {
@@ -481,6 +935,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      unawaited(checkEntitlementExpirations());
       // 앱으로 복귀했을 때 앱 오프닝 광고 트리거 (수익 극대화)
       showAppOpenAdIfAvailable();
     }
@@ -1261,46 +1716,134 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   String? _lastPurchaseMessage;
   String? get lastPurchaseMessage => _lastPurchaseMessage;
 
+  DateTime? _parseTransactionDate(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    final millis = int.tryParse(raw);
+    if (millis != null) {
+      return DateTime.fromMillisecondsSinceEpoch(millis);
+    }
+    return DateTime.tryParse(raw);
+  }
+
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+    unawaited(_processPurchaseUpdates(purchaseDetailsList));
+  }
+
+  @visibleForTesting
+  Future<void> processPurchaseUpdatesForTest(
+    List<PurchaseDetails> purchaseDetailsList, {
+    DateTime? now,
+  }) {
+    return _processPurchaseUpdates(
+      purchaseDetailsList,
+      now: now,
+      completePlatformPurchase: false,
+    );
+  }
+
+  Future<void> _processPurchaseUpdates(
+    List<PurchaseDetails> purchaseDetailsList, {
+    DateTime? now,
+    bool completePlatformPurchase = true,
+  }) async {
+    final checkNow = now ?? DateTime.now();
     for (final purchaseDetails in purchaseDetailsList) {
-      if (purchaseDetails.status == PurchaseStatus.purchased || purchaseDetails.status == PurchaseStatus.restored) {
+      final productId = purchaseDetails.productID;
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        _pendingPurchaseProductId = productId;
+        _lastStoreEventType = StoreEventType.pending;
+        _lastStoreNotice = '${productDisplayName(productId)} 결제가 승인 대기 중입니다.';
+        notifyListeners();
+      } else if (purchaseDetails.status == PurchaseStatus.purchased) {
+        if (_pendingPurchaseProductId == productId) {
+          _pendingPurchaseProductId = null;
+        }
         _lastPurchaseMessage = null;
-        _handleSuccessfulPurchase(purchaseDetails.productID);
-        if (purchaseDetails.pendingCompletePurchase) {
-          InAppPurchase.instance.completePurchase(purchaseDetails);
+        final txTime = _parseTransactionDate(purchaseDetails.transactionDate) ?? checkNow;
+        await _handleSuccessfulPurchase(
+          productId,
+          now: txTime,
+          isRestored: false,
+        );
+        _lastStoreEventType = StoreEventType.purchased;
+        _lastStoreNotice = '${productDisplayName(productId)} 이용이 시작되었습니다.';
+        notifyListeners();
+        if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
+          await InAppPurchase.instance.completePurchase(purchaseDetails);
+        }
+      } else if (purchaseDetails.status == PurchaseStatus.restored) {
+        if (_pendingPurchaseProductId == productId) {
+          _pendingPurchaseProductId = null;
+        }
+        _lastPurchaseMessage = null;
+        _restoreSessionProductIds.add(productId);
+        final txTime = _parseTransactionDate(purchaseDetails.transactionDate);
+        await _handleSuccessfulPurchase(
+          productId,
+          now: checkNow,
+          isRestored: true,
+          originalPurchaseDate: txTime,
+        );
+        _lastStoreEventType = StoreEventType.restored;
+        _lastStoreNotice = '${productDisplayName(productId)} 구독이 복원되었습니다.';
+        notifyListeners();
+        if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
+          await InAppPurchase.instance.completePurchase(purchaseDetails);
         }
       } else if (purchaseDetails.status == PurchaseStatus.error) {
+        if (_pendingPurchaseProductId == productId) {
+          _pendingPurchaseProductId = null;
+        }
+        _lastStoreEventType = StoreEventType.error;
         _lastPurchaseMessage = purchaseDetails.error?.message ?? '결제 처리 중 오류가 발생했습니다.';
-        if (purchaseDetails.pendingCompletePurchase) {
-          InAppPurchase.instance.completePurchase(purchaseDetails);
+        _lastStoreNotice = _lastPurchaseMessage;
+        if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
+          await InAppPurchase.instance.completePurchase(purchaseDetails);
         }
         notifyListeners();
       } else if (purchaseDetails.status == PurchaseStatus.canceled) {
+        if (_pendingPurchaseProductId == productId) {
+          _pendingPurchaseProductId = null;
+        }
+        _lastStoreEventType = StoreEventType.canceled;
         _lastPurchaseMessage = '결제가 취소되었습니다.';
-        if (purchaseDetails.pendingCompletePurchase) {
-          InAppPurchase.instance.completePurchase(purchaseDetails);
+        _lastStoreNotice = _lastPurchaseMessage;
+        if (completePlatformPurchase && purchaseDetails.pendingCompletePurchase) {
+          await InAppPurchase.instance.completePurchase(purchaseDetails);
         }
         notifyListeners();
       }
     }
   }
 
-  Future<void> _handleSuccessfulPurchase(String productId) async {
+  Future<void> _handleSuccessfulPurchase(
+    String productId, {
+    DateTime? now,
+    bool isRestored = false,
+    DateTime? originalPurchaseDate,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (productId == productSubRemoveAdsMonthly) {
-      _isAdsRemoved = true;
-      await prefs.setBool('is_ads_removed', true);
-      premiumStatusNotifier.value = true;
-    } else if (productId == productSubKioskMonthly) {
-      _isKioskProUnlocked = true;
-      await prefs.setBool('is_kiosk_pro_unlocked', true);
-    } else if (productId == productSubAllInOneMonthly || productId == productSubAllInOneYearly) {
-      _isAdsRemoved = true;
-      _isKioskProUnlocked = true;
-      await prefs.setBool('is_ads_removed', true);
-      await prefs.setBool('is_kiosk_pro_unlocked', true);
-      premiumStatusNotifier.value = true;
+    final checkNow = now ?? DateTime.now();
+    final period = periodDurationForProduct(productId);
+    final purchasedAt = originalPurchaseDate ?? checkNow;
+    DateTime expiresAt = purchasedAt.add(period);
+    // 스토어에서 복원(restored) 이벤트가 전달되었다면 자동 갱신 중인 유효 구독이므로 최소 현재 시점 + 잔여 주기를 보장합니다.
+    if (isRestored && !checkNow.isBefore(expiresAt)) {
+      expiresAt = checkNow.add(period);
     }
+
+    _isDebugUnlocked = false;
+    _entitlements[productId] = PurchasedEntitlement(
+      productId: productId,
+      purchasedAt: purchasedAt,
+      expiresAt: expiresAt,
+      isSubscription: _kProductIds.contains(productId),
+      isRestored: isRestored,
+    );
+    _expiredNotifiedProductIds.remove(productId);
+
+    await _persistEntitlements(prefs);
+    await _recomputeAccessFlags(prefs, now: checkNow);
     notifyListeners();
   }
 
@@ -1314,6 +1857,24 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<({bool started, String? errorMessage})> buyProduct(String productId) async {
     try {
+      await checkEntitlementExpirations();
+
+      if (_pendingPurchaseProductId != null) {
+        return (
+          started: false,
+          errorMessage: '${productDisplayName(_pendingPurchaseProductId!)} 결제가 처리 중입니다. 잠시만 기다려 주세요.',
+        );
+      }
+
+      if (isProductActive(productId)) {
+        final expiry = getProductExpiry(productId);
+        final expiryMsg = expiry != null ? ' (${formatShortDate(expiry)} 기간 종료 후 재구매 가능)' : '';
+        return (
+          started: false,
+          errorMessage: '이미 이용 중인 상품입니다.$expiryMsg',
+        );
+      }
+
       if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
         return (started: false, errorMessage: '인앱 결제는 모바일 기기(Google Play / App Store)에서만 지원됩니다.');
       }
@@ -1336,16 +1897,128 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
 
       final product = response.productDetails.first;
       final purchaseParam = PurchaseParam(productDetails: product);
+      _pendingPurchaseProductId = productId;
+      notifyListeners();
+
       final started = await InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+      if (!started && _pendingPurchaseProductId == productId) {
+        _pendingPurchaseProductId = null;
+        notifyListeners();
+      }
       return (started: started, errorMessage: started ? null : '결제 창을 열지 못했습니다.');
     } catch (e) {
+      if (_pendingPurchaseProductId == productId) {
+        _pendingPurchaseProductId = null;
+        notifyListeners();
+      }
       debugPrint('buyProduct error: $e');
       return (started: false, errorMessage: '결제 요청 중 오류가 발생했습니다: $e');
     }
   }
 
-  Future<void> restorePurchases() async {
-    await InAppPurchase.instance.restorePurchases();
+  /// 스토어 구독 복원 및 로컬 이용 상태 동기화
+  Future<({int restoredCount, bool hadError, String message})> restorePurchases({
+    Duration settleDuration = const Duration(milliseconds: 1200),
+    Future<void> Function()? platformRestoreOverride,
+    DateTime? now,
+  }) async {
+    final checkNow = now ?? DateTime.now();
+    _isRestoringPurchases = true;
+    _restoreSessionProductIds.clear();
+    _lastPurchaseMessage = null;
+    notifyListeners();
+
+    try {
+      if (platformRestoreOverride == null) {
+        if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
+          await checkEntitlementExpirations(now: checkNow);
+          return (
+            restoredCount: 0,
+            hadError: true,
+            message: '구독 복원은 모바일 기기(Google Play / App Store)에서 이용할 수 있습니다.',
+          );
+        }
+        final available = await InAppPurchase.instance.isAvailable();
+        if (!available) {
+          await checkEntitlementExpirations(now: checkNow);
+          return (
+            restoredCount: 0,
+            hadError: true,
+            message: 'Google Play 스토어에 연결할 수 없어 로컬 이용 상태만 확인했습니다.',
+          );
+        }
+      }
+
+      await (platformRestoreOverride != null
+          ? platformRestoreOverride()
+          : InAppPurchase.instance.restorePurchases());
+
+      if (settleDuration > Duration.zero) {
+        await Future.delayed(settleDuration);
+      }
+
+      final restoredIds = Set<String>.from(_restoreSessionProductIds);
+      bool expiredStaleLocal = false;
+
+      if (!_isDebugUnlocked) {
+        final prefs = await SharedPreferences.getInstance();
+        for (final id in _kProductIds) {
+          final existing = _entitlements[id];
+          if (existing != null &&
+              existing.isActiveAt(checkNow) &&
+              !restoredIds.contains(id)) {
+            _entitlements[id] = PurchasedEntitlement(
+              productId: id,
+              purchasedAt: existing.purchasedAt,
+              expiresAt: checkNow,
+              isSubscription: true,
+              isRestored: existing.isRestored,
+            );
+            _expiredNotifiedProductIds.add(id);
+            expiredStaleLocal = true;
+          }
+        }
+        await _persistEntitlements(prefs);
+        await _recomputeAccessFlags(prefs, now: checkNow);
+      }
+
+      await checkEntitlementExpirations(now: checkNow);
+
+      if (_lastPurchaseMessage != null) {
+        _lastStoreEventType = StoreEventType.error;
+        _lastStoreNotice = _lastPurchaseMessage;
+        return (
+          restoredCount: restoredIds.length,
+          hadError: true,
+          message: _lastPurchaseMessage!,
+        );
+      }
+
+      if (restoredIds.isNotEmpty) {
+        final names = restoredIds.map(productDisplayName).join(', ');
+        final msg = '구독 ${restoredIds.length}건($names)이 정상 복원되었습니다.';
+        _lastStoreEventType = StoreEventType.restored;
+        _lastStoreNotice = msg;
+        return (restoredCount: restoredIds.length, hadError: false, message: msg);
+      }
+
+      final msg = expiredStaleLocal
+          ? '스토어에 유효한 활성 구독이 없어 만료 상태로 동기화되었습니다.'
+          : '복원할 활성 구독 내역이 없습니다.';
+      _lastStoreEventType =
+          expiredStaleLocal ? StoreEventType.expired : StoreEventType.none;
+      _lastStoreNotice = msg;
+      return (restoredCount: 0, hadError: false, message: msg);
+    } catch (e) {
+      debugPrint('restorePurchases error: $e');
+      final msg = '구독 복원 중 오류가 발생했습니다: $e';
+      _lastStoreEventType = StoreEventType.error;
+      _lastStoreNotice = msg;
+      return (restoredCount: 0, hadError: true, message: msg);
+    } finally {
+      _isRestoringPurchases = false;
+      notifyListeners();
+    }
   }
 
   @override

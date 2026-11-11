@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -13,6 +14,7 @@ import 'package:zeropass/models/pass_record.dart';
 import 'package:zeropass/models/schedule_item.dart';
 import 'package:zeropass/models/studio_profile.dart';
 import 'package:zeropass/providers/app_providers.dart';
+import 'package:zeropass/screens/pro_store_screen.dart';
 import 'package:zeropass/screens/settings_vault_screen.dart';
 import 'package:zeropass/services/data_vault_service.dart';
 import 'package:zeropass/services/database_service.dart';
@@ -610,6 +612,200 @@ void main() {
       await tester.tap(find.text('닫기'));
       await tester.pumpAndSettle();
       expect(allowedCreate, isFalse);
+    });
+  });
+
+  group('Subscription & Period Entitlement Lifecycle Tests', () {
+    PurchaseDetails makePurchase(
+      String productId,
+      PurchaseStatus status, {
+      DateTime? txDate,
+    }) {
+      return PurchaseDetails(
+        productID: productId,
+        verificationData: PurchaseVerificationData(
+          localVerificationData: 'local',
+          serverVerificationData: 'server',
+          source: 'google_play',
+        ),
+        transactionDate: txDate?.millisecondsSinceEpoch.toString(),
+        status: status,
+      );
+    }
+
+    test('Subscription pending -> purchased transitions to active, covers standalone items, and blocks duplicate buyProduct', () async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      expect(bm.getProductState(MonetizationService.productSubAllInOneMonthly), ProductPurchaseState.notOwned);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubAllInOneMonthly), isTrue);
+
+      // 1. Pending state
+      await bm.processPurchaseUpdatesForTest([
+        makePurchase(MonetizationService.productSubAllInOneMonthly, PurchaseStatus.pending),
+      ]);
+      expect(bm.getProductState(MonetizationService.productSubAllInOneMonthly), ProductPurchaseState.pending);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubAllInOneMonthly), isFalse);
+
+      // 2. Purchased -> Active + covers Kiosk & Ads standalone + blocks duplicate buy
+      final purchaseTime = DateTime.now();
+      await bm.processPurchaseUpdatesForTest(
+        [makePurchase(MonetizationService.productSubAllInOneMonthly, PurchaseStatus.purchased, txDate: purchaseTime)],
+        now: purchaseTime,
+      );
+
+      expect(bm.getProductState(MonetizationService.productSubAllInOneMonthly), ProductPurchaseState.active);
+      expect(bm.getProductState(MonetizationService.productSubKioskMonthly), ProductPurchaseState.coveredByVip);
+      expect(bm.getProductState(MonetizationService.productSubRemoveAdsMonthly), ProductPurchaseState.coveredByVip);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubAllInOneMonthly), isFalse);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubKioskMonthly), isFalse);
+      expect(bm.isPermanentVip, isTrue);
+
+      final dupResult = await bm.buyProduct(MonetizationService.productSubAllInOneMonthly);
+      expect(dupResult.started, isFalse);
+      expect(dupResult.errorMessage, contains('이미 이용 중인 상품'));
+    });
+
+    test('Timed 1-hour pass blocks re-claim while active and unlocks cleanly after period expires', () async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      final start = DateTime.now();
+      final firstClaim = await bm.claimTemporaryVipPass(hours: 1, now: start);
+      expect(firstClaim.granted, isTrue);
+      expect(bm.isTemporaryPassActive, isTrue);
+      expect(bm.canClaimTemporaryPass, isFalse);
+      expect(bm.getProductState(MonetizationService.productPassTemporaryVip1h, now: start), ProductPurchaseState.active);
+
+      // Re-claim 30 minutes later must be blocked while active
+      final mid = start.add(const Duration(minutes: 30));
+      final blockedClaim = await bm.claimTemporaryVipPass(hours: 1, now: mid);
+      expect(blockedClaim.granted, isFalse);
+      expect(blockedClaim.message, contains('기간 만료 후 다시 이용'));
+
+      // After 61 minutes, expiration runs -> state becomes expired and re-claim succeeds
+      final afterExpiry = start.add(const Duration(minutes: 61));
+      final expiredIds = await bm.checkEntitlementExpirations(now: afterExpiry);
+      expect(expiredIds, contains(MonetizationService.productPassTemporaryVip1h));
+      expect(bm.getProductState(MonetizationService.productPassTemporaryVip1h, now: afterExpiry), ProductPurchaseState.expired);
+      expect(bm.isUnlimitedVip, isFalse);
+
+      final reClaim = await bm.claimTemporaryVipPass(hours: 1, now: afterExpiry.add(const Duration(seconds: 1)));
+      expect(reClaim.granted, isTrue);
+    });
+
+    test('Subscription expiration revokes access and transitions state to expired -> resubscribable', () async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      final pastPurchase = DateTime.now().subtract(const Duration(days: 35));
+      await bm.seedEntitlementForTest(
+        PurchasedEntitlement(
+          productId: MonetizationService.productSubRemoveAdsMonthly,
+          purchasedAt: pastPurchase,
+          expiresAt: pastPurchase.add(const Duration(days: 30)),
+          isSubscription: true,
+        ),
+      );
+
+      final expiredIds = await bm.checkEntitlementExpirations();
+      expect(expiredIds, contains(MonetizationService.productSubRemoveAdsMonthly));
+      expect(bm.isSubscriptionAdsRemoved, isFalse);
+      expect(bm.isAdsRemoved, isFalse);
+      expect(bm.getProductState(MonetizationService.productSubRemoveAdsMonthly), ProductPurchaseState.expired);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubRemoveAdsMonthly), isTrue);
+    });
+
+    test('restorePurchases activates valid store SKUs and revokes stale un-restored local subscriptions', () async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      // Case 1: Restore valid subscription from store
+      final restoreRes = await bm.restorePurchases(
+        settleDuration: Duration.zero,
+        platformRestoreOverride: () async {
+          await bm.processPurchaseUpdatesForTest([
+            makePurchase(MonetizationService.productSubKioskMonthly, PurchaseStatus.restored),
+          ]);
+        },
+      );
+      expect(restoreRes.hadError, isFalse);
+      expect(restoreRes.restoredCount, 1);
+      expect(bm.isSubscriptionKioskPro, isTrue);
+      expect(bm.getProductState(MonetizationService.productSubKioskMonthly), ProductPurchaseState.active);
+
+      // Case 2: Store returns 0 restored purchases -> stale local subscription becomes expired
+      final syncEmptyRes = await bm.restorePurchases(
+        settleDuration: Duration.zero,
+        platformRestoreOverride: () async {},
+      );
+      expect(syncEmptyRes.hadError, isFalse);
+      expect(syncEmptyRes.restoredCount, 0);
+      expect(syncEmptyRes.message, contains('만료 상태로 동기화'));
+      expect(bm.isSubscriptionKioskPro, isFalse);
+      expect(bm.getProductState(MonetizationService.productSubKioskMonthly), ProductPurchaseState.expired);
+    });
+
+    testWidgets('ProStoreScreen displays active subscription badges, disables duplicate buys, and locks active timed pass', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.75;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      // Active 1-hour pass locks re-claim button
+      await bm.claimTemporaryVipPass(hours: 1);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: ProStoreScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('기간제 이용 중'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('기간제 이용 중'), findsOneWidget);
+      expect(find.textContaining('만료 후 재이용'), findsOneWidget);
+
+      // Simulate All-in-One VIP purchase while ProStoreScreen is open
+      await bm.processPurchaseUpdatesForTest([
+        makePurchase(MonetizationService.productSubAllInOneMonthly, PurchaseStatus.purchased),
+      ]);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('구독 중 (올인원 VIP 이용 중)'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('구독 중 (올인원 VIP 이용 중)'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('태블릿 키오스크 단독 구독'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('VIP 포함 이용 중 (중복 구독 불가)'), findsAtLeastNWidgets(1));
+
+      await tester.scrollUntilVisible(
+        find.text('광고 제거 단독 구독'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('VIP 포함 이용 중 (중복 구독 불가)'), findsAtLeastNWidgets(1));
     });
   });
 }
