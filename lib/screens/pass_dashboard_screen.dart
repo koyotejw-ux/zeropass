@@ -360,48 +360,26 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   },
                 ),
                 const SizedBox(height: 8),
-                ZeroButton(
-                  label: '짧은 광고 보고 1시간 무료 개방',
-                  icon: Icons.play_circle_outline_rounded,
-                  variant: ZeroButtonVariant.neutral,
-                  size: ZeroButtonSize.medium,
-                  fullWidth: true,
-                  onPressed: () {
-                    final bm = MonetizationService.instance;
-                    if (bm.isAnyRewardedAdAvailable) {
-                      bm.showBestRewardedAd(
-                        preferRewardedInterstitial: true,
-                        onRewarded: () async {
-                          await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('1시간 무인 키오스크 + 광고 제거 VIP 패스가 활성화되었습니다!')),
-                            );
-                            _showKioskLaunchSelector(context);
-                          }
-                        },
-                        onFailed: () async {
-                          await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('1시간 무인 키오스크 VIP 패스가 무료로 활성화되었습니다!')),
-                            );
-                            _showKioskLaunchSelector(context);
-                          }
-                        },
-                      );
-                    } else {
-                      bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
+                if (MonetizationService.instance.canClaimTemporaryPass)
+                  ZeroButton(
+                    label: '짧은 광고 보고 1시간 무료 개방',
+                    icon: Icons.play_circle_outline_rounded,
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('1시간 무인 키오스크 + 광고 제거 VIP 패스가 열렸습니다!')),
+                      MonetizationService.instance.launchTemporaryPassFlow(
+                        context,
+                        preferRewardedInterstitial: true,
+                        onGranted: () {
+                          if (context.mounted) {
+                            _showKioskLaunchSelector(context);
+                          }
+                        },
                       );
-                      _showKioskLaunchSelector(context);
-                    }
-                  },
-                ),
+                    },
+                  ),
                 const SizedBox(height: 8),
                 ZeroButton(
                   label: '기능 테스트 체험',

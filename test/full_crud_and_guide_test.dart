@@ -807,6 +807,104 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('VIP 포함 이용 중 (중복 구독 불가)'), findsAtLeastNWidgets(1));
     });
+
+    testWidgets('Per-product benefit matrix: Ads standalone, Kiosk standalone, VIP Yearly, and Settings lock', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.75;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      // 0. Free Plan defaults
+      expect(bm.isAdsRemoved, isFalse);
+      expect(bm.isKioskProUnlocked, isFalse);
+      expect(bm.maxMemberLimit, MonetizationService.freeMaxMembers);
+      expect(bm.maxMonthlyEditLimit, MonetizationService.freeMaxMonthlyEdits);
+
+      // 1. Remove Ads Standalone
+      await bm.processPurchaseUpdatesForTest([
+        makePurchase(MonetizationService.productSubRemoveAdsMonthly, PurchaseStatus.purchased),
+      ]);
+      expect(bm.isAdsRemoved, isTrue);
+      expect(bm.isKioskProUnlocked, isFalse);
+      expect(bm.isStandalonePaidPlan, isTrue);
+      expect(bm.maxMemberLimit, MonetizationService.standaloneMaxMembers);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubRemoveAdsMonthly), isFalse);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubKioskMonthly), isTrue);
+
+      await tester.pumpWidget(const MaterialApp(home: ProStoreScreen()));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('구독 중 (광고 제거 이용 중)'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('구독 중 (광고 제거 이용 중)'), findsOneWidget);
+
+      // 2. Kiosk Standalone (after reset)
+      await bm.debugResetAll();
+      await bm.processPurchaseUpdatesForTest([
+        makePurchase(MonetizationService.productSubKioskMonthly, PurchaseStatus.purchased),
+      ]);
+      expect(bm.isAdsRemoved, isFalse);
+      expect(bm.isKioskProUnlocked, isTrue);
+      expect(bm.isStandalonePaidPlan, isTrue);
+      expect(bm.maxMemberLimit, MonetizationService.standaloneMaxMembers);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubKioskMonthly), isFalse);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubRemoveAdsMonthly), isTrue);
+
+      // 3. VIP Yearly covers Monthly VIP, Kiosk, Ads, Temp Pass + unlocks unlimited quotas
+      await bm.debugResetAll();
+      await bm.processPurchaseUpdatesForTest([
+        makePurchase(MonetizationService.productSubAllInOneYearly, PurchaseStatus.purchased),
+      ]);
+      expect(bm.isPermanentVip, isTrue);
+      expect(bm.isUnlimitedVip, isTrue);
+      expect(bm.maxMemberLimit, -1);
+      expect(bm.maxMonthlyEditLimit, -1);
+      expect(bm.getProductState(MonetizationService.productSubAllInOneYearly), ProductPurchaseState.active);
+      expect(bm.getProductState(MonetizationService.productSubAllInOneMonthly), ProductPurchaseState.coveredByVip);
+      expect(bm.getProductState(MonetizationService.productSubKioskMonthly), ProductPurchaseState.coveredByVip);
+      expect(bm.getProductState(MonetizationService.productSubRemoveAdsMonthly), ProductPurchaseState.coveredByVip);
+      expect(bm.getProductState(MonetizationService.productPassTemporaryVip1h), ProductPurchaseState.coveredByVip);
+      expect(bm.canClaimTemporaryPass, isFalse);
+
+      // Expiry after 366 days revokes VIP Yearly
+      final afterYear = DateTime.now().add(const Duration(days: 366));
+      final expired = await bm.checkEntitlementExpirations(now: afterYear);
+      expect(expired, contains(MonetizationService.productSubAllInOneYearly));
+      expect(bm.isPermanentVip, isFalse);
+      expect(bm.getProductState(MonetizationService.productSubAllInOneYearly), ProductPurchaseState.expired);
+      expect(bm.canPurchaseProduct(MonetizationService.productSubAllInOneYearly), isTrue);
+
+      // 4. SettingsVaultScreen disables 1-hour pass CTA while active
+      await bm.debugResetAll();
+      await bm.claimTemporaryVipPass(hours: 1);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            membersProvider.overrideWith(() => _MockMembersNotifier([])),
+            studioProfileProvider.overrideWith(() => _MockStudioNotifier()),
+          ],
+          child: const MaterialApp(
+            home: SettingsVaultScreen(enableAutoCoachMark: false),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.textContaining('1시간 VIP 체험 중'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('1시간 VIP 체험 중'), findsOneWidget);
+      expect(find.text('1시간 VIP 무료 체험'), findsNothing);
+    });
   });
 }
 

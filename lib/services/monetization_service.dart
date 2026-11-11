@@ -127,6 +127,9 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   bool _isRestoringPurchases = false;
   StoreEventType _lastStoreEventType = StoreEventType.none;
   String? _lastStoreNotice;
+  final Map<String, ProductDetails> _storeProducts = {};
+  bool _storeProductsChecked = false;
+  String? _storeQueryError;
 
   // 선순환 리텐션 & 누적 ROI 가치 측정 지표 (Retention Flywheel Metrics)
   int _activeStreakDays = 1;
@@ -139,6 +142,10 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   bool get isRestoringPurchases => _isRestoringPurchases;
   StoreEventType get lastStoreEventType => _lastStoreEventType;
   String? get lastStoreNotice => _lastStoreNotice;
+  bool get hasStoreProductsChecked => _storeProductsChecked;
+  bool get hasStoreProductsLoaded => _storeProducts.isNotEmpty;
+  String? get storeQueryError => _storeQueryError;
+  ProductDetails? getStoreProduct(String productId) => _storeProducts[productId];
   List<PurchasedEntitlement> get activeEntitlements {
     final now = DateTime.now();
     return _entitlements.values.where((e) => e.isActiveAt(now)).toList();
@@ -578,16 +585,33 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   /// 활성 이용 기간(정기 구독 및 1시간 무료 기간권)이 만료되었는지 점검하고 권한을 회수합니다.
   /// 만료되어 권한이 회수된 상품 ID 목록을 반환합니다.
   Future<List<String>> checkEntitlementExpirations({DateTime? now}) async {
-    final checkNow = now ?? DateTime.now();
+    final wallNow = DateTime.now();
+    final checkNow = now ?? wallNow;
     final prefs = await SharedPreferences.getInstance();
     final expiredProductIds = <String>[];
+    bool updatedExpiryTimestamp = false;
 
-    for (final entry in _entitlements.entries) {
-      if (!entry.value.isActiveAt(checkNow) &&
-          !_expiredNotifiedProductIds.contains(entry.key)) {
-        _expiredNotifiedProductIds.add(entry.key);
-        expiredProductIds.add(entry.key);
+    for (final key in _entitlements.keys.toList()) {
+      final ent = _entitlements[key]!;
+      if (!ent.isActiveAt(checkNow)) {
+        if (ent.expiresAt.isAfter(wallNow)) {
+          _entitlements[key] = PurchasedEntitlement(
+            productId: ent.productId,
+            purchasedAt: ent.purchasedAt,
+            expiresAt: wallNow,
+            isSubscription: ent.isSubscription,
+            isRestored: ent.isRestored,
+          );
+          updatedExpiryTimestamp = true;
+        }
+        if (!_expiredNotifiedProductIds.contains(key)) {
+          _expiredNotifiedProductIds.add(key);
+          expiredProductIds.add(key);
+        }
       }
+    }
+    if (updatedExpiryTimestamp) {
+      await _persistEntitlements(prefs);
     }
 
     if (_rewardedAdFreeUntil != null && !checkNow.isBefore(_rewardedAdFreeUntil!)) {
@@ -753,6 +777,48 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       granted: true,
       message: '$hours시간 무료 VIP 체험이 시작되었습니다! ($expiryTime까지 이용 가능)',
     );
+  }
+
+  /// 앱 전역에서 1시간 기간제 무료 VIP 체험을 시작하는 통합 진입점 (중복 발급 차단 + 보상형 광고/폴백 + 스낵바 안내)
+  Future<void> launchTemporaryPassFlow(
+    BuildContext context, {
+    VoidCallback? onGranted,
+    bool preferRewardedInterstitial = false,
+  }) async {
+    await checkEntitlementExpirations();
+    if (!canClaimTemporaryPass) {
+      final res = await claimTemporaryVipPass(hours: 1);
+      final messengerCtx = context.mounted ? context : rootNavigatorKey.currentContext;
+      if (messengerCtx != null && messengerCtx.mounted) {
+        ScaffoldMessenger.of(messengerCtx).showSnackBar(
+          SnackBar(content: Text(res.message), behavior: SnackBarBehavior.floating),
+        );
+      }
+      return;
+    }
+
+    Future<void> finishClaim() async {
+      final res = await claimTemporaryVipPass(hours: 1);
+      final messengerCtx = context.mounted ? context : rootNavigatorKey.currentContext;
+      if (messengerCtx != null && messengerCtx.mounted) {
+        ScaffoldMessenger.of(messengerCtx).showSnackBar(
+          SnackBar(content: Text(res.message), behavior: SnackBarBehavior.floating),
+        );
+      }
+      if (res.granted) {
+        onGranted?.call();
+      }
+    }
+
+    if (isAnyRewardedAdAvailable) {
+      showBestRewardedAd(
+        preferRewardedInterstitial: preferRewardedInterstitial,
+        onRewarded: finishClaim,
+        onFailed: finishClaim,
+      );
+    } else {
+      await finishClaim();
+    }
   }
 
   /// 보상형 광고 시청 후 N시간 동안 광고 제거 + 태블릿 키오스크 VIP 혜택 부여 (Reverse-Trial Funnel)
@@ -1292,40 +1358,24 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
-                  secondary: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(dlgCtx);
-                      showBestRewardedAd(
-                        onRewarded: () async {
-                          await grantTemporaryAdFreeHours(1, includeKiosk: true);
-                          final snackCtx = rootNavigatorKey.currentContext;
-                          if (snackCtx != null && snackCtx.mounted) {
-                            ScaffoldMessenger.of(snackCtx).showSnackBar(
-                              const SnackBar(
-                                content: Text('1시간 동안 모든 CRUD/배너 광고가 제거되었습니다!'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                        onFailed: () {
-                          Navigator.of(context, rootNavigator: true).push(
-                            MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: Color(0xFFD97706)),
-                    label: const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text('1시간 무료 체험', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFFCD34D)),
-                      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
+                  secondary: canClaimTemporaryPass
+                      ? OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(dlgCtx);
+                            launchTemporaryPassFlow(context);
+                          },
+                          icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: Color(0xFFD97706)),
+                          label: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('1시간 무료 체험', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFFCD34D)),
+                            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 6),
                 TextButton(
@@ -1480,40 +1530,24 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                secondary: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(dlgCtx);
-                    showBestRewardedAd(
-                      onRewarded: () async {
-                        await grantTemporaryAdFreeHours(1, includeKiosk: true);
-                        final snackCtx = rootNavigatorKey.currentContext;
-                        if (snackCtx != null && snackCtx.mounted) {
-                          ScaffoldMessenger.of(snackCtx).showSnackBar(
-                            const SnackBar(
-                              content: Text('1시간 VIP 무제한 체험권이 활성화되었습니다!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      },
-                      onFailed: () {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(builder: (_) => const ProStoreScreen()),
-                        );
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: AppTheme.primaryBlue),
-                  label: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text('1시간 VIP 체험', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF93C5FD)),
-                    padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+                secondary: canClaimTemporaryPass
+                    ? OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(dlgCtx);
+                          launchTemporaryPassFlow(context);
+                        },
+                        icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: AppTheme.primaryBlue),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('1시간 VIP 체험', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF93C5FD)),
+                          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(height: 4),
               TextButton(
@@ -1848,11 +1882,37 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<List<ProductDetails>> fetchProducts() async {
-    final bool available = await InAppPurchase.instance.isAvailable();
-    if (!available) return [];
+    try {
+      if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
+        _storeProductsChecked = true;
+        _storeQueryError = null;
+        notifyListeners();
+        return [];
+      }
+      final bool available = await InAppPurchase.instance.isAvailable();
+      if (!available) {
+        _storeProductsChecked = true;
+        _storeQueryError = 'Google Play 스토어 연결 불가';
+        notifyListeners();
+        return [];
+      }
 
-    final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails(_kProductIds);
-    return response.productDetails;
+      final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails(_kProductIds);
+      _storeProducts.clear();
+      for (final p in response.productDetails) {
+        _storeProducts[p.id] = p;
+      }
+      _storeProductsChecked = true;
+      _storeQueryError = response.error?.message;
+      notifyListeners();
+      return response.productDetails;
+    } catch (e) {
+      debugPrint('fetchProducts error: $e');
+      _storeProductsChecked = true;
+      _storeQueryError = e.toString();
+      notifyListeners();
+      return [];
+    }
   }
 
   Future<({bool started, String? errorMessage})> buyProduct(String productId) async {

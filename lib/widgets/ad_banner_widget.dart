@@ -185,42 +185,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
       mainAxisSize: MainAxisSize.min,
       children: [
         ZeroAdUtilityBar(
-          onFreeAdDismiss: () {
-            if (bm.isAnyRewardedAdAvailable) {
-              bm.showBestRewardedAd(
-                onRewarded: () async {
-                  await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('1시간 동안 광고 제거 + 무인 키오스크 VIP 패스가 지급되었습니다!'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                },
-                onFailed: () async {
-                  await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('응원 혜택으로 1시간 광고 없는 VIP 패스가 즉시 활성화되었습니다!'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                },
-              );
-            } else {
-              bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('1시간 동안 광고 없는 VIP 패스 + 무인 키오스크가 무료로 열렸습니다!'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          },
+          onFreeAdDismiss: () => bm.launchTemporaryPassFlow(context),
           onRemoveAds: () {
             Navigator.push(
               context,

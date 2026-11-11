@@ -20,6 +20,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
   void initState() {
     super.initState();
     MonetizationService.instance.checkEntitlementExpirations();
+    MonetizationService.instance.fetchProducts();
   }
 
   Future<void> _startPurchase(String productId) async {
@@ -35,47 +36,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
   }
 
   Future<void> _claimTemporaryPass(MonetizationService bm, bool isDomestic) async {
-    if (!bm.canClaimTemporaryPass) {
-      final res = await bm.claimTemporaryVipPass(hours: 1);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(res.message),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-
-    Future<void> activatePass({required bool fromAd}) async {
-      final res = await bm.claimTemporaryVipPass(hours: 1);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              res.granted
-                  ? (fromAd
-                      ? res.message
-                      : (isDomestic
-                          ? '응원 혜택으로 1시간 올인원 VIP 패스가 즉시 지급되었습니다!'
-                          : '1-Hour All-in-One VIP Pass granted!'))
-                  : res.message,
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-
-    if (bm.isAnyRewardedAdAvailable) {
-      bm.showBestRewardedAd(
-        onRewarded: () => activatePass(fromAd: true),
-        onFailed: () => activatePass(fromAd: false),
-      );
-    } else {
-      await activatePass(fromAd: true);
-    }
+    await bm.launchTemporaryPassFlow(context);
   }
 
   Future<void> _openPlaySubscriptions() async {
@@ -220,6 +181,14 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
           final vipYearlyState = bm.getProductState(MonetizationService.productSubAllInOneYearly);
           final kioskState = bm.getProductState(MonetizationService.productSubKioskMonthly);
           final adsState = bm.getProductState(MonetizationService.productSubRemoveAdsMonthly);
+          final vipMonthlyPrice = bm.getStoreProduct(MonetizationService.productSubAllInOneMonthly)?.price ??
+              (isDomestic ? '₩5,900' : '\$4.99');
+          final vipYearlyPrice = bm.getStoreProduct(MonetizationService.productSubAllInOneYearly)?.price ??
+              (isDomestic ? '₩59,000' : '\$49.99');
+          final kioskPrice = bm.getStoreProduct(MonetizationService.productSubKioskMonthly)?.price ??
+              (isDomestic ? '₩4,900' : '\$3.99');
+          final adsPrice = bm.getStoreProduct(MonetizationService.productSubRemoveAdsMonthly)?.price ??
+              (isDomestic ? '₩1,900' : '\$1.49');
           final currencyFmt = NumberFormat('#,###');
 
           return ListView(
@@ -675,7 +644,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ? (vipYearlyActive
                           ? (isDomestic ? '연간 VIP 구독 중' : 'Annual VIP Active')
                           : (isDomestic ? '월간 VIP 구독 중' : 'Monthly VIP Active'))
-                      : (isDomestic ? '₩5,900 / 월' : '\$4.99 / mo'),
+                      : (isDomestic ? '$vipMonthlyPrice / 월' : '$vipMonthlyPrice / mo'),
                   priceSubtext: vipActive
                       ? (vipExpiry != null
                           ? (isDomestic
@@ -689,8 +658,8 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               ? '이전 구독 만료 (${bm.formatShortDate(vipExpiry)}) · 다시 구독 가능'
                               : 'Expired on ${bm.formatShortDate(vipExpiry)} · Resubscribe available')
                           : (isDomestic
-                              ? '또는 연간 결제 시 ₩59,000 / 년 (2개월 할인)'
-                              : 'Or save 2 months with annual billing (\$49.99/year)')),
+                              ? '또는 연간 결제 시 $vipYearlyPrice / 년 (2개월 할인)'
+                              : 'Or save 2 months with annual billing ($vipYearlyPrice/year)')),
                   isUnlocked: vipActive,
                   purchaseState: vipCardState,
                   actionButtonText: vipPending
@@ -699,21 +668,21 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                           ? (isDomestic ? '구독 중 (올인원 VIP 이용 중)' : 'Subscribed (VIP Active)')
                           : (vipCardState == ProductPurchaseState.expired
                               ? (isDomestic
-                                  ? '올인원 VIP 다시 구독 (₩5,900/월)'
-                                  : 'Resubscribe VIP (\$4.99/mo)')
+                                  ? '올인원 VIP 다시 구독 ($vipMonthlyPrice/월)'
+                                  : 'Resubscribe VIP ($vipMonthlyPrice/mo)')
                               : (isDomestic
-                                  ? '올인원 VIP 구독 시작 (₩5,900/월)'
-                                  : 'Start All-in-One VIP (\$4.99/mo)'))),
+                                  ? '올인원 VIP 구독 시작 ($vipMonthlyPrice/월)'
+                                  : 'Start All-in-One VIP ($vipMonthlyPrice/mo)'))),
                   actionIcon: vipActive ? Icons.check_circle_rounded : Icons.star_rounded,
                   secondaryButtonText: vipYearlyActive
                       ? (isDomestic ? '태블릿 키오스크 바로 열기' : 'Launch Tablet Kiosk')
                       : (vipActive
                           ? (isDomestic
-                              ? '연간 VIP로 업그레이드 (₩59,000/년 · 2개월 할인)'
-                              : 'Upgrade to Annual (\$49.99/yr)')
+                              ? '연간 VIP로 업그레이드 ($vipYearlyPrice/년 · 2개월 할인)'
+                              : 'Upgrade to Annual ($vipYearlyPrice/yr)')
                           : (isDomestic
-                              ? '연간 구독 2개월 할인 (₩59,000/년)'
-                              : 'Save 2 Months with Annual Plan (\$49.99/yr)')),
+                              ? '연간 구독 2개월 할인 ($vipYearlyPrice/년)'
+                              : 'Save 2 Months with Annual Plan ($vipYearlyPrice/yr)')),
                   onAction: (vipActive || vipPending)
                       ? null
                       : () => _startPurchase(MonetizationService.productIdAllInOneMonthly),
@@ -779,7 +748,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ? (isDomestic ? 'VIP 포함 이용 중' : 'Included in VIP')
                       : (kioskActive
                           ? (isDomestic ? '키오스크 구독 중' : 'Kiosk Subscribed')
-                          : (isDomestic ? '₩4,900 / 월' : '\$3.99 / mo')),
+                          : (isDomestic ? '$kioskPrice / 월' : '$kioskPrice / mo')),
                   priceSubtext: kioskCovered
                       ? (isDomestic
                           ? '올인원 VIP 구독에 포함되어 별도 결제가 필요 없습니다.'
@@ -809,11 +778,11 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               ? (isDomestic ? '구독 중 (키오스크 이용 중)' : 'Subscribed (Kiosk Active)')
                               : (effectiveKioskState == ProductPurchaseState.expired
                                   ? (isDomestic
-                                      ? '키오스크 다시 구독 (₩4,900/월)'
-                                      : 'Resubscribe Kiosk (\$3.99/mo)')
+                                      ? '키오스크 다시 구독 ($kioskPrice/월)'
+                                      : 'Resubscribe Kiosk ($kioskPrice/mo)')
                                   : (isDomestic
-                                      ? '키오스크 구독 시작 (₩4,900/월)'
-                                      : 'Start Kiosk Subscription (\$3.99/mo)')))),
+                                      ? '키오스크 구독 시작 ($kioskPrice/월)'
+                                      : 'Start Kiosk Subscription ($kioskPrice/mo)')))),
                   actionIcon: kioskActive ? Icons.check_circle_rounded : Icons.tablet_mac_rounded,
                   secondaryButtonText: kioskActive
                       ? (isDomestic ? '키오스크 바로 실행' : 'Launch Kiosk Mode')
@@ -879,7 +848,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       ? (isDomestic ? 'VIP 포함 이용 중' : 'Included in VIP')
                       : (adsActive
                           ? (isDomestic ? '광고 제거 구독 중' : 'Ad-Free Subscribed')
-                          : (isDomestic ? '₩1,900 / 월 (한 달)' : '\$1.49 / mo (1 Month)')),
+                          : (isDomestic ? '$adsPrice / 월 (한 달)' : '$adsPrice / mo (1 Month)')),
                   priceSubtext: adsCovered
                       ? (isDomestic
                           ? '올인원 VIP 구독에 포함되어 별도 결제가 필요 없습니다.'
@@ -909,11 +878,11 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               ? (isDomestic ? '구독 중 (광고 제거 이용 중)' : 'Subscribed (Ad-Free Active)')
                               : (effectiveAdsState == ProductPurchaseState.expired
                                   ? (isDomestic
-                                      ? '광고 제거 다시 구독 (월 ₩1,900)'
-                                      : 'Resubscribe Remove Ads (\$1.49/mo)')
+                                      ? '광고 제거 다시 구독 (월 $adsPrice)'
+                                      : 'Resubscribe Remove Ads ($adsPrice/mo)')
                                   : (isDomestic
-                                      ? '광고 제거 한 달 구독 (월 ₩1,900)'
-                                      : 'Subscribe to Remove Ads (\$1.49/mo)')))),
+                                      ? '광고 제거 한 달 구독 (월 $adsPrice)'
+                                      : 'Subscribe to Remove Ads ($adsPrice/mo)')))),
                   actionIcon: adsActive ? Icons.check_circle_rounded : Icons.block_flipped,
                   onAction: (adsActive || adsPending)
                       ? null

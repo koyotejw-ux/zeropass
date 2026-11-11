@@ -3016,52 +3016,28 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          if (bm.isAnyRewardedAdAvailable) {
-                            bm.showBestRewardedAd(
-                              onRewarded: () async {
-                                await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              },
-                              onFailed: () async {
-                                await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('응원 혜택으로 1시간 올인원 VIP 패스가 무료로 활성화되었습니다!'),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              },
-                            );
-                          } else {
-                            bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: bm.canClaimTemporaryPass
+                            ? () => bm.launchTemporaryPassFlow(context)
+                            : null,
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: isTemp ? 0.2 : 0.35),
+                          ),
                           foregroundColor: Colors.white,
+                          disabledForegroundColor: const Color(0xFF94A3B8),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        icon: const Icon(Icons.play_circle_outline_rounded, size: 15, color: Color(0xFFFBBF24)),
-                        label: const Text(
-                          '1시간 VIP 무료 체험',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                        icon: Icon(
+                          isTemp ? Icons.timer_outlined : Icons.play_circle_outline_rounded,
+                          size: 15,
+                          color: isTemp ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                        ),
+                        label: Text(
+                          isTemp
+                              ? '1시간 VIP 체험 중 (${bm.remainingTemporaryPassFormatted})'
+                              : '1시간 VIP 무료 체험',
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),

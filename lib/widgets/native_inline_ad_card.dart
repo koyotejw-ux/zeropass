@@ -258,42 +258,9 @@ class _NativeInlineAdCardState extends State<NativeInlineAdCard> {
                   SizedBox(
                     height: 36,
                     child: OutlinedButton(
-                      onPressed: () {
-                        if (bm.isAnyRewardedAdAvailable) {
-                          bm.showBestRewardedAd(
-                            onRewarded: () async {
-                              await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 활성화되었습니다!'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
-                            onFailed: () async {
-                              await bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
-                          );
-                        } else {
-                          bm.grantTemporaryAdFreeHours(1, includeKiosk: true);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('1시간 광고 제거 + 무인 키오스크 VIP 패스가 열렸습니다!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: bm.canClaimTemporaryPass
+                          ? () => bm.launchTemporaryPassFlow(context)
+                          : null,
                       style: OutlinedButton.styleFrom(
                         backgroundColor: const Color(0xFFF8FAFC),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
