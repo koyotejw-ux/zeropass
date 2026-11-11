@@ -529,5 +529,88 @@ void main() {
       expect(find.text('광고 없이 바로 저장할까요?'), findsNothing);
     });
   });
+
+  group('Non-VIP Registration & Edit Quota Enforcement Tests', () {
+    test('Free and Standalone plans enforce caps while All-in-One VIP unlocks unlimited', () async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      // 1. Free tier caps
+      expect(bm.isUnlimitedVip, isFalse);
+      expect(bm.maxMemberLimit, equals(10));
+      expect(bm.maxMonthlyEditLimit, equals(5));
+      expect(bm.maxCustomTemplateLimit, equals(5));
+      expect(bm.canCreateItem(currentCount: 9, limit: bm.maxMemberLimit), isTrue);
+      expect(bm.canCreateItem(currentCount: 10, limit: bm.maxMemberLimit), isFalse);
+
+      // Consume all 5 free monthly edits
+      for (int i = 0; i < 5; i++) {
+        expect(bm.canPerformEdit, isTrue);
+        await bm.recordEditUsage();
+      }
+      expect(bm.remainingMonthlyEditCount, equals(0));
+      expect(bm.canPerformEdit, isFalse);
+
+      // 2. Standalone plan (Remove Ads only) expands caps slightly, still non-VIP restricted
+      await bm.setDebugUnlock(adsRemoved: true, kioskPro: false);
+      expect(bm.isUnlimitedVip, isFalse);
+      expect(bm.isStandalonePaidPlan, isTrue);
+      expect(bm.maxMemberLimit, equals(30));
+      expect(bm.maxMonthlyEditLimit, equals(15));
+      expect(bm.canCreateItem(currentCount: 30, limit: bm.maxMemberLimit), isFalse);
+      expect(bm.canPerformEdit, isTrue); // 5 used out of 15 standalone edits
+
+      // 3. All-in-One VIP unlocks unlimited registration & edits
+      await bm.debugUnlockAll();
+      expect(bm.isUnlimitedVip, isTrue);
+      expect(bm.maxMemberLimit, equals(-1));
+      expect(bm.maxMonthlyEditLimit, equals(-1));
+      expect(bm.canCreateItem(currentCount: 9999, limit: bm.maxMemberLimit), isTrue);
+      expect(bm.canPerformEdit, isTrue);
+    });
+
+    testWidgets('showVipLimitUpgradeDialog blocks over-limit action and links to VIP', (tester) async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      addTearDown(() async => await bm.debugResetAll());
+
+      bool allowedCreate = true;
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Builder(
+              builder: (ctx) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      allowedCreate = await bm.ensureCreateAllowed(
+                        ctx,
+                        itemLabel: '회원',
+                        currentCount: 10,
+                        limit: bm.maxMemberLimit,
+                      );
+                    },
+                    child: const Text('TRY_ADD_MEMBER_11'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('TRY_ADD_MEMBER_11'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('회원 등록 한도에 도달했습니다'), findsOneWidget);
+      expect(find.text('올인원 VIP 무제한 (₩5,900)'), findsOneWidget);
+      expect(find.text('1시간 VIP 체험'), findsOneWidget);
+
+      await tester.tap(find.text('닫기'));
+      await tester.pumpAndSettle();
+      expect(allowedCreate, isFalse);
+    });
+  });
 }
 

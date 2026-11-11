@@ -325,7 +325,65 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 1-B. Reverse-Trial Bridge Card (100% Full-Width Button)
+              // 1-B. Membership Quota & Limit Comparison Card (VIP 무제한 vs 일반 한도)
+              if (isDomestic)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: bm.isUnlimitedVip ? const Color(0xFFF59E0B) : AppTheme.borderSubtle,
+                      width: bm.isUnlimitedVip ? 1.4 : 0.9,
+                    ),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: bm.isUnlimitedVip ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              bm.membershipPlanLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: bm.isUnlimitedVip ? const Color(0xFFB45309) : const Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            bm.isUnlimitedVip ? '모든 등록 · 수정 100% 무제한' : '비-VIP 한도 적용 중 → VIP 시 무제한',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: bm.isUnlimitedVip ? const Color(0xFF059669) : AppTheme.primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        bm.isUnlimitedVip
+                            ? '회원 등록, 청구서·지출·일정, 맞춤 서식 생성과 모든 정보 수정이 횟수 제한 없이 무제한 제공됩니다.'
+                            : '• 현재 한도: 회원 최대 ${bm.maxMemberLimit}명 · 수정 월 ${bm.maxMonthlyEditLimit}회 (남은 수정 ${bm.remainingMonthlyEditCount}회) · 맞춤 서식 ${bm.maxCustomTemplateLimit}개\n• 단독 구독도 등록/수정 한도가 적용되며, 올인원 VIP만 100% 무제한입니다.',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.45),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // 1-C. Reverse-Trial Bridge Card (100% Full-Width Button)
               if (!isSubAllInOne) ...[
                 Container(
                   padding: const EdgeInsets.all(18),
@@ -475,16 +533,16 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                     : 'Tablet Kiosk + 100% Ad-Free experience combined into one convenient subscription.',
                 features: isDomestic
                     ? const [
+                        '회원 · 청구 · 지출 · 맞춤 서식 등록 개수 100% 무제한',
+                        '모든 정보 수정 · 템플릿 편집 횟수 100% 무제한',
                         '안 쓰는 태블릿/휴대폰을 거치형 무인 출결기로 즉시 변신',
-                        '학생/회원이 뒷번호 4자리 터치 시 1초 자동 출결 & 회차 차감',
-                        '관리자 4자리 암호 잠금 및 비상 탈출 방지 장치',
-                        '앱 내 모든 배너 및 전면 광고 완전 차단',
+                        '앱 내 모든 배너 및 CRUD 전면 광고 완전 차단',
                         '기기 변경 시에도 구글 계정으로 원클릭 구독 복원',
                       ]
                     : const [
+                        'Unlimited members, invoices, expenses, templates & edits',
                         'Transform any tablet into an entrance attendance kiosk',
                         'Instant 4-digit check-in and session deduction',
-                        'PIN-protected admin exit lock system',
                         '100% ad-free app experience',
                         'One-click Google Play subscription restore across devices',
                       ],
@@ -537,14 +595,14 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                     ? const [
                         '입구 거치형 무인 출결 키오스크 단독 무제한 이용',
                         '회원 뒷번호 4자리 터치 출결 & 자동 회차 차감',
-                        '관리자 설정 잠금 비밀번호 보호',
-                        '정기 결제로 가볍게 시작하고 원할 때 해지',
+                        '단독 플랜 한도: 회원 최대 30명 · 수정 월 15회 · 서식 8개',
+                        '등록·수정 100% 무제한은 [올인원 VIP]에서 제공',
                       ]
                     : const [
                         'Unlimited entrance self-check-in kiosk mode',
                         '4-digit number touch check-in & auto session deduction',
-                        'Admin PIN lock security protection',
-                        'Flexible monthly subscription, cancel anytime',
+                        'Standalone limits: up to 30 members, 15 edits/month',
+                        'Full unlimited quotas require All-in-One VIP',
                       ],
                 priceText: isSubKiosk
                     ? (isDomestic ? '키오스크 이용 중' : 'Kiosk Active (Subscribed)')
@@ -585,14 +643,14 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                     : 'Remove all bottom banner ads and enjoy a clean, wide workspace.',
                 features: isDomestic
                     ? const [
-                        '하단 광고 배너 완전 숨김',
-                        '가로/세로 화면 공간 100% 온전 활용',
-                        '월 1,900원(한 달 구독)으로 쾌적한 장부 관리',
+                        '하단 배너 및 CRUD 전면 광고 완전 숨김',
+                        '단독 플랜 한도: 회원 최대 30명 · 수정 월 15회 · 서식 8개',
+                        '등록·수정 100% 무제한은 [올인원 VIP]에서 제공',
                       ]
                     : const [
-                        'Completely hide bottom banner ads',
-                        '100% full screen utilization in portrait & landscape',
-                        'Affordable monthly pass (\$1.49/mo)',
+                        'Completely hide banner and interstitial ads',
+                        'Standalone limits: up to 30 members, 15 edits/month',
+                        'Full unlimited quotas require All-in-One VIP',
                       ],
                 priceText: isSubNoAds
                     ? (isDomestic ? '광고 제거 이용 중' : 'Ad-Free Active (Subscribed)')

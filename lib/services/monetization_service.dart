@@ -87,6 +87,98 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   /// 실제 구글 플레이 올인원 정기 구독 여부 (임시 1시간 무료 패스 제외)
   bool get isSubscriptionAllInOne => _isAdsRemoved && _isKioskProUnlocked;
 
+  /// 올인원 VIP 무제한 이용 가능 여부 (정기 구독 VIP 또는 1시간 무료 VIP 체험 패스 포함)
+  bool get isUnlimitedVip => isPermanentVip || isTemporaryPassActive;
+
+  /// 단일 기능 구독(광고 제거 단독 또는 키오스크 단독)만 활성화된 상태 여부 (비-VIP 제한 플랜)
+  bool get isStandalonePaidPlan => !isUnlimitedVip && (isAdsRemoved || isKioskProUnlocked);
+
+  String get membershipPlanLabel {
+    if (isPermanentVip) return '올인원 VIP 멤버십 (무제한)';
+    if (isTemporaryPassActive) return '1시간 VIP 무료 체험 (무제한)';
+    if (_isAdsRemoved) return '광고 제거 단독 (제한형)';
+    if (_isKioskProUnlocked) return '키오스크 단독 (제한형)';
+    return '무료 플랜 (체험 한도)';
+  }
+
+  // 비-VIP 등록 개수 & 월 수정 횟수 한도 (-1 = 무제한)
+  static const int freeMaxMembers = 10;
+  static const int standaloneMaxMembers = 30;
+  static const int freeMaxInvoices = 15;
+  static const int standaloneMaxInvoices = 40;
+  static const int freeMaxExpenses = 10;
+  static const int standaloneMaxExpenses = 30;
+  static const int freeMaxVendors = 5;
+  static const int standaloneMaxVendors = 15;
+  static const int freeMaxSchedules = 10;
+  static const int standaloneMaxSchedules = 25;
+  static const int freeMaxTemplates = 5;
+  static const int standaloneMaxTemplates = 8;
+  static const int freeMaxMonthlyEdits = 5;
+  static const int standaloneMaxMonthlyEdits = 15;
+
+  int get maxMemberLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxMembers : freeMaxMembers);
+  int get maxInvoiceLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxInvoices : freeMaxInvoices);
+  int get maxExpenseLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxExpenses : freeMaxExpenses);
+  int get maxVendorLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxVendors : freeMaxVendors);
+  int get maxScheduleLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxSchedules : freeMaxSchedules);
+  int get maxCustomTemplateLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxTemplates : freeMaxTemplates);
+  int get maxMonthlyEditLimit => isUnlimitedVip ? -1 : (isStandalonePaidPlan ? standaloneMaxMonthlyEdits : freeMaxMonthlyEdits);
+
+  int _monthlyEditCount = 0;
+  String _editCountMonthKey = '';
+
+  int get usedMonthlyEditCount => _monthlyEditCount;
+  int get remainingMonthlyEditCount {
+    final limit = maxMonthlyEditLimit;
+    if (limit < 0) return -1;
+    return (limit - _monthlyEditCount).clamp(0, limit);
+  }
+
+  bool canCreateItem({required int currentCount, required int limit}) {
+    if (limit < 0) return true;
+    return currentCount < limit;
+  }
+
+  bool get canPerformEdit {
+    final limit = maxMonthlyEditLimit;
+    if (limit < 0) return true;
+    return _monthlyEditCount < limit;
+  }
+
+  String _currentMonthKey() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _syncMonthlyEditCounter(SharedPreferences prefs) async {
+    final nowKey = _currentMonthKey();
+    final savedKey = prefs.getString('bm_monthly_edit_month') ?? '';
+    if (savedKey != nowKey) {
+      _monthlyEditCount = 0;
+      _editCountMonthKey = nowKey;
+      await prefs.setString('bm_monthly_edit_month', nowKey);
+      await prefs.setInt('bm_monthly_edit_count', 0);
+    } else {
+      _editCountMonthKey = savedKey;
+      _monthlyEditCount = prefs.getInt('bm_monthly_edit_count') ?? 0;
+    }
+  }
+
+  Future<void> recordEditUsage() async {
+    if (isUnlimitedVip) return;
+    final prefs = await SharedPreferences.getInstance();
+    final nowKey = _currentMonthKey();
+    if (_editCountMonthKey != nowKey) {
+      _monthlyEditCount = 0;
+      _editCountMonthKey = nowKey;
+      await prefs.setString('bm_monthly_edit_month', nowKey);
+    }
+    _monthlyEditCount++;
+    await prefs.setInt('bm_monthly_edit_count', _monthlyEditCount);
+    notifyListeners();
+  }
+
   bool get isTemporaryPassActive =>
       (!_isAdsRemoved && _rewardedAdFreeUntil != null && DateTime.now().isBefore(_rewardedAdFreeUntil!)) ||
       (!_isKioskProUnlocked && _rewardedKioskPassUntil != null && DateTime.now().isBefore(_rewardedKioskPassUntil!));
@@ -224,9 +316,13 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     _lastInterstitialShownTime = null;
     _lastUpsellDialogShownTime = null;
     _crudAdExposureCount = 0;
+    _monthlyEditCount = 0;
+    _editCountMonthKey = _currentMonthKey();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('rewarded_ad_free_until');
     await prefs.remove('rewarded_kiosk_pass_until');
+    await prefs.setInt('bm_monthly_edit_count', 0);
+    await prefs.setString('bm_monthly_edit_month', _editCountMonthKey);
     notifyListeners();
   }
 
@@ -333,6 +429,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     _activeStreakDays = prefs.getInt('bm_active_streak_days') ?? 7;
     _lastActiveDateStr = prefs.getString('bm_last_active_date');
     await _updateDailyStreak(prefs);
+    await _syncMonthlyEditCounter(prefs);
 
     final adFreeStr = prefs.getString('rewarded_ad_free_until');
     if (adFreeStr != null) {
@@ -791,6 +888,191 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     } finally {
       _isShowingUpsellDialog = false;
     }
+  }
+
+  /// 비-VIP 플랜의 신규 등록 개수 한도를 검사하고, 초과 시 VIP 무제한 업그레이드 다이얼로그를 표시합니다.
+  Future<bool> ensureCreateAllowed(
+    BuildContext context, {
+    required String itemLabel,
+    required int currentCount,
+    required int limit,
+  }) async {
+    if (canCreateItem(currentCount: currentCount, limit: limit)) {
+      return true;
+    }
+    if (context.mounted) {
+      await showVipLimitUpgradeDialog(
+        context,
+        title: '$itemLabel 등록 한도에 도달했습니다',
+        reason: '$membershipPlanLabel에서는 $itemLabel 등록이 최대 $limit개(명)까지 가능합니다. (현재 $currentCount/$limit)',
+      );
+    }
+    return false;
+  }
+
+  /// 비-VIP 플랜의 월간 수정 횟수 한도를 검사하고, 소진 시 VIP 무제한 업그레이드 다이얼로그를 표시합니다.
+  Future<bool> ensureEditAllowed(
+    BuildContext context, {
+    required String itemLabel,
+  }) async {
+    if (canPerformEdit) {
+      return true;
+    }
+    if (context.mounted) {
+      await showVipLimitUpgradeDialog(
+        context,
+        title: '이번 달 수정 한도를 모두 사용했습니다',
+        reason: '$membershipPlanLabel에서는 정보 수정($itemLabel 등)을 월 $maxMonthlyEditLimit회까지 이용할 수 있습니다. ($_monthlyEditCount/$maxMonthlyEditLimit회 사용)',
+      );
+    }
+    return false;
+  }
+
+  /// 등록 개수 제한 및 수정 횟수 제한 도달 시 올인원 VIP 무제한 구독으로 유도하는 다이얼로그
+  Future<void> showVipLimitUpgradeDialog(
+    BuildContext context, {
+    required String title,
+    required String reason,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      useRootNavigator: true,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.diamond_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                reason,
+                style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.45, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '👑 올인원 VIP 멤버십 무제한 혜택',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: Color(0xFFFBBF24)),
+                    ),
+                    SizedBox(height: 6),
+                    Text('• 회원 · 청구 · 지출 · 거래처 · 일정 등록 개수 무제한', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.45)),
+                    Text('• 맞춤 서식 / 템플릿 생성 및 모든 수정 횟수 무제한', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.45)),
+                    Text('• 무인 태블릿 키오스크 + 전면/배너 광고 100% 제거', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.45)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        actions: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ResponsiveDialogActions(
+                breakpoint: 360,
+                primaryFirstInColumn: true,
+                primary: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dlgCtx);
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.workspace_premium_rounded, size: 18),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('올인원 VIP 무제한 (₩5,900)', style: TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                secondary: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dlgCtx);
+                    showBestRewardedAd(
+                      onRewarded: () async {
+                        await grantTemporaryAdFreeHours(1, includeKiosk: true);
+                        final snackCtx = rootNavigatorKey.currentContext;
+                        if (snackCtx != null && snackCtx.mounted) {
+                          ScaffoldMessenger.of(snackCtx).showSnackBar(
+                            const SnackBar(
+                              content: Text('1시간 VIP 무제한 체험권이 활성화되었습니다!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      onFailed: () {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                        );
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: AppTheme.primaryBlue),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('1시간 VIP 체험', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF93C5FD)),
+                    padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () => Navigator.pop(dlgCtx),
+                child: const Text(
+                  '닫기',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   // ==========================================

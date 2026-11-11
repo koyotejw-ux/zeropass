@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import 'app_bottom_sheet.dart';
 import 'design_system.dart';
 import '../services/localization_service.dart';
+import '../services/monetization_service.dart';
 
 class ScheduleCalendarModal extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -186,25 +187,39 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                     label: isEdit ? '수정하기' : '등록하기',
                     size: ZeroButtonSize.medium,
                     fullWidth: true,
-                    onPressed: () {
+                    onPressed: () async {
                       final title = titleController.text.trim();
                       if (title.isEmpty) return;
                       final memo = memoController.text.trim().isEmpty ? null : memoController.text.trim();
+                      final bm = MonetizationService.instance;
                       if (isEdit) {
+                        if (!await bm.ensureEditAllowed(dialogCtx, itemLabel: '일정')) return;
                         final updated = editItem.copyWith(
                           title: title,
                           category: selectedCat,
                           memo: memo,
                         );
-                        ref.read(schedulesProvider.notifier).updateSchedule(updated);
-                        Navigator.pop(dialogCtx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('\'$title\' 일정이 수정되었습니다.'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        await ref.read(schedulesProvider.notifier).updateSchedule(updated);
+                        await bm.recordEditUsage();
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('\'$title\' 일정이 수정되었습니다.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
                       } else {
+                        final curCount = ref.read(schedulesProvider).value?.length ?? 0;
+                        if (!await bm.ensureCreateAllowed(
+                          dialogCtx,
+                          itemLabel: '일정',
+                          currentCount: curCount,
+                          limit: bm.maxScheduleLimit,
+                        )) {
+                          return;
+                        }
                         final newItem = ScheduleItem(
                           id: 'sch_${DateTime.now().millisecondsSinceEpoch}',
                           title: title,
@@ -213,14 +228,16 @@ class _ScheduleCalendarModalState extends ConsumerState<ScheduleCalendarModal> {
                           memo: memo,
                           createdAt: DateTime.now(),
                         );
-                        ref.read(schedulesProvider.notifier).addSchedule(newItem);
-                        Navigator.pop(dialogCtx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('\'$title\' 일정이 등록되었습니다.'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        await ref.read(schedulesProvider.notifier).addSchedule(newItem);
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('\'$title\' 일정이 등록되었습니다.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

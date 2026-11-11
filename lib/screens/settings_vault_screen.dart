@@ -2332,6 +2332,22 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         );
                         return;
                       }
+                      final bm = MonetizationService.instance;
+                      if (isEdit) {
+                        if (!await bm.ensureEditAllowed(ctx, itemLabel: '맞춤 문자 서식')) {
+                          return;
+                        }
+                      } else {
+                        final curMsgs = ref.read(customCategoryProvider).value?.messageTemplates.length ?? 0;
+                        if (!await bm.ensureCreateAllowed(
+                          ctx,
+                          itemLabel: '맞춤 문자 서식',
+                          currentCount: curMsgs,
+                          limit: bm.maxCustomTemplateLimit,
+                        )) {
+                          return;
+                        }
+                      }
                       final tpl = CustomMessageTemplate(
                         id: existing?.id ?? 'msg_tpl_${DateTime.now().millisecondsSinceEpoch}',
                         title: title,
@@ -2339,6 +2355,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         categoryTag: tag.isEmpty ? null : tag,
                       );
                       await ref.read(customCategoryProvider.notifier).saveMessageTemplate(tpl);
+                      if (isEdit) {
+                        await bm.recordEditUsage();
+                      }
                       if (ctx.mounted) Navigator.pop(ctx);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -4863,7 +4882,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('그룹 이름을 입력해주세요.')));
                   return;
                 }
+                if (!await MonetizationService.instance.ensureEditAllowed(dlgContext, itemLabel: '그룹 이름')) {
+                  return;
+                }
                 await ref.read(customCategoryProvider.notifier).renameGroupCategory(oldName, newName);
+                await MonetizationService.instance.recordEditUsage();
                 if (dlgContext.mounted) Navigator.pop(dlgContext);
                 if (context.mounted && newName != oldName) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -5089,6 +5112,22 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         return;
                       }
 
+                      final bm = MonetizationService.instance;
+                      if (isEdit) {
+                        if (!await bm.ensureEditAllowed(dlgContext, itemLabel: '회원 등록 템플릿')) {
+                          return;
+                        }
+                      } else {
+                        final curCount = catState.memberTemplates.length;
+                        if (!await bm.ensureCreateAllowed(
+                          dlgContext,
+                          itemLabel: '회원 등록 템플릿',
+                          currentCount: curCount,
+                          limit: bm.maxCustomTemplateLimit,
+                        )) {
+                          return;
+                        }
+                      }
                       final newTemplate = MemberCategoryTemplate(
                         id: existing?.id ?? 'tpl_${DateTime.now().millisecondsSinceEpoch}',
                         label: label,
@@ -5099,6 +5138,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       );
 
                       await ref.read(customCategoryProvider.notifier).saveMemberTemplate(newTemplate);
+                      if (isEdit) {
+                        await bm.recordEditUsage();
+                      }
                       if (dlgContext.mounted) Navigator.pop(dlgContext);
                     },
                   ),
@@ -5300,6 +5342,22 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     return;
                   }
 
+                  final bm = MonetizationService.instance;
+                  if (isEdit) {
+                    if (!await bm.ensureEditAllowed(dlgContext, itemLabel: '청구 항목 템플릿')) {
+                      return;
+                    }
+                  } else {
+                    final curCount = ref.read(customCategoryProvider).value?.invoiceTemplates.length ?? 0;
+                    if (!await bm.ensureCreateAllowed(
+                      dlgContext,
+                      itemLabel: '청구 항목 템플릿',
+                      currentCount: curCount,
+                      limit: bm.maxCustomTemplateLimit,
+                    )) {
+                      return;
+                    }
+                  }
                   final newTemplate = InvoiceItemTemplate(
                     id: existing?.id ?? 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
                     title: title,
@@ -5308,6 +5366,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   );
 
                   await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
+                  if (isEdit) {
+                    await bm.recordEditUsage();
+                  }
                   if (dlgContext.mounted) Navigator.pop(dlgContext);
                 },
               ),

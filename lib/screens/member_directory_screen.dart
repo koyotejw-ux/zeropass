@@ -671,6 +671,16 @@ class _MemberDetailModal extends ConsumerWidget {
               fullWidth: true,
               size: ZeroButtonSize.large,
               onPressed: () async {
+                final bm = MonetizationService.instance;
+                final curInvCount = ref.read(invoicesProvider).value?.length ?? 0;
+                if (!await bm.ensureCreateAllowed(
+                  context,
+                  itemLabel: '청구서',
+                  currentCount: curInvCount,
+                  limit: bm.maxInvoiceLimit,
+                )) {
+                  return;
+                }
                 // Create invoice on the fly
                 final invoice = Invoice(
                   id: 'inv_${const Uuid().v4().substring(0, 8)}',
@@ -723,6 +733,16 @@ class _MemberDetailModal extends ConsumerWidget {
                     size: ZeroButtonSize.large,
                     onPressed: () async {
                       // Create invoice on the fly
+                      final bm = MonetizationService.instance;
+                      final curInvCount = ref.read(invoicesProvider).value?.length ?? 0;
+                      if (!await bm.ensureCreateAllowed(
+                        context,
+                        itemLabel: '청구서',
+                        currentCount: curInvCount,
+                        limit: bm.maxInvoiceLimit,
+                      )) {
+                        return;
+                      }
                       final invoice = Invoice(
                         id: 'inv_${const Uuid().v4().substring(0, 8)}',
                         memberIds: [member.id],
@@ -1595,6 +1615,12 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                           : totalSessions;
 
                       if (_isEdit) {
+                        if (!await MonetizationService.instance.ensureEditAllowed(
+                          context,
+                          itemLabel: '회원 정보',
+                        )) {
+                          return;
+                        }
                         final updatedMember = widget.editMember!.copyWith(
                           name: _nameController.text.trim(),
                           phone: _phoneController.text.trim(),
@@ -1608,6 +1634,7 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                           photoPath: _photoPath,
                         );
                         await ref.read(membersProvider.notifier).updateMember(updatedMember);
+                        await MonetizationService.instance.recordEditUsage();
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1618,6 +1645,16 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                           );
                         }
                       } else {
+                        final bm = MonetizationService.instance;
+                        final currentMemberCount = ref.read(membersProvider).value?.length ?? 0;
+                        if (!await bm.ensureCreateAllowed(
+                          context,
+                          itemLabel: '회원',
+                          currentCount: currentMemberCount,
+                          limit: bm.maxMemberLimit,
+                        )) {
+                          return;
+                        }
                         final newMember = Member(
                           id: 'mem_${const Uuid().v4().substring(0, 8)}',
                           name: _nameController.text.trim(),

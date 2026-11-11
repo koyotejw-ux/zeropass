@@ -1326,6 +1326,9 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim());
                 if (title.isEmpty || amount == null || amount <= 0) return;
 
+                if (!await MonetizationService.instance.ensureEditAllowed(dlgCtx, itemLabel: '청구서')) {
+                  return;
+                }
                 final updated = invoice.copyWith(
                   title: title,
                   amount: amount,
@@ -1333,6 +1336,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   dueDate: dueDate,
                 );
                 await ref.read(invoicesProvider.notifier).updateInvoice(updated);
+                await MonetizationService.instance.recordEditUsage();
                 if (dlgCtx.mounted) Navigator.pop(dlgCtx);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -2724,14 +2728,28 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                         withholdingTax: withTax,
                       );
 
+                      final bm = MonetizationService.instance;
                       if (editExpense == null) {
+                        final curExp = ref.read(expensesProvider).value?.length ?? 0;
+                        if (!await bm.ensureCreateAllowed(
+                          sheetCtx,
+                          itemLabel: '지출·매입',
+                          currentCount: curExp,
+                          limit: bm.maxExpenseLimit,
+                        )) {
+                          return;
+                        }
                         await ref.read(expensesProvider.notifier).addExpense(item);
-                        MonetizationService.instance.triggerSmartInterstitialAd(
+                        bm.triggerSmartInterstitialAd(
                           cooldownSeconds: 75,
                           actionThreshold: 2,
                         );
                       } else {
+                        if (!await bm.ensureEditAllowed(sheetCtx, itemLabel: '지출·매입')) {
+                          return;
+                        }
                         await ref.read(expensesProvider.notifier).updateExpense(item);
+                        await bm.recordEditUsage();
                       }
 
                       if (sheetCtx.mounted) Navigator.pop(sheetCtx);
@@ -3089,10 +3107,24 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   createdAt: editVendor?.createdAt ?? DateTime.now(),
                 );
 
+                final bm = MonetizationService.instance;
                 if (editVendor == null) {
+                  final curVendors = ref.read(vendorsProvider).value?.length ?? 0;
+                  if (!await bm.ensureCreateAllowed(
+                    dlgCtx,
+                    itemLabel: '거래처',
+                    currentCount: curVendors,
+                    limit: bm.maxVendorLimit,
+                  )) {
+                    return;
+                  }
                   await ref.read(vendorsProvider.notifier).addVendor(vendor);
                 } else {
+                  if (!await bm.ensureEditAllowed(dlgCtx, itemLabel: '거래처')) {
+                    return;
+                  }
                   await ref.read(vendorsProvider.notifier).updateVendor(vendor);
+                  await bm.recordEditUsage();
                 }
 
                 if (dlgCtx.mounted) Navigator.pop(dlgCtx);
@@ -4033,9 +4065,31 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                         return;
                       }
 
+                      final bm = MonetizationService.instance;
+                      final curInvCount = ref.read(invoicesProvider).value?.length ?? 0;
+                      if (!await bm.ensureCreateAllowed(
+                        context,
+                        itemLabel: '청구서',
+                        currentCount: curInvCount,
+                        limit: bm.maxInvoiceLimit,
+                      )) {
+                        return;
+                      }
+
+                      if (!context.mounted) return;
                       String memberId = 'mem_${const Uuid().v4().substring(0, 8)}';
                       Member? newMember;
                       if (_autoRegisterMember) {
+                        final curMemCount = ref.read(membersProvider).value?.length ?? 0;
+                        if (!await bm.ensureCreateAllowed(
+                          context,
+                          itemLabel: '회원',
+                          currentCount: curMemCount,
+                          limit: bm.maxMemberLimit,
+                        )) {
+                          return;
+                        }
+                        if (!context.mounted) return;
                         newMember = Member(
                           id: memberId,
                           name: directName,
@@ -4089,6 +4143,17 @@ class _QuickInvoiceModalState extends ConsumerState<_QuickInvoiceModal> {
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
+                        return;
+                      }
+
+                      final bm = MonetizationService.instance;
+                      final curInvCount = ref.read(invoicesProvider).value?.length ?? 0;
+                      if (!await bm.ensureCreateAllowed(
+                        context,
+                        itemLabel: '청구서',
+                        currentCount: curInvCount,
+                        limit: bm.maxInvoiceLimit,
+                      )) {
                         return;
                       }
 
