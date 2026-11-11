@@ -7,6 +7,7 @@ import '../services/schedule_service.dart';
 import '../theme/app_theme.dart';
 import 'app_bottom_sheet.dart';
 import 'design_system.dart';
+import 'responsive_dialog_actions.dart';
 
 /// 운영·설정 탭에서 각 메뉴(출결/청구/지출·세무/회원/설정·키오스크·프로샵)별
 /// 등록·조회·수정·삭제 및 실사용 데이터 전환 방법을 한눈에 안내하는 종합 사용 가이드 모달.
@@ -71,15 +72,21 @@ class _FullUsageGuideModalState extends ConsumerState<FullUsageGuideModal> {
           '연습용 샘플 회원·출석·청구·거래처·지출·일정 데이터를 모두 지우고 실제 매장 데이터만 입력할 수 있는 깨끗한 상태로 초기화합니다.\n(스튜디오 상호·계좌·템플릿 설정은 유지됩니다.)',
           style: TextStyle(fontSize: 13.5, height: 1.5, color: AppTheme.textSecondary),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dlgCtx, false),
-            child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dlgCtx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-            child: const Text('깨끗이 비우고 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ResponsiveDialogActions(
+            secondary: TextButton(
+              onPressed: () => Navigator.pop(dlgCtx, false),
+              child: const Text('취소', style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            primary: ElevatedButton(
+              onPressed: () => Navigator.pop(dlgCtx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
+              child: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('깨끗이 비우고 시작', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              ),
+            ),
           ),
         ],
       ),
@@ -117,163 +124,184 @@ class _FullUsageGuideModalState extends ConsumerState<FullUsageGuideModal> {
     final membersCount = ref.watch(membersProvider).value?.length ?? 0;
     final selectedCat = _categories[_selectedSection];
 
-    return Column(
-      children: [
-        // 1. Header
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue, size: 22),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '체크앤페이 전체 메뉴·기능 가이드',
-                      style: TextStyle(fontSize: 17.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      '각 탭별 등록·수정·삭제 및 실사용 운영 방법 안내',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 360;
+        final isWide = constraints.maxWidth >= 520;
+        final hPad = isCompact ? 12.0 : 16.0;
 
-        // 2. Category Selector Chips
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            itemCount: _categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (ctx, i) {
-              final cat = _categories[i];
-              final isSelected = _selectedSection == i;
-              return ChoiceChip(
-                avatar: Icon(
-                  cat.icon,
-                  size: 16,
-                  color: isSelected ? Colors.white : AppTheme.primaryBlue,
-                ),
-                label: Text(cat.label),
-                selected: isSelected,
-                selectedColor: AppTheme.primaryDark,
-                backgroundColor: const Color(0xFFF1F5F9),
-                labelStyle: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppTheme.textPrimary,
-                ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                onSelected: (_) => setState(() => _selectedSection = i),
-              );
-            },
-          ),
-        ),
-        const Divider(height: 1, color: AppTheme.borderSubtle),
-
-        // 3. Body Scrollable Content
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            children: [
-              // Quick Real-Data Transition Banner
-              Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+        return Column(
+          children: [
+            // 1. Header
+            Padding(
+              padding: EdgeInsets.fromLTRB(hPad + 2, 12, 8, 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.rocket_launch_rounded, size: 18, color: AppTheme.primaryBlue),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '현재 등록된 회원: $membersCount명 · 실사용 전환 체크',
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E3A8A),
-                            ),
-                          ),
+                        Text(
+                          '체크앤페이 전체 메뉴·기능 가이드',
+                          style: TextStyle(fontSize: 17.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                          softWrap: true,
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          '각 탭별 등록·수정·삭제 및 실사용 운영 방법 안내',
+                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          softWrap: true,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '앱 설치 직후에는 기능 체험을 위한 샘플 데이터가 들어 있습니다. 본인 매장의 실제 회원·수납·지출을 관리하려면 먼저 샘플 데이터를 비우고 스튜디오 정보(상호·입금 계좌)를 입력하세요.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.45),
-                    ),
-                    const SizedBox(height: 10),
-                    ZeroButton.primary(
-                      label: '샘플 데이터 비우고 실사용 시작하기',
-                      icon: Icons.cleaning_services_rounded,
-                      size: ZeroButtonSize.medium,
-                      fullWidth: true,
-                      onPressed: _handleClearDummyDataAndStartReal,
-                    ),
-                  ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // 2. Category Selector Chips (Wrap cleanly on wide layouts, horizontal scroll on narrow mobile)
+            if (isWide)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 6),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _categories.map((cat) => _buildCategoryChip(cat)).toList(),
+                ),
+              )
+            else
+              SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 4),
+                  itemCount: _categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (ctx, i) => _buildCategoryChip(_categories[i]),
                 ),
               ),
+            const Divider(height: 1, color: AppTheme.borderSubtle),
 
-              // Section Guide Cards
-              ..._buildSectionCards(_selectedSection, profile),
+            // 3. Body Scrollable Content
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 24),
+                children: [
+                  // Quick Real-Data Transition Banner
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: EdgeInsets.all(isCompact ? 12 : 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.rocket_launch_rounded, size: 18, color: AppTheme.primaryBlue),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '현재 등록된 회원: $membersCount명 · 실사용 전환 체크',
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1E3A8A),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          '앱 설치 직후에는 기능 체험을 위한 샘플 데이터가 들어 있습니다. 본인 매장의 실제 회원·수납·지출을 관리하려면 먼저 샘플 데이터를 비우고 스튜디오 정보(상호·입금 계좌)를 입력하세요.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.45),
+                        ),
+                        const SizedBox(height: 10),
+                        ZeroButton.primary(
+                          label: '샘플 데이터 비우고 실사용 시작하기',
+                          icon: Icons.cleaning_services_rounded,
+                          size: ZeroButtonSize.medium,
+                          fullWidth: true,
+                          onPressed: _handleClearDummyDataAndStartReal,
+                        ),
+                      ],
+                    ),
+                  ),
 
-              const SizedBox(height: 8),
-              // Jump to Tab CTA
-              if (widget.onNavigateToTab != null)
-                ZeroButton.secondary(
-                  label: '${selectedCat.label} 탭으로 바로 이동하기',
-                  icon: Icons.arrow_forward_rounded,
-                  size: ZeroButtonSize.large,
-                  fullWidth: true,
-                  onPressed: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToTab?.call(selectedCat.tabIndex);
-                  },
-                ),
-              if (_selectedSection == 4 && widget.onOpenProStore != null) ...[
-                const SizedBox(height: 8),
-                ZeroButton.primary(
-                  label: '프로샵(VIP 구독 · 1시간 무료 체험) 열기',
-                  icon: Icons.workspace_premium_rounded,
-                  size: ZeroButtonSize.large,
-                  fullWidth: true,
-                  onPressed: () {
-                    Navigator.pop(context);
-                    widget.onOpenProStore?.call();
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+                  // Section Guide Cards
+                  ..._buildSectionCards(_selectedSection, profile),
+
+                  const SizedBox(height: 8),
+                  // Jump to Tab CTA
+                  if (widget.onNavigateToTab != null)
+                    ZeroButton.secondary(
+                      label: '${selectedCat.label} 탭으로 바로 이동하기',
+                      icon: Icons.arrow_forward_rounded,
+                      size: ZeroButtonSize.large,
+                      fullWidth: true,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onNavigateToTab?.call(selectedCat.tabIndex);
+                      },
+                    ),
+                  if (_selectedSection == 4 && widget.onOpenProStore != null) ...[
+                    const SizedBox(height: 8),
+                    ZeroButton.primary(
+                      label: '프로샵(VIP 구독 · 1시간 무료 체험) 열기',
+                      icon: Icons.workspace_premium_rounded,
+                      size: ZeroButtonSize.large,
+                      fullWidth: true,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onOpenProStore?.call();
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryChip(_GuideCategoryMeta cat) {
+    final isSelected = _selectedSection == cat.index;
+    return ChoiceChip(
+      avatar: Icon(
+        cat.icon,
+        size: 16,
+        color: isSelected ? Colors.white : AppTheme.primaryBlue,
+      ),
+      label: Text(cat.label),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryDark,
+      backgroundColor: const Color(0xFFF1F5F9),
+      labelStyle: TextStyle(
+        fontSize: 12.5,
+        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+        color: isSelected ? Colors.white : AppTheme.textPrimary,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      onSelected: (_) => setState(() => _selectedSection = cat.index),
     );
   }
 

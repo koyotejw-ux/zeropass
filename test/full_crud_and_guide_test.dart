@@ -21,6 +21,10 @@ import 'package:zeropass/services/monetization_service.dart';
 import 'package:zeropass/services/schedule_service.dart';
 import 'package:zeropass/services/sequential_dispatch_service.dart';
 import 'package:zeropass/services/sms_template_service.dart';
+import 'package:zeropass/widgets/full_usage_guide_modal.dart';
+import 'package:zeropass/widgets/interactive_guide_dialog.dart';
+import 'package:zeropass/widgets/senior_easy_guide_modal.dart';
+import 'package:zeropass/widgets/tax_guide_modal.dart';
 
 class _MockMembersNotifier extends MembersNotifier {
   final List<Member> _items;
@@ -299,6 +303,132 @@ void main() {
         member: member,
       );
       expect(dispatchMsg, equals('루나 필라테스 실장 박지현 / 회원 레슨비 스튜디오'));
+    });
+  });
+
+  group('Responsive Width Tests for Settings & Guides', () {
+    testWidgets('SettingsVaultScreen and FullUsageGuideModal render cleanly on 320px compact phone and 900px tablet', (tester) async {
+      for (final size in const [Size(320, 640), Size(900, 800)]) {
+        await tester.binding.setSurfaceSize(size);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            key: ValueKey(size),
+            overrides: [
+              studioProfileProvider.overrideWith(() => _MockStudioNotifier()),
+              membersProvider.overrideWith(() => _MockMembersNotifier([])),
+            ],
+            child: const MaterialApp(
+              home: SettingsVaultScreen(enableAutoCoachMark: false),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Check tile list constraints (max 720px on tablet -> card width <= 720)
+        final tileFinder = find.text('맞춤 호칭 & 용어 설정');
+        await tester.scrollUntilVisible(
+          tileFinder,
+          150,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(tileFinder, findsOneWidget);
+        if (size.width >= 900) {
+          final tileRect = tester.getRect(tileFinder);
+          // On 900px screen centered in max 720px content column, left margin >= (900 - 720) / 2 = 90
+          expect(tileRect.left, greaterThanOrEqualTo(89.0));
+        }
+
+        // Open FullUsageGuideModal and verify sheet maxWidth <= 640 on tablet and zero overflow on 320px
+        await tester.scrollUntilVisible(
+          find.text('탭별 · 기능별 전체 사용 가이드'),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.ensureVisible(find.text('탭별 · 기능별 전체 사용 가이드'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('탭별 · 기능별 전체 사용 가이드'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('체크앤페이 전체 메뉴·기능 가이드'), findsOneWidget);
+        if (size.width >= 900) {
+          final sheetRect = tester.getRect(find.byType(FullUsageGuideModal));
+          expect(sheetRect.width, lessThanOrEqualTo(640.1));
+        }
+
+        Navigator.pop(tester.element(find.byType(FullUsageGuideModal)));
+        await tester.pumpAndSettle();
+      }
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+    });
+
+    testWidgets('TaxGuideModal, SeniorEasyGuideModal, and StepByStepPracticeGuideDialog render cleanly at 320px & 900px', (tester) async {
+      for (final size in const [Size(320, 640), Size(900, 800)]) {
+        await tester.binding.setSurfaceSize(size);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            key: ValueKey('guide_${size.width}'),
+            overrides: [
+              studioProfileProvider.overrideWith(() => _MockStudioNotifier()),
+              membersProvider.overrideWith(() => _MockMembersNotifier([])),
+            ],
+            child: MaterialApp(
+              home: Builder(
+                builder: (ctx) => Scaffold(
+                  body: Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => TaxGuideModal.show(ctx),
+                        child: const Text('TAX'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => SeniorEasyGuideModal.show(ctx),
+                        child: const Text('SENIOR'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => StepByStepPracticeGuideDialog.show(
+                          ctx,
+                          onOpenAddMember: () {},
+                          onOpenSettings: () {},
+                        ),
+                        child: const Text('STEP'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // 1. TaxGuideModal
+        await tester.tap(find.text('TAX'));
+        await tester.pumpAndSettle();
+        expect(find.text('1분 세무 마스터 가이드'), findsOneWidget);
+        if (size.width >= 900) {
+          expect(tester.getRect(find.byType(TaxGuideModal)).width, lessThanOrEqualTo(640.1));
+        }
+        Navigator.pop(tester.element(find.byType(TaxGuideModal)));
+        await tester.pumpAndSettle();
+
+        // 2. SeniorEasyGuideModal
+        await tester.tap(find.text('SENIOR'));
+        await tester.pumpAndSettle();
+        expect(find.text('큰글씨 간편 사용 안내'), findsOneWidget);
+        Navigator.pop(tester.element(find.byType(SeniorEasyGuideModal)));
+        await tester.pumpAndSettle();
+
+        // 3. StepByStepPracticeGuideDialog
+        await tester.tap(find.text('STEP'));
+        await tester.pumpAndSettle();
+        expect(find.text('하나씩 따라 해볼까요?'), findsOneWidget);
+        Navigator.pop(tester.element(find.byType(StepByStepPracticeGuideDialog)));
+        await tester.pumpAndSettle();
+      }
+      addTearDown(() => tester.binding.setSurfaceSize(null));
     });
   });
 }

@@ -26,6 +26,7 @@ import '../widgets/full_usage_guide_modal.dart';
 import '../widgets/interactive_guide_dialog.dart';
 import '../widgets/mascot_avatar.dart';
 import '../widgets/native_inline_ad_card.dart';
+import '../widgets/responsive_dialog_actions.dart';
 import '../widgets/senior_easy_guide_modal.dart';
 import '../widgets/smart_notification_center_modal.dart';
 import '../widgets/tax_guide_modal.dart';
@@ -793,9 +794,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           final categoryState = customCatAsync.value ??
               CustomCategoryState.getDefaultsForIndustry(profile.category);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+            padding: AppBottomSheet.responsivePagePadding(context, maxWidth: 720, top: 12, bottom: 90),
             children: [
-              // 1. Studio Compact Hero Card (시설 상호명, 로고, 대표자, 업종)
+              // 1. Studio Compact Hero Card (시설 상호명, 로고, 담당자, 업종)
               _buildStudioCompactHeroCard(context, profile),
               const SizedBox(height: 14),
 
@@ -814,7 +815,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 iconColor: AppTheme.primaryBlue,
                 iconBgColor: const Color(0xFFEFF6FF),
                 title: '${profile.placeTitle} 프로필 및 기본 정보',
-                subtitle: '${profile.studioName} · ${profile.category} · 대표 ${profile.instructorName}',
+                subtitle: '${profile.studioName} · ${profile.category} · ${profile.roleTitle} ${profile.instructorName}',
                 onTap: () => _openEditProfileDialog(context, profile),
               ),
               const SizedBox(height: 8),
@@ -1258,59 +1259,75 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 340;
+            return Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 12 : 16,
+                vertical: 14,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.3,
-                      ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.borderSubtle, width: 0.8),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(isCompact ? 8 : 10),
+                    decoration: BoxDecoration(
+                      color: iconBgColor,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      softWrap: true,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: AppTheme.textSecondary,
-                        letterSpacing: -0.2,
-                        height: 1.35,
-                      ),
+                    child: Icon(icon, color: iconColor, size: isCompact ? 18 : 20),
+                  ),
+                  SizedBox(width: isCompact ? 10 : 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                            letterSpacing: -0.3,
+                          ),
+                          softWrap: true,
+                        ),
+                        if (isCompact && trailingBadge != null) ...[
+                          const SizedBox(height: 4),
+                          trailingBadge,
+                        ],
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle,
+                          softWrap: true,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: AppTheme.textSecondary,
+                            letterSpacing: -0.2,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isCompact && trailingBadge != null) ...[
+                    const SizedBox(width: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 112),
+                      child: trailingBadge,
                     ),
                   ],
-                ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textTertiary),
+                ],
               ),
-              if (trailingBadge != null) ...[
-                const SizedBox(width: 8),
-                trailingBadge,
-              ],
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textTertiary),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -1571,7 +1588,10 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Row(
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 4,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
                                           children: [
                                             Text(
                                               '${cur.code} (${cur.symbol})',
@@ -1581,7 +1601,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                                 color: isSelected ? const Color(0xFF15803D) : AppTheme.textPrimary,
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
@@ -2123,47 +2142,49 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _openCardPaymentUrlDialog(context, profile),
-                              icon: const Icon(Icons.edit_outlined, size: 15),
-                              label: const FittedBox(fit: BoxFit.scaleDown, child: Text('결제 링크 설정')),
+                      if (profile.cardPaymentUrl.trim().isEmpty)
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openCardPaymentUrlDialog(context, profile),
+                            icon: const Icon(Icons.edit_outlined, size: 15),
+                            label: const Text('결제 링크 설정'),
+                          ),
+                        )
+                      else
+                        ResponsiveDialogActions(
+                          primaryFirstInColumn: false,
+                          secondary: OutlinedButton.icon(
+                            onPressed: () => _openCardPaymentUrlDialog(context, profile),
+                            icon: const Icon(Icons.edit_outlined, size: 15),
+                            label: const FittedBox(fit: BoxFit.scaleDown, child: Text('결제 링크 설정')),
+                          ),
+                          primary: ElevatedButton.icon(
+                            onPressed: () async {
+                              final testUrl = profile.getFormattedCardPaymentUrl(
+                                amount: 100000,
+                                orderTitle: '테스트${profile.feeWord}',
+                                customerName: '홍길동',
+                              );
+                              final uri = Uri.tryParse(testUrl);
+                              if (uri != null && await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('유효한 웹 링크 형식이 아닙니다. (http:// 또는 https:// 포함)')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.open_in_browser_rounded, size: 15),
+                            label: const FittedBox(fit: BoxFit.scaleDown, child: Text('링크 테스트')),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryBlue,
+                              foregroundColor: Colors.white,
                             ),
                           ),
-                          if (profile.cardPaymentUrl.trim().isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  final testUrl = profile.getFormattedCardPaymentUrl(
-                                    amount: 100000,
-                                    orderTitle: '테스트수강료',
-                                    customerName: '홍길동',
-                                  );
-                                  final uri = Uri.tryParse(testUrl);
-                                  if (uri != null && await canLaunchUrl(uri)) {
-                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                  } else {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('유효한 웹 링크 형식이 아닙니다. (http:// 또는 https:// 포함)')),
-                                      );
-                                    }
-                                  }
-                                },
-                                icon: const Icon(Icons.open_in_browser_rounded, size: 15),
-                                label: const FittedBox(fit: BoxFit.scaleDown, child: Text('링크 테스트')),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryBlue,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+                        ),
                     ] else ...[
                       SizedBox(
                         width: double.infinity,
@@ -2371,28 +2392,21 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          Row(
-            children: [
-              Expanded(
-                child: ZeroButton(
-                  label: LocalizationService.tr('btn_cancel'),
-                  variant: ZeroButtonVariant.neutral,
-                  size: ZeroButtonSize.medium,
-                  fullWidth: true,
-                  onPressed: () => Navigator.pop(c, false),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ZeroButton.danger(
-                  label: '깨끗이 비우기',
-                  icon: Icons.delete_sweep_rounded,
-                  size: ZeroButtonSize.medium,
-                  fullWidth: true,
-                  onPressed: () => Navigator.pop(c, true),
-                ),
-              ),
-            ],
+          ResponsiveDialogActions(
+            secondary: ZeroButton(
+              label: LocalizationService.tr('btn_cancel'),
+              variant: ZeroButtonVariant.neutral,
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => Navigator.pop(c, false),
+            ),
+            primary: ZeroButton.danger(
+              label: '깨끗이 비우기',
+              icon: Icons.delete_sweep_rounded,
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => Navigator.pop(c, true),
+            ),
           ),
         ],
       ),
@@ -3075,7 +3089,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 : selectedPlace;
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3414,7 +3428,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3736,7 +3750,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       context: context,
       builder: (ctx) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3836,7 +3850,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       maxHeightRatio: 0.85,
       builder: (ctx) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4020,7 +4034,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 .replaceAll('#{잔여회차}', '• 잔여 회차 : 9회');
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -4031,18 +4045,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         child: Text(
                           title,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      TextButton.icon(
-                        onPressed: () {
-                          textController.text = defaultText;
-                          setModalState(() {});
-                        },
-                        icon: const Icon(Icons.restart_alt_rounded, size: 16, color: AppTheme.primaryBlue),
-                        label: const Text('권장 서식 초기화', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          visualDensity: VisualDensity.compact,
+                          softWrap: true,
                         ),
                       ),
                       IconButton(
@@ -4051,9 +4054,24 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ),
                     ],
                   ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        textController.text = defaultText;
+                        setModalState(() {});
+                      },
+                      icon: const Icon(Icons.restart_alt_rounded, size: 16, color: AppTheme.primaryBlue),
+                      label: const Text('권장 서식 초기화', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   const Text(
-                    '필수 변수(상호명, 계좌 등)를 수정하면 문자에 즉시 반영됩니다.',
+                    '필수 변수(상호명, 담당자, 계좌 등)를 수정하면 문자에 즉시 반영됩니다.',
                     style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                   ),
                   const SizedBox(height: 16),
@@ -4073,9 +4091,11 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           children: [
                             Icon(Icons.tune_rounded, size: 16, color: AppTheme.primaryBlue),
                             SizedBox(width: 6),
-                            Text(
-                              '문자에 삽입되는 필수 기본 정보',
-                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                            Expanded(
+                              child: Text(
+                                '문자에 삽입되는 필수 기본 정보',
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                              ),
                             ),
                           ],
                         ),
@@ -4085,6 +4105,14 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                           label: '사업장 상호/브랜드명 (#{상호명})',
                           hint: '예: 체크앤페이 스튜디오 / 학원 / 공방',
                           prefixIcon: Icons.storefront_outlined,
+                          onChanged: (_) => setModalState(() {}),
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: instructorController,
+                          label: '담당자 성명 (#{담당자})',
+                          hint: '예: 홍길동',
+                          prefixIcon: Icons.badge_outlined,
                           onChanged: (_) => setModalState(() {}),
                         ),
                         const SizedBox(height: 12),
@@ -4388,7 +4416,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -4493,7 +4521,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -4646,49 +4674,42 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               ),
               actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               actions: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: ZeroButton(
-                        label: LocalizationService.tr('btn_cancel'),
-                        variant: ZeroButtonVariant.neutral,
-                        size: ZeroButtonSize.medium,
-                        fullWidth: true,
-                        onPressed: () => Navigator.pop(dlgContext),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ZeroButton.primary(
-                        label: '저장',
-                        size: ZeroButtonSize.medium,
-                        fullWidth: true,
-                        onPressed: () async {
-                          final label = labelCtrl.text.trim();
-                          final group = groupCtrl.text.trim();
-                          final fee = int.tryParse(feeCtrl.text.replaceAll(',', '').trim()) ?? 0;
-                          final sessions = int.tryParse(sessionsCtrl.text.trim()) ?? 0;
+                ResponsiveDialogActions(
+                  secondary: ZeroButton(
+                    label: LocalizationService.tr('btn_cancel'),
+                    variant: ZeroButtonVariant.neutral,
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () => Navigator.pop(dlgContext),
+                  ),
+                  primary: ZeroButton.primary(
+                    label: '저장',
+                    size: ZeroButtonSize.medium,
+                    fullWidth: true,
+                    onPressed: () async {
+                      final label = labelCtrl.text.trim();
+                      final group = groupCtrl.text.trim();
+                      final fee = int.tryParse(feeCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                      final sessions = int.tryParse(sessionsCtrl.text.trim()) ?? 0;
 
-                          if (label.isEmpty || group.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('템플릿명과 그룹명을 입력해주세요.')));
-                            return;
-                          }
+                      if (label.isEmpty || group.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('템플릿명과 그룹명을 입력해주세요.')));
+                        return;
+                      }
 
-                          final newTemplate = MemberCategoryTemplate(
-                            id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
-                            label: label,
-                            groupName: group,
-                            billingType: billingType,
-                            defaultFee: fee,
-                            defaultSessions: billingType == BillingType.sessionBased ? sessions : 0,
-                          );
+                      final newTemplate = MemberCategoryTemplate(
+                        id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
+                        label: label,
+                        groupName: group,
+                        billingType: billingType,
+                        defaultFee: fee,
+                        defaultSessions: billingType == BillingType.sessionBased ? sessions : 0,
+                      );
 
-                          await ref.read(customCategoryProvider.notifier).saveMemberTemplate(newTemplate);
-                          if (dlgContext.mounted) Navigator.pop(dlgContext);
-                        },
-                      ),
-                    ),
-                  ],
+                      await ref.read(customCategoryProvider.notifier).saveMemberTemplate(newTemplate);
+                      if (dlgContext.mounted) Navigator.pop(dlgContext);
+                    },
+                  ),
                 ),
               ],
             );
@@ -4711,7 +4732,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -4758,11 +4779,13 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
                                     children: [
                                       Text(template.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                                      if (template.category != null && template.category!.isNotEmpty) ...[
-                                        const SizedBox(width: 6),
+                                      if (template.category != null && template.category!.isNotEmpty)
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
@@ -4771,7 +4794,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                           ),
                                           child: Text(template.category!, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF4338CA))),
                                         ),
-                                      ],
                                     ],
                                   ),
                                   const SizedBox(height: 4),
@@ -4847,46 +4869,39 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: ZeroButton(
-                    label: LocalizationService.tr('btn_cancel'),
-                    variant: ZeroButtonVariant.neutral,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () => Navigator.pop(dlgContext),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ZeroButton.primary(
-                    label: '저장',
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () async {
-                      final title = titleCtrl.text.trim();
-                      final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
-                      final tag = tagCtrl.text.trim();
+            ResponsiveDialogActions(
+              secondary: ZeroButton(
+                label: LocalizationService.tr('btn_cancel'),
+                variant: ZeroButtonVariant.neutral,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () => Navigator.pop(dlgContext),
+              ),
+              primary: ZeroButton.primary(
+                label: '저장',
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () async {
+                  final title = titleCtrl.text.trim();
+                  final amount = int.tryParse(amountCtrl.text.replaceAll(',', '').trim()) ?? 0;
+                  final tag = tagCtrl.text.trim();
 
-                      if (title.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('청구 항목명을 입력해주세요.')));
-                        return;
-                      }
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('청구 항목명을 입력해주세요.')));
+                    return;
+                  }
 
-                      final newTemplate = InvoiceItemTemplate(
-                        id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
-                        title: title,
-                        defaultAmount: amount,
-                        category: tag.isEmpty ? null : tag,
-                      );
+                  final newTemplate = InvoiceItemTemplate(
+                    id: 'inv_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                    title: title,
+                    defaultAmount: amount,
+                    category: tag.isEmpty ? null : tag,
+                  );
 
-                      await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
-                      if (dlgContext.mounted) Navigator.pop(dlgContext);
-                    },
-                  ),
-                ),
-              ],
+                  await ref.read(customCategoryProvider.notifier).saveInvoiceTemplate(newTemplate);
+                  if (dlgContext.mounted) Navigator.pop(dlgContext);
+                },
+              ),
             ),
           ],
         );

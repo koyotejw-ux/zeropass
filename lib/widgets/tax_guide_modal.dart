@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import 'app_bottom_sheet.dart';
+import 'responsive_dialog_actions.dart';
 
 class TaxGuideModal extends StatelessWidget {
   const TaxGuideModal({super.key});
@@ -16,12 +17,15 @@ class TaxGuideModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 360;
+    final hPad = isCompact ? 14.0 : 20.0;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Header
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+          padding: EdgeInsets.fromLTRB(hPad, 4, 8, 8),
           child: Row(
             children: [
               Container(
@@ -41,6 +45,7 @@ class TaxGuideModal extends StatelessWidget {
                     Text(
                       '국세청 간편장부 & 세무 꿀팁',
                       style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                      softWrap: true,
                     ),
                     SizedBox(height: 2),
                     Text(
@@ -63,7 +68,7 @@ class TaxGuideModal extends StatelessWidget {
           // Scrollable content
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 4),
               children: [
                 // 1. 간편장부란?
                 _buildInfoCard(
@@ -132,41 +137,41 @@ class TaxGuideModal extends StatelessWidget {
 
           // Bottom Action
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 12),
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(top: BorderSide(color: AppTheme.borderSubtle)),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final uri = Uri.parse('https://www.hometax.go.kr');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    icon: const Icon(Icons.open_in_new_rounded, size: 15, color: Color(0xFF4F46E5)),
-                    label: const Text('국세청 홈택스 바로가기', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      side: const BorderSide(color: Color(0xFFC7D2FE)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
+            child: ResponsiveDialogActions(
+              breakpoint: 340,
+              primaryFirstInColumn: false,
+              secondary: OutlinedButton.icon(
+                onPressed: () async {
+                  final uri = Uri.parse('https://www.hometax.go.kr');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                icon: const Icon(Icons.open_in_new_rounded, size: 15, color: Color(0xFF4F46E5)),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('국세청 홈택스 바로가기', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF4F46E5))),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryDark,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('확인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  side: const BorderSide(color: Color(0xFFC7D2FE)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ],
+              ),
+              primary: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryDark,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('확인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
             ),
           ),
         ],

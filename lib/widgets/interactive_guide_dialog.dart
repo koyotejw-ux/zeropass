@@ -6,6 +6,7 @@ import '../services/schedule_service.dart';
 import '../theme/app_theme.dart';
 import 'mascot_avatar.dart';
 import 'design_system.dart';
+import 'responsive_dialog_actions.dart';
 import '../services/localization_service.dart';
 
 class StepByStepPracticeGuideDialog extends ConsumerStatefulWidget {
@@ -80,14 +81,16 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
   @override
   Widget build(BuildContext context) {
     final step = _steps[_currentStep];
+    final width = MediaQuery.sizeOf(context).width;
+    final isCompact = width < 360;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Container(
+      insetPadding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16, vertical: 16),
+      child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(isCompact ? 16 : 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -285,28 +288,21 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                       ),
                       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       actions: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ZeroButton(
-                                label: LocalizationService.tr('btn_cancel'),
-                                variant: ZeroButtonVariant.neutral,
-                                size: ZeroButtonSize.medium,
-                                fullWidth: true,
-                                onPressed: () => Navigator.pop(c, false),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ZeroButton.primary(
-                                label: '비우고 시작하기',
-                                icon: Icons.check_rounded,
-                                size: ZeroButtonSize.medium,
-                                fullWidth: true,
-                                onPressed: () => Navigator.pop(c, true),
-                              ),
-                            ),
-                          ],
+                        ResponsiveDialogActions(
+                          secondary: ZeroButton(
+                            label: LocalizationService.tr('btn_cancel'),
+                            variant: ZeroButtonVariant.neutral,
+                            size: ZeroButtonSize.medium,
+                            fullWidth: true,
+                            onPressed: () => Navigator.pop(c, false),
+                          ),
+                          primary: ZeroButton.primary(
+                            label: '비우고 시작하기',
+                            icon: Icons.check_rounded,
+                            size: ZeroButtonSize.medium,
+                            fullWidth: true,
+                            onPressed: () => Navigator.pop(c, true),
+                          ),
                         ),
                       ],
                     ),
@@ -345,15 +341,19 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryDark,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    step.actionLabel,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
+                  Flexible(
+                    child: Text(
+                      step.actionLabel,
+                      textAlign: TextAlign.center,
+                      softWrap: true,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   const Icon(Icons.arrow_forward_rounded, size: 16, color: Colors.white),
@@ -363,8 +363,11 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
             const SizedBox(height: 10),
 
             // Bottom Navigation buttons: responsive wrap if width is constrained
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 if (_currentStep > 0)
                   TextButton.icon(
@@ -373,7 +376,7 @@ class _StepByStepPracticeGuideDialogState extends ConsumerState<StepByStepPracti
                     label: const Text('이전 단계', style: TextStyle(color: AppTheme.textSecondary)),
                   )
                 else
-                  const SizedBox(width: 80),
+                  const SizedBox.shrink(),
                 if (_currentStep < _steps.length - 1)
                   TextButton.icon(
                     onPressed: () => setState(() => _currentStep++),

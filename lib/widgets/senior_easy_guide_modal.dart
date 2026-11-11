@@ -15,31 +15,32 @@ class SeniorEasyGuideModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final isCompact = mediaQuery.size.width < 360;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 360;
+    final hPad = isCompact ? 14.0 : 20.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Header
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 8, 12),
+          padding: EdgeInsets.fromLTRB(hPad, 4, 8, 12),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(isCompact ? 8 : 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppTheme.primaryBlue.withAlpha(80), width: 1.5),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.elderly_rounded,
                   color: AppTheme.trustBlue,
-                  size: 28,
+                  size: isCompact ? 24 : 28,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +80,7 @@ class SeniorEasyGuideModal extends StatelessWidget {
         // Content Steps List
         Flexible(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 16),
             children: [
               _buildStepCard(
                 stepNumber: '1',
@@ -125,7 +126,7 @@ class SeniorEasyGuideModal extends StatelessWidget {
         ),
         // Bottom Confirm Button
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+          padding: EdgeInsets.fromLTRB(hPad, 10, hPad, 16),
           child: SizedBox(
             width: double.infinity,
             height: 56,
@@ -137,9 +138,12 @@ class SeniorEasyGuideModal extends StatelessWidget {
                 elevation: 1,
               ),
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                '확인했습니다 (닫기)',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              child: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '확인했습니다 (닫기)',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                ),
               ),
             ),
           ),
