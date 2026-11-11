@@ -1280,29 +1280,30 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
     final customCatState = customCatAsync.value ??
         CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+    return Form(
+      key: _formKey,
+      child: StickyBottomSheetLayout(
+        header: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 12, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isEdit ? '회원 정보 수정' : LocalizationService.tr('add_member_btn'),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+              Text(
+                _isEdit ? '회원 정보 수정' : LocalizationService.tr('add_member_btn'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: 14),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ),
+        bodyPadding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
 
               // Member Photo Picker Avatar
               Center(
@@ -1600,104 +1601,101 @@ class _AddMemberModalState extends ConsumerState<_AddMemberModal> {
                 hint: '회원 특이사항, 목표 등',
                 prefixIcon: Icons.note_alt_outlined,
               ),
-              const SizedBox(height: 20),
-
-              // Submit
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final fee = int.tryParse(_feeController.text.replaceAll(',', '')) ?? 0;
-                      final totalSessions = int.tryParse(_sessionsController.text) ?? 10;
-                      final remainingSessions = _isEdit
-                          ? (int.tryParse(_remainingSessionsController.text) ?? totalSessions)
-                          : totalSessions;
-
-                      if (_isEdit) {
-                        if (!await MonetizationService.instance.ensureEditAllowed(
-                          context,
-                          itemLabel: '회원 정보',
-                        )) {
-                          return;
-                        }
-                        final updatedMember = widget.editMember!.copyWith(
-                          name: _nameController.text.trim(),
-                          phone: _phoneController.text.trim(),
-                          groupName: _groupController.text.trim(),
-                          billingType: _billingType,
-                          defaultFee: fee,
-                          totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
-                          remainingSessions: _billingType == BillingType.sessionBased ? remainingSessions : 0,
-                          memo: _memoController.text.trim(),
-                          payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : '',
-                          photoPath: _photoPath,
-                        );
-                        await ref.read(membersProvider.notifier).updateMember(updatedMember);
-                        await MonetizationService.instance.recordEditUsage();
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${updatedMember.name} 회원 정보가 수정되었습니다.'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      } else {
-                        final bm = MonetizationService.instance;
-                        final currentMemberCount = ref.read(membersProvider).value?.length ?? 0;
-                        if (!await bm.ensureCreateAllowed(
-                          context,
-                          itemLabel: '회원',
-                          currentCount: currentMemberCount,
-                          limit: bm.maxMemberLimit,
-                        )) {
-                          return;
-                        }
-                        final newMember = Member(
-                          id: 'mem_${const Uuid().v4().substring(0, 8)}',
-                          name: _nameController.text.trim(),
-                          phone: _phoneController.text.trim(),
-                          groupName: _groupController.text.trim(),
-                          billingType: _billingType,
-                          defaultFee: fee,
-                          totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
-                          remainingSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
-                          memo: _memoController.text.trim(),
-                          payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : null,
-                          registeredAt: DateTime.now(),
-                          photoPath: _photoPath,
-                        );
-
-                        await ref.read(membersProvider.notifier).addMember(newMember);
-                        MonetizationService.instance.triggerSmartInterstitialAd(
-                          cooldownSeconds: 75,
-                          actionThreshold: 2,
-                        );
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${newMember.name} 회원이 등록되었습니다.'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryDark,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: Text(
-                    _isEdit ? '회원 정보 수정 완료' : '회원 등록 완료',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
             ],
+          ),
+        footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+        footer: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                final fee = int.tryParse(_feeController.text.replaceAll(',', '')) ?? 0;
+                final totalSessions = int.tryParse(_sessionsController.text) ?? 10;
+                final remainingSessions = _isEdit
+                    ? (int.tryParse(_remainingSessionsController.text) ?? totalSessions)
+                    : totalSessions;
+
+                if (_isEdit) {
+                  if (!await MonetizationService.instance.ensureEditAllowed(
+                    context,
+                    itemLabel: '회원 정보',
+                  )) {
+                    return;
+                  }
+                  final updatedMember = widget.editMember!.copyWith(
+                    name: _nameController.text.trim(),
+                    phone: _phoneController.text.trim(),
+                    groupName: _groupController.text.trim(),
+                    billingType: _billingType,
+                    defaultFee: fee,
+                    totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
+                    remainingSessions: _billingType == BillingType.sessionBased ? remainingSessions : 0,
+                    memo: _memoController.text.trim(),
+                    payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : '',
+                    photoPath: _photoPath,
+                  );
+                  await ref.read(membersProvider.notifier).updateMember(updatedMember);
+                  await MonetizationService.instance.recordEditUsage();
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${updatedMember.name} 회원 정보가 수정되었습니다.'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                } else {
+                  final bm = MonetizationService.instance;
+                  final currentMemberCount = ref.read(membersProvider).value?.length ?? 0;
+                  if (!await bm.ensureCreateAllowed(
+                    context,
+                    itemLabel: '회원',
+                    currentCount: currentMemberCount,
+                    limit: bm.maxMemberLimit,
+                  )) {
+                    return;
+                  }
+                  final newMember = Member(
+                    id: 'mem_${const Uuid().v4().substring(0, 8)}',
+                    name: _nameController.text.trim(),
+                    phone: _phoneController.text.trim(),
+                    groupName: _groupController.text.trim(),
+                    billingType: _billingType,
+                    defaultFee: fee,
+                    totalSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
+                    remainingSessions: _billingType == BillingType.sessionBased ? totalSessions : 0,
+                    memo: _memoController.text.trim(),
+                    payerName: _payerNameController.text.trim().isNotEmpty ? _payerNameController.text.trim() : null,
+                    registeredAt: DateTime.now(),
+                    photoPath: _photoPath,
+                  );
+
+                  await ref.read(membersProvider.notifier).addMember(newMember);
+                  MonetizationService.instance.triggerSmartInterstitialAd(
+                    cooldownSeconds: 75,
+                    actionThreshold: 2,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${newMember.name} 회원이 등록되었습니다.'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryDark,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: Text(
+              _isEdit ? '회원 정보 수정 완료' : '회원 등록 완료',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
           ),
         ),
       ),

@@ -247,36 +247,44 @@ class _FullUsageGuideModalState extends ConsumerState<FullUsageGuideModal> {
 
                   // Section Guide Cards
                   ..._buildSectionCards(_selectedSection, profile),
-
-                  const SizedBox(height: 8),
-                  // Jump to Tab CTA
-                  if (widget.onNavigateToTab != null)
-                    ZeroButton.secondary(
-                      label: '${selectedCat.label} 탭으로 바로 이동하기',
-                      icon: Icons.arrow_forward_rounded,
-                      size: ZeroButtonSize.large,
-                      fullWidth: true,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        widget.onNavigateToTab?.call(selectedCat.tabIndex);
-                      },
-                    ),
-                  if (_selectedSection == 4 && widget.onOpenProStore != null) ...[
-                    const SizedBox(height: 8),
-                    ZeroButton.primary(
-                      label: '프로샵(VIP 구독 · 1시간 무료 체험) 열기',
-                      icon: Icons.workspace_premium_rounded,
-                      size: ZeroButtonSize.large,
-                      fullWidth: true,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        widget.onOpenProStore?.call();
-                      },
-                    ),
-                  ],
                 ],
               ),
             ),
+
+            // Sticky Bottom CTA Bar
+            if (widget.onNavigateToTab != null || (_selectedSection == 4 && widget.onOpenProStore != null))
+              StickyBottomSheetFooter(
+                padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.onNavigateToTab != null)
+                      ZeroButton.secondary(
+                        label: '${selectedCat.label} 탭으로 바로 이동하기',
+                        icon: Icons.arrow_forward_rounded,
+                        size: ZeroButtonSize.large,
+                        fullWidth: true,
+                        onPressed: () {
+                          Navigator.pop(context);
+                          widget.onNavigateToTab?.call(selectedCat.tabIndex);
+                        },
+                      ),
+                    if (_selectedSection == 4 && widget.onOpenProStore != null) ...[
+                      if (widget.onNavigateToTab != null) const SizedBox(height: 8),
+                      ZeroButton.primary(
+                        label: '프로샵(VIP 구독 · 1시간 무료 체험) 열기',
+                        icon: Icons.workspace_premium_rounded,
+                        size: ZeroButtonSize.large,
+                        fullWidth: true,
+                        onPressed: () {
+                          Navigator.pop(context);
+                          widget.onOpenProStore?.call();
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
           ],
         );
       },

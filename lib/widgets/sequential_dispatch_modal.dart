@@ -395,10 +395,10 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
     final targets = _filteredMembers;
     final groups = _availableGroups;
 
-    return SingleChildScrollView(
+    return StickyBottomSheetLayout(
       key: const ValueKey('config_phase'),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
+      bodyPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -677,28 +677,25 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
           ],
-
-          // Start Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: targets.isEmpty ? null : _startDispatch,
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-              label: Text(
-                '총 ${targets.length}명 순차 릴레이 발송 시작 🚀',
-                style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
         ],
+      ),
+      footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      footer: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: targets.isEmpty ? null : _startDispatch,
+          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+          label: Text(
+            '총 ${targets.length}명 순차 릴레이 발송 시작 🚀',
+            style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryBlue,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
       ),
     );
   }
@@ -745,10 +742,10 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
     final sentCount = _dispatchQueue.where((i) => i.isSent).length;
     final skippedCount = _dispatchQueue.where((i) => i.sentChannel == 'SKIPPED').length;
 
-    return SingleChildScrollView(
+    return StickyBottomSheetLayout(
       key: const ValueKey('dispatch_phase'),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
+      bodyPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -892,8 +889,13 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
             label: '${member.name.split(' ').first} 회원 맞춤 메시지 (발송 전 수정 가능)',
             maxLines: 7,
           ),
-          const SizedBox(height: 14),
-
+          const SizedBox(height: 8),
+        ],
+      ),
+      footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           // Primary One-Tap Actions (1 Column Full-Width in Senior Mode)
           Builder(
             builder: (context) {
@@ -991,7 +993,6 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
         ],
       ),
     );
@@ -1006,10 +1007,10 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
     final smsCount = _dispatchQueue.where((i) => i.sentChannel == 'SMS').length;
     final skippedCount = _dispatchQueue.where((i) => i.sentChannel == 'SKIPPED').length;
 
-    return SingleChildScrollView(
+    return StickyBottomSheetLayout(
       key: const ValueKey('completed_phase'),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
+      bodyPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 10),
@@ -1056,25 +1057,23 @@ class _SequentialDispatchModalState extends State<SequentialDispatchModal> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: const Text(
-                '확인 및 닫기',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
         ],
+      ),
+      footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      footer: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryBlue,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          child: const Text(
+            '확인 및 닫기',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+        ),
       ),
     );
   }

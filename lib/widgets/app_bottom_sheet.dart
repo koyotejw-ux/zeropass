@@ -27,6 +27,7 @@ class AppBottomSheet {
   static Future<T?> show<T>({
     required BuildContext context,
     required Widget Function(BuildContext) builder,
+    Widget Function(BuildContext)? footerBuilder,
     bool isScrollControlled = true,
     bool isDismissible = true,
     bool enableDrag = true,
@@ -81,21 +82,111 @@ class AppBottomSheet {
                       borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
-                  // Content with bottom safe area
-                  Flexible(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        bottom: effectiveBottomPadding,
-                      ),
+                  // Content with optional outer sticky footer
+                  if (footerBuilder != null) ...[
+                    Flexible(
                       child: builder(sheetContext),
                     ),
-                  ),
+                    StickyBottomSheetFooter(
+                      backgroundColor: backgroundColor,
+                      bottomPadding: effectiveBottomPadding,
+                      child: footerBuilder(sheetContext),
+                    ),
+                  ] else
+                    Flexible(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          bottom: effectiveBottomPadding,
+                        ),
+                        child: builder(sheetContext),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+/// 바텀 시트 하단 액션 버튼을 스크롤과 무관하게 항상 하단에 고정(Sticky)하기 위한 표준 푸터 컨테이너
+class StickyBottomSheetFooter extends StatelessWidget {
+  final Widget child;
+  final Color backgroundColor;
+  final double bottomPadding;
+  final EdgeInsetsGeometry? padding;
+
+  const StickyBottomSheetFooter({
+    super.key,
+    required this.child,
+    this.backgroundColor = Colors.white,
+    this.bottomPadding = 0,
+    this.padding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final horizontal = width < 360 ? 14.0 : 20.0;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE2E8F0), width: 0.9),
+        ),
+      ),
+      padding: padding ?? EdgeInsets.fromLTRB(horizontal, 12, horizontal, bottomPadding),
+      child: child,
+    );
+  }
+}
+
+/// 헤더(고정) · 본문(스크롤) · 하단 버튼(스티키 고정) 구조를 제공하는 표준 바텀 시트 레이아웃
+class StickyBottomSheetLayout extends StatelessWidget {
+  final Widget? header;
+  final Widget body;
+  final Widget footer;
+  final bool scrollBody;
+  final Color backgroundColor;
+  final EdgeInsetsGeometry? bodyPadding;
+  final EdgeInsetsGeometry? footerPadding;
+
+  const StickyBottomSheetLayout({
+    super.key,
+    this.header,
+    required this.body,
+    required this.footer,
+    this.scrollBody = true,
+    this.backgroundColor = Colors.white,
+    this.bodyPadding,
+    this.footerPadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (header != null) header!,
+        Flexible(
+          fit: FlexFit.loose,
+          child: scrollBody
+              ? SingleChildScrollView(
+                  padding: bodyPadding,
+                  child: body,
+                )
+              : body,
+        ),
+        StickyBottomSheetFooter(
+          backgroundColor: backgroundColor,
+          padding: footerPadding,
+          child: footer,
+        ),
+      ],
     );
   }
 }

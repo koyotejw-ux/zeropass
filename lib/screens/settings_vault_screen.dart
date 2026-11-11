@@ -1407,9 +1407,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           final curLang = ref.watch(languageProvider);
           final curCur = ref.watch(currencyProvider);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
+          return StickyBottomSheetLayout(
+            bodyPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            body: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1767,27 +1767,25 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
-                    ),
-                    onPressed: () => Navigator.pop(sheetCtx),
-                    child: Text(
-                      LocalizationService.tr('btn_confirm'),
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
               ],
+            ),
+            footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            footer: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                onPressed: () => Navigator.pop(sheetCtx),
+                child: Text(
+                  LocalizationService.tr('btn_confirm'),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+              ),
             ),
           );
         },
@@ -1946,9 +1944,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 messageTemplates: CustomCategoryState.getDefaultMessageTemplatesForIndustry(latestProfile.category),
               );
 
-          return SingleChildScrollView(
-            padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 8),
-            child: Column(
+          return StickyBottomSheetLayout(
+            bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 8),
+            body: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2065,14 +2063,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                ZeroButton.primary(
-                  label: '새 맞춤 문자 서식 만들기',
-                  icon: Icons.add_comment_rounded,
-                  size: ZeroButtonSize.medium,
-                  fullWidth: true,
-                  onPressed: () => _openCustomMessageTemplateFormDialog(context, latestProfile),
-                ),
                 const SizedBox(height: 12),
 
                 if (catState.messageTemplates.isEmpty)
@@ -2178,8 +2168,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ),
                     );
                   }),
-                const SizedBox(height: 16),
               ],
+            ),
+            footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            footer: ZeroButton.primary(
+              label: '새 맞춤 문자 서식 만들기',
+              icon: Icons.add_comment_rounded,
+              size: ZeroButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => _openCustomMessageTemplateFormDialog(context, latestProfile),
             ),
           );
         },
@@ -2238,9 +2235,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 .replaceAll('#{잔여회차}', '2회')
                 .replaceAll('#{납부기한}', '이번 달 25일');
 
-            return SingleChildScrollView(
-              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
-              child: Column(
+            return StickyBottomSheetLayout(
+              bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
+              body: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2316,57 +2313,57 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  ZeroButton.primary(
-                    label: isEdit ? '수정 내용 저장하기' : '새 서식 저장하기',
-                    icon: Icons.check_rounded,
-                    size: ZeroButtonSize.large,
-                    fullWidth: true,
-                    onPressed: () async {
-                      final title = titleCtrl.text.trim();
-                      final body = bodyCtrl.text.trim();
-                      final tag = tagCtrl.text.trim();
-                      if (title.isEmpty || body.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('서식 제목과 본문을 모두 입력해주세요.')),
-                        );
-                        return;
-                      }
-                      final bm = MonetizationService.instance;
-                      if (isEdit) {
-                        if (!await bm.ensureEditAllowed(ctx, itemLabel: '맞춤 문자 서식')) {
-                          return;
-                        }
-                      } else {
-                        final curMsgs = ref.read(customCategoryProvider).value?.messageTemplates.length ?? 0;
-                        if (!await bm.ensureCreateAllowed(
-                          ctx,
-                          itemLabel: '맞춤 문자 서식',
-                          currentCount: curMsgs,
-                          limit: bm.maxCustomTemplateLimit,
-                        )) {
-                          return;
-                        }
-                      }
-                      final tpl = CustomMessageTemplate(
-                        id: existing?.id ?? 'msg_tpl_${DateTime.now().millisecondsSinceEpoch}',
-                        title: title,
-                        body: body,
-                        categoryTag: tag.isEmpty ? null : tag,
-                      );
-                      await ref.read(customCategoryProvider.notifier).saveMessageTemplate(tpl);
-                      if (isEdit) {
-                        await bm.recordEditUsage();
-                      }
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('\'$title\' 서식이 저장되었습니다.')),
-                        );
-                      }
-                    },
-                  ),
                 ],
+              ),
+              footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              footer: ZeroButton.primary(
+                label: isEdit ? '수정 내용 저장하기' : '새 서식 저장하기',
+                icon: Icons.check_rounded,
+                size: ZeroButtonSize.large,
+                fullWidth: true,
+                onPressed: () async {
+                  final title = titleCtrl.text.trim();
+                  final body = bodyCtrl.text.trim();
+                  final tag = tagCtrl.text.trim();
+                  if (title.isEmpty || body.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('서식 제목과 본문을 모두 입력해주세요.')),
+                    );
+                    return;
+                  }
+                  final bm = MonetizationService.instance;
+                  if (isEdit) {
+                    if (!await bm.ensureEditAllowed(ctx, itemLabel: '맞춤 문자 서식')) {
+                      return;
+                    }
+                  } else {
+                    final curMsgs = ref.read(customCategoryProvider).value?.messageTemplates.length ?? 0;
+                    if (!await bm.ensureCreateAllowed(
+                      ctx,
+                      itemLabel: '맞춤 문자 서식',
+                      currentCount: curMsgs,
+                      limit: bm.maxCustomTemplateLimit,
+                    )) {
+                      return;
+                    }
+                  }
+                  final tpl = CustomMessageTemplate(
+                    id: existing?.id ?? 'msg_tpl_${DateTime.now().millisecondsSinceEpoch}',
+                    title: title,
+                    body: body,
+                    categoryTag: tag.isEmpty ? null : tag,
+                  );
+                  await ref.read(customCategoryProvider.notifier).saveMessageTemplate(tpl);
+                  if (isEdit) {
+                    await bm.recordEditUsage();
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('\'$title\' 서식이 저장되었습니다.')),
+                    );
+                  }
+                },
               ),
             );
           },
@@ -3404,9 +3401,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 ? (customPlaceCtrl.text.trim().isEmpty ? '매장' : customPlaceCtrl.text.trim())
                 : selectedPlace;
 
-            return SingleChildScrollView(
-              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
-              child: Column(
+            return StickyBottomSheetLayout(
+              bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
+              body: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3674,37 +3671,35 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final updated = current.copyWith(
-                          customMemberTerm: activeMemberTerm,
-                          customFeeTerm: activeFeeTerm,
-                          customRoleTerm: activeRoleTerm,
-                          customPlaceTerm: activePlaceTerm,
-                        );
-                        await ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('맞춤 호칭($activeRoleTerm · $activeMemberTerm · $activeFeeTerm · $activePlaceTerm)이 저장되었습니다.')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: const Text('맞춤 호칭 저장하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
                 ],
+              ),
+              footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              footer: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final updated = current.copyWith(
+                      customMemberTerm: activeMemberTerm,
+                      customFeeTerm: activeFeeTerm,
+                      customRoleTerm: activeRoleTerm,
+                      customPlaceTerm: activePlaceTerm,
+                    );
+                    await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('맞춤 호칭($activeRoleTerm · $activeMemberTerm · $activeFeeTerm · $activePlaceTerm)이 저장되었습니다.')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('맞춤 호칭 저장하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                ),
               ),
             );
           },
@@ -3743,9 +3738,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return SingleChildScrollView(
-              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
-              child: Column(
+            return StickyBottomSheetLayout(
+              bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
+              body: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -4010,48 +4005,48 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       keyboardType: TextInputType.url,
                     ),
                   ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final finalCat = selectedCategory == '기타 / 맞춤업종' && customCategoryCtrl.text.trim().isNotEmpty
-                            ? customCategoryCtrl.text.trim()
-                            : selectedCategory;
-                        final finalRole = isCustomRole
-                            ? (customRoleCtrl.text.trim().isEmpty ? '대표' : customRoleCtrl.text.trim())
-                            : selectedRole;
-                        final updated = current.copyWith(
-                          studioName: studioCtrl.text.trim(),
-                          instructorName: instructorCtrl.text.trim(),
-                          bankName: bankCtrl.text.trim(),
-                          accountNumber: accountCtrl.text.trim(),
-                          accountHolder: holderCtrl.text.trim(),
-                          category: finalCat,
-                          customRoleTerm: finalRole,
-                          cardPaymentEnabled: cardEnabled,
-                          cardPaymentUrl: cardUrlCtrl.text.trim(),
-                          logoPath: modalLogoPath,
-                          clearLogo: modalClearLogo,
-                        );
-                        await ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('스튜디오 프로필 및 카테고리가 저장되었습니다.')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
-                  ),
                 ],
+              ),
+              footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              footer: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final finalCat = selectedCategory == '기타 / 맞춤업종' && customCategoryCtrl.text.trim().isNotEmpty
+                        ? customCategoryCtrl.text.trim()
+                        : selectedCategory;
+                    final finalRole = isCustomRole
+                        ? (customRoleCtrl.text.trim().isEmpty ? '대표' : customRoleCtrl.text.trim())
+                        : selectedRole;
+                    final updated = current.copyWith(
+                      studioName: studioCtrl.text.trim(),
+                      instructorName: instructorCtrl.text.trim(),
+                      bankName: bankCtrl.text.trim(),
+                      accountNumber: accountCtrl.text.trim(),
+                      accountHolder: holderCtrl.text.trim(),
+                      category: finalCat,
+                      customRoleTerm: finalRole,
+                      cardPaymentEnabled: cardEnabled,
+                      cardPaymentUrl: cardUrlCtrl.text.trim(),
+                      logoPath: modalLogoPath,
+                      clearLogo: modalClearLogo,
+                    );
+                    await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('스튜디오 프로필 및 카테고리가 저장되었습니다.')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
               ),
             );
           },
@@ -4065,9 +4060,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     AppBottomSheet.show(
       context: context,
       builder: (ctx) {
-        return SingleChildScrollView(
-          padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 16),
-          child: Column(
+        return StickyBottomSheetLayout(
+          bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 16),
+          body: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -4125,33 +4120,33 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final updated = current.copyWith(
-                      cardPaymentUrl: urlCtrl.text.trim(),
-                      cardPaymentEnabled: true,
-                    );
-                    await ref.read(studioProfileProvider.notifier).updateProfile(updated);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('카드결제 링크가 저장되었습니다.')),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-              ),
             ],
+          ),
+          footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          footer: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                final updated = current.copyWith(
+                  cardPaymentUrl: urlCtrl.text.trim(),
+                  cardPaymentEnabled: true,
+                );
+                await ref.read(studioProfileProvider.notifier).updateProfile(updated);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('카드결제 링크가 저장되었습니다.')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('저장하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
           ),
         );
       },
@@ -4165,9 +4160,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
       context: context,
       maxHeightRatio: 0.85,
       builder: (ctx) {
-        return SingleChildScrollView(
-          padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 16),
-          child: Column(
+        return StickyBottomSheetLayout(
+          bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 16),
+          body: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -4196,59 +4191,59 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 hint: '{\n  "version": "1.0.0",\n  "members": [...]\n}',
                 maxLines: 10,
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final text = jsonController.text.trim();
-                    if (text.isEmpty) return;
-
-                    final success = await DataVaultService.restoreFromBackupJson(text);
-                    if (ctx.mounted) Navigator.pop(ctx);
-
-                    if (success) {
-                      await ref.read(membersProvider.notifier).reload();
-                      await ref.read(passRecordsProvider.notifier).reload();
-                      await ref.read(invoicesProvider.notifier).reload();
-                      await ref.read(studioProfileProvider.notifier).reload();
-                      await ref.read(vendorsProvider.notifier).reload();
-                      await ref.read(expensesProvider.notifier).reload();
-                      await ref.read(notificationLogsProvider.notifier).reload();
-                      await ref.read(schedulesProvider.notifier).reload();
-
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('백업 데이터가 복원되었습니다.'),
-                            backgroundColor: AppTheme.softMint,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('올바르지 않은 백업 데이터 형식이거나 복원에 실패했습니다.'),
-                            backgroundColor: AppTheme.danger,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  icon: const Icon(Icons.restore, color: Colors.white),
-                  label: const Text('지금 바로 데이터 복원하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-              ),
             ],
+          ),
+          footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          footer: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final text = jsonController.text.trim();
+                if (text.isEmpty) return;
+
+                final success = await DataVaultService.restoreFromBackupJson(text);
+                if (ctx.mounted) Navigator.pop(ctx);
+
+                if (success) {
+                  await ref.read(membersProvider.notifier).reload();
+                  await ref.read(passRecordsProvider.notifier).reload();
+                  await ref.read(invoicesProvider.notifier).reload();
+                  await ref.read(studioProfileProvider.notifier).reload();
+                  await ref.read(vendorsProvider.notifier).reload();
+                  await ref.read(expensesProvider.notifier).reload();
+                  await ref.read(notificationLogsProvider.notifier).reload();
+                  await ref.read(schedulesProvider.notifier).reload();
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('백업 데이터가 복원되었습니다.'),
+                        backgroundColor: AppTheme.softMint,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('올바르지 않은 백업 데이터 형식이거나 복원에 실패했습니다.'),
+                        backgroundColor: AppTheme.danger,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.restore, color: Colors.white),
+              label: const Text('지금 바로 데이터 복원하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
           ),
         );
       },
@@ -4349,9 +4344,9 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 .replaceAll('#{출석시간}', '14:30')
                 .replaceAll('#{잔여회차}', '• 잔여 회차 : 9회');
 
-            return SingleChildScrollView(
-              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
-              child: Column(
+            return StickyBottomSheetLayout(
+              bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
+              body: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -4560,37 +4555,35 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final updatedProfile = profile.copyWith(
-                          studioName: studioNameController.text.trim(),
-                          instructorName: instructorController.text.trim(),
-                          bankName: bankController.text.trim(),
-                          accountNumber: accountController.text.trim(),
-                          accountHolder: holderController.text.trim(),
-                        );
-                        onSave(textController.text.trim(), updatedProfile);
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('문자 서식 및 상호/계좌 정보가 안전하게 저장되었습니다.')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
-                      child: const Text('서식 & 정보 함께 저장하기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
                 ],
+              ),
+              footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              footer: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final updatedProfile = profile.copyWith(
+                      studioName: studioNameController.text.trim(),
+                      instructorName: instructorController.text.trim(),
+                      bankName: bankController.text.trim(),
+                      accountNumber: accountController.text.trim(),
+                      accountHolder: holderController.text.trim(),
+                    );
+                    onSave(textController.text.trim(), updatedProfile);
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('문자 서식 및 상호/계좌 정보가 안전하게 저장되었습니다.')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: const Text('서식 & 정보 함께 저장하기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
               ),
             );
           },
@@ -4889,24 +4882,16 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             final catState = ref.watch(customCategoryProvider).value ??
                 CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
 
-            return SingleChildScrollView(
-              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
-              child: Column(
+            return StickyBottomSheetLayout(
+              bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
+              body: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSheetHeader(ctx, '회원 등록 간편 템플릿', Icons.playlist_add_check_rounded, AppTheme.softMint),
                   const Text('업종에 맞게 회원 등록 템플릿을 새로 만들거나 기존 템플릿을 눌러 금액·회차·유형을 수정·삭제할 수 있습니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
-                  const SizedBox(height: 14),
-                  ZeroButton.primary(
-                    label: '새 등록 템플릿 추가하기',
-                    icon: Icons.add_rounded,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () => _openAddMemberTemplateDialog(context, catState),
-                  ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
 
                   if (catState.memberTemplates.isEmpty)
                     Container(
@@ -4979,8 +4964,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         ),
                       );
                     }),
-                  const SizedBox(height: 20),
                 ],
+              ),
+              footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              footer: ZeroButton.primary(
+                label: '새 등록 템플릿 추가하기',
+                icon: Icons.add_rounded,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () => _openAddMemberTemplateDialog(context, catState),
               ),
             );
           },
@@ -5141,23 +5133,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             final catState = ref.watch(customCategoryProvider).value ??
                 CustomCategoryState.getDefaultsForIndustry('입시 / 보습학원');
 
-            return SingleChildScrollView(
-              padding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
-              child: Column(
+            return StickyBottomSheetLayout(
+              bodyPadding: AppBottomSheet.responsiveSheetPadding(ctx, vertical: 12),
+              body: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSheetHeader(ctx, '청구 항목 및 금액 템플릿', Icons.receipt_long_rounded, const Color(0xFF8B5CF6)),
                   const Text('업종별 수납 항목과 금액을 새로 추가하거나 기존 항목을 눌러 수정·삭제할 수 있습니다.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
-                  const SizedBox(height: 14),
-                  ZeroButton.primary(
-                    label: '새 청구 항목 템플릿 추가하기',
-                    icon: Icons.add_rounded,
-                    size: ZeroButtonSize.medium,
-                    fullWidth: true,
-                    onPressed: () => _openAddInvoiceTemplateDialog(context),
-                  ),
                   const SizedBox(height: 16),
 
                   if (catState.invoiceTemplates.isEmpty)
@@ -5240,8 +5224,15 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                         ),
                       );
                     }),
-                  const SizedBox(height: 20),
                 ],
+              ),
+              footerPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              footer: ZeroButton.primary(
+                label: '새 청구 항목 템플릿 추가하기',
+                icon: Icons.add_rounded,
+                size: ZeroButtonSize.medium,
+                fullWidth: true,
+                onPressed: () => _openAddInvoiceTemplateDialog(context),
               ),
             );
           },

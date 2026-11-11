@@ -23,6 +23,7 @@ import 'package:zeropass/services/monetization_service.dart';
 import 'package:zeropass/services/schedule_service.dart';
 import 'package:zeropass/services/sequential_dispatch_service.dart';
 import 'package:zeropass/services/sms_template_service.dart';
+import 'package:zeropass/widgets/app_bottom_sheet.dart';
 import 'package:zeropass/widgets/full_usage_guide_modal.dart';
 import 'package:zeropass/widgets/interactive_guide_dialog.dart';
 import 'package:zeropass/widgets/senior_easy_guide_modal.dart';
@@ -904,6 +905,66 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('1시간 VIP 체험 중'), findsOneWidget);
       expect(find.text('1시간 VIP 무료 체험'), findsNothing);
+    });
+
+    testWidgets('StickyBottomSheetLayout keeps footer pinned below scrollable body on compact viewports', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 420));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (ctx) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  AppBottomSheet.show(
+                    context: ctx,
+                    builder: (_) => StickyBottomSheetLayout(
+                      bodyPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      body: Column(
+                        children: List.generate(
+                          20,
+                          (i) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text('SCROLLABLE_ROW_$i'),
+                          ),
+                        ),
+                      ),
+                      footer: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          child: const Text('STICKY_ACTION_BTN'),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('OPEN_SHEET'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('OPEN_SHEET'));
+      await tester.pumpAndSettle();
+
+      // Footer must be immediately visible and hit-testable at bottom without scrolling,
+      // while row 19 is clipped below the footer/viewport.
+      final stickyFinder = find.text('STICKY_ACTION_BTN');
+      expect(stickyFinder.hitTestable(), findsOneWidget);
+      expect(find.text('SCROLLABLE_ROW_0').hitTestable(), findsOneWidget);
+      expect(tester.getTopLeft(find.text('SCROLLABLE_ROW_19')).dy, greaterThan(420));
+
+      final initialBottomY = tester.getBottomLeft(stickyFinder).dy;
+
+      // Scroll body -> sticky footer Y coordinate must remain identical
+      await tester.drag(find.text('SCROLLABLE_ROW_0'), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      expect(stickyFinder.hitTestable(), findsOneWidget);
+      expect(tester.getBottomLeft(stickyFinder).dy, closeTo(initialBottomY, 0.5));
     });
   });
 }

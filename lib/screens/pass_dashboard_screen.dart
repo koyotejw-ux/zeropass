@@ -1660,9 +1660,9 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
       context: context,
       maxHeightRatio: 0.88,
       builder: (modalCtx) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Column(
+        return StickyBottomSheetLayout(
+          bodyPadding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          body: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1784,32 +1784,31 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 18),
-              // Primary Action Button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(modalCtx);
-                    setState(() => _statusFilter = '골든타임 케어');
-                  },
-                  icon: const Icon(Icons.filter_list_rounded, size: 18),
-                  label: Text('대상 회원 ${absentMembers.length}명 목록 바로보기'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE11D48),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    textStyle: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+            ],
+          ),
+          footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          footer: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(modalCtx);
+                setState(() => _statusFilter = '골든타임 케어');
+              },
+              icon: const Icon(Icons.filter_list_rounded, size: 18),
+              label: Text('대상 회원 ${absentMembers.length}명 목록 바로보기'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                textStyle: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
@@ -2172,192 +2171,173 @@ class _GoldenTimeCareSheetState extends State<_GoldenTimeCareSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
+    return StickyBottomSheetLayout(
+      bodyPadding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+                  color: const Color(0xFFFFF7ED),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFED7AA)),
                 ),
+                child: const Icon(Icons.favorite_rounded, color: Color(0xFFEA580C), size: 20),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Header Row
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7ED),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFED7AA)),
-                  ),
-                  child: const Icon(Icons.favorite_rounded, color: Color(0xFFEA580C), size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            '${widget.member.primaryName} 회원님',
-                            softWrap: true,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${widget.member.primaryName} 회원님',
+                          softWrap: true,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFEDD5),
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFEDD5),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text('골든타임 안심 케어', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFFC2410C))),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '연락처: ${widget.member.phone} • 최근 7일 이상 미출석',
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Situation Preset Chips
-            const Text(
-              '상황별 안부 메시지 템플릿 선택',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: List.generate(_presets.length, (i) {
-                final isSelected = _selectedPresetIndex == i;
-                return ChoiceChip(
-                  label: Text(_presets[i]['title']!),
-                  labelStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? const Color(0xFFC2410C) : const Color(0xFF475569),
-                  ),
-                  selected: isSelected,
-                  selectedColor: const Color(0xFFFFEDD5),
-                  backgroundColor: const Color(0xFFF8FAFC),
-                  side: BorderSide(
-                    color: isSelected ? const Color(0xFFF97316) : const Color(0xFFE2E8F0),
-                    width: isSelected ? 1.2 : 0.8,
-                  ),
-                  onSelected: (_) => _applyPreset(i),
-                );
-              }),
-            ),
-            const SizedBox(height: 14),
-
-            // Editable Text Area
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: TextField(
-                controller: _messageController,
-                maxLines: 5,
-                style: const TextStyle(fontSize: 13.5, height: 1.45, color: Color(0xFF1E293B)),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.all(14),
-                  border: InputBorder.none,
-                  hintText: '회원님께 전할 따뜻한 안부 메시지를 입력하세요.',
+                          child: const Text('골든타임 안심 케어', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFFC2410C))),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '연락처: ${widget.member.phone} • 최근 7일 이상 미출석',
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+            ],
+          ),
+          const SizedBox(height: 16),
 
-            // Dispatch Action Buttons
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.end,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: _messageController.text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('안부 메시지가 클립보드에 복사되었습니다.'),
-                        behavior: SnackBarBehavior.floating,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.copy_rounded, size: 14, color: AppTheme.textSecondary),
-                  label: const Text('내용 복사', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
+          // Situation Preset Chips
+          const Text(
+            '상황별 안부 메시지 템플릿 선택',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: List.generate(_presets.length, (i) {
+              final isSelected = _selectedPresetIndex == i;
+              return ChoiceChip(
+                label: Text(_presets[i]['title']!),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? const Color(0xFFC2410C) : const Color(0xFF475569),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final text = _messageController.text.trim();
-                    if (text.isEmpty) return;
-                    Navigator.pop(context);
-                    await SmsTemplateService.launchNativeSms(
-                      recipientPhone: widget.member.phone,
-                      body: text,
-                    );
-                  },
-                  icon: const Icon(Icons.sms_rounded, size: 15, color: Colors.white),
-                  label: const Text('문자(SMS) 전송', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                selected: isSelected,
+                selectedColor: const Color(0xFFFFEDD5),
+                backgroundColor: const Color(0xFFF8FAFC),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFFF97316) : const Color(0xFFE2E8F0),
+                  width: isSelected ? 1.2 : 0.8,
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final text = _messageController.text.trim();
-                    if (text.isEmpty) return;
-                    Navigator.pop(context);
-                    await KakaoShareService.shareMessage(
-                      text: text,
-                      subject: '[${widget.studio.studioName}] 안부 인사',
-                    );
-                  },
-                  icon: const Icon(Icons.chat_bubble_rounded, size: 15, color: Color(0xFF1E1E1E)),
-                  label: const Text('카카오톡 안부 톡', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1E1E1E))),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFEE500),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ],
+                onSelected: (_) => _applyPreset(i),
+              );
+            }),
+          ),
+          const SizedBox(height: 14),
+
+          // Editable Text Area
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-          ],
-        ),
+            child: TextField(
+              controller: _messageController,
+              maxLines: 5,
+              style: const TextStyle(fontSize: 13.5, height: 1.45, color: Color(0xFF1E293B)),
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.all(14),
+                border: InputBorder.none,
+                hintText: '회원님께 전할 따뜻한 안부 메시지를 입력하세요.',
+              ),
+            ),
+          ),
+        ],
+      ),
+      footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      footer: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: _messageController.text));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('안부 메시지가 클립보드에 복사되었습니다.'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: const Icon(Icons.copy_rounded, size: 14, color: AppTheme.textSecondary),
+            label: const Text('내용 복사', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary)),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              final text = _messageController.text.trim();
+              if (text.isEmpty) return;
+              Navigator.pop(context);
+              await SmsTemplateService.launchNativeSms(
+                recipientPhone: widget.member.phone,
+                body: text,
+              );
+            },
+            icon: const Icon(Icons.sms_rounded, size: 15, color: Colors.white),
+            label: const Text('문자(SMS) 전송', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              final text = _messageController.text.trim();
+              if (text.isEmpty) return;
+              Navigator.pop(context);
+              await KakaoShareService.shareMessage(
+                text: text,
+                subject: '[${widget.studio.studioName}] 안부 인사',
+              );
+            },
+            icon: const Icon(Icons.chat_bubble_rounded, size: 15, color: Color(0xFF1E1E1E)),
+            label: const Text('카카오톡 안부 톡', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1E1E1E))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFEE500),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
       ),
     );
   }

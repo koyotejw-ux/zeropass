@@ -568,45 +568,51 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
   // TAB 3: QUICK TEMPLATES
   // ==========================================
   Widget _buildTemplatesTab({required StudioProfile studio}) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      children: [
-        const Text(
-          '알림장 문구 즉시 수정',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          '사용 가능한 자동 치환 변수: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}, #{토스송금링크}, #{카드결제링크}',
-          style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
-        ),
-        const SizedBox(height: 16),
+    return StickyBottomSheetLayout(
+      scrollBody: false,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        children: [
+          const Text(
+            '알림장 문구 즉시 수정',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '사용 가능한 자동 치환 변수: #{상호명}, #{회원명}, #{출석시간}, #{잔여회차}, #{금액}, #{토스송금링크}, #{카드결제링크}',
+            style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 16),
 
-        // Attendance Template
-        AppTextField(
-          controller: _attendanceTplController,
-          label: '안심 등원 알림 템플릿',
-          maxLines: 4,
-        ),
-        const SizedBox(height: 14),
+          // Attendance Template
+          AppTextField(
+            controller: _attendanceTplController,
+            label: '안심 등원 알림 템플릿',
+            maxLines: 4,
+          ),
+          const SizedBox(height: 14),
 
-        // Departure Template
-        AppTextField(
-          controller: _departureTplController,
-          label: '안심 하원 알림 템플릿',
-          maxLines: 4,
-        ),
-        const SizedBox(height: 14),
+          // Departure Template
+          AppTextField(
+            controller: _departureTplController,
+            label: '안심 하원 알림 템플릿',
+            maxLines: 4,
+          ),
+          const SizedBox(height: 14),
 
-        // Invoice Template
-        AppTextField(
-          controller: _invoiceTplController,
-          label: '수강료 청구/독촉 알림 템플릿',
-          maxLines: 5,
-        ),
-        const SizedBox(height: 20),
-
-        ElevatedButton.icon(
+          // Invoice Template
+          AppTextField(
+            controller: _invoiceTplController,
+            label: '수강료 청구/독촉 알림 템플릿',
+            maxLines: 5,
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+      footerPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      footer: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
           onPressed: () async {
             final updated = studio.copyWith(
               attendanceTemplate: _attendanceTplController.text.trim(),
@@ -629,7 +635,7 @@ class _SmartNotificationCenterModalState extends ConsumerState<SmartNotification
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
-      ],
+      ),
     );
   }
 }
