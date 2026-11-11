@@ -25,60 +25,59 @@ class ResponsiveDialogActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isSenior = Theme.of(context).primaryColor == AppTheme.seniorPrimaryBlue;
-        final isNarrow = isSenior || constraints.maxWidth < breakpoint;
+    // Use MediaQuery width rather than LayoutBuilder so ResponsiveDialogActions can safely live
+    // inside AlertDialog.actions / OverflowBar (which queries intrinsic dimensions).
+    final dialogAvailableWidth = (MediaQuery.sizeOf(context).width - 80.0).clamp(0.0, 480.0);
+    final isSenior = Theme.of(context).primaryColor == AppTheme.seniorPrimaryBlue;
+    final isNarrow = isSenior || dialogAvailableWidth < breakpoint;
 
-        if (isNarrow) {
-          final columnChildren = <Widget>[];
-          if (primaryFirstInColumn) {
-            columnChildren.add(SizedBox(width: double.infinity, child: primary));
-            if (secondary != null) {
-              columnChildren.add(SizedBox(height: spacing));
-              columnChildren.add(SizedBox(width: double.infinity, child: secondary!));
-            }
-            if (tertiary != null) {
-              columnChildren.add(SizedBox(height: spacing));
-              columnChildren.add(SizedBox(width: double.infinity, child: tertiary!));
-            }
-          } else {
-            if (tertiary != null) {
-              columnChildren.add(SizedBox(width: double.infinity, child: tertiary!));
-              columnChildren.add(SizedBox(height: spacing));
-            }
-            if (secondary != null) {
-              columnChildren.add(SizedBox(width: double.infinity, child: secondary!));
-              columnChildren.add(SizedBox(height: spacing));
-            }
-            columnChildren.add(SizedBox(width: double.infinity, child: primary));
-          }
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: columnChildren,
-          );
+    if (isNarrow) {
+      final columnChildren = <Widget>[];
+      if (primaryFirstInColumn) {
+        columnChildren.add(SizedBox(width: double.infinity, child: primary));
+        if (secondary != null) {
+          columnChildren.add(SizedBox(height: spacing));
+          columnChildren.add(SizedBox(width: double.infinity, child: secondary!));
         }
+        if (tertiary != null) {
+          columnChildren.add(SizedBox(height: spacing));
+          columnChildren.add(SizedBox(width: double.infinity, child: tertiary!));
+        }
+      } else {
+        if (tertiary != null) {
+          columnChildren.add(SizedBox(width: double.infinity, child: tertiary!));
+          columnChildren.add(SizedBox(height: spacing));
+        }
+        if (secondary != null) {
+          columnChildren.add(SizedBox(width: double.infinity, child: secondary!));
+          columnChildren.add(SizedBox(height: spacing));
+        }
+        columnChildren.add(SizedBox(width: double.infinity, child: primary));
+      }
 
-        // Wide layout: row of buttons
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (tertiary != null) ...[
-              Expanded(child: tertiary!),
-              SizedBox(width: spacing),
-            ],
-            if (secondary != null) ...[
-              Expanded(child: secondary!),
-              SizedBox(width: spacing),
-            ],
-            Expanded(
-              child: primary,
-            ),
-          ],
-        );
-      },
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: columnChildren,
+      );
+    }
+
+    // Wide layout: row of buttons
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (tertiary != null) ...[
+          Expanded(child: tertiary!),
+          SizedBox(width: spacing),
+        ],
+        if (secondary != null) ...[
+          Expanded(child: secondary!),
+          SizedBox(width: spacing),
+        ],
+        Expanded(
+          child: primary,
+        ),
+      ],
     );
   }
 }

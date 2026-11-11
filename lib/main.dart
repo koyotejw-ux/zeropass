@@ -102,6 +102,7 @@ class _ZeroPassAppState extends ConsumerState<ZeroPassApp> {
     }
 
     return MaterialApp(
+      navigatorKey: MonetizationService.rootNavigatorKey,
       title: LocalizationService.tr('app_name'),
       debugShowCheckedModeBanner: false,
       locale: Locale(activeLang.code),

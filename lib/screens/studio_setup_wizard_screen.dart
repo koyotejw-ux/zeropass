@@ -131,7 +131,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
         attendanceTemplate: defaultProfile.attendanceTemplate,
         departureTemplate: defaultProfile.departureTemplate,
       );
-      await ref.read(studioProfileProvider.notifier).updateProfile(studio);
+      await ref.read(studioProfileProvider.notifier).updateProfile(studio, triggerAd: false);
 
       // 3. Register the very first real student/member if name is given
       if (_memberNameCtrl.text.trim().isNotEmpty) {
@@ -148,7 +148,7 @@ class _StudioSetupWizardScreenState extends ConsumerState<StudioSetupWizardScree
           remainingSessions: _billingType == BillingType.sessionBased ? sessions : 0,
           registeredAt: DateTime.now(),
         );
-        await ref.read(membersProvider.notifier).addMember(member);
+        await ref.read(membersProvider.notifier).addMember(member, triggerAd: false);
       }
 
       await ref.read(membersProvider.notifier).reload();

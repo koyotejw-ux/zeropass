@@ -1,9 +1,13 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../screens/pro_store_screen.dart';
+import '../theme/app_theme.dart';
+import '../widgets/responsive_dialog_actions.dart';
 
 /// 최고 수익률(High eCPM)을 위한 AdMob 전면/오프닝/보상형/배너 통합 관리 서비스
 class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
@@ -131,11 +135,30 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     return '스타트업 파트너';
   }
 
+  // 루트 네비게이터 키 (전역 CRUD 광고 종료 후 구독 전환 팝업 노출용)
+  static final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+  static const double defaultCrudAdProbability = 0.45; // CRUD 1회당 45% 확률로 전면 광고 노출
+  static const int defaultCrudCooldownSeconds = 18; // 연속 작업 시 최소 18초 쿨다운
+
   // 광고 객체 및 로드 상태
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdLoaded = false;
   DateTime? _lastInterstitialShownTime;
+  DateTime? _lastUpsellDialogShownTime;
+  bool _isShowingUpsellDialog = false;
   int _actionCounter = 0; // 스마트 빈도 조절용 액션 카운터
+  int _crudAdExposureCount = 0; // 이번 세션 CRUD 광고/업셀 노출 횟수
+  final Random _random = Random();
+
+  @visibleForTesting
+  bool allowCrudAdInTests = false;
+  @visibleForTesting
+  void Function(String actionLabel)? onTestInterstitialTriggered;
+  @visibleForTesting
+  void Function(String actionLabel)? onTestUpsellTriggered;
+
+  int get crudAdExposureCount => _crudAdExposureCount;
 
   AppOpenAd? _appOpenAd;
   bool _isAppOpenAdLoaded = false;
@@ -198,6 +221,9 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     await setDebugUnlock(adsRemoved: false, kioskPro: false);
     _rewardedAdFreeUntil = null;
     _rewardedKioskPassUntil = null;
+    _lastInterstitialShownTime = null;
+    _lastUpsellDialogShownTime = null;
+    _crudAdExposureCount = 0;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('rewarded_ad_free_until');
     await prefs.remove('rewarded_kiosk_pass_until');
@@ -489,28 +515,281 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
     final bool shouldShow = forceShow || (_actionCounter >= actionThreshold && isCooldownOver);
 
     if (shouldShow && _isInterstitialAdLoaded && _interstitialAd != null) {
-      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _lastInterstitialShownTime = DateTime.now();
-          _actionCounter = 0;
-          _loadInterstitialAd();
-          onDismissed?.call();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _loadInterstitialAd();
-          onDismissed?.call();
-        },
+      _showLoadedInterstitial(
+        actionLabel: '업무 저장',
+        onDismissed: onDismissed,
       );
-      _interstitialAd!.show();
-      _isInterstitialAdLoaded = false;
-      _interstitialAd = null;
     } else {
       if (!_isInterstitialAdLoaded) {
         _loadInterstitialAd();
       }
       onDismissed?.call();
+    }
+  }
+
+  /// 모든 메뉴(회원/출결/청구/지출/거래처/일정/템플릿/설정)의 CRUD(등록·수정·삭제) 완료 시
+  /// [probability] 확률로 전면 광고를 띄우고, 광고 종료 후 자연스럽게 광고 제거 구독(결제)을 유도합니다.
+  bool triggerCrudInterstitialAd({
+    String actionLabel = '데이터 등록·수정·삭제',
+    double probability = defaultCrudAdProbability,
+    int cooldownSeconds = defaultCrudCooldownSeconds,
+    Random? random,
+    VoidCallback? onDismissed,
+  }) {
+    if (isAdsRemoved) {
+      onDismissed?.call();
+      return false;
+    }
+
+    final isMobileRuntime = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+    if (!isMobileRuntime && !allowCrudAdInTests) {
+      onDismissed?.call();
+      return false;
+    }
+
+    final now = DateTime.now();
+    if (_externalIntentSuppressedUntil != null && now.isBefore(_externalIntentSuppressedUntil!)) {
+      onDismissed?.call();
+      return false;
+    }
+
+    final isCooldownOver = _lastInterstitialShownTime == null ||
+        now.difference(_lastInterstitialShownTime!).inSeconds >= cooldownSeconds;
+    if (!isCooldownOver) {
+      onDismissed?.call();
+      return false;
+    }
+
+    final roll = (random ?? _random).nextDouble();
+    if (roll >= probability.clamp(0.0, 1.0)) {
+      if (!_isInterstitialAdLoaded && isMobileRuntime) {
+        _loadInterstitialAd();
+      }
+      onDismissed?.call();
+      return false;
+    }
+
+    _crudAdExposureCount++;
+
+    if (allowCrudAdInTests) {
+      _lastInterstitialShownTime = DateTime.now();
+      _actionCounter = 0;
+      onTestInterstitialTriggered?.call(actionLabel);
+      _maybeShowAdRemovalUpsell(actionLabel: actionLabel);
+      onDismissed?.call();
+      return true;
+    }
+
+    if (_isInterstitialAdLoaded && _interstitialAd != null) {
+      _showLoadedInterstitial(
+        actionLabel: actionLabel,
+        onDismissed: onDismissed,
+      );
+      return true;
+    }
+
+    // 전면 광고가 아직 로드되지 않았을 때는 즉시 프리로드 + 일정 간격으로 구독 유도 다이얼로그 노출
+    _loadInterstitialAd();
+    _maybeShowAdRemovalUpsell(actionLabel: actionLabel, cooldownSeconds: 60);
+    onDismissed?.call();
+    return false;
+  }
+
+  void _showLoadedInterstitial({
+    required String actionLabel,
+    VoidCallback? onDismissed,
+  }) {
+    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _lastInterstitialShownTime = DateTime.now();
+        _actionCounter = 0;
+        _loadInterstitialAd();
+        onDismissed?.call();
+        _maybeShowAdRemovalUpsell(actionLabel: actionLabel, cooldownSeconds: 45);
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadInterstitialAd();
+        onDismissed?.call();
+      },
+    );
+    _interstitialAd!.show();
+    _isInterstitialAdLoaded = false;
+    _interstitialAd = null;
+  }
+
+  void _maybeShowAdRemovalUpsell({
+    required String actionLabel,
+    int cooldownSeconds = 45,
+  }) {
+    if (isAdsRemoved || _isShowingUpsellDialog) return;
+
+    final now = DateTime.now();
+    if (_lastUpsellDialogShownTime != null &&
+        now.difference(_lastUpsellDialogShownTime!).inSeconds < cooldownSeconds) {
+      return;
+    }
+
+    if (allowCrudAdInTests && onTestUpsellTriggered != null) {
+      _lastUpsellDialogShownTime = now;
+      onTestUpsellTriggered!(actionLabel);
+      return;
+    }
+
+    final navCtx = rootNavigatorKey.currentContext;
+    if (navCtx == null || !navCtx.mounted) return;
+
+    _lastUpsellDialogShownTime = now;
+    Future.microtask(() {
+      final ctx = rootNavigatorKey.currentContext;
+      if (ctx != null && ctx.mounted && !isAdsRemoved && !_isShowingUpsellDialog) {
+        showAdRemovalUpsellDialog(ctx, actionLabel: actionLabel);
+      }
+    });
+  }
+
+  /// 전면 광고 직후 또는 반복 CRUD 시 자연스럽게 광고 제거 구독 결제를 유도하는 다이얼로그
+  Future<void> showAdRemovalUpsellDialog(
+    BuildContext context, {
+    String actionLabel = '데이터 등록·수정·삭제',
+  }) async {
+    if (isAdsRemoved || _isShowingUpsellDialog) return;
+    _isShowingUpsellDialog = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        useRootNavigator: true,
+        builder: (dlgCtx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 22),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  '광고 없이 바로 저장할까요?',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+                ),
+              ),
+            ],
+          ),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '무료 버전에서는 \'$actionLabel\' 등 주요 작업마다 일정 확률로 전면 광고가 표시됩니다.',
+                  style: const TextStyle(fontSize: 13.5, color: AppTheme.textPrimary, height: 1.45, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• 등록·수정·삭제 전면 광고 100% 영구 제거', style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45)),
+                      Text('• 하단 배너 / 오프닝 / 리스트 내 광고 완전 차단', style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45)),
+                      Text('• 언제든 Google Play에서 위약금 없이 해지 가능', style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.45)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          actions: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ResponsiveDialogActions(
+                  breakpoint: 360,
+                  primaryFirstInColumn: true,
+                  primary: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dlgCtx);
+                      Navigator.of(context, rootNavigator: true).push(
+                        MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.bolt_rounded, size: 18),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('월 1,900원 광고 완전 제거', style: TextStyle(fontWeight: FontWeight.w800)),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  secondary: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dlgCtx);
+                      showBestRewardedAd(
+                        onRewarded: () async {
+                          await grantTemporaryAdFreeHours(1, includeKiosk: true);
+                          final snackCtx = rootNavigatorKey.currentContext;
+                          if (snackCtx != null && snackCtx.mounted) {
+                            ScaffoldMessenger.of(snackCtx).showSnackBar(
+                              const SnackBar(
+                                content: Text('1시간 동안 모든 CRUD/배너 광고가 제거되었습니다!'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                        onFailed: () {
+                          Navigator.of(context, rootNavigator: true).push(
+                            MaterialPageRoute(builder: (_) => const ProStoreScreen()),
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.play_circle_outline_rounded, size: 17, color: Color(0xFFD97706)),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('1시간 무료 체험', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFCD34D)),
+                      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextButton(
+                  onPressed: () => Navigator.pop(dlgCtx),
+                  child: const Text(
+                    '계속 광고 보며 이용하기',
+                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _isShowingUpsellDialog = false;
     }
   }
 

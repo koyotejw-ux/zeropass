@@ -431,5 +431,103 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
     });
   });
+
+  group('Probabilistic CRUD Ad & Subscription Upsell Tests', () {
+    test('triggerCrudInterstitialAd fires probabilistically across CRUD operations and stops when subscribed', () async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+      bm.allowCrudAdInTests = true;
+      final triggeredActions = <String>[];
+      final upsells = <String>[];
+      bm.onTestInterstitialTriggered = triggeredActions.add;
+      bm.onTestUpsellTriggered = upsells.add;
+      addTearDown(() async {
+        bm.allowCrudAdInTests = false;
+        bm.onTestInterstitialTriggered = null;
+        bm.onTestUpsellTriggered = null;
+        await bm.debugResetAll();
+      });
+
+      // 1. Probability 0.0 -> never triggers
+      expect(
+        bm.triggerCrudInterstitialAd(actionLabel: '회원 등록', probability: 0.0, cooldownSeconds: 0),
+        isFalse,
+      );
+      expect(triggeredActions, isEmpty);
+
+      // 2. Probability 1.0 -> triggers ad + upsell funnel
+      expect(
+        bm.triggerCrudInterstitialAd(actionLabel: '회원 수정', probability: 1.0, cooldownSeconds: 0),
+        isTrue,
+      );
+      expect(triggeredActions, equals(['회원 수정']));
+      expect(upsells, equals(['회원 수정']));
+
+      // 3. Respects cooldown when cooldownSeconds > 0
+      expect(
+        bm.triggerCrudInterstitialAd(actionLabel: '청구 삭제', probability: 1.0, cooldownSeconds: 30),
+        isFalse,
+      );
+      expect(triggeredActions.length, equals(1));
+
+      // 4. Fires again after cooldownSeconds == 0 on next CRUD
+      expect(
+        bm.triggerCrudInterstitialAd(actionLabel: '지출 등록', probability: 1.0, cooldownSeconds: 0),
+        isTrue,
+      );
+      expect(triggeredActions, equals(['회원 수정', '지출 등록']));
+
+      // 5. Completely suppressed when VIP subscription or 1h ad-free pass is active
+      await bm.setDebugUnlock(adsRemoved: true);
+      expect(
+        bm.triggerCrudInterstitialAd(actionLabel: '일정 등록', probability: 1.0, cooldownSeconds: 0),
+        isFalse,
+      );
+      expect(triggeredActions.length, equals(2));
+
+      await bm.debugResetAll();
+      await bm.grantTemporaryAdFreeHours(1);
+      expect(
+        bm.triggerCrudInterstitialAd(actionLabel: '서식 저장', probability: 1.0, cooldownSeconds: 0),
+        isFalse,
+      );
+      expect(triggeredActions.length, equals(2));
+    });
+
+    testWidgets('showAdRemovalUpsellDialog renders cleanly and navigates to ProStoreScreen', (tester) async {
+      final bm = MonetizationService.instance;
+      await bm.debugResetAll();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            navigatorKey: MonetizationService.rootNavigatorKey,
+            home: Builder(
+              builder: (ctx) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () => bm.showAdRemovalUpsellDialog(ctx, actionLabel: '회원 등록'),
+                    child: const Text('SHOW_UPSELL'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('SHOW_UPSELL'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('광고 없이 바로 저장할까요?'), findsOneWidget);
+      expect(find.textContaining('회원 등록'), findsOneWidget);
+      expect(find.text('월 1,900원 광고 완전 제거'), findsOneWidget);
+      expect(find.text('1시간 무료 체험'), findsOneWidget);
+
+      await tester.tap(find.text('계속 광고 보며 이용하기'));
+      await tester.pumpAndSettle();
+      expect(find.text('광고 없이 바로 저장할까요?'), findsNothing);
+    });
+  });
 }
 

@@ -11,6 +11,7 @@ import '../models/notification_log.dart';
 import '../models/schedule_item.dart';
 import '../services/custom_category_service.dart';
 import '../services/database_service.dart';
+import '../services/monetization_service.dart';
 import 'dart:ui';
 import '../services/schedule_service.dart';
 import '../services/localization_service.dart';
@@ -36,22 +37,31 @@ class MembersNotifier extends AsyncNotifier<List<Member>> {
     });
   }
 
-  Future<void> addMember(Member member) async {
+  Future<void> addMember(Member member, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.insertMember(member);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '회원 등록');
+    }
   }
 
-  Future<void> updateMember(Member member) async {
+  Future<void> updateMember(Member member, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.updateMember(member);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '회원 정보 수정');
+    }
   }
 
-  Future<void> deleteMember(String id) async {
+  Future<void> deleteMember(String id, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.deleteMember(id);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '회원 삭제');
+    }
   }
 
   Future<void> addSessions(String memberId, int sessionsToAdd) async {
@@ -63,7 +73,8 @@ class MembersNotifier extends AsyncNotifier<List<Member>> {
         totalSessions: m.totalSessions + sessionsToAdd,
         remainingSessions: m.remainingSessions + sessionsToAdd,
       );
-      await updateMember(updated);
+      await updateMember(updated, triggerAd: false);
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '회차 충전');
     }
   }
 }
@@ -91,6 +102,7 @@ class PassRecordsNotifier extends AsyncNotifier<List<PassRecord>> {
   Future<void> checkInMember({
     required Member member,
     AttendanceStatus status = AttendanceStatus.attended,
+    bool triggerAd = true,
   }) async {
     final db = ref.read(databaseServiceProvider);
     final record = PassRecord(
@@ -108,15 +120,19 @@ class PassRecordsNotifier extends AsyncNotifier<List<PassRecord>> {
       final updatedMember = member.copyWith(
         remainingSessions: member.remainingSessions - 1,
       );
-      await ref.read(membersProvider.notifier).updateMember(updatedMember);
+      await ref.read(membersProvider.notifier).updateMember(updatedMember, triggerAd: false);
     }
 
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '출결 체크');
+    }
   }
 
   Future<void> cancelCheckIn({
     required PassRecord record,
     Member? member,
+    bool triggerAd = true,
   }) async {
     final db = ref.read(databaseServiceProvider);
     await db.deletePassRecord(record.id);
@@ -127,15 +143,21 @@ class PassRecordsNotifier extends AsyncNotifier<List<PassRecord>> {
       final restored = member.copyWith(
         remainingSessions: member.remainingSessions + deduction,
       );
-      await ref.read(membersProvider.notifier).updateMember(restored);
+      await ref.read(membersProvider.notifier).updateMember(restored, triggerAd: false);
     }
 
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '출결 취소');
+    }
   }
 
   Future<void> batchCheckInAll(List<Member> members) async {
     for (final m in members) {
-      await checkInMember(member: m, status: AttendanceStatus.attended);
+      await checkInMember(member: m, status: AttendanceStatus.attended, triggerAd: false);
+    }
+    if (members.isNotEmpty) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '일괄 출석 처리');
     }
   }
 }
@@ -160,27 +182,37 @@ class InvoicesNotifier extends AsyncNotifier<List<Invoice>> {
     });
   }
 
-  Future<void> addInvoice(Invoice invoice) async {
+  Future<void> addInvoice(Invoice invoice, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.insertInvoice(invoice);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '청구서 등록');
+    }
   }
 
-  Future<void> updateInvoice(Invoice invoice) async {
+  Future<void> updateInvoice(Invoice invoice, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.updateInvoice(invoice);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '청구서 수정');
+    }
   }
 
-  Future<void> deleteInvoice(String invoiceId) async {
+  Future<void> deleteInvoice(String invoiceId, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.deleteInvoice(invoiceId);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '청구서 삭제');
+    }
   }
 
   Future<void> markAsPaid({
     required String invoiceId,
     required String paymentMethod,
+    bool triggerAd = true,
   }) async {
     final currentInvoices = state.value ?? [];
     final idx = currentInvoices.indexWhere((inv) => inv.id == invoiceId);
@@ -193,10 +225,13 @@ class InvoicesNotifier extends AsyncNotifier<List<Invoice>> {
       final db = ref.read(databaseServiceProvider);
       await db.updateInvoice(updated);
       await reload();
+      if (triggerAd) {
+        MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '수납 완료 처리');
+      }
     }
   }
 
-  Future<void> markAsUnpaid(String invoiceId) async {
+  Future<void> markAsUnpaid(String invoiceId, {bool triggerAd = true}) async {
     final currentInvoices = state.value ?? [];
     final idx = currentInvoices.indexWhere((inv) => inv.id == invoiceId);
     if (idx != -1) {
@@ -216,6 +251,9 @@ class InvoicesNotifier extends AsyncNotifier<List<Invoice>> {
       final db = ref.read(databaseServiceProvider);
       await db.updateInvoice(updated);
       await reload();
+      if (triggerAd) {
+        MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '수납 취소 전환');
+      }
     }
   }
 }
@@ -240,10 +278,13 @@ class StudioProfileNotifier extends AsyncNotifier<StudioProfile> {
     });
   }
 
-  Future<void> updateProfile(StudioProfile profile) async {
+  Future<void> updateProfile(StudioProfile profile, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.updateStudioProfile(profile);
     state = AsyncValue.data(profile);
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '운영·서식 정보 저장');
+    }
   }
 
   Future<void> toggleBankDetect(bool enabled) async {
@@ -286,54 +327,63 @@ class CustomCategoryNotifier extends AsyncNotifier<CustomCategoryState> {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.addGroupCategory(group);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '그룹 카테고리 추가');
   }
 
   Future<void> renameGroupCategory(String oldName, String newName) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.renameGroupCategory(oldName, newName);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '그룹 이름 수정');
   }
 
   Future<void> removeGroupCategory(String group) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.removeGroupCategory(group);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '그룹 삭제');
   }
 
   Future<void> saveMemberTemplate(MemberCategoryTemplate template) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.saveMemberTemplate(template);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '회원 템플릿 저장');
   }
 
   Future<void> removeMemberTemplate(String id) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.removeMemberTemplate(id);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '회원 템플릿 삭제');
   }
 
   Future<void> saveInvoiceTemplate(InvoiceItemTemplate template) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.saveInvoiceTemplate(template);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '청구 템플릿 저장');
   }
 
   Future<void> removeInvoiceTemplate(String id) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.removeInvoiceTemplate(id);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '청구 템플릿 삭제');
   }
 
   Future<void> saveMessageTemplate(CustomMessageTemplate template) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.saveMessageTemplate(template);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '맞춤 문자 서식 저장');
   }
 
   Future<void> removeMessageTemplate(String id) async {
     final service = ref.read(customCategoryServiceProvider);
     final updated = await service.removeMessageTemplate(id);
     state = AsyncValue.data(updated);
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '맞춤 문자 서식 삭제');
   }
 
   Future<void> resetToIndustry(String industryCategory) async {
@@ -369,18 +419,21 @@ class VendorsNotifier extends AsyncNotifier<List<Vendor>> {
     final db = ref.read(databaseServiceProvider);
     await db.insertVendor(vendor);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '거래처 등록');
   }
 
   Future<void> updateVendor(Vendor vendor) async {
     final db = ref.read(databaseServiceProvider);
     await db.updateVendor(vendor);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '거래처 수정');
   }
 
   Future<void> deleteVendor(String id) async {
     final db = ref.read(databaseServiceProvider);
     await db.deleteVendor(id);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '거래처 삭제');
   }
 }
 
@@ -408,18 +461,23 @@ class ExpensesNotifier extends AsyncNotifier<List<ExpenseItem>> {
     final db = ref.read(databaseServiceProvider);
     await db.insertExpense(expense);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '지출·매입 등록');
   }
 
-  Future<void> updateExpense(ExpenseItem expense) async {
+  Future<void> updateExpense(ExpenseItem expense, {bool triggerAd = true}) async {
     final db = ref.read(databaseServiceProvider);
     await db.updateExpense(expense);
     await reload();
+    if (triggerAd) {
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '지출·매입 수정');
+    }
   }
 
   Future<void> deleteExpense(String id) async {
     final db = ref.read(databaseServiceProvider);
     await db.deleteExpense(id);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '지출·매입 삭제');
   }
 
   Future<void> togglePaymentStatus(String id) async {
@@ -428,7 +486,8 @@ class ExpensesNotifier extends AsyncNotifier<List<ExpenseItem>> {
     if (idx != -1) {
       final target = currentList[idx];
       final updated = target.copyWith(isPaid: !target.isPaid);
-      await updateExpense(updated);
+      await updateExpense(updated, triggerAd: false);
+      MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '지출 지급 상태 변경');
     }
   }
 }
@@ -544,16 +603,19 @@ class SchedulesNotifier extends AsyncNotifier<List<ScheduleItem>> {
   Future<void> addSchedule(ScheduleItem item) async {
     await ScheduleService.addSchedule(item);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '일정 등록');
   }
 
   Future<void> deleteSchedule(String id) async {
     await ScheduleService.deleteSchedule(id);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '일정 삭제');
   }
 
   Future<void> updateSchedule(ScheduleItem item) async {
     await ScheduleService.updateSchedule(item);
     await reload();
+    MonetizationService.instance.triggerCrudInterstitialAd(actionLabel: '일정 수정');
   }
 }
 
