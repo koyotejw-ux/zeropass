@@ -336,6 +336,96 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     );
   }
 
+  /// 언어 간편 전환 다이얼로그 (키오스크 이용 학생/회원 편의)
+  void _showLanguageSwitchDialog() {
+    final curLang = LocalizationService.currentLanguage;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const Icon(Icons.language_rounded, color: Color(0xFF38BDF8), size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                LocalizationService.tr('language'),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: AppLanguage.values.map((lang) {
+              final isSelected = lang == curLang;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await ref.read(languageProvider.notifier).setLanguage(lang, autoUpdateCurrency: false);
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF0284C7).withValues(alpha: 0.25) : const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected ? const Color(0xFF38BDF8) : Colors.white.withValues(alpha: 0.08),
+                        width: isSelected ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(lang.flag, style: const TextStyle(fontSize: 22)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                lang.label,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                              Text(
+                                lang.englishLabel,
+                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF38BDF8), size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              LocalizationService.tr('btn_cancel'),
+              style: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 자물쇠 버튼 탭 시 관리자 비밀번호 확인 다이얼로그 (학생의 무단 이탈 방지)
   void _showExitDialog() {
     final pinController = TextEditingController();
@@ -879,6 +969,20 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           ),
         ),
         const SizedBox(width: 8),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: const Icon(Icons.language_rounded, color: Color(0xFF38BDF8), size: 20),
+          ),
+          tooltip: LocalizationService.tr('language'),
+          onPressed: _showLanguageSwitchDialog,
+        ),
+        const SizedBox(width: 4),
         IconButton(
           icon: Container(
             padding: const EdgeInsets.all(8),

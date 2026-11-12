@@ -315,14 +315,21 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                         runSpacing: 6,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          const Row(
+                          Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.receipt_long_outlined, size: 15, color: Color(0xFF475569)),
-                              SizedBox(width: 5),
+                              const Icon(Icons.receipt_long_outlined, size: 15, color: Color(0xFF475569)),
+                              const SizedBox(width: 5),
                               Text(
-                                '현금영수증 발급 지원',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                                LocalizationService.pick(
+                                  ko: '현금영수증 발급 지원',
+                                  en: 'Cash Receipt Support',
+                                  ja: '領収書発行サポート',
+                                  zh: '发票 / 收据开具支持',
+                                  vi: 'Hỗ trợ xuất biên lai',
+                                  es: 'Soporte de Recibo Fiscal',
+                                ),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
                               ),
                             ],
                           ),
@@ -334,7 +341,14 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                                   Clipboard.setData(ClipboardData(text: widget.member.phone.replaceAll('-', '')));
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('현금영수증 발급용 휴대폰 번호(${widget.member.phone})가 복사되었습니다.'),
+                                      content: Text(LocalizationService.pick(
+                                        ko: '현금영수증 발급용 휴대폰 번호(${widget.member.phone})가 복사되었습니다.',
+                                        en: 'Copied member phone number (${widget.member.phone}) for receipt issuance.',
+                                        ja: '領収書用電話番号（${widget.member.phone}）をコピーしました。',
+                                        zh: '已复制开票手机号（${widget.member.phone}）。',
+                                        vi: 'Đã sao chép SĐT (${widget.member.phone}) để xuất biên lai.',
+                                        es: 'Número (${widget.member.phone}) copiado para el recibo.',
+                                      )),
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
@@ -346,12 +360,22 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: const Color(0xFFCBD5E1)),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.copy_rounded, size: 12, color: AppTheme.primaryBlue),
-                                      SizedBox(width: 3),
-                                      Text('번호 복사', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                                      const Icon(Icons.copy_rounded, size: 12, color: AppTheme.primaryBlue),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        LocalizationService.pick(
+                                          ko: '번호 복사',
+                                          en: 'Copy No.',
+                                          ja: '番号コピー',
+                                          zh: '复制号码',
+                                          vi: 'Sao chép',
+                                          es: 'Copiar',
+                                        ),
+                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -371,12 +395,22 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.open_in_new_rounded, size: 12, color: Color(0xFF059669)),
-                                      SizedBox(width: 3),
-                                      Text('홈택스 열기', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                                      const Icon(Icons.open_in_new_rounded, size: 12, color: Color(0xFF059669)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        LocalizationService.pick(
+                                          ko: '홈택스 열기',
+                                          en: 'Open Tax Portal',
+                                          ja: '税務ポータル',
+                                          zh: '税务门户',
+                                          vi: 'Cổng thuế',
+                                          es: 'Portal Fiscal',
+                                        ),
+                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF059669)),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -386,9 +420,16 @@ class _ReceiptNotifyDialogState extends State<ReceiptNotifyDialog> {
                         ],
                       ),
                       const SizedBox(height: 5),
-                      const Text(
-                        '💡 홈택스 접속 후 [전자세금계산서·현금영수증 > 현금영수증 발급]에서 1분 만에 발행 가능합니다.',
-                        style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B), height: 1.3),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '💡 홈택스 접속 후 [전자세금계산서·현금영수증 > 현금영수증 발급]에서 1분 만에 발행 가능합니다.',
+                          en: '💡 Log in to your national tax portal to issue digital receipts easily.',
+                          ja: '💡 国税ポータルより電子領収書を簡単に発行できます。',
+                          zh: '💡 可登录国税电子税务局快速开具数电发票或收款收据。',
+                          vi: '💡 Đăng nhập cổng thuế điện tử để xuất hóa đơn/biên lai nhanh chóng.',
+                          es: '💡 Emite facturas electrónicas o recibos desde el portal fiscal oficial.',
+                        ),
+                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), height: 1.3),
                       ),
                     ],
                   ),

@@ -24,9 +24,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         tag: LocalizationService.tr('onb_slide1_badge'),
         title: LocalizationService.tr('onb_slide1_title'),
         subtitle: LocalizationService.tr('onb_slide1_desc'),
-        highlightText: LocalizationService.isDomestic
-            ? '기본 기능 0원 무료 이용 · 100% 독립 로컬 보안'
-            : 'Free Starter Plan · 100% Private Local DB',
+        highlightText: LocalizationService.pick(
+          ko: '기본 기능 0원 무료 이용 · 100% 독립 로컬 보안',
+          en: 'Free Starter Plan · 100% Private Local DB',
+          ja: '基本機能 0円無料 · 100% ローカルDB保護',
+          zh: '基础功能 0 元免费 · 100% 本地隐私安全',
+          vi: 'Miễn phí tính năng cơ bản · Bảo mật 100% nội bộ',
+          es: 'Plan Básico Gratis · 100% Privado en Local',
+        ),
       ),
       OnboardingPageData(
         icon: Icons.touch_app_rounded,

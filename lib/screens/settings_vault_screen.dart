@@ -14,6 +14,7 @@ import '../services/data_vault_service.dart';
 import '../services/database_service.dart';
 import '../services/localization_service.dart';
 import '../services/monetization_service.dart';
+import '../services/region_workflow_service.dart';
 import '../services/schedule_service.dart';
 import '../services/starter_preset_service.dart';
 import '../theme/app_theme.dart';
@@ -2080,6 +2081,58 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
     );
   }
 
+  Future<void> _syncProfileDefaultsOnLocaleChange({
+    required AppLanguage newLang,
+    required AppCurrency newCurrency,
+  }) async {
+    try {
+      final currentProfile = ref.read(studioProfileProvider).value;
+      if (currentProfile != null) {
+        // If the profile templates or studio name are still untouched defaults, refresh them to match new country
+        final isDefaultInvoice = currentProfile.invoiceTemplate.trim() == StudioProfile.defaultInvoiceTemplate.trim() ||
+            currentProfile.invoiceTemplate.contains('마인드핏') ||
+            currentProfile.invoiceTemplate.contains('수강료') ||
+            currentProfile.invoiceTemplate.contains('MindFit') ||
+            currentProfile.invoiceTemplate.contains('マインドフィット');
+        final isDefaultAttendance = currentProfile.attendanceTemplate.trim() == StudioProfile.defaultAttendanceTemplate.trim() ||
+            currentProfile.attendanceTemplate.contains('출석 안심 알림') ||
+            currentProfile.attendanceTemplate.contains('MindFit') ||
+            currentProfile.attendanceTemplate.contains('登園・出席通知');
+        final isDefaultDeparture = currentProfile.departureTemplate.trim() == StudioProfile.defaultDepartureTemplate.trim() ||
+            currentProfile.departureTemplate.contains('하원·퇴실 완료 알림') ||
+            currentProfile.departureTemplate.contains('MindFit') ||
+            currentProfile.departureTemplate.contains('退園・下校完了通知');
+        final isDefaultStudioName = currentProfile.studioName == '마인드핏 아카데미 & 스튜디오' ||
+            currentProfile.studioName == 'MindFit Academy & Studio' ||
+            currentProfile.studioName == 'マインドフィット アカデミー＆スタジオ' ||
+            currentProfile.studioName == 'MindFit 学院与运动中心' ||
+            currentProfile.studioName == 'MindFit Studio & Academy';
+
+        if (isDefaultInvoice || isDefaultAttendance || isDefaultDeparture || isDefaultStudioName) {
+          final meta = RegionWorkflowService.defaultStudioMetadata(newLang, newCurrency);
+          final updated = currentProfile.copyWith(
+            studioName: isDefaultStudioName ? meta['studioName'] : currentProfile.studioName,
+            instructorName: isDefaultStudioName ? meta['instructorName'] : currentProfile.instructorName,
+            bankName: currentProfile.bankName == '토스뱅크' || currentProfile.bankName == 'Chase Bank'
+                ? meta['bankName']
+                : currentProfile.bankName,
+            accountHolder: isDefaultStudioName ? meta['accountHolder'] : currentProfile.accountHolder,
+            invoiceTemplate: isDefaultInvoice
+                ? RegionWorkflowService.defaultInvoiceTemplate(newLang, newCurrency)
+                : currentProfile.invoiceTemplate,
+            attendanceTemplate: isDefaultAttendance
+                ? RegionWorkflowService.defaultAttendanceTemplate(newLang)
+                : currentProfile.attendanceTemplate,
+            departureTemplate: isDefaultDeparture
+                ? RegionWorkflowService.defaultDepartureTemplate(newLang)
+                : currentProfile.departureTemplate,
+          );
+          await ref.read(studioProfileProvider.notifier).updateProfile(updated, triggerAd: false);
+        }
+      }
+    } catch (_) {}
+  }
+
   void _showLocalizationBottomSheet(BuildContext context) {
     bool autoSuggestCurrency = true;
 
@@ -2140,6 +2193,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                               lang,
                               autoUpdateCurrency: autoSuggestCurrency,
                             );
+                        final nextCur = ref.read(currencyProvider);
+                        await _syncProfileDefaultsOnLocaleChange(newLang: lang, newCurrency: nextCur);
                         setSheetState(() {});
                       },
                       borderRadius: BorderRadius.circular(12),
@@ -2247,6 +2302,8 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       child: InkWell(
                         onTap: () async {
                           await ref.read(currencyProvider.notifier).setCurrency(cur);
+                          final nextLang = ref.read(languageProvider);
+                          await _syncProfileDefaultsOnLocaleChange(newLang: nextLang, newCurrency: cur);
                           setSheetState(() {});
                         },
                         borderRadius: BorderRadius.circular(14),
@@ -5857,21 +5914,51 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                 runSpacing: 6,
                 children: [
                   ActionChip(
-                    label: const Text('{금액}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                    label: Text(
+                      LocalizationService.pick(
+                        ko: '{금액}',
+                        en: '{amount}',
+                        ja: '{金額}',
+                        zh: '{金额}',
+                        vi: '{số_tiền}',
+                        es: '{importe}',
+                      ),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                    ),
                     backgroundColor: const Color(0xFFEFF6FF),
                     onPressed: () {
                       urlCtrl.text = '${urlCtrl.text}{금액}';
                     },
                   ),
                   ActionChip(
-                    label: const Text('{회원명}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                    label: Text(
+                      LocalizationService.pick(
+                        ko: '{회원명}',
+                        en: '{name}',
+                        ja: '{会員名}',
+                        zh: '{姓名}',
+                        vi: '{tên}',
+                        es: '{nombre}',
+                      ),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                    ),
                     backgroundColor: const Color(0xFFEFF6FF),
                     onPressed: () {
                       urlCtrl.text = '${urlCtrl.text}{회원명}';
                     },
                   ),
                   ActionChip(
-                    label: const Text('{상품명}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                    label: Text(
+                      LocalizationService.pick(
+                        ko: '{상품명}',
+                        en: '{title}',
+                        ja: '{商品名}',
+                        zh: '{项目名}',
+                        vi: '{mục}',
+                        es: '{concepto}',
+                      ),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
+                    ),
                     backgroundColor: const Color(0xFFEFF6FF),
                     onPressed: () {
                       urlCtrl.text = '${urlCtrl.text}{상품명}';
