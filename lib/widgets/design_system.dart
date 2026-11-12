@@ -209,7 +209,6 @@ class ZeroBadge extends StatelessWidget {
     Widget labelText = Text(
       label,
       maxLines: 1,
-      overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontFamily: 'Pretendard',
         fontSize: customFontSize ?? metrics.fontSize,
@@ -221,7 +220,11 @@ class ZeroBadge extends StatelessWidget {
 
     Widget content;
     if (!hasLeading) {
-      content = labelText;
+      content = FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: labelText,
+      );
     } else {
       content = FittedBox(
         fit: BoxFit.scaleDown,

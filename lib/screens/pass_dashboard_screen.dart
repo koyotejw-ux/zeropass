@@ -1320,8 +1320,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                         if ((member.secondaryTag == null || member.secondaryTag!.isEmpty) && member.groupName.isEmpty)
                           LocalizationService.localizeBuiltInLabel('일반'),
                       ].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                       style: const TextStyle(
                         fontFamily: 'Pretendard',
                         fontSize: 12.5,

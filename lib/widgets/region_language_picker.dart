@@ -33,14 +33,16 @@ class RegionLanguageChip extends ConsumerWidget {
             Text(lang.flag, style: const TextStyle(fontSize: 13)),
             const SizedBox(width: 5),
             Flexible(
-              child: Text(
-                '${lang.label} · ${currency.code}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryDark,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '${lang.label} · ${currency.code}',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryDark,
+                  ),
                 ),
               ),
             ),
@@ -198,8 +200,7 @@ Future<void> showRegionLanguagePickerSheet(
                                     fontSize: 11,
                                     color: AppTheme.textSecondary,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: true,
                                 ),
                               ],
                             ),

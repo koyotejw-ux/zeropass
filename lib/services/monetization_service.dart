@@ -931,7 +931,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
         ko: '$hours시간 무료 VIP 체험이 시작되었습니다! ($expiryTime까지 이용 가능)',
         en: '${hours}h free VIP pass started! Active until $expiryTime.',
         ja: '$hours時間無料VIP体験を開始しました！（$expiryTimeまで有効）',
-        zh: '已开启${hours}小时免费 VIP 体验！（有效期至 $expiryTime）',
+        zh: '已开启$hours小时免费 VIP 体验！（有效期至 $expiryTime）',
         vi: 'Đã kích hoạt dùng thử VIP $hours giờ! (Đến $expiryTime)',
         es: '¡Pase VIP gratuito de ${hours}h activado! (Hasta las $expiryTime)',
       ),
@@ -1007,7 +1007,7 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
       ko: '$hours시간 무료 VIP 체험이 활성화되었습니다. 이용 기간 종료 후 다시 이용하실 수 있습니다.',
       en: '${hours}h free VIP pass activated. Re-claimable after expiration.',
       ja: '$hours時間無料VIP体験が有効になりました。期限終了後に再利用できます。',
-      zh: '已激活${hours}小时免费VIP体验，到期后可再次开启。',
+      zh: '已激活$hours小时免费VIP体验，到期后可再次开启。',
       vi: 'Đã kích hoạt gói VIP $hours giờ miễn phí. Có thể dùng lại sau khi hết hạn.',
       es: 'Pase VIP gratis de ${hours}h activado. Podrás renovarlo al caducar.',
     );

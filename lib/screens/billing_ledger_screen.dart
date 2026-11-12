@@ -1945,8 +1945,6 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                           const SizedBox(height: 2),
                           Text(
                             '${invoice.title} (${LocalizationService.formatAmount(invoice.amount)})',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
                           ),
                         ],

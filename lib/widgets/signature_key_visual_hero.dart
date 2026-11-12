@@ -185,8 +185,8 @@ class SignatureKeyVisualHero extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   studio?.studioName ?? LocalizationService.tr('kiosk_brand_title'),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                  softWrap: true,
                                   style: const TextStyle(
                                     fontFamily: 'Pretendard',
                                     color: Colors.white,
@@ -232,18 +232,20 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 3.5),
                                     Flexible(
-                                      child: Text(
-                                        studio != null
-                                            ? studio!.localizedCategoryLabel
-                                            : LocalizationService.industryCategoryLabel('피트니스 / PT'),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontFamily: 'Pretendard',
-                                          color: Color(0xFFE0F2FE),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -0.2,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          studio != null
+                                              ? studio!.localizedCategoryLabel
+                                              : LocalizationService.industryCategoryLabel('피트니스 / PT'),
+                                          style: const TextStyle(
+                                            fontFamily: 'Pretendard',
+                                            color: Color(0xFFE0F2FE),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.2,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -267,16 +269,18 @@ class SignatureKeyVisualHero extends StatelessWidget {
                                     Icon(expression.vectorIcon, size: 12, color: auraBorder),
                                     const SizedBox(width: 4),
                                     Flexible(
-                                      child: Text(
-                                        '${LocalizationService.tr("attendance_rate")} $attendanceRate% (${expression.label})',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontFamily: 'Pretendard',
-                                          color: statusBadgeTextColor,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -0.2,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          '${LocalizationService.tr("attendance_rate")} $attendanceRate% (${expression.label})',
+                                          style: TextStyle(
+                                            fontFamily: 'Pretendard',
+                                            color: statusBadgeTextColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.2,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -444,15 +448,16 @@ class SignatureKeyVisualHero extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Flexible(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF94A3B8),
-                          fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                          letterSpacing: -0.2,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                       ),
                     ),

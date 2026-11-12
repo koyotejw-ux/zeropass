@@ -278,7 +278,7 @@ class DataVaultService {
 
     // 2. Process Expenses
     for (final exp in expenses) {
-      final expRate = exp.isWithholdingApplied ? '$ratePct' : '-';
+      final expRate = exp.isWithholdingApplied ? ratePct : '-';
       combinedEntries.add({
         'date': exp.date,
         'dateStr': DateFormat('yyyy-MM-dd').format(exp.date),

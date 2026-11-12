@@ -1117,7 +1117,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               ? '${bm.formatShortDate(kioskExpiry)} (${LocalizationService.tr('pro_status_active')})'
                               : LocalizationService.tr('pro_status_active'))
                           : (effectiveKioskState == ProductPurchaseState.expired && kioskExpiry != null
-                              ? '${bm.formatShortDate(kioskExpiry)}'
+                              ? bm.formatShortDate(kioskExpiry)
                               : LocalizationService.pick(
                                   ko: '구글 플레이 매월 자동 갱신 (언제든 취소 가능)',
                                   en: 'Google Play auto-renewal (Cancel anytime)',
@@ -1278,7 +1278,7 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                               ? '${bm.formatShortDate(adsExpiry)} (${LocalizationService.tr('pro_status_active')})'
                               : LocalizationService.tr('pro_status_active'))
                           : (effectiveAdsState == ProductPurchaseState.expired && adsExpiry != null
-                              ? '${bm.formatShortDate(adsExpiry)}'
+                              ? bm.formatShortDate(adsExpiry)
                               : LocalizationService.pick(
                                   ko: '부담 없는 한 달 정기 구독 (언제든 구글 플레이에서 해지)',
                                   en: 'Affordable monthly subscription (Cancel anytime)',

@@ -2033,8 +2033,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                       color: AppTheme.textPrimary,
                       letterSpacing: -0.4,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
                   ),
                 ),
               ],
@@ -2399,30 +2398,34 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.payment_rounded, size: 13, color: Color(0xFF64748B)),
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 2),
+                                          child: Icon(Icons.payment_rounded, size: 13, color: Color(0xFF64748B)),
+                                        ),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
                                             cur.paymentChannels.join(' · '),
                                             style: const TextStyle(fontSize: 11, color: Color(0xFF334155), fontWeight: FontWeight.w500),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 2),
                                     Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.receipt_long_outlined, size: 13, color: Color(0xFF64748B)),
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 2),
+                                          child: Icon(Icons.receipt_long_outlined, size: 13, color: Color(0xFF64748B)),
+                                        ),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
                                             cur.taxPolicy,
                                             style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
@@ -3119,8 +3122,6 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
                                     const SizedBox(height: 4),
                                     Text(
                                       tpl.body,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
                                     ),
                                   ],
@@ -6225,7 +6226,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
             final previewCard = profile.cardPaymentEnabled && profile.cardPaymentUrl.isNotEmpty
                 ? profile.getFormattedCardPaymentUrl(
                     amount: sampleAmtNum,
-                    orderTitle: '${profile.feeWord}',
+                    orderTitle: profile.feeWord,
                     customerName: LocalizationService.pick(ko: '김민준', en: 'Alex Kim', ja: '佐藤健太', zh: '张明', vi: 'Minh', es: 'Carlos'),
                   )
                 : 'https://pay.example.com/checkout';
