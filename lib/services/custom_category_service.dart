@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/custom_category_template.dart';
+import 'localization_service.dart';
 
 class CustomCategoryService {
   CustomCategoryService._();
@@ -10,6 +11,11 @@ class CustomCategoryService {
   static const String _keyMemberTemplates = 'zeropass_custom_member_templates';
   static const String _keyInvoiceTemplates = 'zeropass_custom_invoice_templates';
   static const String _keyMessageTemplates = 'zeropass_custom_message_templates';
+  static const String _keyUserCustomized = 'zeropass_custom_user_customized';
+  static const String _keyPresetLocale = 'zeropass_custom_preset_locale';
+
+  static String get _currentPresetLocaleKey =>
+      '${LocalizationService.currentLanguage.code}_${LocalizationService.currentCurrency.code}';
 
   /// Loads custom category state. If never saved before, generates defaults based on [industryCategory].
   Future<CustomCategoryState> loadCategories({String? industryCategory}) async {
@@ -19,6 +25,9 @@ class CustomCategoryService {
     final rawMemberTemplates = prefs.getString(_keyMemberTemplates);
     final rawInvoiceTemplates = prefs.getString(_keyInvoiceTemplates);
     final rawMessageTemplates = prefs.getString(_keyMessageTemplates);
+    final isCustomized = prefs.getBool(_keyUserCustomized) ?? false;
+    final storedLocale = prefs.getString(_keyPresetLocale);
+    final activeLocale = _currentPresetLocaleKey;
 
     if (rawGroups == null && rawMemberTemplates == null && rawInvoiceTemplates == null && rawMessageTemplates == null) {
       // First time initialization: load default preset for the studio's industry
@@ -26,7 +35,18 @@ class CustomCategoryService {
       final defaults = CustomCategoryState.getDefaultsForIndustry(effectiveIndustry).copyWith(
         messageTemplates: CustomCategoryState.getDefaultMessageTemplatesForIndustry(effectiveIndustry),
       );
-      await saveCategories(defaults);
+      await saveCategories(defaults, markCustomized: false);
+      return defaults;
+    }
+
+    // If the user has never customized presets yet and switched language/currency,
+    // regenerate localized default groups and currency-scaled templates cleanly.
+    if (!isCustomized && storedLocale != activeLocale) {
+      final effectiveIndustry = industryCategory ?? '입시 / 보습학원';
+      final defaults = CustomCategoryState.getDefaultsForIndustry(effectiveIndustry).copyWith(
+        messageTemplates: CustomCategoryState.getDefaultMessageTemplatesForIndustry(effectiveIndustry),
+      );
+      await saveCategories(defaults, markCustomized: false);
       return defaults;
     }
 
@@ -97,7 +117,10 @@ class CustomCategoryService {
   }
 
   /// Persists the complete custom category state
-  Future<void> saveCategories(CustomCategoryState state) async {
+  Future<void> saveCategories(
+    CustomCategoryState state, {
+    bool markCustomized = true,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString(_keyGroupCategories, jsonEncode(state.groupCategories));
@@ -113,6 +136,8 @@ class CustomCategoryService {
       _keyMessageTemplates,
       jsonEncode(state.messageTemplates.map((e) => e.toMap()).toList()),
     );
+    await prefs.setBool(_keyUserCustomized, markCustomized);
+    await prefs.setString(_keyPresetLocale, _currentPresetLocaleKey);
   }
 
   /// Resets categories and templates to the specified industry preset
@@ -120,7 +145,7 @@ class CustomCategoryService {
     final defaults = CustomCategoryState.getDefaultsForIndustry(industryCategory).copyWith(
       messageTemplates: CustomCategoryState.getDefaultMessageTemplatesForIndustry(industryCategory),
     );
-    await saveCategories(defaults);
+    await saveCategories(defaults, markCustomized: false);
     return defaults;
   }
 

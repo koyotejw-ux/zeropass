@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:zeropass/models/custom_category_template.dart';
 import 'package:zeropass/models/expense_item.dart';
 import 'package:zeropass/models/invoice.dart';
 import 'package:zeropass/models/member.dart';
@@ -292,6 +293,39 @@ void main() {
       expect(csvText, contains('Tax Bookkeeping Ledger (USD)'));
       expect(csvText, contains('Revenue (USD)'));
       expect(csvText, isNot(contains('국세청 표준')));
+    });
+
+    test('CustomCategoryState & DatabaseService mock seeds localize and scale fees outside Korea cleanly', () async {
+      await LocalizationService.setLanguage(AppLanguage.english, persist: false);
+      await LocalizationService.setCurrency(AppCurrency.usd, persist: false);
+
+      final acadPreset = CustomCategoryState.getDefaultsForIndustry('academy');
+      expect(acadPreset.groupCategories, contains('Middle School Core'));
+      expect(acadPreset.memberTemplates.first.defaultFee, lessThan(1000));
+      expect(acadPreset.memberTemplates.first.label, contains('\$'));
+
+      final msgTemplates = CustomCategoryState.getDefaultMessageTemplatesForIndustry('fitness');
+      expect(msgTemplates.first.title, contains('Renewal'));
+      expect(msgTemplates.first.body, contains('Hi #{회원명}'));
+      expect(msgTemplates.last.body, isNot(contains('토스송금링크')));
+
+      await DatabaseService.instance.clearAllData();
+      await DatabaseService.instance.restoreSampleData();
+
+      final members = await DatabaseService.instance.getMembers();
+      expect(members, isNotEmpty);
+      expect(members.any((m) => m.name.contains('Ethan Carter')), isTrue);
+      expect(members.first.defaultFee, lessThan(2000));
+
+      final invoices = await DatabaseService.instance.getInvoices();
+      expect(invoices, isNotEmpty);
+      expect(invoices.any((inv) => inv.title.contains('Music Tuition') || inv.title.contains('Renewal')), isTrue);
+      expect(invoices.first.amount, lessThan(3000));
+
+      final expenses = await DatabaseService.instance.getExpenses();
+      expect(expenses, isNotEmpty);
+      expect(expenses.any((e) => e.title.contains('Monthly') || e.title.contains('Sanitizer') || e.title.contains('Workbooks')), isTrue);
+      expect(expenses.first.amount, lessThan(5000));
     });
   });
 

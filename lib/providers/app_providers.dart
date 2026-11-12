@@ -309,6 +309,8 @@ final customCategoryServiceProvider = Provider<CustomCategoryService>((ref) {
 class CustomCategoryNotifier extends AsyncNotifier<CustomCategoryState> {
   @override
   Future<CustomCategoryState> build() async {
+    ref.watch(languageProvider);
+    ref.watch(currencyProvider);
     final studioProfile = await ref.watch(studioProfileProvider.future).catchError((_) => StudioProfile.defaultProfile());
     final service = ref.read(customCategoryServiceProvider);
     return await service.loadCategories(industryCategory: studioProfile.category);
