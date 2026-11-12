@@ -1386,63 +1386,76 @@ class ZeroAdUtilityBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          InkWell(
-            onTap: onFreeAdDismiss,
-            borderRadius: BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.play_circle_fill_rounded, size: 14, color: Color(0xFF2563EB)),
-                  const SizedBox(width: 4),
-                  Text(
-                    LocalizationService.pick(
-                      ko: '1시간 광고 끄기 (무료)',
-                      en: 'Ad-Free 1h (Free)',
-                      ja: '1時間広告オフ (無料)',
-                      zh: '免广告1小时 (免费)',
-                      vi: 'Tắt QC 1 giờ (Miễn phí)',
-                      es: 'Sin anuncios 1h (Gratis)',
-                    ),
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF2563EB),
-                    ),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                onTap: onFreeAdDismiss,
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.play_circle_fill_rounded, size: 14, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 4),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '1시간 광고 끄기 (무료)',
+                          en: 'Ad-Free 1h (Free)',
+                          ja: '1時間広告オフ (無料)',
+                          zh: '免广告1小时 (免费)',
+                          vi: 'Tắt QC 1 giờ (Miễn phí)',
+                          es: 'Sin anuncios 1h (Gratis)',
+                        ),
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-          InkWell(
-            onTap: onRemoveAds,
-            borderRadius: BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFFD97706)),
-                  const SizedBox(width: 4),
-                  Text(
-                    LocalizationService.pick(
-                      ko: '광고 제거 월 1,900원 >',
-                      en: 'Remove Ads >',
-                      ja: '広告削除 >',
-                      zh: '去除广告 >',
-                      vi: 'Xóa quảng cáo >',
-                      es: 'Quitar anuncios >',
-                    ),
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFFB45309),
-                    ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                onTap: onRemoveAds,
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFFD97706)),
+                      const SizedBox(width: 4),
+                      Text(
+                        LocalizationService.pick(
+                          ko: '광고 제거 월 1,900원 >',
+                          en: 'Remove Ads >',
+                          ja: '広告削除 >',
+                          zh: '去除广告 >',
+                          vi: 'Xóa quảng cáo >',
+                          es: 'Quitar anuncios >',
+                        ),
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

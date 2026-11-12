@@ -511,31 +511,35 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                                         spacing: 8,
                                         runSpacing: 6,
                                         children: [
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.all(6),
-                                                decoration: BoxDecoration(
-                                                  color: heroIconColor.withAlpha((255 * 0.18).round()),
-                                                  shape: BoxShape.circle,
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: heroIconColor.withAlpha((255 * 0.18).round()),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    heroIcon,
+                                                    color: heroIconColor,
+                                                    size: 16,
+                                                  ),
                                                 ),
-                                                child: Icon(
-                                                  heroIcon,
-                                                  color: heroIconColor,
-                                                  size: 16,
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  heroTitle,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF94A3B8),
+                                                    fontSize: 13.5,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                heroTitle,
-                                                style: const TextStyle(
-                                                  color: Color(0xFF94A3B8),
-                                                  fontSize: 13.5,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
@@ -1040,9 +1044,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                   Text(
                     '$dateLabel $dateValue',
                     style: const TextStyle(
@@ -1136,8 +1144,10 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                   ),
                 ],
               ),
-            ],
+            ),
           ),
+        ],
+      ),
           const SizedBox(height: 10),
 
           // 2. Mobile-First Vertical Focal Stack: Tier-1 Amount -> Tier-2 Title -> Tier-3 Member & Phone (Zero Truncation!)

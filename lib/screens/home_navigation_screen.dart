@@ -93,7 +93,7 @@ class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
                         final isSelected = states.contains(WidgetState.selected);
                         return TextStyle(
                           fontFamily: 'Pretendard',
-                          fontSize: isSeniorMode ? 12.5 : (isCompact ? 10.5 : 11.5),
+                          fontSize: isSeniorMode ? 11.5 : (isCompact ? 10.5 : 11.5),
                           fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                           color: isSelected
                               ? (isSeniorMode ? AppTheme.seniorPrimaryBlue : AppTheme.primaryDark)
@@ -103,7 +103,7 @@ class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
                       }),
                     ),
                     child: NavigationBar(
-                      height: isLandscape ? 54 : (isSeniorMode ? 76 : 66),
+                      height: isLandscape ? 54 : (isSeniorMode ? 82 : 66),
                       selectedIndex: _currentIndex,
                       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                       onDestinationSelected: (index) {

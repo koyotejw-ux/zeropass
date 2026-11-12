@@ -2090,40 +2090,53 @@ class _StickyMemberSearchAndFilterDelegate extends SliverPersistentHeaderDelegat
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      LocalizationService.tr('total_members_count').replaceAll('{count}', totalCount.toString()),
-                      style: const TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textSecondary,
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          LocalizationService.tr('total_members_count').replaceAll('{count}', totalCount.toString()),
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
                       ),
                     ),
-                    InkWell(
-                      onTap: onSequentialDispatch,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: InkWell(
+                          onTap: onSequentialDispatch,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.send_rounded, size: 11.5, color: Color(0xFF475569)),
-                            const SizedBox(width: 4),
-                            Text(
-                              LocalizationService.tr('sequential_dispatch_btn'),
-                              style: TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF334155),
-                              ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.send_rounded, size: 11.5, color: Color(0xFF475569)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  LocalizationService.tr('sequential_dispatch_btn'),
+                                  style: const TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF334155),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),

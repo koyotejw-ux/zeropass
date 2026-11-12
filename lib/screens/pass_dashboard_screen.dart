@@ -2504,20 +2504,23 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: borderColor.withAlpha(120), width: 1.2),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      badgeText,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        color: iconColor,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        badgeText,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: iconColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(Icons.touch_app_rounded, size: 15, color: iconColor),
-                  ],
+                      const SizedBox(width: 6),
+                      Icon(Icons.touch_app_rounded, size: 15, color: iconColor),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -3122,7 +3125,6 @@ class _SeniorAttendanceModalSheetState extends ConsumerState<_SeniorAttendanceMo
                               else
                                 SizedBox(
                                   width: double.infinity,
-                                  height: 48,
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF059669),
@@ -3373,7 +3375,6 @@ class _SeniorBillingModalSheetState extends State<_SeniorBillingModalSheet> {
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
-                                height: 48,
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.trustBlue,
@@ -3609,7 +3610,6 @@ class _SeniorCallModalSheetState extends State<_SeniorCallModalSheet> {
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
-                                height: 48,
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF059669),
