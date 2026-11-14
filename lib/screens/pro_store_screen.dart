@@ -135,13 +135,17 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         toolbarHeight: isLandscape ? 50 : 56,
-        title: Text(
-          LocalizationService.proStoreTitle,
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: isLandscape ? 18 : 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.4,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            LocalizationService.proStoreTitle,
+            style: TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: isLandscape ? 17 : 19,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
+            ),
           ),
         ),
         actions: [
@@ -753,20 +757,22 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                   children: [
                     const Icon(Icons.workspace_premium_rounded, size: 18, color: Color(0xFFD97706)),
                     const SizedBox(width: 6),
-                    Text(
-                      LocalizationService.pick(
-                        ko: '정기 구독 플랜 (Google Play)',
-                        en: 'Subscription Plans (Google Play)',
-                        ja: '定期購入プラン (Google Play)',
-                        zh: '定期订阅方案 (Google Play)',
-                        vi: 'Gói thuê bao định kỳ (Google Play)',
-                        es: 'Planes de suscripción (Google Play)',
-                      ),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.3,
+                    Expanded(
+                      child: Text(
+                        LocalizationService.pick(
+                          ko: '정기 구독 플랜 (Google Play)',
+                          en: 'Subscription Plans (Google Play)',
+                          ja: '定期購入プラン (Google Play)',
+                          zh: '定期订阅方案 (Google Play)',
+                          vi: 'Gói thuê bao định kỳ (Google Play)',
+                          es: 'Planes de suscripción (Google Play)',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.3,
+                        ),
                       ),
                     ),
                   ],
@@ -1334,19 +1340,21 @@ class _ProStoreScreenState extends State<ProStoreScreen> {
                       children: [
                         const Icon(Icons.shield_outlined, color: AppTheme.primaryBlue, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          LocalizationService.pick(
-                            ko: '정기 구독 안내 및 해지 방법',
-                            en: 'Subscription Terms & Cancellation',
-                            ja: '定期購入のご案内および解約方法',
-                            zh: '订阅说明与退订方式',
-                            vi: 'Điều khoản & cách hủy gói',
-                            es: 'Términos y cancelación de suscripción',
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
+                        Expanded(
+                          child: Text(
+                            LocalizationService.pick(
+                              ko: '정기 구독 안내 및 해지 방법',
+                              en: 'Subscription Terms & Cancellation',
+                              ja: '定期購入のご案内および解約方法',
+                              zh: '订阅说明与退订方式',
+                              vi: 'Điều khoản & cách hủy gói',
+                              es: 'Términos y cancelación de suscripción',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
                         ),
                       ],
