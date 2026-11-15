@@ -1520,42 +1520,45 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
             Row(
               children: [
                 Expanded(
-                  flex: isAtRisk ? 6 : 10,
+                  flex: isAtRisk ? 5 : 10,
                   child: SizedBox(
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () => _handleOneTouchCheckIn(member),
                       icon: const Icon(Icons.check_rounded, size: 20),
-                      label: Text(
-                        isDepleted
-                            ? LocalizationService.pick(
-                                ko: '출석(0회)',
-                                en: 'Check In (0)',
-                                ja: '出席(残0)',
-                                zh: '签到(剩0)',
-                                vi: 'Điểm danh (0)',
-                                es: 'Registro (0)',
-                              )
-                            : LocalizationService.pick(
-                                ko: '체크인',
-                                en: 'Check In',
-                                ja: 'チェックイン',
-                                zh: '签到',
-                                vi: 'Điểm danh',
-                                es: 'Registrar',
-                              ),
-                        style: const TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isDepleted
+                              ? LocalizationService.pick(
+                                  ko: '출석(0회)',
+                                  en: 'Check In (0)',
+                                  ja: '出席(残0)',
+                                  zh: '签到(剩0)',
+                                  vi: 'Điểm danh (0)',
+                                  es: 'Registro (0)',
+                                )
+                              : LocalizationService.pick(
+                                  ko: '체크인',
+                                  en: 'Check In',
+                                  ja: 'チェックイン',
+                                  zh: '签到',
+                                  vi: 'Điểm danh',
+                                  es: 'Registrar',
+                                ),
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 15.0,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                          ),
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDepleted ? const Color(0xFFE11D48) : AppTheme.primaryDark,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
@@ -1564,7 +1567,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                 if (isAtRisk) ...[
                   const SizedBox(width: 8),
                   Expanded(
-                    flex: 4,
+                    flex: 5,
                     child: SizedBox(
                       height: 48,
                       child: ZeroButton.tint(
@@ -1576,6 +1579,7 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
                           vi: '+10 buổi',
                           es: '+10 Sesiones',
                         ),
+                        maxLines: 1,
                         icon: Icons.add_circle_outline_rounded,
                         size: ZeroButtonSize.medium,
                         fullWidth: true,

@@ -578,18 +578,21 @@ class ZeroButton extends StatelessWidget {
           const SizedBox(width: 6),
         ],
         Flexible(
-          child: Text(
-            label,
-            textAlign: textAlign,
-            maxLines: maxLines,
-            softWrap: true,
-            style: TextStyle(
-              fontFamily: 'Pretendard',
-              fontSize: _resolveFontSize(),
-              fontWeight: _resolveFontWeight(),
-              color: style.fg,
-              letterSpacing: -0.3,
-              height: 1.25,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: textAlign,
+              maxLines: maxLines,
+              softWrap: maxLines > 1,
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontSize: _resolveFontSize(),
+                fontWeight: _resolveFontWeight(),
+                color: style.fg,
+                letterSpacing: -0.3,
+                height: 1.25,
+              ),
             ),
           ),
         ),

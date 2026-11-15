@@ -64,6 +64,7 @@ class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
 
     return Scaffold(
       body: IndexedStack(
+        key: ValueKey('home_indexed_stack_senior_$isSeniorMode'),
         index: _currentIndex,
         children: _screens,
       ),
