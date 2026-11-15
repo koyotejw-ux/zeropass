@@ -335,7 +335,11 @@ class MonetizationService extends ChangeNotifier with WidgetsBindingObserver {
   bool get isSubscriptionAllInOne =>
       _hasActiveVipBundle(DateTime.now()) || (isSubscriptionAdsRemoved && isSubscriptionKioskPro);
 
+  // 스토어 규격 실물 스크린샷 촬영 및 디버그 무광고 모드 플래그
+  static bool storeScreenshotMode = false;
+
   bool get isAdsRemoved {
+    if (storeScreenshotMode) return true;
     if (isSubscriptionAdsRemoved) return true;
     if (_rewardedAdFreeUntil != null && DateTime.now().isBefore(_rewardedAdFreeUntil!)) {
       return true;

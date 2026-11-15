@@ -31,6 +31,12 @@ void main() async {
   final showSetupWizard = !(prefs.getBool('setup_wizard_completed') ?? false);
   final isKioskDedicated = prefs.getBool('is_kiosk_dedicated_mode') ?? false;
 
+  // 스토어 규격 실물 캡처 또는 환경 설정에 따른 광고 제거 모드 활성화
+  final storeCaptureAdFree = prefs.getBool('store_screenshot_ad_free') ?? true;
+  if (storeCaptureAdFree) {
+    MonetizationService.storeScreenshotMode = true;
+  }
+
   runApp(
     ProviderScope(
       child: ZeroPassApp(
