@@ -178,7 +178,7 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
               icon: Icon(
                 Icons.format_size_rounded,
                 size: 21,
-                color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
               ),
               tooltip: LocalizationService.tr('senior_easy_mode'),
               splashRadius: 20,

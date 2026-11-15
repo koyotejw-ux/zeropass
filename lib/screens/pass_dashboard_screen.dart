@@ -784,12 +784,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
           ],
         ),
         actions: [
-          // 0. 무인 자율출결 키오스크 (일반 폰/태블릿으로 운영 → 심플 태블릿 아웃라인 아이콘, 우측 아이콘 세트와 동일 계열·동일 크기)
+          // 0. 무인 자율출결 키오스크 (헤더 키오스크 강조 색상 부여)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.tablet_android_outlined, size: 21, color: Color(0xFF3F3F46)),
+              icon: const Icon(Icons.tablet_android_rounded, size: 22, color: AppTheme.primaryBlue),
               tooltip: LocalizationService.pick(
                 ko: '무인 키오스크 모드',
                 en: 'Self Check-In Kiosk Mode',
@@ -805,12 +805,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               onPressed: () => _openTabletKioskMode(context),
             ),
           ),
-          // 1. 스케줄 달력 (주요일정 & 출결 캘린더)
+          // 1. 스케줄 달력 (주요일정 & 출결 캘린더 - 검정 단일색상)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.calendar_month_outlined, size: 21, color: Color(0xFF3F3F46)),
+              icon: const Icon(Icons.calendar_month_outlined, size: 21, color: AppTheme.textPrimary),
               tooltip: LocalizationService.pick(
                 ko: '스케줄 달력',
                 en: 'Schedule Calendar',
@@ -826,12 +826,12 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               onPressed: () => ScheduleCalendarModal.show(context),
             ),
           ),
-          // 2. 스마트 안심 알림 센터 (심플 라인 아이콘)
+          // 2. 스마트 안심 알림 센터 (심플 라인 아이콘 - 검정 단일색상)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.notifications_none_rounded, size: 21, color: Color(0xFF3F3F46)),
+              icon: const Icon(Icons.notifications_none_rounded, size: 21, color: AppTheme.textPrimary),
               tooltip: LocalizationService.pick(
                 ko: '안심 알림 센터',
                 en: 'Notification Center',
@@ -847,14 +847,14 @@ class _PassDashboardScreenState extends ConsumerState<PassDashboardScreen> {
               onPressed: () => SmartNotificationCenterModal.show(context),
             ),
           ),
-          // 3. 시니어 큰글씨 모드 퀵 토글 (공통: 가장 우측 배치)
+          // 3. 시니어 큰글씨 모드 퀵 토글 (검정 단일색상 / 활성 시는 유지)
           Padding(
             padding: const EdgeInsets.only(right: 6),
             child: IconButton(
               icon: Icon(
                 Icons.format_size_rounded,
                 size: 21,
-                color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
               ),
               tooltip: LocalizationService.tr('senior_easy_mode'),
               splashRadius: 20,

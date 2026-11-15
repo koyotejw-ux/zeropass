@@ -135,12 +135,12 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
           child: Text(appBarTitle),
         ),
         actions: [
-          // 1. 간편장부 엑셀 내보내기 & 세무 가이드 (심플 라인 아이콘)
+          // 1. 간편장부 엑셀 내보내기 & 세무 가이드 (심플 라인 아이콘 - 검정 단일색상)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.table_view_outlined, size: 21, color: Color(0xFF3F3F46)),
+              icon: const Icon(Icons.table_view_outlined, size: 21, color: AppTheme.textPrimary),
               tooltip: LocalizationService.pick(
                 ko: '간편장부 엑셀 & 세무',
                 en: 'CSV Ledger & Tax Export',
@@ -162,7 +162,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               width: 40,
               height: 40,
               child: IconButton(
-                icon: const Icon(Icons.menu_book_outlined, size: 21, color: Color(0xFF3F3F46)),
+                icon: const Icon(Icons.menu_book_outlined, size: 21, color: AppTheme.textPrimary),
                 tooltip: LocalizationService.pick(
                   ko: '소상공인 세무 가이드',
                   en: 'Small Business Tax Guide',
@@ -178,13 +178,13 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
                 onPressed: () => TaxGuideModal.show(context),
               ),
             ),
-          // 3. 거래처 수첩 or 실시간 입금 감지 (심플 라인 아이콘)
+          // 3. 거래처 수첩 or 실시간 입금 감지 (검정 단일색상)
           if (_selectedTab == 2 || widget.mode == LedgerScreenMode.expenseTaxOnly)
             SizedBox(
               width: 40,
               height: 40,
               child: IconButton(
-                icon: const Icon(Icons.business_center_outlined, size: 21, color: Color(0xFF4F46E5)),
+                icon: const Icon(Icons.business_center_outlined, size: 21, color: AppTheme.textPrimary),
                 tooltip: LocalizationService.pick(
                   ko: '거래처 수첩',
                   en: 'Vendors & Payroll Book',
@@ -208,7 +208,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               width: 40,
               height: 40,
               child: IconButton(
-                icon: const Icon(Icons.notifications_active_outlined, size: 21, color: Color(0xFF059669)),
+                icon: const Icon(Icons.notifications_active_outlined, size: 21, color: AppTheme.textPrimary),
                 tooltip: LocalizationService.pick(
                   ko: '실시간 입금 감지',
                   en: 'Auto Deposit Match',
@@ -235,7 +235,7 @@ class _BillingLedgerScreenState extends ConsumerState<BillingLedgerScreen> {
               icon: Icon(
                 Icons.format_size_rounded,
                 size: 21,
-                color: isSeniorMode ? AppTheme.trustBlue : const Color(0xFF3F3F46),
+                color: isSeniorMode ? AppTheme.trustBlue : AppTheme.textPrimary,
               ),
               tooltip: LocalizationService.pick(
                 ko: '큰글씨 모드',

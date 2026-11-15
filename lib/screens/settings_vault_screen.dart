@@ -1105,12 +1105,12 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
           child: Text(LocalizationService.tr('tab_settings')),
         ),
         actions: [
-          // 1. PRO VIP 샵 퀵 버튼 (심플 라인 아이콘)
+          // 1. PRO VIP 샵 퀵 버튼 (심플 라인 아이콘 - 검정 단일색상)
           SizedBox(
             width: 40,
             height: 40,
             child: IconButton(
-              icon: const Icon(Icons.workspace_premium_outlined, size: 21, color: Color(0xFFD97706)),
+              icon: const Icon(Icons.workspace_premium_outlined, size: 21, color: AppTheme.textPrimary),
               tooltip: LocalizationService.pick(
                 ko: 'PRO 샵',
                 en: 'PRO Shop',
@@ -1170,7 +1170,7 @@ class _SettingsVaultScreenState extends ConsumerState<SettingsVaultScreen> {
               icon: Icon(
                 Icons.format_size_rounded,
                 size: 21,
-                color: isSeniorMode ? AppTheme.primaryBlue : AppTheme.textSecondary,
+                color: isSeniorMode ? AppTheme.primaryBlue : AppTheme.textPrimary,
               ),
               tooltip: LocalizationService.pick(
                 ko: '큰글씨 모드',
