@@ -53,3 +53,11 @@ app.*.map.json
 plugins/**/build/
 plugins/**/.gradle/
 
+
+# Local scratch scripts and temp dbs/images
+*.db
+*.xml
+*.png
+*.py
+!portfolio/**
+
