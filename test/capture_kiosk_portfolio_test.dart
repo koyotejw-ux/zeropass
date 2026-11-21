@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zeropass/models/member.dart';
+import 'package:zeropass/models/pass_record.dart';
 import 'package:zeropass/models/studio_profile.dart';
 import 'package:zeropass/providers/app_providers.dart';
 import 'package:zeropass/screens/tablet_kiosk_screen.dart';
@@ -24,7 +25,7 @@ class MockKioskMembersNotifier extends MembersNotifier {
         billingType: BillingType.sessionBased,
         defaultFee: 340000,
         totalSessions: 12,
-        remainingSessions: 1,
+        remainingSessions: 2,
         registeredAt: DateTime.now().subtract(const Duration(days: 60)),
         memo: 'D-3 만료 임박 회원',
       ),
@@ -42,6 +43,28 @@ class MockKioskMembersNotifier extends MembersNotifier {
       ),
     ];
   }
+
+  @override
+  Future<void> reload() async {
+    // no-op in mock
+  }
+}
+
+class MockPassRecordsNotifier extends PassRecordsNotifier {
+  @override
+  Future<List<PassRecord>> build() async => [];
+
+  @override
+  Future<void> checkInMember({
+    required Member member,
+    AttendanceStatus status = AttendanceStatus.attended,
+    bool triggerAd = false,
+  }) async {
+    // mock success
+  }
+
+  @override
+  Future<void> reload() async {}
 }
 
 class MockKioskStudioProfileNotifier extends StudioProfileNotifier {
@@ -86,13 +109,12 @@ Future<void> loadFonts() async {
     matLoader.addFont(Future.value(ByteData.view(bytes.buffer)));
     await matLoader.load();
   }
-
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Capture Real Tablet Kiosk Screen for Portfolio Deck', (WidgetTester tester) async {
+  testWidgets('Capture 3 Stages of Production Tablet Kiosk: Standby, Dialing, and Success', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'language': 'ko'});
     await initializeDateFormatting('ko_KR', null);
     await loadFonts();
@@ -102,7 +124,8 @@ void main() {
       outDir.createSync(recursive: true);
     }
 
-    const tabletSize = Size(680, 960);
+    // 3:4 Pro Tablet Screen (768 x 1024)
+    const tabletSize = Size(768, 1024);
     tester.view.physicalSize = tabletSize;
     tester.view.devicePixelRatio = 1.0;
 
@@ -111,6 +134,7 @@ void main() {
       ProviderScope(
         overrides: [
           membersProvider.overrideWith(() => MockKioskMembersNotifier()),
+          passRecordsProvider.overrideWith(() => MockPassRecordsNotifier()),
           studioProfileProvider.overrideWith(() => MockKioskStudioProfileNotifier()),
         ],
         child: MaterialApp(
@@ -129,7 +153,22 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // 1. Enter 1, 2, 3 -> Live Dialing State
+    // Stage 1: Production Standby Entry Screen (Waiting for student, '— — — —')
+    final screenshotStandby = await tester.runAsync(() async {
+      final boundary = key1.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+      final image = await boundary.toImage(pixelRatio: 2.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    });
+
+    if (screenshotStandby != null) {
+      final pathStandby = r'd:\097.flutter_project\auto_portfolio\zeropass\assets\kiosk_mockups\real_tablet_kiosk_standby.png';
+      File(pathStandby).writeAsBytesSync(screenshotStandby);
+      print('Saved Kiosk Standby Screen: $pathStandby');
+    }
+
+    // Stage 2: Active Dialing Screen (Tapping 1, 2, 3 -> '1 2 3 —')
     final key1Btn = find.text('1').first;
     final key2Btn = find.text('2').first;
     final key3Btn = find.text('3').first;
@@ -140,7 +179,7 @@ void main() {
     await tester.tap(key3Btn);
     await tester.pumpAndSettle();
 
-    final screenshot1 = await tester.runAsync(() async {
+    final screenshotDial = await tester.runAsync(() async {
       final boundary = key1.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return null;
       final image = await boundary.toImage(pixelRatio: 2.0);
@@ -148,20 +187,20 @@ void main() {
       return byteData?.buffer.asUint8List();
     });
 
-    if (screenshot1 != null) {
-      final path1 = r'd:\097.flutter_project\auto_portfolio\zeropass\assets\kiosk_mockups\real_tablet_kiosk_dial.png';
-      File(path1).writeAsBytesSync(screenshot1);
-      print('Saved Kiosk Dial Screen: $path1');
+    if (screenshotDial != null) {
+      final pathDial = r'd:\097.flutter_project\auto_portfolio\zeropass\assets\kiosk_mockups\real_tablet_kiosk_dial.png';
+      File(pathDial).writeAsBytesSync(screenshotDial);
+      print('Saved Kiosk Dial Screen: $pathDial');
     }
 
-    // 2. Tap '4' -> Triggers Member 1234 Match Success!
+    // Stage 3: Celebration Success Screen (Tapping '4' -> Matches '강지훈' 1234 -> Instant Celebration Modal!)
     final key4Btn = find.text('4').first;
     await tester.tap(key4Btn);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
 
-    final screenshot2 = await tester.runAsync(() async {
+    final screenshotSuccess = await tester.runAsync(() async {
       final boundary = key1.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return null;
       final image = await boundary.toImage(pixelRatio: 2.0);
@@ -169,10 +208,10 @@ void main() {
       return byteData?.buffer.asUint8List();
     });
 
-    if (screenshot2 != null) {
-      final path2 = r'd:\097.flutter_project\auto_portfolio\zeropass\assets\kiosk_mockups\real_tablet_kiosk_success.png';
-      File(path2).writeAsBytesSync(screenshot2);
-      print('Saved Kiosk Success Screen: $path2');
+    if (screenshotSuccess != null) {
+      final pathSuccess = r'd:\097.flutter_project\auto_portfolio\zeropass\assets\kiosk_mockups\real_tablet_kiosk_success.png';
+      File(pathSuccess).writeAsBytesSync(screenshotSuccess);
+      print('Saved Kiosk Success Screen: $pathSuccess');
     }
   });
 }

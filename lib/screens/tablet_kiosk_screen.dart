@@ -163,11 +163,12 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       HapticFeedback.heavyImpact();
       await Future.delayed(const Duration(milliseconds: 250));
 
+      final matched = matchedMembers.isNotEmpty ? matchedMembers.first : null;
       final celebration = AttendanceCelebration(
         digits: enteredCode,
-        memberName: LocalizationService.tr('kiosk_demo_member_name'),
-        programTag: LocalizationService.tr('kiosk_demo_group'),
-        passStatus: LocalizationService.tr('kiosk_demo_pass_info'),
+        memberName: matched != null ? matched.name : '강지훈 회원',
+        programTag: matched != null ? matched.groupName : 'PT 화목반',
+        passStatus: matched != null ? '잔여 11회 (1회 차감 완료)' : '10회권 (잔여 9회)', 
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: true,
         isSuccess: true,
@@ -229,8 +230,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
       final celebration = AttendanceCelebration(
         digits: enteredCode,
-        memberName: member.primaryName,
-        programTag: member.secondaryTag,
+        memberName: member.name,
+        programTag: member.groupName.isNotEmpty ? member.groupName : member.secondaryTag,
         passStatus: remaining,
         timeStr: DateFormat('yyyy.MM.dd HH:mm:ss').format(DateTime.now()),
         isDemo: false,
@@ -755,30 +756,32 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
               _buildQuickTestChips(members),
               const SizedBox(height: 16),
 
+              const Spacer(flex: 1),
+
               // Center: Prompt & Mode Toggle
               _buildPromptAndMascot(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               // 4-Digit Display Boxes
               _buildDigitBoxes(),
-              const SizedBox(height: 12),
+              if (_statusMessage != null) ...[
+                const SizedBox(height: 16),
+                _buildStatusCard(),
+              ],
 
-              // Status / Success / Error Card
-              if (_statusMessage != null) _buildStatusCard(),
-
-              const Spacer(),
+              const Spacer(flex: 2),
 
               // Keypad (FittedBox to prevent overflow on small screens)
               Center(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 340),
+                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width >= 600 ? 460 : 340),
                     child: _buildKeypad(),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const Spacer(flex: 2),
             ],
           ),
         ),
@@ -1259,6 +1262,11 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildDigitBoxes() {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    final boxW = isTablet ? 76.0 : 56.0;
+    final boxH = isTablet ? 90.0 : 66.0;
+    final fontSz = isTablet ? 42.0 : 32.0;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(4, (index) {
@@ -1267,9 +1275,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          width: 56,
-          height: 66,
+          margin: EdgeInsets.symmetric(horizontal: isTablet ? 10 : 6),
+          width: boxW,
+          height: boxH,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
@@ -1291,8 +1299,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           child: isFilled
               ? Text(
                   digitChar,
-                  style: const TextStyle(
-                    fontSize: 32,
+                  style: TextStyle(
+                    fontSize: fontSz,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: -0.5,
@@ -1401,12 +1409,17 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildKeypadButton(String num) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    final btnW = isTablet ? 116.0 : 86.0;
+    final btnH = isTablet ? 84.0 : 68.0;
+    final fontSz = isTablet ? 36.0 : 28.0;
+
     return InkWell(
       onTap: () => _onKeyTap(num),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(isTablet ? 24 : 20),
       child: Container(
-        width: 86,
-        height: 68,
+        width: btnW,
+        height: btnH,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
@@ -1422,8 +1435,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         ),
         child: Text(
           num,
-          style: const TextStyle(
-            fontSize: 28,
+          style: TextStyle(
+            fontSize: fontSz,
             fontWeight: FontWeight.w900,
             color: Colors.white,
           ),
@@ -1433,12 +1446,16 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildActionKeypadButton(String label, IconData icon, VoidCallback onTap) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    final btnW = isTablet ? 116.0 : 86.0;
+    final btnH = isTablet ? 84.0 : 68.0;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(isTablet ? 24 : 20),
       child: Container(
-        width: 86,
-        height: 68,
+        width: btnW,
+        height: btnH,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFF0F172A),
@@ -1493,11 +1510,12 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isLandscape = constraints.maxWidth > constraints.maxHeight;
+                  final isTablet = constraints.maxWidth >= 600;
                   final isCompact = constraints.maxHeight < 680;
-                  final vGap = isLandscape ? 8.0 : (isCompact ? 10.0 : 16.0);
-                  final avatarSize = isLandscape ? 72.0 : (isCompact ? 80.0 : 96.0);
-                  final digitBoxWidth = ((constraints.maxWidth - 64) / 4).clamp(40.0, 58.0);
-                  final digitBoxHeight = digitBoxWidth * 1.15;
+                  final vGap = isLandscape ? 8.0 : (isTablet ? 24.0 : (isCompact ? 10.0 : 16.0));
+                  final avatarSize = isLandscape ? 72.0 : (isTablet ? 124.0 : (isCompact ? 80.0 : 96.0));
+                  final digitBoxWidth = isTablet ? 72.0 : ((constraints.maxWidth - 64) / 4).clamp(40.0, 58.0);
+                  final digitBoxHeight = digitBoxWidth * 1.18;
 
                   return SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
@@ -1567,8 +1585,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                           // 2. Avatar Circle: Member Photo if registered, else Naturally Masked 3D Penguin (축하 활짝 웃음)
                           ZeroPassMascotAvatar(
                             size: avatarSize,
+                            name: celebration.memberName,
                             photoPath: celebration.photoPath,
-                            expression: MascotExpression.laughing,
+                            showMascot: false,
+                            useBrandEmblem: false,
                             isLightMode: true,
                             border: Border.all(color: const Color(0xFF10B981), width: 3),
                             boxShadow: [
