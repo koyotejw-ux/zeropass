@@ -899,6 +899,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     return ZeroPassMascotAvatar(
       size: size,
       isLightMode: true,
+      showMascot: false,
+      useBrandEmblem: true,
       border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
     );
   }
