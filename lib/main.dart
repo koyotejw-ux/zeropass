@@ -1,5 +1,10 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/foundation.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'dart:io' show Platform;
 import 'services/localization_service.dart';
+import 'services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -14,6 +19,15 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // SQLite databaseFactory 즉시 초기화 (Web Worker / Desktop FFI)
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   await Future.wait([
     initializeDateFormatting('ko_KR', null),
     initializeDateFormatting('en_US', null),
@@ -25,6 +39,13 @@ void main() async {
 
   await MonetizationService.instance.initialize();
   await LocalizationService.initialize();
+
+  // Database 인스턴스 조기 로드 및 웹 스토리지 에러 방어
+  try {
+    await DatabaseService.instance.database;
+  } catch (e) {
+    debugPrint('[ZeroPass] Early DB initialization warning: $e');
+  }
 
   final prefs = await SharedPreferences.getInstance();
   final showOnboarding = !(prefs.getBool('onboarding_completed') ?? false);
