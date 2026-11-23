@@ -739,33 +739,37 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
       );
     }
 
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    final horizPad = isTablet ? 40.0 : 20.0;
+    final vertPad = isTablet ? 28.0 : 12.0;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: horizPad, vertical: vertPad),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical - 24,
+          minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical - (vertPad * 2),
         ),
         child: IntrinsicHeight(
           child: Column(
             children: [
               // Top Header (Studio Info, Live Time & Exit Lock)
               _buildTopHeader(studio, dateStr, timeStr),
-              const SizedBox(height: 12),
+              SizedBox(height: isTablet ? 20 : 12),
 
               // Quick Test Chips
               _buildQuickTestChips(members),
-              const SizedBox(height: 16),
+              SizedBox(height: isTablet ? 24 : 16),
 
               const Spacer(flex: 1),
 
               // Center: Prompt & Mode Toggle
               _buildPromptAndMascot(),
-              const SizedBox(height: 20),
+              SizedBox(height: isTablet ? 28 : 20),
 
               // 4-Digit Display Boxes
               _buildDigitBoxes(),
               if (_statusMessage != null) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: isTablet ? 20 : 16),
                 _buildStatusCard(),
               ],
 
@@ -776,7 +780,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width >= 600 ? 460 : 340),
+                    constraints: BoxConstraints(maxWidth: isTablet ? 560 : 340),
                     child: _buildKeypad(),
                   ),
                 ),
@@ -1107,6 +1111,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildPromptAndMascot() {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+
     return Column(
       children: [
         Text(
@@ -1114,25 +1120,29 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
               ? LocalizationService.tr('kiosk_name_search_hint')
               : LocalizationService.tr('kiosk_prompt'),
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 17,
+          style: TextStyle(
+            fontSize: isTablet ? 24 : 17,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isTablet ? 8 : 5),
         Text(
           LocalizationService.tr('kiosk_sub_prompt'),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+          style: TextStyle(
+            fontSize: isTablet ? 15 : 12.5,
+            color: const Color(0xFF94A3B8),
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: isTablet ? 16 : 10),
         Container(
-          padding: const EdgeInsets.all(3),
+          padding: EdgeInsets.all(isTablet ? 4 : 3),
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(isTablet ? 14 : 12),
             border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Row(
@@ -1263,9 +1273,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
   Widget _buildDigitBoxes() {
     final isTablet = MediaQuery.of(context).size.width >= 600;
-    final boxW = isTablet ? 76.0 : 56.0;
-    final boxH = isTablet ? 90.0 : 66.0;
-    final fontSz = isTablet ? 42.0 : 32.0;
+    final boxW = isTablet ? 92.0 : 56.0;
+    final boxH = isTablet ? 104.0 : 66.0;
+    final fontSz = isTablet ? 48.0 : 32.0;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1275,7 +1285,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: EdgeInsets.symmetric(horizontal: isTablet ? 10 : 6),
+          margin: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 6),
           width: boxW,
           height: boxH,
           alignment: Alignment.center,
@@ -1358,6 +1368,10 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildKeypad() {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    final rowGap = isTablet ? 16.0 : 12.0;
+    final colGap = isTablet ? 16.0 : 12.0;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1365,42 +1379,42 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildKeypadButton('1'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('2'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('3'),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: rowGap),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildKeypadButton('4'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('5'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('6'),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: rowGap),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildKeypadButton('7'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('8'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('9'),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: rowGap),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildActionKeypadButton(LocalizationService.tr('common_reset'), Icons.refresh_rounded, _onClear),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildKeypadButton('0'),
-            const SizedBox(width: 12),
+            SizedBox(width: colGap),
             _buildActionKeypadButton(LocalizationService.tr('common_backspace'), Icons.backspace_outlined, _onBackspace),
           ],
         ),
@@ -1410,9 +1424,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
   Widget _buildKeypadButton(String num) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
-    final btnW = isTablet ? 116.0 : 86.0;
-    final btnH = isTablet ? 84.0 : 68.0;
-    final fontSz = isTablet ? 36.0 : 28.0;
+    final btnW = isTablet ? 142.0 : 86.0;
+    final btnH = isTablet ? 98.0 : 68.0;
+    final fontSz = isTablet ? 42.0 : 28.0;
 
     return InkWell(
       onTap: () => _onKeyTap(num),
@@ -1447,8 +1461,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
   Widget _buildActionKeypadButton(String label, IconData icon, VoidCallback onTap) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
-    final btnW = isTablet ? 116.0 : 86.0;
-    final btnH = isTablet ? 84.0 : 68.0;
+    final btnW = isTablet ? 142.0 : 86.0;
+    final btnH = isTablet ? 98.0 : 68.0;
 
     return InkWell(
       onTap: onTap,
@@ -1465,13 +1479,13 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 22, color: const Color(0xFF94A3B8)),
-            const SizedBox(height: 3),
+            Icon(icon, size: isTablet ? 26 : 22, color: const Color(0xFF94A3B8)),
+            SizedBox(height: isTablet ? 5 : 3),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF94A3B8),
+              style: TextStyle(
+                fontSize: isTablet ? 13 : 11,
+                color: const Color(0xFF94A3B8),
                 fontWeight: FontWeight.w800,
               ),
             ),
