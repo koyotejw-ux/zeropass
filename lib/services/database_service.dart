@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import '../models/member.dart';
@@ -34,8 +35,10 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    // FFI initialization for desktop/testing support
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    // FFI initialization for Web and Desktop/testing support
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
@@ -43,6 +46,8 @@ class DatabaseService {
     final String path;
     if (testDatabasePath != null) {
       path = testDatabasePath!;
+    } else if (kIsWeb) {
+      path = 'zeropass_local_vault.db';
     } else {
       final dbPath = await getDatabasesPath();
       path = p.join(dbPath, 'zeropass_local_vault.db');

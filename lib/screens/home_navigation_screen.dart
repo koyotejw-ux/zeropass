@@ -10,7 +10,8 @@ import 'settings_vault_screen.dart';
 import '../widgets/ad_banner_widget.dart';
 
 class HomeNavigationScreen extends ConsumerStatefulWidget {
-  const HomeNavigationScreen({super.key});
+  final int initialIndex;
+  const HomeNavigationScreen({super.key, this.initialIndex = 0});
 
   static HomeNavigationScreenState? of(BuildContext context) {
     return context.findAncestorStateOfType<HomeNavigationScreenState>();
@@ -21,7 +22,13 @@ class HomeNavigationScreen extends ConsumerStatefulWidget {
 }
 
 class HomeNavigationScreenState extends ConsumerState<HomeNavigationScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   void switchToTab(int index) {
     setState(() {

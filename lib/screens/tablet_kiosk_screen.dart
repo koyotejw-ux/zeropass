@@ -740,8 +740,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
     }
 
     final isTablet = MediaQuery.of(context).size.width >= 600;
-    final horizPad = isTablet ? 40.0 : 20.0;
-    final vertPad = isTablet ? 28.0 : 12.0;
+    final horizPad = isTablet ? 48.0 : 20.0;
+    final vertPad = isTablet ? 24.0 : 12.0;
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: horizPad, vertical: vertPad),
@@ -754,22 +754,18 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
             children: [
               // Top Header (Studio Info, Live Time & Exit Lock)
               _buildTopHeader(studio, dateStr, timeStr),
-              SizedBox(height: isTablet ? 20 : 12),
-
-              // Quick Test Chips
-              _buildQuickTestChips(members),
-              SizedBox(height: isTablet ? 24 : 16),
+              SizedBox(height: isTablet ? 28 : 16),
 
               const Spacer(flex: 1),
 
               // Center: Prompt & Mode Toggle
               _buildPromptAndMascot(),
-              SizedBox(height: isTablet ? 28 : 20),
+              SizedBox(height: isTablet ? 32 : 20),
 
               // 4-Digit Display Boxes
               _buildDigitBoxes(),
               if (_statusMessage != null) ...[
-                SizedBox(height: isTablet ? 20 : 16),
+                SizedBox(height: isTablet ? 20 : 14),
                 _buildStatusCard(),
               ],
 
@@ -780,7 +776,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: isTablet ? 560 : 340),
+                    constraints: BoxConstraints(maxWidth: isTablet ? 490 : 340),
                     child: _buildKeypad(),
                   ),
                 ),
@@ -941,25 +937,7 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                             ),
                           ),
                         ),
-                        if (_localTestMode) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF818CF8), width: 0.8),
-                            ),
-                            child: Text(
-                              LocalizationService.tr('kiosk_demo_badge'),
-                              style: const TextStyle(
-                                color: Color(0xFFA5B4FC),
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
+                        // Test badge intentionally omitted for clean kiosk presentation
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -1010,42 +988,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
   }
 
   Widget _buildQuickTestChips(List<Member> members) {
-    // 학생용(운영용) 모드에서는 어떠한 경우에도 체험용 핀 칩을 일체 노출하지 않습니다.
-    if (!_localTestMode) {
-      return const SizedBox.shrink();
-    }
-
-    // 원장님 기능 테스트 모드에서만 상단 배지 및 1234 체험 칩 노출
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF312E81).withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.6)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.science_rounded, color: Color(0xFFA5B4FC), size: 18),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              LocalizationService.tr('kiosk_demo_admin_badge'),
-              style: const TextStyle(
-                color: Color(0xFFA5B4FC),
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          _buildQuickPinBadge(
-            _QuickPinItem(pin: '1234', tag: LocalizationService.tr('kiosk_demo_pin_label'), color: const Color(0xFF38BDF8)),
-          ),
-        ],
-      ),
-    );
+    // 키오스크 순수 화면: 테스트 칩 정보를 숨겨 정갈하고 완성도 높은 레이아웃 유지
+    return const SizedBox.shrink();
   }
 
   Widget _buildQuickPinBadge(_QuickPinItem item) {
@@ -1424,9 +1368,9 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
   Widget _buildKeypadButton(String num) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
-    final btnW = isTablet ? 142.0 : 86.0;
-    final btnH = isTablet ? 98.0 : 68.0;
-    final fontSz = isTablet ? 42.0 : 28.0;
+    final btnW = isTablet ? 128.0 : 86.0;
+    final btnH = isTablet ? 88.0 : 68.0;
+    final fontSz = isTablet ? 38.0 : 28.0;
 
     return InkWell(
       onTap: () => _onKeyTap(num),
@@ -1461,8 +1405,8 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
 
   Widget _buildActionKeypadButton(String label, IconData icon, VoidCallback onTap) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
-    final btnW = isTablet ? 142.0 : 86.0;
-    final btnH = isTablet ? 98.0 : 68.0;
+    final btnW = isTablet ? 128.0 : 86.0;
+    final btnH = isTablet ? 88.0 : 68.0;
 
     return InkWell(
       onTap: onTap,
@@ -1786,17 +1730,17 @@ class _TabletKioskScreenState extends ConsumerState<TabletKioskScreen> {
                                   const Divider(color: Color(0xFF1F2937), height: 16),
                                   Row(
                                     children: [
-                                      Icon(
-                                        celebration.isDemo ? Icons.tips_and_updates_rounded : Icons.mark_chat_read_rounded,
-                                        color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFF38BDF8),
+                                      const Icon(
+                                        Icons.mark_chat_read_rounded,
+                                        color: Color(0xFF38BDF8),
                                         size: 18,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
                                           LocalizationService.tr('kiosk_success_queue_note'),
-                                          style: TextStyle(
-                                            color: celebration.isDemo ? const Color(0xFFFBBF24) : const Color(0xFFE2E8F0),
+                                          style: const TextStyle(
+                                            color: Color(0xFFE2E8F0),
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                           ),

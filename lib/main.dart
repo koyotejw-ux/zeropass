@@ -96,13 +96,22 @@ class _ZeroPassAppState extends ConsumerState<ZeroPassApp> {
     final activeLang = ref.watch(languageProvider);
     ref.watch(currencyProvider);
 
+    // Parse web query parameters (e.g. ?flow=kiosk, ?flow=ledger, ?flow=members, ?flow=vault)
+    final flowParam = Uri.base.queryParameters['flow']?.toLowerCase();
+
     Widget homeScreen;
-    if (_showOnboarding) {
+    if (flowParam == 'kiosk' || widget.isKioskDedicated) {
+      homeScreen = const TabletKioskScreen(isTestMode: true);
+    } else if (flowParam == 'ledger') {
+      homeScreen = const HomeNavigationScreen(initialIndex: 1);
+    } else if (flowParam == 'members') {
+      homeScreen = const HomeNavigationScreen(initialIndex: 3);
+    } else if (flowParam == 'vault') {
+      homeScreen = const HomeNavigationScreen(initialIndex: 4);
+    } else if (_showOnboarding) {
       homeScreen = OnboardingScreen(onFinish: _finishOnboarding);
     } else if (_showSetupWizard) {
       homeScreen = StudioSetupWizardScreen(onFinish: _finishSetupWizard);
-    } else if (widget.isKioskDedicated) {
-      homeScreen = const TabletKioskScreen();
     } else {
       homeScreen = const HomeNavigationScreen();
     }

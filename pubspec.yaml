@@ -52,6 +52,7 @@ dependencies:
   google_mobile_ads: ^7.0.0
   in_app_purchase: ^3.2.3
   image_picker: ^1.2.4
+  sqflite_common_ffi_web: ^1.2.2
 
 dependency_overrides:
   in_app_purchase_android:
